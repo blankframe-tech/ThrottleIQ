@@ -145,14 +145,16 @@ describe deletion as automatic on the form.
 
 ## Background location — required extra steps
 
-`ACCESS_BACKGROUND_LOCATION` is a **restricted permission**. Google requires, in addition to the Data Safety form:
+`ACCESS_BACKGROUND_LOCATION` is a **restricted permission**. Only one feature asks for it: **automatic ride detection** (Settings → "Detect rides automatically", off by default). A ride the rider starts by hand does not: it runs under a foreground service of type `location`, with a visible notification, and while-in-use location only. This split is the core of the declaration; Play rejects background-location requests that a foreground service already covers.
 
-1. **Prominent in-app disclosure** shown *before* requesting the permission, explaining what the app does with background location and that it happens even when the app isn't in use. (Worth double-checking this exists in the app's location-permission flow — Play reviewers check for it specifically.)
-2. **Permissions Declaration form** in Play Console (appears under App content once a background-location-using APK/AAB is detected): you'll need to explain, in your own words, why the app needs background location. Suggested answer:
+Google requires, in addition to the Data Safety form:
 
-> "Throttle IQ records motorcycle rides — GPS route, speed, and distance — which continue for the length of a ride even if the rider's screen locks or they switch to another app (e.g. a maps app) mid-ride. Background location access is required so ride recording doesn't stop the moment the screen turns off, which is the normal riding condition on a motorcycle."
+1. **Prominent in-app disclosure** shown *before* the request. It exists: turning on "Detect rides automatically" shows the "Background location" dialog (`ensureBackgroundLocationDisclosure` in `app/lib/features/ride/presentation/widgets/recording_gate.dart`, copy `backgroundLocationRationale`). It names the data (location), the purpose (detect and record rides), says it happens "even when the app is closed or not in use", and comes before the system's "Allow all the time" prompt. "Not now" makes no request. Once accepted it is not shown again. Starting a ride by hand never shows it and never asks for "Allow all the time".
+2. **Permissions Declaration form** in Play Console (appears under App content once a background-location-using APK/AAB is detected): explain, in your own words, why the app needs background location. Suggested answer:
 
-3. A **short video or screenshots** may be requested showing the background-location feature in use — have a short screen recording of a ride being recorded with the screen locked/backgrounded ready, in case Play asks for it during review.
+> "ThrottleIQ has an optional, off-by-default feature, 'Detect rides automatically', that notices when the rider starts riding and records the ride without them opening the app or tapping Start, so service reminders based on distance ridden stay accurate. It uses the platform activity-recognition signal and turns GPS on only once vehicle motion is seen, which happens while the app is closed. That needs background location. Rides the rider starts by hand use a foreground service with while-in-use location and do not request background location."
+
+3. A **short video** is usually requested. Record: Settings → turn on "Detect rides automatically" → the disclosure dialog → Continue → the system prompt → "Allow all the time" → the "Watching for rides" notification → close the app → ride → the detected ride appearing afterwards. Separately, show that a manual ride start asks only for "While using the app".
 
 ---
 

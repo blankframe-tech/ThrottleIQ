@@ -89,11 +89,10 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     }
 
     // "While in use" is not enough: the whole feature is about noticing a ride
-    // when the app is closed. The plugin's own request flow explains the
-    // upgrade better than a bare system dialog, so it is left to do the ask
-    // (see AutoTrackingService's backgroundPermissionRationale) — but if the
-    // rider has already refused Always outright, say so rather than silently
-    // enabling something that will never fire.
+    // when the app is closed. This is the only place the app asks for "Allow
+    // all the time"; the switch has already shown Play's disclosure
+    // (ensureBackgroundLocationDisclosure, B4). If the rider refuses, say so
+    // rather than silently enabling something that will never fire.
     if (permission == LocationPermission.whileInUse) {
       final upgraded = await Geolocator.requestPermission();
       if (upgraded != LocationPermission.always) {
@@ -143,8 +142,8 @@ class AutoTrackingSchedule {
 /// and change independently of whether tracking is currently on — a rider
 /// picking their commute hours before ever flipping the main switch on
 /// shouldn't be blocked from doing so.
-final autoTrackingScheduleProvider = AsyncNotifierProvider<
-    AutoTrackingScheduleNotifier, AutoTrackingSchedule>(
+final autoTrackingScheduleProvider =
+    AsyncNotifierProvider<AutoTrackingScheduleNotifier, AutoTrackingSchedule>(
   AutoTrackingScheduleNotifier.new,
 );
 
@@ -240,7 +239,8 @@ class RideAttribution {
         bikeType: bike.cc != null ? '${bike.cc}cc' : 'Motorcycle',
       );
     } catch (e) {
-      debugPrint('[RideAttribution] shared-post bike resync failed for $rideId: $e');
+      debugPrint(
+          '[RideAttribution] shared-post bike resync failed for $rideId: $e');
     }
   }
 }

@@ -1796,10 +1796,10 @@ abstract class AppLocalizations {
   /// **'Background location'**
   String get backgroundLocation;
 
-  /// Text in record_screen.
+  /// Play prominent disclosure, shown before the background-location request when the rider turns on automatic ride detection.
   ///
   /// In en, this message translates to:
-  /// **'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.'**
+  /// **'With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.'**
   String get backgroundLocationRationale;
 
   /// Text in record_screen.

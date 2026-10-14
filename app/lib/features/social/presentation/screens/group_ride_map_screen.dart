@@ -127,23 +127,16 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   Future<void> _bootstrap() async {
     if (widget.autoStartRide) {
       final notifier = ref.read(rideRecordingProvider.notifier);
-      // Same gate the Record screen's start controls pass through — this
-      // path used to skip it, and a start refused for want of location
-      // permission failed silently, leaving the rider on a group map with
-      // no ride recording and no idea why.
-      final proceed = await ensureLocationDisclosure(context);
+      // startRide() no-ops unless status is idle, so an already-recording
+      // rider who opens a group ride keeps their ride instead of getting a
+      // second one. A refused start is said out loud: this path used to fail
+      // silently, leaving the rider on a group map with no ride recording.
+      await notifier.startRide();
       if (!mounted) return;
-      if (proceed) {
-        // startRide() no-ops unless status is idle, so an already-recording
-        // rider who opens a group ride keeps their ride instead of getting a
-        // second one.
-        await notifier.startRide();
-        if (!mounted) return;
-        final result = ref.read(rideRecordingProvider);
-        if (result.status != RecordingStatus.active &&
-            result.status != RecordingStatus.paused) {
-          showRecordingBlockedSnackBar(context, result);
-        }
+      final result = ref.read(rideRecordingProvider);
+      if (result.status != RecordingStatus.active &&
+          result.status != RecordingStatus.paused) {
+        showRecordingBlockedSnackBar(context, result);
       }
     }
 

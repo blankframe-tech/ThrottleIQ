@@ -163,7 +163,7 @@
   <div class="container">
     <div class="header">
       <h1>🏍️ ThrottleIQ Privacy Policy</h1>
-      <p>Effective date: 14 October 2026</p>
+      <p>Effective date: 15 October 2026</p>
     </div>
 
     <div class="content">
@@ -313,30 +313,30 @@
 
       <h2>3. Background location — why it is needed</h2>
 
-      <p>ThrottleIQ asks for permission to access your location <strong>while the app is in the
-      background</strong>, which on Android means the "Allow all the time" setting.</p>
+      <p>Recording a ride you start yourself does <strong>not</strong> need background location.
+      While and only while that ride is recording, the app runs an Android foreground service
+      with a visible notification ("Ride Recording Active"), so it keeps recording with the
+      screen off or another app in front using the ordinary "While using the app" permission.
+      Location collection starts when you start the ride and stops when you finish it.</p>
 
-      <p>The reason is specific: a ride recording has to keep running when your phone screen is
-      off or another app is in front. On a motorcycle that is the normal case — the phone is on a
-      handlebar mount with the screen locked, or showing a navigation app, for the entire ride. If
-      location access stopped the moment the app left the foreground, the recording would break
-      into fragments, distance and max-speed figures would be wrong, and crash detection would go
-      blind exactly when it matters most.</p>
+      <p>Only one optional feature asks for location <strong>while the app is in the
+      background</strong>, which on Android means the "Allow all the time" setting:
+      <strong>Detect rides automatically</strong>. It is off unless you turn it on in Settings,
+      and the app explains it on screen before the system asks.</p>
 
-      <p>Concretely, while and only while a ride is recording:</p>
       <ul>
-        <li>The app runs an Android foreground service with a permanent, visible notification
-        reading "Ride Recording Active — ThrottleIQ is recording your ride in the background."
-        You can always see when it is running.</li>
-        <li>Location collection <strong>starts</strong> when you press start on a ride and
-        <strong>stops</strong> when you finish it. The app does not track you between rides.</li>
+        <li>With it on, the app listens to your phone's motion signal (activity recognition,
+        run by the operating system) and turns GPS on only once you are moving in a vehicle, so a
+        ride is logged even if you never opened the app. A notification reading "Watching for
+        rides" is shown while it runs.</li>
+        <li>The background position fixes are kept on your phone and summarised into detected
+        rides; the raw fixes are deleted from the phone after 14 days.</li>
+        <li>Turn it off at any time in Settings, or revoke "Allow all the time" in your phone's
+        system settings; the feature then switches itself off. Recording rides by hand keeps
+        working.</li>
         <li>The one other use of location is one-off: when you open the Places tab or ask to
         import nearby places, the app takes a single position fix to find what's around you.</li>
       </ul>
-
-      <p>You can refuse or later revoke background location in your phone's system settings.
-      Ride recording will then only work while the app is on screen, which in practice means it
-      will not work reliably. Nothing else in the app depends on it.</p>
 
       <h2>4. Third parties, and exactly what each one receives</h2>
 
@@ -546,7 +546,7 @@
       </p>
 
       <div class="meta">
-        <p>ThrottleIQ — Privacy Policy · Effective 14 October 2026</p>
+        <p>ThrottleIQ — Privacy Policy · Effective 15 October 2026</p>
         <p>Published at https://throttleiqfb.web.app/privacy.html</p>
       </div>
 

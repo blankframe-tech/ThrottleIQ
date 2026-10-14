@@ -70,6 +70,23 @@ const kNoBikeRecordingError = 'Please add a bike before recording a ride.';
 const kStartFailedRecordingError =
     'Could not start the ride. Please try again.';
 
+/// While-in-use location for a ride, asked at most once per start (B4).
+///
+/// A ride runs under a location foreground service, so it never needs "Allow
+/// all the time"; only turning auto-tracking on asks for that, behind its
+/// disclosure. It used to ask for the upgrade on every start (on Android 11+
+/// a trip to system Settings), and to open Settings itself after a permanent
+/// refusal; the blocked-recording card and SnackBar offer that button instead.
+@visibleForTesting
+Future<bool> ensureRideLocationPermission() async {
+  var perm = await Geolocator.checkPermission();
+  if (perm == LocationPermission.denied) {
+    perm = await Geolocator.requestPermission();
+  }
+  return perm == LocationPermission.always ||
+      perm == LocationPermission.whileInUse;
+}
+
 class RideRecordingState {
   final RecordingStatus status;
   final RideEntity? ride;
@@ -334,21 +351,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   static const _prefsBatteryOptPrompted = 'battery_optimization_prompted';
 
   Future<bool> _requestPermissions() async {
-    LocationPermission perm = await Geolocator.checkPermission();
-    if (perm == LocationPermission.denied) {
-      perm = await Geolocator.requestPermission();
-    }
-    if (perm == LocationPermission.deniedForever) {
-      await Geolocator.openAppSettings();
-      return false;
-    }
-
-    if (perm == LocationPermission.whileInUse) {
-      final bg = await Geolocator.requestPermission();
-      if (bg == LocationPermission.always) {
-        return true;
-      }
-    }
+    if (!await ensureRideLocationPermission()) return false;
 
     if (Platform.isAndroid) {
       // Asked once, ever (§90.C11). It used to be re-asked on every start
@@ -365,9 +368,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         }
       } catch (_) {}
     }
-
-    return perm == LocationPermission.always ||
-        perm == LocationPermission.whileInUse;
+    return true;
   }
 
   Future<({String message, RecordingBlockKind kind})?>

@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -89,7 +88,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final quote = resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
+    final quote =
+        resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
     final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
@@ -186,7 +186,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                             children: [
                               Text(recordingErrorText(context.l10n, rideState),
                                   style: TextStyle(
-                                      color: context.palette.danger, fontSize: 13),
+                                      color: context.palette.danger,
+                                      fontSize: 13),
                                   textAlign: TextAlign.center),
                               if (rideState.blockKind !=
                                   RecordingBlockKind.none) ...[
@@ -288,7 +289,8 @@ class _NoBikeCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             context.l10n.addBikeRideThrottleiq,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -317,8 +319,6 @@ class _HoldToStartControl extends ConsumerWidget {
       enabled: enabled,
       busy: status == RecordingStatus.starting,
       onStart: () async {
-        if (!await ensureLocationDisclosure(context)) return;
-        if (!context.mounted) return;
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
         final result = ref.read(rideRecordingProvider);
@@ -391,11 +391,6 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
   void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
 
   void _triggerStart() async {
-    if (!await ensureLocationDisclosure(context)) {
-      _ctrl.animateTo(0.0, curve: Curves.easeOut);
-      return;
-    }
-    if (!mounted) return;
     await ref.read(rideRecordingProvider.notifier).startRide();
     if (!mounted) return;
     final result = ref.read(rideRecordingProvider);
@@ -509,5 +504,3 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     );
   }
 }
-
-
