@@ -6,5 +6,5 @@ This directory contains components related to `router`.
 
 The following files are present in this directory:
 
-- `app_router.dart`: Dart source code.
+- `app_router.dart`: All routes. The redirect applies auth first, then `AppModules.redirectFor` (parts of the app the rider turned off land on their home tab).
 

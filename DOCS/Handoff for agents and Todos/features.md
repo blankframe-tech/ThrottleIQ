@@ -19,7 +19,7 @@ hook in `.claude/settings.json`).
 
 ---
 
-## Your ThrottleIQ — app modules (Settings, branch `modular-throttleiq`)
+## Your ThrottleIQ — app modules (Settings → Your ThrottleIQ)
 
 Settings → "Your ThrottleIQ" lets privacy-minded or minimalist riders turn parts of the app off. Model and rules: `app/lib/core/services/app_modules.dart` (`AppModules`, `appModulesProvider`, SharedPreferences `module_*`, device-local). Nothing is deleted; turning a module back on restores it.
 

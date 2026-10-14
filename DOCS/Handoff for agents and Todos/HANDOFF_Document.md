@@ -2,8 +2,9 @@
 
 _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (latest): modular ThrottleIQ — branch `modular-throttleiq`, pushed, not merged
+## 2026-10-15 (latest): modular ThrottleIQ — on `main` (`c90b2cd`), pushed; branch deleted
 
+- Merged to `main` by fast-forward; `modular-throttleiq` deleted locally and on origin. Gate green (2149 tests). With nothing turned off the app behaves as before.
 - Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
 - Not done: the feature tour still offers Social/Places/Record steps when those are off (Show me just lands on the home tab); forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
 
