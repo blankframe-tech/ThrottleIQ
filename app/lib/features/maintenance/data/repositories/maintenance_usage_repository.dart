@@ -30,7 +30,7 @@ class MaintenanceUsageRepository {
              COALESCE(SUM(hard_brake_count), 0) AS b
       FROM rides
       WHERE bike_id = ? AND status = 'completed' AND start_time >= ?
-    ''', [bikeId, teleFrom.toIso8601String()])).first;
+    ''', [bikeId, teleFrom.toUtc().toIso8601String()])).first;
 
     final paceKm = await distanceKmSince(bikeId, paceFrom);
 
@@ -65,7 +65,7 @@ class MaintenanceUsageRepository {
     final rides = (await db.rawQuery('''
       SELECT COALESCE(SUM(distance_m), 0) AS d FROM rides
       WHERE bike_id = ? AND status = 'completed' AND start_time >= ?
-    ''', [bikeId, from.toIso8601String()])).first['d'] as num? ?? 0;
+    ''', [bikeId, from.toUtc().toIso8601String()])).first['d'] as num? ?? 0;
     final credits = (await db.rawQuery('''
       SELECT COALESCE(SUM(distance_m), 0) AS d FROM detection_odometer_credits
       WHERE bike_id = ? AND credited_at >= ?
