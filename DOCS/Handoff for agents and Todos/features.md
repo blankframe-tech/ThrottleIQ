@@ -1,6 +1,6 @@
 # Features
 
-_Last updated: 2026-10-09 · Branch: `main` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-10-14 · Branch: `fix/oct14-tiq-shell` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
 
 What a signed-in user can actually do in the app today, organized by the
 five-tab bottom nav. This is a living document — regenerate/update it
@@ -23,6 +23,7 @@ hook in `.claude/settings.json`).
 
 ```
 Splash → (auth redirect) → Login / Register → Onboarding (first sign-in only)
+(any screen) → Update required (blocking, when this build < config/app.minBuild)
                                                     │
                                                     ▼
                         ┌───────────────────────────────────────────────┐
@@ -33,7 +34,7 @@ Social  → Feed tab | Forums tab → forum thread → post detail
                                 → create forum
 Places  → place detail | add place | (header) my places, routes
 Stats   → stats/journey (rank, badges, chart, recent rides)
-Record  → active ride (live) → crash overlay (conditional) → ride summary
+Record  → active ride (live) → crash overlay (only with the detector flag on; off in every build) → ride summary
                              → ride share → save as route
 Record  → ride with friends → friend picker → group ride live map
 Routes  → route detail → navigate (starts a ride; guidance rides on /ride/active)
@@ -659,14 +660,29 @@ User-facing changes only; the full list is in `issues_fixed.md` §81.
     after 21:00, or when the app is opened after 21:00.
   - Open follow-ups are in `issues_open.md` §93.
 
+## Changes from the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`, not checked on a device)
+
+- **Forced update:** at start the app reads `config/app.minBuild` (`core/services/app_update_gate.dart`). A build
+  with a lower build number (`package_info_plus`) shows a blocking *Update required* screen whose button opens
+  `https://blankframe.tech/ThrottleIQ/install`. Offline, slow (5 s), denied, missing or non-numeric all fail open.
+  Raise `minBuild` in the console (the doc needs public read in `firestore.rules`) before a rules change old
+  builds can't survive.
+- **Delete account:** the dialog now says sign-in and phone data go at once and cloud data is deleted by hand within
+  30 days of an email to hello@blankframe.tech (Spark: no deletion function). Runbook:
+  `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
+- **Crash copy:** the crash overlay and crash notification show only with `impactDetectorLiveEnabled` on, and no
+  longer say contacts will be notified.
+- **Cut:** challenges (dead under the rules), the top-speed badge family (Ton-up / Quick / Speed demon), the badge
+  rarity UI, the RTDB group-ride channel.
+
 ## Changes from the realtime pass (2026-10-07, commit `8f8f774`, inactive until RTDB is set up)
 
 Nothing below is visible until an RTDB instance exists and the app is built with `RTDB_URL` (`issues_open.md` §99.1). Without it, every feature behaves as before.
 
 - **Live share (partner viewer):** while sharing, the rider's position also goes to `/live_shares/{token}` once a second. The web viewer moves the marker from whichever source is newer (RTDB or the Firestore session). It shows a "Live" / "Updates every 10s" badge. The Firestore session is still what decides whether the link works. While RTDB carries position, the Firestore write drops from every 10 s to every 20 s.
-- **Group ride map:** dots move every 2 s (when the rider moved 5 m or more, with a 30 s heartbeat) over `/group_rides/{id}/locations`. Firestore `memberLocations` drops to a 2-minute heartbeat, so riders on older builds still see everyone. Each marker uses the newer of the two. The title shows a "Live" / "Delayed" badge. A kick also bans the rider on the RTDB side.
+- ~~**Group ride map** over `/group_rides/{id}/locations`~~ — **removed 2026-10-14** (critique B9: positions readable without membership). Group rides use Firestore `memberLocations` only; the code is on branch `park/rtdb-group-ride`.
 - **Chat:** "typing…" under the other rider's name in 1:1 chats. It is not sent to or shown for a blocked rider, and it clears itself within 6 s if their app dies.
-- **Connection budget:** the app keeps the RTDB socket open only while sharing, on the group map, or in a chat room. It disconnects 30 s after the last of those closes (Spark plan cap: 100 connections).
+- **Connection budget:** the app keeps the RTDB socket open only while sharing or in a chat room. It disconnects 30 s after the last of those closes (Spark plan cap: 100 connections).
 
 ## Changes from the bike-archive pass (2026-10-08, in the working tree, not committed, not checked on a device)
 
@@ -705,10 +721,10 @@ Nothing below is visible until an RTDB instance exists and the app is built with
 - **Overspeed count persisted:** schema v25 `rides.overspeed_count` (NULL for legacy rides, skipped by the chart);
   `EventDetector` counts episodes, not samples.
 - **Badge detail sheet:** tier rows in the badge ladder (and the single-tier First ride tile) open
-  `BadgeDetailSheet` — rarity ring, earned date (replayed from local rides) or progress bar, "X% of riders own
-  this", rarity tier (Legendary <1%, Epic 1–5%, Rare 5–15%, Uncommon 15–40%, Common ≥40%), celebration + share.
-  Backed by `stats/badges` (Cloud Functions `badge-stats.ts`: create/delete triggers + `recomputeBadgeStatsDaily`).
-  Shows "—" until the first recompute runs.
+  `BadgeDetailSheet` — earned date (replayed from local rides) or progress bar, celebration + share. The
+  "X% of riders own this" figure and rarity tiers were **removed 2026-10-14** (critique B7: riders can award
+  themselves badges, so the counts mean nothing). The client still keeps the `stats/badges` counters the rules
+  pair with each award.
 - **Profile (`/profile`):** badge list removed. New *My QR code* (`/profile/qr`, link
   `https://blankframe.tech/ThrottleIQ/u/<uid>`, cached per uid, share/save) and *Scan QR* (`/profile/scan`,
   mobile_scanner) — follows via `FollowController` then opens `/home/social?tab=people`. System-camera scans open
