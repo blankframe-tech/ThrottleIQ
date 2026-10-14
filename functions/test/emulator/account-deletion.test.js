@@ -3,12 +3,16 @@
 /**
  * deleteUserData (account-erasure.ts) against the Firestore + Database
  * emulators: issues §101.S4 (forum follows, group rides, RTDB, completion
- * marker). §101.S2's collection-group index cannot be checked here: the
- * Firestore emulator does not enforce indexes.
+ * marker), and everything public/privacy.html §9 promises (critique
+ * 2026-10-14, B1): profile, rides and GPS tracks, emergency contacts, chats,
+ * forum bylines, plus the B2 email lookup. §101.S2's collection-group
+ * indexes cannot be checked here: the Firestore emulator does not enforce
+ * indexes (they are in firestore.indexes.json `fieldOverrides`).
  */
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { createHash } = require('node:crypto');
 
 const { db, rtdb, clearEmulators } = require('./setup');
 const { deleteUserData, DELETED_RIDER } = require('../../lib/account-erasure');
@@ -18,6 +22,7 @@ const OTHER = 'otherRiderUid0000000000002';
 const TOKEN = 'a'.repeat(40);
 const OTHER_TOKEN = 'b'.repeat(40);
 const CHAT_ID = [UID, OTHER].sort().join('_');
+const EMAIL_HASH = 'c'.repeat(64);
 
 const exists = async (path) => (await db.doc(path).get()).exists;
 const rtdbVal = async (path) => (await rtdb.ref(path).get()).val();
@@ -29,6 +34,25 @@ async function seed() {
   set(`users/${UID}`, { username: 'GoneRider', displayName: 'Gone' });
   set('usernames/gonerider', { uid: UID });
 
+  // What privacy.html §9 lists: owner-only subcollections under the profile.
+  set(`users/${UID}/private/account`, { email: 'gone@example.com', emailLower: 'gone@example.com' });
+  set(`emailLookup/${EMAIL_HASH}`, { uid: UID });
+  set('emailLookup/' + 'd'.repeat(64), { uid: OTHER });
+  set(`users/${UID}/rides/ride1`, { start_time: '2026-01-01T08:00:00.000', distance: 12000 });
+  set(`users/${UID}/rides/ride1/track/0`, { index: 0, points: [23.8, 90.4, 1, 5, 0] });
+  set(`users/${UID}/bikes/b1`, { name: 'FZ' });
+  set(`users/${UID}/maintenance/m1`, { type: 'oil' });
+  set(`users/${UID}/emergencyContacts/c1`, { name: 'Mum', phone: '+8801700000000' });
+  set(`users/${UID}/notifications/n1`, { type: 'follow', fromUid: OTHER });
+  set(`users/${UID}/blocks/${OTHER}`, { blockedAt: 1 });
+  // A shared ride on the feed, and the rider's comment on someone else's.
+  set('rides/shared1', { userId: UID, audience: 'public' });
+  set('rides/shared1/comments/k1', { userId: OTHER, userName: 'Other', text: 'nice' });
+  set('rides/othersRide', { userId: OTHER, audience: 'public' });
+  set('rides/othersRide/comments/k2', { userId: UID, userName: 'Gone', userPhotoUrl: 'x', text: 'wow' });
+  set(`follows/${UID}_${OTHER}`, { followerUid: UID, followeeUid: OTHER });
+  set(`follows/${OTHER}_${UID}`, { followerUid: OTHER, followeeUid: UID });
+
   // Forum follows: one live forum the rider and someone else follow, and one
   // follow pointing at a forum that has since been deleted.
   set('forums/f1', { name: 'Dhaka riders', followerCount: 2 });
@@ -36,6 +60,8 @@ async function seed() {
   set(`forum_follows/${OTHER}_f1`, { userId: OTHER, forumId: 'f1' });
   set(`forum_follows/${UID}_gone`, { userId: UID, forumId: 'gone' });
   set('forums/f1/posts/p1', { userId: UID, userName: 'Gone', userPhotoUrl: 'x', body: 'hi' });
+  set('forums/f1/posts/p2', { userId: OTHER, userName: 'Other', body: 'yo' });
+  set('forums/f1/posts/p2/replies/q1', { userId: UID, userName: 'Gone', userPhotoUrl: 'x', body: 'me too' });
 
   // r1: someone else's ride the rider joined (with a legacy inline roster).
   set('groupRides/r1', {
@@ -76,6 +102,9 @@ async function seed() {
   set(`liveSessions/${TOKEN}`, { uid: UID });
   set(`livePointers/${UID}`, { token: TOKEN });
   set(`chats/${CHAT_ID}`, { participants: [UID, OTHER].sort() });
+  set(`chats/${CHAT_ID}/messages/m1`, { senderId: UID, text: 'see you at 6' });
+  set(`chats/${CHAT_ID}/messages/m2`, { senderId: OTHER, text: 'ok' });
+  set(`chats/${OTHER}_zzz`, { participants: [OTHER, 'zzz'] });
   await batch.commit();
 
   await rtdb.ref().set({
@@ -105,12 +134,6 @@ async function seed() {
   });
 }
 
-test.before(async () => {
-  delete process.env.CLOUDINARY_CLOUD_NAME;
-  delete process.env.CLOUDINARY_API_KEY;
-  delete process.env.CLOUDINARY_API_SECRET;
-});
-
 test('deleteUserData erases the rider everywhere and records a complete marker', async () => {
   await clearEmulators();
   await seed();
@@ -122,6 +145,38 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal(await exists(`users/${UID}`), false);
   assert.equal(await exists('usernames/gonerider'), false);
 
+  // Everything under the profile: rides and GPS track, emergency contacts
+  // (other people's numbers), the private email doc, bikes, maintenance,
+  // notifications, blocks.
+  for (const path of [
+    `users/${UID}/private/account`,
+    `users/${UID}/rides/ride1`,
+    `users/${UID}/rides/ride1/track/0`,
+    `users/${UID}/bikes/b1`,
+    `users/${UID}/maintenance/m1`,
+    `users/${UID}/emergencyContacts/c1`,
+    `users/${UID}/notifications/n1`,
+    `users/${UID}/blocks/${OTHER}`,
+  ]) {
+    assert.equal(await exists(path), false, `${path} survived`);
+  }
+
+  // Email lookup: the rider's goes, another rider's stays.
+  assert.equal(await exists(`emailLookup/${EMAIL_HASH}`), false);
+  assert.equal(await exists('emailLookup/' + 'd'.repeat(64)), true);
+
+  // Shared rides go with their comments; follow edges both ways go.
+  assert.equal(await exists('rides/shared1'), false);
+  assert.equal(await exists('rides/shared1/comments/k1'), false);
+  assert.equal(await exists(`follows/${UID}_${OTHER}`), false);
+  assert.equal(await exists(`follows/${OTHER}_${UID}`), false);
+
+  // Chats: the rider's DM and all its messages are gone; others' chats stay.
+  assert.equal(await exists(`chats/${CHAT_ID}`), false);
+  assert.equal(await exists(`chats/${CHAT_ID}/messages/m1`), false);
+  assert.equal(await exists(`chats/${CHAT_ID}/messages/m2`), false);
+  assert.equal(await exists(`chats/${OTHER}_zzz`), true);
+
   // Forum follows: the rider's are gone, the other rider's stays, and the
   // live forum's count drops by exactly one. The deleted forum is not
   // recreated.
@@ -131,12 +186,17 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal((await db.doc('forums/f1').get()).get('followerCount'), 1);
   assert.equal(await exists('forums/gone'), false);
 
-  // Forum post anonymized, not deleted.
-  const post = (await db.doc('forums/f1/posts/p1').get()).data();
-  assert.deepEqual(
-    { userId: post.userId, userName: post.userName, userPhotoUrl: post.userPhotoUrl, body: post.body },
-    { userId: '', userName: DELETED_RIDER, userPhotoUrl: '', body: 'hi' }
-  );
+  // Forum bylines: the post, the reply in someone else's thread, and the
+  // comment on someone else's ride are anonymized, not deleted.
+  const byline = async (path) => {
+    const d = (await db.doc(path).get()).data();
+    return { userId: d.userId, userName: d.userName, userPhotoUrl: d.userPhotoUrl, body: d.body ?? d.text };
+  };
+  const gone = { userId: '', userName: DELETED_RIDER, userPhotoUrl: '' };
+  assert.deepEqual(await byline('forums/f1/posts/p1'), { ...gone, body: 'hi' });
+  assert.deepEqual(await byline('forums/f1/posts/p2/replies/q1'), { ...gone, body: 'me too' });
+  assert.deepEqual(await byline('rides/othersRide/comments/k2'), { ...gone, body: 'wow' });
+  assert.equal((await db.doc('forums/f1/posts/p2').get()).get('userId'), OTHER);
 
   // r1: only the rider's rows and array entries are gone.
   const r1 = (await db.doc('groupRides/r1').get()).data();
@@ -208,6 +268,55 @@ test('a partial erasure is recorded as failed steps, not just logged', async () 
   assert.equal(marker.ok, false);
   assert.deepEqual(marker.failedSteps, ['cloudinary (no credentials)']);
   assert.equal(marker.rtdbSkipped, true);
+});
+
+test('with credentials, owned media is destroyed by a signed call; foreign rows are skipped', async () => {
+  await clearEmulators();
+  await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
+  await db.doc(`users/${UID}/cloudinaryAssets/a2`).set({ publicId: `voiceNotes/${UID}/v`, resourceType: 'video' });
+  await db.doc(`users/${UID}/cloudinaryAssets/a3`).set({ publicId: `avatars/${OTHER}/victim`, resourceType: 'image' });
+
+  // No call may leave the machine: fetch is stubbed for Cloudinary only.
+  const calls = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).startsWith('https://api.cloudinary.com/')) return realFetch(url, init);
+    calls.push({ url: String(url), body: Object.fromEntries(init.body) });
+    return { ok: true, json: async () => ({ result: 'ok' }) };
+  };
+  try {
+    const result = await deleteUserData(db, UID, {
+      rtdb: null,
+      cloudinary: { cloud: 'demo-cloud', apiKey: 'k', apiSecret: 's' },
+    });
+    assert.deepEqual(result.failedSteps, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  assert.deepEqual(calls.map((c) => c.url).sort(), [
+    'https://api.cloudinary.com/v1_1/demo-cloud/image/destroy',
+    'https://api.cloudinary.com/v1_1/demo-cloud/video/destroy',
+  ]);
+  const avatar = calls.find((c) => c.body.public_id === `avatars/${UID}/x`);
+  const expected = createHash('sha1')
+    .update(`public_id=avatars/${UID}/x&timestamp=${avatar.body.timestamp}s`)
+    .digest('hex');
+  assert.equal(avatar.body.signature, expected);
+  assert.equal(avatar.body.api_key, 'k');
+  assert.ok(!calls.some((c) => c.body.public_id.includes(OTHER)), 'foreign asset destroyed');
+  assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false, 'ledger deleted with the profile');
+});
+
+test('empty credentials (an unset secret) skip the sweep without throwing', async () => {
+  await clearEmulators();
+  await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
+  const result = await deleteUserData(db, UID, {
+    rtdb: null,
+    cloudinary: { cloud: 'demo-cloud', apiKey: '', apiSecret: '' },
+  });
+  assert.deepEqual(result.failedSteps, ['cloudinary (no credentials)']);
+  assert.equal(await exists(`users/${UID}`), false);
 });
 
 test.after(async () => {

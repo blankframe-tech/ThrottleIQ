@@ -379,12 +379,12 @@ test('D11: a bare followerCount bump is denied in both directions', async () => 
 // §90.D6 — profile email pinned to the auth token
 // ---------------------------------------------------------------------------
 
-test('D6: ensureProfile writing the caller\'s own token email is allowed', async () => {
+// B2 (2026-10-14) supersedes the "own token email is allowed" case: no new
+// email lands on the public profile at all (critique_oct14_rules.test.js).
+test('D6: ensureProfile without an email is allowed', async () => {
   const db = dbFor(BOB, { email: 'Bob@Example.com' });
   await assertSucceeds(setDoc(doc(db, 'users', BOB), {
     displayName: 'Bob',
-    email: 'Bob@Example.com',
-    emailLower: 'bob@example.com',
     visibility: 'public',
   }, { merge: true }));
 });
@@ -501,7 +501,7 @@ test('D9: unfiltered username / email searches are denied', async () => {
 test('D9: public-only queries are allowed and never return a private profile', async () => {
   const db = dbFor(BOB);
   const recent = await assertSucceeds(getDocs(query(collection(db, 'users'),
-    where('visibility', '==', 'public'), orderBy('createdAt', 'desc'), limit(50))));
+    where('visibility', '==', 'public'), orderBy('createdAt', 'desc'), limit(20))));
   const ids = recent.docs.map((d) => d.id);
   if (!ids.includes(ALICE) || ids.includes(EVE)) throw new Error(`unexpected ${ids}`);
 

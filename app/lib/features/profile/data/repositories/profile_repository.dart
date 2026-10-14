@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
@@ -12,6 +14,12 @@ import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
+
+/// Doc id of `emailLookup/{id}`: lowercase hex SHA-256 of the trimmed,
+/// lowercased email. firestore.rules recomputes it from the token email, and
+/// the migration script and rules tests use the same formula.
+String emailLookupId(String email) =>
+    sha256.convert(utf8.encode(email.trim().toLowerCase())).toString();
 
 /// Reads/writes the public `users/{uid}` profile doc, handles unique @username
 /// reservation, avatar uploads, and rider search (by username prefix / exact
@@ -32,6 +40,14 @@ class ProfileRepository {
   /// exact search without exposing the whole users collection.
   CollectionReference<Map<String, dynamic>> get _usernames =>
       _firestore.collection('usernames');
+
+  /// `emailLookup/{emailLookupId}` → { uid }: find-by-email without the
+  /// address on the public profile (B2, critique 2026-10-14).
+  CollectionReference<Map<String, dynamic>> get _emailLookup =>
+      _firestore.collection('emailLookup');
+
+  /// firestore.rules refuses a `users` list query above this many docs.
+  static const int usersPageLimit = 20;
 
   Future<UserProfileEntity?> getProfile(String uid) async {
     final doc = await _users.doc(uid).get();
@@ -57,10 +73,11 @@ class ProfileRepository {
   /// (firestore.rules, issues §90.A4), and a legacy doc without the field
   /// would otherwise never show up in search again.
   ///
-  /// `email`/`emailLower` must equal the signed-in token's email (§90.D6) —
-  /// `user.email` is that same value. `photoUrl` is only seeded when it is on
-  /// an allow-listed host (§90.D10), so an unexpected avatar host can't fail
-  /// the whole profile write.
+  /// The email is NOT written to the public doc any more (B2): a legacy copy
+  /// is stripped, and [_saveEmail] writes the owner-only
+  /// `private/account` doc and the `emailLookup` entry. `photoUrl` is only
+  /// seeded when it is on an allow-listed host (§90.D10), so an unexpected
+  /// avatar host can't fail the whole profile write.
   ///
   /// First creation also adds the rider to `stats/badges.totalRiders`, in
   /// the same batch as the profile write (BadgeStatsCounter). Only when the
@@ -79,10 +96,8 @@ class ProfileRepository {
           existing['photoUrl'] == null &&
           isAllowedPhotoUrl(authPhoto))
         'photoUrl': authPhoto,
-      if (user.email != null) ...{
-        'email': user.email,
-        'emailLower': user.email!.toLowerCase(),
-      },
+      if (existing.containsKey('email')) 'email': FieldValue.delete(),
+      if (existing.containsKey('emailLower')) 'emailLower': FieldValue.delete(),
       if (existing['visibility'] == null) 'visibility': 'public',
       if (!snap.exists) ...{
         'followerCount': 0,
@@ -91,17 +106,38 @@ class ProfileRepository {
       },
       'updatedAt': FieldValue.serverTimestamp(),
     };
+    var written = false;
     if (!snap.exists && !snap.metadata.isFromCache) {
       try {
         await BadgeStatsCounter(firestore: _firestore).commit(
           BadgeStatsBatches.riderRegistration(user.uid, profileFields: fields),
         );
-        return;
+        written = true;
       } on FirebaseException catch (e) {
         if (e.code != 'permission-denied') rethrow;
       }
     }
-    await ref.set(fields, SetOptions(merge: true));
+    if (!written) await ref.set(fields, SetOptions(merge: true));
+    await _saveEmail(user);
+  }
+
+  /// Keeps the rider's email owner-only at `users/{uid}/private/account` and
+  /// registers `emailLookup/{emailLookupId}` so others can find them by it.
+  /// Separate writes, and permission errors are swallowed: rules that predate
+  /// B2 refuse the lookup, and that must not cost the private copy or fail
+  /// sign-in.
+  Future<void> _saveEmail(User user) async {
+    final email = user.email;
+    if (email == null || email.isEmpty) return;
+    try {
+      await _users.doc(user.uid).collection('private').doc('account').set(
+        {'email': email, 'emailLower': email.toLowerCase()},
+        SetOptions(merge: true),
+      );
+      await _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid});
+    } on FirebaseException catch (e) {
+      if (e.code != 'permission-denied') rethrow;
+    }
   }
 
   /// Updates the caller's own profile fields (never the counters).
@@ -325,37 +361,50 @@ class ProfileRepository {
   /// `createdAt` to fetch the next page instead of re-reading the first one
   /// with a bigger limit. Profiles sharing that exact timestamp may be
   /// skipped — harmless for a browse list.
+  ///
+  /// The rules cap one query at [usersPageLimit] docs (B2), so a bigger
+  /// [limit] is read as successive pages.
   Future<List<UserProfileEntity>> getRecentUsers({
     int limit = 50,
     DateTime? createdBefore,
   }) async {
-    Query<Map<String, dynamic>> q = _users
+    final base = _users
         .where('visibility', isEqualTo: 'public')
         .orderBy('createdAt', descending: true);
-    if (createdBefore != null) {
-      q = q.startAfter([Timestamp.fromDate(createdBefore)]);
+    final docs = <QueryDocumentSnapshot<Map<String, dynamic>>>[];
+    while (docs.length < limit) {
+      final page = min(usersPageLimit, limit - docs.length);
+      final q = docs.isNotEmpty
+          ? base.startAfterDocument(docs.last)
+          : createdBefore != null
+              ? base.startAfter([Timestamp.fromDate(createdBefore)])
+              : base;
+      final snap = await q.limit(page).get();
+      docs.addAll(snap.docs);
+      if (snap.docs.length < page) break;
     }
-    final snap = await q.limit(limit).get();
-    return snap.docs
+    return docs
         .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
         .toList();
   }
 
-  /// Exact-match search by email.
-  Future<List<UserProfileEntity>> searchByEmail(
-    String email, {
-    int limit = 10,
-  }) async {
+  /// Exact-match search by email, through `emailLookup` (B2): nobody can
+  /// list emails, but a rider who knows one finds its account. Public
+  /// profiles only, as with the other searches.
+  Future<List<UserProfileEntity>> searchByEmail(String email) async {
     final e = email.trim().toLowerCase();
     if (e.isEmpty) return [];
-    final snap = await _users
-        .where('visibility', isEqualTo: 'public')
-        .where('emailLower', isEqualTo: e)
-        .limit(limit)
-        .get();
-    return snap.docs
-        .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
-        .toList();
+    try {
+      final hit = await _emailLookup.doc(emailLookupId(e)).get();
+      final uid = hit.data()?['uid'];
+      if (uid is! String) return [];
+      final profile = await getProfile(uid);
+      return profile != null && profile.visibility == 'public' ? [profile] : [];
+    } on FirebaseException catch (err) {
+      // A mutual/private profile (or rules that predate the lookup).
+      if (err.code == 'permission-denied') return [];
+      rethrow;
+    }
   }
 
   /// Blocks a user: writes `users/{me}/blocks/{them}` and, in the same

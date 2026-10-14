@@ -1,5 +1,12 @@
 # Realtime Database (live movement channel)
 
+> **Retired 2026-10-14 (critique B9).** `database.rules.json` now denies every
+> read and write: group-ride positions were readable by any signed-in rider
+> who knew the ride id, and the client is being removed from `main`. The
+> live viewer falls back to Firestore on the rules rejection. What follows is
+> the old design, kept for reference if RTDB returns behind a membership
+> mirror.
+
 Firestore stays the source of truth for everything structural: the live
 session (`liveSessions/{token}`: status, battery, `shareable`, `expiresAt`),
 the group ride (`groupRides/{id}`, its roster and membership arrays) and chat

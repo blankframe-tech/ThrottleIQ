@@ -23,12 +23,23 @@ const FORUM_FOLLOW_BATCH = 200;
 /** Where the per-deletion completion marker is written (issues §101.S4). */
 export const ACCOUNT_DELETIONS = "accountDeletions";
 
+export interface CloudinaryCredentials {
+  cloud: string;
+  apiKey: string;
+  apiSecret: string;
+}
+
 export interface ErasureOptions {
   /**
    * The Realtime Database to clean up. `undefined` (the default) resolves the
    * project's default instance; `null` skips RTDB entirely.
    */
   rtdb?: Database | null;
+  /**
+   * Cloudinary Admin API credentials (account-deletion.ts reads them from
+   * functions secrets). Missing or empty skips the media sweep.
+   */
+  cloudinary?: CloudinaryCredentials;
 }
 
 export interface ErasureResult {
@@ -264,6 +275,10 @@ export async function deleteUserData(
     // a rider who no longer exists.
     ["follows (out)", db.collection("follows").where("followerUid", "==", uid)],
     ["follows (in)", db.collection("follows").where("followeeUid", "==", uid)],
+    // Every DM the rider is in, with its messages (critique 2026-10-14).
+    ["chats", db.collection("chats").where("participants", "array-contains", uid)],
+    // Find-by-email lookup (B2): emailLookup/{sha256(email)} -> {uid}.
+    ["emailLookup", db.collection("emailLookup").where("uid", "==", uid)],
   ];
 
   for (const [label, query] of ownedQueries) {
@@ -342,7 +357,7 @@ export async function deleteUserData(
 
   // Cloudinary media. MUST run before the profile is recursively deleted —
   // the ledger it reads lives at users/{uid}/cloudinaryAssets.
-  failedSteps.push(...(await destroyCloudinaryAssets(uid, db)));
+  failedSteps.push(...(await destroyCloudinaryAssets(uid, db, opts.cloudinary)));
 
   await step("delete profile", () =>
     db.recursiveDelete(db.collection("users").doc(uid))
@@ -412,25 +427,24 @@ function forumIdOf(doc: FirebaseFirestore.QueryDocumentSnapshot, uid: string): s
  *
  * The app uploads through an *unsigned* preset, which by design cannot
  * authorise a destroy — so this has to be done server-side with the account's
- * API key/secret. Those are read from the environment and are NOT in the repo:
+ * API key/secret, passed in from the functions secrets CLOUDINARY_API_KEY and
+ * CLOUDINARY_API_SECRET (account-deletion.ts). They are NOT in the repo.
  *
- *   firebase functions:secrets:set CLOUDINARY_API_SECRET
- *   firebase functions:config:set cloudinary.key=... cloudinary.cloud=...
- *
- * With no secret configured this logs and returns, leaving the ledger intact
- * so the sweep can be re-run retroactively once credentials exist. That is a
- * known gap, and it is recorded as a failed step in the marker — not silent
- * success.
+ * Without them this logs and returns without throwing, and the skip is
+ * recorded as a failed step in the marker, not silent success. The ledger is
+ * then deleted with the profile, but every asset sits under `<kind>/<uid>/`,
+ * so the marker's uid is enough to find the leftovers in the Cloudinary
+ * console. There is no automatic folder sweep: a ledger row missed by a
+ * failed client write is only found that way too.
  *
  * Returns the labels of the failed steps (empty on success).
  */
 async function destroyCloudinaryAssets(
   uid: string,
-  db: FirebaseFirestore.Firestore
+  db: FirebaseFirestore.Firestore,
+  creds: CloudinaryCredentials | undefined
 ): Promise<string[]> {
-  const cloud = process.env.CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.CLOUDINARY_API_KEY;
-  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  const { cloud, apiKey, apiSecret } = creds ?? { cloud: "", apiKey: "", apiSecret: "" };
 
   let ledger: FirebaseFirestore.QuerySnapshot;
   try {
