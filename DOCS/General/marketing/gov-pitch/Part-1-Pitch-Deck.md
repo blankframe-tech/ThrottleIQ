@@ -1,3 +1,5 @@
+> **⚠️ Superseded 2026-10-14. Do not submit this file as written.** It still claims crash detection and emergency alerts that are switched off (crash detection) or not built (alert delivery) in every build. The corrected package is [`../iDEA_PITCH_SUBMISSION.md`](../iDEA_PITCH_SUBMISSION.md) (critique `CrtiQue_Oct14.md` §11).
+
 # Part 1: Pitch Deck Guidelines (MS PowerPoint Presentation)
 **iDEA Project Application | ICT Division, Government of Bangladesh**
 
@@ -96,7 +98,7 @@
 | Evaluation Dimension | Fitness Apps (Strava, Komoot) | Western Moto Apps (Rever, Detecht) | Hardware Trackers (OBD/GPS) | **ThrottleIQ (Blankframe)** |
 | :--- | :--- | :--- | :--- | :--- |
 | **Crash Detection** | ❌ None (Bicycle/run focus) | ⚠️ Fails without active 4G | ⚠️ Basic tilt-only sensor | ✅ **Impact + Speed-Drop Signature (Filters Potholes)** |
-| **Emergency Live Link** | ⚠️ Behind \$80 paywall | ⚠️ Recipient must install app | ❌ Raw SMS coordinates only | ✅ **Token Link (Opens on any web browser)** |
+| **Live Share Link** | ⚠️ Behind \$80 paywall | ⚠️ Recipient must install app | ❌ Raw SMS coordinates only | ✅ **Token Link (Opens on any web browser)** |
 | **Offline Resilience** | ❌ Loses data in dead zones | ❌ Freezes during weak signal | ⚠️ Requires continuous 2G SIM | ✅ **100% Offline SQLite Architecture** |
 | **Maintenance Tracking** | ❌ None | ❌ Manual calendar dates | ❌ None | ✅ **Automatic km-Based Service Triggers** |
 | **Hardware Barrier** | ✅ None | ✅ None | ❌ Costs BDT 3,500–8,000 + SIM | ✅ **Zero Hardware (Uses Phone Sensors)** |

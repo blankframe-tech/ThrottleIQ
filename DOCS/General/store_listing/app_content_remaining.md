@@ -78,7 +78,7 @@ of anything else in the app.
 - **"Does your app provide health-related features?"** → **No.** This
   section is about apps making regulated health claims (fitness tracking
   tied to medical use, health records, telehealth, etc.). ThrottleIQ records
-  ride telemetry (speed, GPS, motion for crash detection) for vehicle safety
+  ride telemetry (speed, GPS, motion for braking and riding-behaviour stats) for vehicle safety
   and performance purposes, not health/fitness — it doesn't claim to
   measure steps, heart rate, sleep, or any medical metric. No change needed
   here even though the app requests `ACTIVITY_RECOGNITION` — that permission

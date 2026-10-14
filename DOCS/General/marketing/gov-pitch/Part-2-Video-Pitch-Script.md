@@ -1,3 +1,5 @@
+> **⚠️ Superseded 2026-10-14. Do not submit this file as written.** It still claims crash detection and emergency alerts that are switched off (crash detection) or not built (alert delivery) in every build. The corrected package is [`../iDEA_PITCH_SUBMISSION.md`](../iDEA_PITCH_SUBMISSION.md) (critique `CrtiQue_Oct14.md` §11).
+
 # Part 2: Video Pitch Guidelines & 5-Minute Timed Script
 **iDEA Project Application | ICT Division, Government of Bangladesh**
 
@@ -45,7 +47,7 @@
 **Visual:** Quick cut to phone running ThrottleIQ in ride mode. Zoom in on live speedometer, followed by the 60-second crash alarm countdown screen.
 
 **Speaker: Founder & CEO**
-> "We built **ThrottleIQ** to solve this. ThrottleIQ turns any standard smartphone into an intelligent black box and lifesaver for motorcycles—with zero expensive hardware needed.
+> "We built **ThrottleIQ** to solve this. ThrottleIQ turns any standard smartphone into an intelligent black box for motorcycles—with zero expensive hardware needed.
 >
 > First, **Intelligent Crash Detection**. ThrottleIQ continuously monitors motion dynamics. When it senses a high-impact spike followed by an immediate drop in speed, it triggers a loud 60-second audio-visual alarm. If the rider is unharmed or simply dropped their phone, they cancel it with a single tap. If they are unresponsive, ThrottleIQ instantly broadcasts an encrypted emergency web link with their exact live GPS location, speed, and battery level to their family.
 >
