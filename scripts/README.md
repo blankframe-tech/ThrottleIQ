@@ -15,6 +15,7 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`update_places_google_ratings.js`](#update_places_google_ratingsjs--enrich-places-with-google-maps-ratings) | Enriches commercial places (fuel, garage, parts) with Google Maps ratings (`x`) alongside ThrottleIQ ratings (`y`) | Yes — re-running updates fields |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
+| [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
@@ -78,6 +79,25 @@ Runs, against the RTDB emulator (port 9000):
 - `test/live_viewer_core.test.js` — the pure merge/staleness/seq logic in
   `public/live-viewer-core.js` (no emulator needed; also picked up by
   `npm test`).
+
+---
+
+# `migrate_emails_private.js` — move emails off public profiles
+
+One-off, for B2 in `CrtiQue_Oct14.md`. Run it once, by hand, **after** the B2
+`firestore.rules` are deployed (they stop any build from writing an email back
+onto the public profile). New builds also migrate each rider on sign-in; this
+covers riders who never open the app again.
+
+```bash
+cd scripts
+node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
+node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
+```
+
+It prints counts and uids, never an address, warns if one email sits on two
+profiles, and a second run reports 0. Unit tests: `npm test`
+(`test/migrate_emails_private.test.js`).
 
 ---
 
