@@ -74,6 +74,9 @@ Do these in order.
    Firebase Auth marks verified (N3). Google accounts are verified. Riders
    with email and password get a verification link from the new build, once,
    and become findable by email after they click it and next open the app.
+   Then update `public/privacy.html` §5 (the email is no longer readable by
+   other riders; someone who already knows a verified address can find the
+   account) and deploy Hosting: `firebase deploy --only hosting --project throttleiqfb`.
 4. **Realtime Database rules**, only if an RTDB instance exists (the
    rules now deny everything):
    `firebase deploy --only database --project throttleiqfb`
