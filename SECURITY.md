@@ -19,6 +19,8 @@ There is no bug bounty.
 These are console and deploy steps only the project owner can take. Agents
 never run them. Project: `throttleiqfb`. Never run a bare `firebase deploy`:
 it would also push undeployed functions (crash alerts, chat moderation).
+If the standalone `firebase` binary crashes in predeploy, use
+`npx firebase-tools@15` in its place.
 
 ### Deploying the 2026-10-14 fixes (B1, B2, B3, B9, retention)
 

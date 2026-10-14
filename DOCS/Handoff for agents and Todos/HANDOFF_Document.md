@@ -2,7 +2,15 @@
 
 _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-13 (latest): dependabot merged, stale docs moved, branches synced — pushed
+## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, not deployed
+
+- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
+- **B3:** chat create/update, notifications and follow create refuse writes across a block.
+- **B1 groundwork:** `onUserAccountDeleted` now also deletes chats and the email lookup, and reads Cloudinary credentials from secrets. The `userId` and `track.syncedAt` collection-group overrides are in `firestore.indexes.json`. New `purgeOldGpsTracks` (12-month raw-track retention). Nothing deployed: Blaze needed.
+- **B9:** `database.rules.json` denies everything; the delivery suite and `verify_realtime.js` are gone. `config/{doc}` is world-readable, never client-written (`minBuild`).
+- **Deploy order and the App Check runbook:** `SECURITY.md`.
+
+## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.
