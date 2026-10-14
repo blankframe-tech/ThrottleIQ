@@ -13,7 +13,7 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 - **deploy.sh:** also builds and attaches the three `--split-per-abi` APKs (universal APK kept; the install page links it).
 - **Cuts:** challenges (B6), top-speed badge family, badge rarity UI (B7), RTDB group-ride client (parked on branch `park/rtdb-group-ride`), `storage.rules`, `posters.py` / `posters_v2.py` / `illus.py`. Speed ids `ton_up`, `speed_140`, `speed_demon` stay in `firestore.rules` and `badge-catalog.ts` on purpose (old builds still award them); the parity test treats them as retired.
 - **Not cut:** `seed_police_checkposts.js` / `_v2.js`. They are not superseded: v1, v2 and v3 seed three different batches (30 + 25 + 35 places). Delete only if the 55 v1/v2 places are confirmed in production and never need re-seeding.
-- QA: `scripts/check.sh` result in the branch's last commit message / report. Not run: device, rules emulator (no rules change here).
+- QA: `scripts/check.sh` passed (analyze clean, 2113 flutter tests; rules and functions unchanged on this branch, so skipped). `flutter build ios --no-codesign` passes. Not run: device, Android release build, rules emulator.
 
 ## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 
