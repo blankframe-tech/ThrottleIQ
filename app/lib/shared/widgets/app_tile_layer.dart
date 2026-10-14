@@ -62,7 +62,7 @@ class AppTileLayer extends StatelessWidget {
   /// const.
   static Map<String, String> _headers() => {
         'User-Agent':
-            'ThrottleIQ ($_userAgentPackageName; contact@blankframe.com)',
+            'ThrottleIQ ($_userAgentPackageName; hello@blankframe.tech)',
       };
 
   static const _maxStale = Duration(days: 30);
