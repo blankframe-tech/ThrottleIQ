@@ -13,8 +13,8 @@ typedef PullResult = ({bool pulledAny, DateTime? maxSyncedAt});
 ///
 /// The mark is the server's own timestamp off a document, never this
 /// device's clock, so clock skew can't open a gap. [overlap] re-reads a small
-/// window behind it anyway; the download path skips ids it already holds, so
-/// the overlap costs reads, never duplicates.
+/// window behind it anyway; the download path skips copies no newer than the
+/// one it holds, so the overlap costs reads, never duplicates.
 ///
 /// Deletions are unaffected: no download ever deleted a local row, and the
 /// tombstones (`deleted_bikes`, `deleted_rides`) that stop a deleted row
@@ -30,7 +30,7 @@ class PullWatermark {
   static final DateTime floorForUnstamped =
       DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
-  static const collections = ['bikes', 'rides', 'maintenance'];
+  static const collections = ['bikes', 'rides', 'maintenance', 'fuelLogs'];
 
   static String key(String uid, String collection) =>
       'cloud_pull_watermark_${collection}_$uid';
@@ -66,7 +66,9 @@ class PullWatermark {
   static Future<DateTime?> read(String uid, String collection) async {
     final prefs = await SharedPreferences.getInstance();
     final ms = prefs.getInt(key(uid, collection));
-    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
+    return ms == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);
   }
 
   static Future<void> write(String uid, String collection, DateTime? at) async {
