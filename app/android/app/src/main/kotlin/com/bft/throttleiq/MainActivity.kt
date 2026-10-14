@@ -19,7 +19,7 @@ class MainActivity : FlutterActivity() {
                     "manufacturer" -> result.success(Build.MANUFACTURER)
                     "openFirst" -> {
                         val components = (call.arguments as? List<*>).orEmpty()
-                        result.success(components.filterIsInstance<String>().any(::tryOpen))
+                        result.success(components.filterIsInstance<String>().any { tryOpen(it) })
                     }
                     else -> result.notImplemented()
                 }
