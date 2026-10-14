@@ -1,6 +1,18 @@
 import * as functionsV1 from "firebase-functions/v1";
+import { defineSecret } from "firebase-functions/params";
 import { getFirestore } from "firebase-admin/firestore";
 import { deleteUserData } from "./account-erasure";
+
+/**
+ * Cloudinary Admin API credentials for the media sweep, from Secret Manager
+ * (`firebase functions:secrets:set CLOUDINARY_API_KEY` / `..._SECRET`).
+ * An empty value skips the sweep and records it in the marker.
+ */
+const CLOUDINARY_API_KEY = defineSecret("CLOUDINARY_API_KEY");
+const CLOUDINARY_API_SECRET = defineSecret("CLOUDINARY_API_SECRET");
+
+/** Public, same as CloudinaryUploadService._cloudName in the app. */
+const CLOUDINARY_CLOUD_NAME = "vjvcigkt";
 
 /**
  * Cleans up a rider's Firestore profile once their Firebase Auth account is
@@ -55,14 +67,17 @@ import { deleteUserData } from "./account-erasure";
  * ({completedAt, failedSteps, ok, rtdbSkipped}), so a partial erasure is
  * visible after the fact and not only in the logs.
  *
- * Still NOT covered, and still needing a decision: chat messages the rider
- * sent (a 1:1 DM is arguably the other participant's record too).
+ * Chats (critique 2026-10-14, B1): every DM the rider is in is deleted with
+ * its messages, for both participants. The privacy page keeps messages "as
+ * long as your account exists", and a half-deleted 1:1 thread with a rider
+ * who no longer exists would still carry their words. Their email lookup
+ * (emailLookup/{hash}) goes too.
  *
  * The body lives in account-erasure.ts (`deleteUserData`) so the emulator
  * suite in test/emulator/ can run it directly.
  *
- * NOT yet deployed by this pass — requires `firebase deploy --only
- * functions` before it actually runs. Until deployed, a successful account
+ * NOT deployed yet: it needs the Blaze plan. The exact deploy steps are in
+ * SECURITY.md ("Account deletion"). Until deployed, a successful account
  * deletion leaves the Firestore profile/username claim orphaned (a lesser,
  * non-destructive regression versus the CRITICAL bug this fixes — the
  * rider's own data is gone either way once they've confirmed deletion, and
@@ -70,6 +85,15 @@ import { deleteUserData } from "./account-erasure";
  * gone" that turned out to be true only for the parts that didn't need to
  * be).
  */
-export const onUserAccountDeleted = functionsV1.auth.user().onDelete(async (user) => {
-  await deleteUserData(getFirestore(), user.uid);
-});
+export const onUserAccountDeleted = functionsV1
+  .runWith({ secrets: [CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET] })
+  .auth.user()
+  .onDelete(async (user) => {
+    await deleteUserData(getFirestore(), user.uid, {
+      cloudinary: {
+        cloud: CLOUDINARY_CLOUD_NAME,
+        apiKey: CLOUDINARY_API_KEY.value(),
+        apiSecret: CLOUDINARY_API_SECRET.value(),
+      },
+    });
+  });
