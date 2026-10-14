@@ -95,7 +95,6 @@ notNow
 continueLabel
 turnOnCaps
 settingsCaps
-slideStartRide
 close
 fetchingRoute
 routeNotAvailable

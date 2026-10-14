@@ -53,7 +53,6 @@ object WidgetKeys {
     const val THEME_TEXT_TERTIARY = "ti_theme_text_tertiary"
     const val THEME_DANGER = "ti_theme_danger"
     const val THEME_IS_DARK = "ti_theme_is_dark"
-    const val THEME_MODE = "ti_theme_mode"
 }
 
 /**

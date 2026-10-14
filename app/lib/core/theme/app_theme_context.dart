@@ -31,9 +31,6 @@ extension AppThemeContext on BuildContext {
 // `MaterialApp`, say — has no extensions registered. Fall back to the default
 // appearance rather than throwing, so such a tree still renders. The real app
 // always registers both (see `AppTheme.build`).
-final AppColorPalette _fallbackPalette = AppColorPalette.forMode(
-  AppAppearance.defaultAppearance.colorMode,
-  AppAppearance.defaultAppearance.brightness,
-);
-final AppShapeProfile _fallbackShape =
-    AppShapeProfile.forVibe(AppAppearance.defaultAppearance.shapeVibe);
+final AppColorPalette _fallbackPalette =
+    AppColorPalette.forBrightness(AppAppearance.defaultAppearance.brightness);
+const AppShapeProfile _fallbackShape = AppShapeProfile.curvy;

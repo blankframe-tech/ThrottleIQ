@@ -24,21 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearanceSection => 'Appearance';
 
   @override
-  String get vibeFieldLabel => 'Vibe';
-
-  @override
-  String get vibeBoxyLabel => 'Boxy';
-
-  @override
-  String get vibeBoxyDescription => 'Sharp corners';
-
-  @override
-  String get vibeCurvyLabel => 'Curvy';
-
-  @override
-  String get vibeCurvyDescription => 'Rounded corners';
-
-  @override
   String get brightnessFieldLabel => 'Brightness';
 
   @override
@@ -58,51 +43,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brightnessSystemDescription => 'Match your phone';
-
-  @override
-  String get colorFieldLabel => 'Color';
-
-  @override
-  String get themeSportLabel => 'Sport';
-
-  @override
-  String get themeSportDescription => 'Lime and magenta, carbon-black panel';
-
-  @override
-  String get themeRainLabel => 'Rain';
-
-  @override
-  String get themeRainDescription => 'Indigo dusk, lavender and teal';
-
-  @override
-  String get themeRaceLabel => 'Race';
-
-  @override
-  String get themeRaceDescription => 'Blocky race poster, mustard and rust';
-
-  @override
-  String get themeCommuteLabel => 'Commute';
-
-  @override
-  String get themeCommuteDescription => 'Calm cream, sage and tan';
-
-  @override
-  String get themeTourLabel => 'Tour';
-
-  @override
-  String get themeTourDescription => 'Punchy orange and sky blue';
-
-  @override
-  String get themeAdvLabel => 'ADV';
-
-  @override
-  String get themeAdvDescription => 'Navy console, cyan telemetry';
-
-  @override
-  String get themeCityLabel => 'City';
-
-  @override
-  String get themeCityDescription => 'Paper warmth, blue and orange';
 
   @override
   String get languageSection => 'Language';
@@ -946,9 +886,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsCaps => 'SETTINGS';
-
-  @override
-  String get slideStartRide => 'Slide to start ride';
 
   @override
   String get close => 'Close';
@@ -5989,11 +5926,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Ride solo, or start a group ride and invite friends or share a join code.';
 
   @override
-  String get tourRecordStartTitle => 'Hold or slide to start';
+  String get tourRecordStartTitle => 'Hold to start';
 
   @override
   String get tourRecordStartBody =>
-      'Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.';
+      'Press and hold the start ring, so a stray tap never starts a ride.';
 
   @override
   String get tourCockpitTitle => 'Your live cockpit';
