@@ -28,7 +28,8 @@ Settings → "Your ThrottleIQ" lets privacy-minded or minimalist riders turn par
 - **Ride tracking:** off = maintenance-only app. Record and Rides tabs are replaced by a **Maintenance** tab; auto-tracking is switched off (refused mid-ride); maintenance shows a manual "Sync odometer" card first; bike detail hides ride history; route navigation is hidden.
 - Turning anything off asks first with a "Keep it on" default (mild discouragement). Nav updates live, no restart.
 - One gate for routes: `AppModules.redirectFor` inside `routerProvider`'s redirect (also re-run on module change), so deep links, widgets and notifications land on the home tab. Bottom nav: `AppModules.tabs` + `shellTabIndexForLocation(location, modules)`.
-- Tests: `test/core/services/app_modules_test.dart`, `end_ride_sheet_test.dart`.
+- Feature tour: `onboardingSlides(l10n, modules: …)` leaves out steps for off modules (forums-only gets a Forums step) and drops callouts about them; the tour's mini nav shows `AppModules.tabs`.
+- Tests: `test/core/services/app_modules_test.dart`, `end_ride_sheet_test.dart`, `onboarding_manifest_test.dart` (every module mix), `onboarding_tour_test.dart`.
 
 ## UI hierarchy
 

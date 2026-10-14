@@ -163,3 +163,9 @@ functions/lib/
 # (docs/Issues.md §62.10 — never a shared hardcoded password, never printed
 # to stdout/CI logs).
 scripts/qa_seed_passwords.*.json
+
+# Raw crash exports stay on the founder's machine: the full GPS track shows
+# where the ride started, and the phone database also holds a second account's
+# data (DOCS/CRASH TESTING/crash_analysis_2026-10-14.md). This repo is public.
+/DOCS/CRASH TESTING/phone_sqlite/
+/DOCS/CRASH TESTING/ride_*

@@ -10572,6 +10572,66 @@ abstract class AppLocalizations {
   /// **'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.'**
   String get tourProfileSafeQrBody;
 
+  /// Feature tour, forums-only community step: finding a forum.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your bike\'s forum'**
+  String get tourForumsFindTitle;
+
+  /// Feature tour, forums-only community step: finding a forum.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand and model hubs, plus forums other riders started. Search by bike or topic.'**
+  String get tourForumsFindBody;
+
+  /// Feature tour, forums-only community step: posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask and answer'**
+  String get tourForumsAskTitle;
+
+  /// Feature tour, forums-only community step: posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.'**
+  String get tourForumsAskBody;
+
+  /// Feature tour, forums-only community step: attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Show your bike'**
+  String get tourForumsBikeTitle;
+
+  /// Feature tour, forums-only community step: attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach your bike or a maintenance log to a post, so others know exactly what you ride.'**
+  String get tourForumsBikeBody;
+
+  /// Feature tour, garage step subtitle when ride tracking is off (no rides).
+  ///
+  /// In en, this message translates to:
+  /// **'Every bike you own, each with its own odometer and service history.'**
+  String get tourGarageSubtitleNoTracking;
+
+  /// Feature tour, garage step, active bike, when ride tracking is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance opens on the active bike. Switch it any time.'**
+  String get tourGarageActiveBodyNoTracking;
+
+  /// Feature tour, garage step, bike details, when ride tracking is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a bike to add a photo and edit its specs.'**
+  String get tourGarageDetailBodyNoTracking;
+
+  /// Feature tour, profile step subtitle when the rider turned off follows (community Forums only or Off).
+  ///
+  /// In en, this message translates to:
+  /// **'Your public page: stats and garage.'**
+  String get tourProfileSubtitleNoSocial;
+
   /// Heading of the fuel card on bike detail.
   ///
   /// In en, this message translates to:
