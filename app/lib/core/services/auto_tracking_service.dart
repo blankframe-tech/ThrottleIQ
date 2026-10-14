@@ -526,9 +526,11 @@ class AutoTrackingService {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
         channelId: _channelId,
-        channelName: 'Auto-tracking',
+        // Also carries a manual ride's notification (B5); the id stays so
+        // existing installs keep the rider's channel settings.
+        channelName: 'Ride recording',
         channelDescription:
-            'Shown while ThrottleIQ is watching for a ride to start.',
+            'Shown while ThrottleIQ records a ride or watches for one.',
         priority: NotificationPriority.MIN,
         onlyAlertOnce: true,
       ),
