@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +21,7 @@ import '../widgets/bike_picker_card.dart';
 import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
+import 'oem_guide_screen.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
@@ -54,7 +57,25 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // One-shot: this screen can be *built* while a ride is already running
     // (cold start onto Record, or a restored interrupted ride), and a
     // `ref.listen` only fires on a change, never on the current value.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _redirectIfRiding();
+      unawaited(_offerOemGuide());
+    });
+  }
+
+  /// The one-time Xiaomi/OPPO/vivo/realme battery-settings guide, offered
+  /// once the rider has a finished ride (B5). See `maybeOfferOemGuide`.
+  Future<void> _offerOemGuide() async {
+    try {
+      if (ref.read(rideRecordingProvider).status != RecordingStatus.idle) {
+        return;
+      }
+      final lastRideId = await ref.read(latestCompletedRideIdProvider.future);
+      if (!mounted) return;
+      await maybeOfferOemGuide(context, hasFinishedRide: lastRideId != null);
+    } catch (e) {
+      debugPrint('[RecordScreen] OEM guide offer failed: $e');
+    }
   }
 
   /// Sends the rider to the active-ride cockpit if a ride is under way.

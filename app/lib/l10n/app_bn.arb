@@ -1813,5 +1813,15 @@
   "analyticsColDistance": "দূরত্ব",
   "insightPeakMonth": "সবচেয়ে বেশি ছিল {month}-এ {value}।",
   "insightFuelAverage": "গড় {value}, {count, plural, =1{1টি ফুল-ট্যাংক পর্বে} other{{count}টি ফুল-ট্যাংক পর্বে}}।",
-  "insightFuelNeedFullFills": "এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।"
+  "insightFuelNeedFullFills": "এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।",
+  "oemGuideTitle": "রাইড রেকর্ডিং চালু রাখুন",
+  "oemGuideIntro": "{brand} ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। এই তিনটি সেটিং একবার বদলে নিন।",
+  "oemGuideStepAutostart": "ThrottleIQ-এর জন্য অটোস্টার্ট (অটো-লঞ্চ বা ব্যাকগ্রাউন্ড স্টার্ট নামেও থাকে) চালু করুন।",
+  "oemGuideOpenAutostart": "অটোস্টার্ট সেটিংস খুলুন",
+  "oemGuideStepBattery": "ThrottleIQ-এর অ্যাপ ইনফোতে ব্যাটারি \"কোনো সীমা নেই\" বা \"ব্যাকগ্রাউন্ডে চলতে দিন\" করে দিন।",
+  "oemGuideStepLock": "সাম্প্রতিক অ্যাপে ThrottleIQ লক করুন (কার্ডটি চেপে ধরুন বা নিচে টানুন), যাতে সব মুছে দিলেও এটি বন্ধ না হয়।",
+  "oemGuideMoreHelp": "{brand} ফোনের জন্য ধাপে ধাপে গাইড",
+  "oemGuideOfferTitle": "{brand}-এ রাইড মাঝপথে কেটে যায়?",
+  "oemGuideOfferBody": "ব্যাটারি বাঁচাতে {brand} ফোন রাইডের মাঝপথে ThrottleIQ বন্ধ করে দিতে পারে। তিনটি সেটিং বদলালে আর হবে না, এক মিনিট লাগে।",
+  "oemGuideShowMe": "দেখান"
 }

@@ -6417,4 +6417,45 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'Log two full-tank fill-ups to measure this.';
+
+  @override
+  String get oemGuideTitle => 'Keep rides recording';
+
+  @override
+  String oemGuideIntro(String brand) {
+    return '$brand phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.';
+  }
+
+  @override
+  String get oemGuideStepAutostart =>
+      'Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.';
+
+  @override
+  String get oemGuideOpenAutostart => 'Open Autostart settings';
+
+  @override
+  String get oemGuideStepBattery =>
+      'In ThrottleIQ\'s app info, set Battery to \"No restrictions\" or \"Allow background activity\".';
+
+  @override
+  String get oemGuideStepLock =>
+      'In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn\'t close it.';
+
+  @override
+  String oemGuideMoreHelp(String brand) {
+    return 'Step-by-step guide for $brand phones';
+  }
+
+  @override
+  String oemGuideOfferTitle(String brand) {
+    return 'Rides cut short on $brand?';
+  }
+
+  @override
+  String oemGuideOfferBody(String brand) {
+    return '$brand phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.';
+  }
+
+  @override
+  String get oemGuideShowMe => 'Show me';
 }

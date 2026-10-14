@@ -1641,3 +1641,13 @@ updateRequiredAction
 # batch: oct14 ride recording
 notifRecordingStoppedTitle
 notifRecordingStoppedBody
+oemGuideTitle
+oemGuideIntro
+oemGuideStepAutostart
+oemGuideOpenAutostart
+oemGuideStepBattery
+oemGuideStepLock
+oemGuideMoreHelp
+oemGuideOfferTitle
+oemGuideOfferBody
+oemGuideShowMe
