@@ -10038,6 +10038,24 @@ abstract class AppLocalizations {
   /// **'No connection. Check your internet and try again.'**
   String get deleteAccountOffline;
 
+  /// Title of the blocking screen shown when this build is older than config/app.minBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateRequiredTitle;
+
+  /// Body of the blocking update screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.'**
+  String get updateRequiredBody;
+
+  /// Button on the blocking update screen; opens the install page.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the latest version'**
+  String get updateRequiredAction;
+
   /// Title of the re-authentication dialog before deleting an account.
   ///
   /// In en, this message translates to:

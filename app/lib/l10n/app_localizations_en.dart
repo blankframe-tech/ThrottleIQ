@@ -5850,6 +5850,16 @@ class AppLocalizationsEn extends AppLocalizations {
       'No connection. Check your internet and try again.';
 
   @override
+  String get updateRequiredTitle => 'Update required';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.';
+
+  @override
+  String get updateRequiredAction => 'Get the latest version';
+
+  @override
   String get reauthRequiredTitle => 'Confirm it\'s you';
 
   @override

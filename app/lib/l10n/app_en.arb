@@ -8091,6 +8091,18 @@
   "@deleteAccountOffline": {
     "description": "Snackbar when delete-account fails with network-request-failed."
   },
+  "updateRequiredTitle": "Update required",
+  "@updateRequiredTitle": {
+    "description": "Title of the blocking screen shown when this build is older than config/app.minBuild."
+  },
+  "updateRequiredBody": "This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.",
+  "@updateRequiredBody": {
+    "description": "Body of the blocking update screen."
+  },
+  "updateRequiredAction": "Get the latest version",
+  "@updateRequiredAction": {
+    "description": "Button on the blocking update screen; opens the install page."
+  },
   "reauthRequiredTitle": "Confirm it's you",
   "@reauthRequiredTitle": {
     "description": "Title of the re-authentication dialog before deleting an account."

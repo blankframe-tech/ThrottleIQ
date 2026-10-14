@@ -1652,3 +1652,7 @@ analyticsColDistance
 insightPeakMonth
 insightFuelAverage
 insightFuelNeedFullFills
+# batch: oct14 update gate
+updateRequiredTitle
+updateRequiredBody
+updateRequiredAction

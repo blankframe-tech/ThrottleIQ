@@ -18,25 +18,27 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
    - Detect connected iOS device via `flutter devices` (e.g., Abraar’s iPhone `00008120-001E5D190A85A01E`).
    - Run the app in release mode on the device:
      ```bash
-     cd app && flutter run --release -d <device_id>
+     cd app && flutter run --release -d <device_id> --dart-define=APP_BUILD=<n>
      ```
 
 4. **Build Android Release Artifacts**
-   - Build release APK:
+   - Every release build gets `--dart-define=APP_BUILD=<n>`, the build number after `+` in `pubspec.yaml`. Without it the forced-update gate (`config/app.minBuild`) never blocks that build.
+   - Build release APKs (universal, which the install page links, and per-ABI):
      ```bash
-     cd app && flutter build apk --release
+     cd app && flutter build apk --release --dart-define=APP_BUILD=<n>
+     flutter build apk --release --split-per-abi --dart-define=APP_BUILD=<n>
      ```
-     Binary output: `app/build/app/outputs/flutter-apk/app-release.apk`
+     Binary output: `app/build/app/outputs/flutter-apk/app-release.apk` and `app-<abi>-release.apk`
    - Build release AAB:
      ```bash
-     cd app && flutter build appbundle --release
+     cd app && flutter build appbundle --release --dart-define=APP_BUILD=<n>
      ```
      Binary output: `app/build/app/outputs/bundle/release/app-release.aab`
 
 5. **Publish GitHub Release Tag**
    - Create the release and tag on GitHub via `gh release create`:
      ```bash
-     gh release create <tag> app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<changelog>"
+     gh release create <tag> app/build/app/outputs/flutter-apk/app-*-release.apk app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<changelog>"
      ```
 
 6. **Repeatable Script Alternative**

@@ -46,16 +46,17 @@ bash scripts/deploy.sh
 
 3. **Deploy to connected iPhone**:
    ```bash
-   cd app && flutter run --release -d 00008120-001E5D190A85A01E
+   cd app && flutter run --release -d 00008120-001E5D190A85A01E --dart-define=APP_BUILD=<n>
    ```
 
-4. **Build Android APK & AAB**:
+4. **Build Android APKs & AAB** (`<n>` is the build number after `+` in `pubspec.yaml`; without `APP_BUILD` the forced-update gate never blocks that build):
    ```bash
-   cd app && flutter build apk --release
-   flutter build appbundle --release
+   cd app && flutter build apk --release --dart-define=APP_BUILD=<n>
+   flutter build apk --release --split-per-abi --dart-define=APP_BUILD=<n>
+   flutter build appbundle --release --dart-define=APP_BUILD=<n>
    ```
 
 5. **GitHub Release**:
    ```bash
-   gh release create <tag> app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes>"
+   gh release create <tag> app/build/app/outputs/flutter-apk/app-*-release.apk app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes>"
    ```

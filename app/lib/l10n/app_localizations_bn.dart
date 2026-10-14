@@ -5815,6 +5815,16 @@ class AppLocalizationsBn extends AppLocalizations {
       'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
 
   @override
+  String get updateRequiredTitle => 'আপডেট দরকার';
+
+  @override
+  String get updateRequiredBody =>
+      'ThrottleIQ-এর এই সংস্করণটি আর সার্ভারের সঙ্গে কাজ করে না। অ্যাপটি ব্যবহার চালিয়ে যেতে সর্বশেষ সংস্করণ ইনস্টল করুন।';
+
+  @override
+  String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
+
+  @override
   String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';
 
   @override
