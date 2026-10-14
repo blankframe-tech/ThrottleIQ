@@ -2341,7 +2341,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thisActionIrreversibleAll =>
-      'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.';
+      'This can\'t be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.';
 
   @override
   String get deletePermanently => 'Delete Permanently';
