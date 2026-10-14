@@ -19,6 +19,7 @@ import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/realtime/realtime_location_publisher.dart';
 import '../../../../core/realtime/realtime_providers.dart';
+import '../../../../core/services/gps_drop_log.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/notification_service.dart';
@@ -330,6 +331,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   bool _userInitiated = true;
 
+  /// Fixes kept and fixes dropped for poor accuracy this ride, for
+  /// [GpsDropLog].
+  int _gpsKept = 0;
+  int _gpsDropped = 0;
+
   bool get isLiveShareEnabled => _liveCoordinator.isLiveShareEnabled;
   bool get isAutoStarted => !_userInitiated;
 
@@ -476,6 +482,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _fixCount = 0;
       _skipNextDistanceDelta = false;
       _nextFixStartsSegment = false;
+      _gpsKept = 0;
+      _gpsDropped = 0;
 
       unawaited(AnalyticsService.instance.log(AnalyticsEvent.rideStarted,
           param: AnalyticsParam.source,
@@ -677,8 +685,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     if (!pos.accuracy.isFinite ||
         pos.accuracy > SensorConstants.maxGpsAccuracyM) {
+      _gpsDropped++;
       return;
     }
+    _gpsKept++;
 
     double rawDist = 0;
     double deltaT = 0;
@@ -1176,6 +1186,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     try {
       _ref.invalidate(garageProvider);
       unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
+      unawaited(GpsDropLog.record(ride.id, kept: _gpsKept, dropped: _gpsDropped)
+          .catchError((Object e) => debugPrint('[RideRecording] gps log: $e')));
       unawaited(HomeWidgetService.instance.refreshFromLocalData());
       // The ride moved the odometer: anything it pushed past "due soon" or
       // "overdue" is notified now ("You just passed your oil interval").
@@ -1305,6 +1317,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _skipNextDistanceDelta = true;
     _nextFixStartsSegment = true;
     _sessionLive = false;
+    _gpsKept = 0;
+    _gpsDropped = 0;
 
     _polyline = <LatLng>[];
     _displayStride = 1;
