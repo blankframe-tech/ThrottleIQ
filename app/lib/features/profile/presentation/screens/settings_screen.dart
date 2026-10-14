@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +22,7 @@ import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/public_live_link_setting.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
@@ -47,618 +50,636 @@ class SettingsScreen extends ConsumerWidget {
         children: [
           ListView(
             padding: const EdgeInsets.all(16),
-        children: [
-          // ── Profile ────────────────────────────────────────────────────
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: context.palette.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: context.palette.border),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: context.palette.primary.withValues(alpha: 0.15),
-                  child: Text(
-                    (user?.displayName?.isNotEmpty == true
-                            ? user!.displayName![0]
-                            : '?')
-                        .toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
-                        color: context.palette.primary),
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(user?.displayName ?? l10n.riderFallbackName,
-                          style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                              color: context.palette.textPrimary)),
-                      const SizedBox(height: 2),
-                      Text(user?.email ?? '',
-                          style: TextStyle(
-                              fontSize: 13, color: context.palette.textSecondary)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ── Appearance ─────────────────────────────────────────────────
-          // Three independent choices, not one flat skin list: Vibe (shape),
-          // Brightness, and Color each pick their own axis, so any of the
-          // seven color modes can be sharp or curvy, dark or light. A rider
-          // who wants "sharp, like Nothing" or "rounded, like iOS" sets Vibe
-          // once and every color mode they try afterward respects it.
-          Text(l10n.appearanceSection,
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: context.palette.textPrimary)),
-          const SizedBox(height: 12),
-          Text(l10n.vibeFieldLabel,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: context.palette.textSecondary)),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: context.palette.surface,
-              borderRadius: BorderRadius.circular(context.shape.radiusMd),
-              border: Border.all(color: context.palette.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.vibeBoxyLabel,
-                    description: l10n.vibeBoxyDescription,
-                    selected: appearance.shapeVibe == AppShapeVibe.boxy,
-                    onTap: () => ref
-                        .read(appearanceProvider.notifier)
-                        .setShapeVibe(AppShapeVibe.boxy),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.vibeCurvyLabel,
-                    description: l10n.vibeCurvyDescription,
-                    selected: appearance.shapeVibe == AppShapeVibe.curvy,
-                    onTap: () => ref
-                        .read(appearanceProvider.notifier)
-                        .setShapeVibe(AppShapeVibe.curvy),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(l10n.brightnessFieldLabel,
-              style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: context.palette.textSecondary)),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: context.palette.surface,
-              borderRadius: BorderRadius.circular(context.shape.radiusMd),
-              border: Border.all(color: context.palette.border),
-            ),
-            // Three options, matching the Language row below: "System" is
-            // not the same as "Light" — it tracks the OS and flips with it
-            // (issues §83.9). Selection compares brightnessMode, not the
-            // resolved brightness, so System stays highlighted whichever way
-            // the OS currently leans.
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.brightnessSystemLabel,
-                    description: l10n.brightnessSystemDescription,
-                    selected:
-                        appearance.brightnessMode == AppBrightnessMode.system,
-                    onTap: () => ref
-                        .read(appearanceProvider.notifier)
-                        .setBrightnessMode(AppBrightnessMode.system),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.brightnessDarkLabel,
-                    description: l10n.brightnessDarkDescription,
-                    selected:
-                        appearance.brightnessMode == AppBrightnessMode.dark,
-                    onTap: () => ref
-                        .read(appearanceProvider.notifier)
-                        .setBrightnessMode(AppBrightnessMode.dark),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.brightnessLightLabel,
-                    description: l10n.brightnessLightDescription,
-                    selected:
-                        appearance.brightnessMode == AppBrightnessMode.light,
-                    onTap: () => ref
-                        .read(appearanceProvider.notifier)
-                        .setBrightnessMode(AppBrightnessMode.light),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          const ColorModeSegmentedPicker(),
-          const SizedBox(height: 24),
-
-          // ── Language ───────────────────────────────────────────────────
-          // Deliberately three options rather than a two-way English/Bangla
-          // toggle: "System default" is not the same as "English". A rider
-          // whose phone is already in Bangla should get Bangla without
-          // touching this screen, and should keep getting whatever their
-          // phone says later — pinning them to a language is an explicit act.
-          Text(l10n.languageSection,
-              style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: context.palette.textPrimary)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: context.palette.surface,
-              borderRadius: BorderRadius.circular(context.shape.radiusMd),
-              border: Border.all(color: context.palette.border),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.languageSystemLabel,
-                    description: l10n.languageSystemDescription,
-                    selected: appLocale == AppLocale.system,
-                    onTap: () => ref
-                        .read(localeProvider.notifier)
-                        .setLocale(AppLocale.system),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.languageEnglishLabel,
-                    description: l10n.languageEnglishDescription,
-                    selected: appLocale == AppLocale.english,
-                    onTap: () => ref
-                        .read(localeProvider.notifier)
-                        .setLocale(AppLocale.english),
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: _SegmentedOption(
-                    label: l10n.languageBanglaLabel,
-                    description: l10n.languageBanglaDescription,
-                    selected: appLocale == AppLocale.bangla,
-                    onTap: () => ref
-                        .read(localeProvider.notifier)
-                        .setLocale(AppLocale.bangla),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ── Ride tracking ──────────────────────────────────────────────
-          const AutoTrackingTile(),
-          const AutoTrackingScheduleTile(),
-          const SizedBox(height: 12),
-          const _OverspeedLimitTile(),
-
-          const SizedBox(height: 24),
-
-          // ── Emergency contacts ─────────────────────────────────────────
-          Row(
             children: [
-              Text(l10n.emergencyContactsSection,
+              // ── Profile ────────────────────────────────────────────────────
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 26,
+                      backgroundColor:
+                          context.palette.primary.withValues(alpha: 0.15),
+                      child: Text(
+                        (user?.displayName?.isNotEmpty == true
+                                ? user!.displayName![0]
+                                : '?')
+                            .toUpperCase(),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: context.palette.primary),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(user?.displayName ?? l10n.riderFallbackName,
+                              style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: context.palette.textPrimary)),
+                          const SizedBox(height: 2),
+                          Text(user?.email ?? '',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.palette.textSecondary)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Appearance ─────────────────────────────────────────────────
+              // Three independent choices, not one flat skin list: Vibe (shape),
+              // Brightness, and Color each pick their own axis, so any of the
+              // seven color modes can be sharp or curvy, dark or light. A rider
+              // who wants "sharp, like Nothing" or "rounded, like iOS" sets Vibe
+              // once and every color mode they try afterward respects it.
+              Text(l10n.appearanceSection,
                   style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: context.palette.textPrimary)),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: () => _showContactDialog(context, ref),
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(l10n.addAction),
-              ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          // A warning-colored banner, not fine print: until crash alerts
-          // actually send, having contacts here must not read as being
-          // protected (grill §3.6.3).
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: context.palette.warning.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(context.shape.radiusMd),
-              border: Border.all(color: context.palette.warning),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.warning_amber_rounded, color: context.palette.warning, size: 22),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    l10n.emergencyContactsNotAlertedBanner,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary),
-                  ),
+              const SizedBox(height: 12),
+              Text(l10n.vibeFieldLabel,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textSecondary)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.emergencyContactsDescription,
-            style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
-          ),
-          const SizedBox(height: 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.vibeBoxyLabel,
+                        description: l10n.vibeBoxyDescription,
+                        selected: appearance.shapeVibe == AppShapeVibe.boxy,
+                        onTap: () => ref
+                            .read(appearanceProvider.notifier)
+                            .setShapeVibe(AppShapeVibe.boxy),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.vibeCurvyLabel,
+                        description: l10n.vibeCurvyDescription,
+                        selected: appearance.shapeVibe == AppShapeVibe.curvy,
+                        onTap: () => ref
+                            .read(appearanceProvider.notifier)
+                            .setShapeVibe(AppShapeVibe.curvy),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(l10n.brightnessFieldLabel,
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textSecondary)),
+              const SizedBox(height: 6),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
+                ),
+                // Three options, matching the Language row below: "System" is
+                // not the same as "Light" — it tracks the OS and flips with it
+                // (issues §83.9). Selection compares brightnessMode, not the
+                // resolved brightness, so System stays highlighted whichever way
+                // the OS currently leans.
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.brightnessSystemLabel,
+                        description: l10n.brightnessSystemDescription,
+                        selected: appearance.brightnessMode ==
+                            AppBrightnessMode.system,
+                        onTap: () => ref
+                            .read(appearanceProvider.notifier)
+                            .setBrightnessMode(AppBrightnessMode.system),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.brightnessDarkLabel,
+                        description: l10n.brightnessDarkDescription,
+                        selected:
+                            appearance.brightnessMode == AppBrightnessMode.dark,
+                        onTap: () => ref
+                            .read(appearanceProvider.notifier)
+                            .setBrightnessMode(AppBrightnessMode.dark),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.brightnessLightLabel,
+                        description: l10n.brightnessLightDescription,
+                        selected: appearance.brightnessMode ==
+                            AppBrightnessMode.light,
+                        onTap: () => ref
+                            .read(appearanceProvider.notifier)
+                            .setBrightnessMode(AppBrightnessMode.light),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              const ColorModeSegmentedPicker(),
+              const SizedBox(height: 24),
 
-          contacts.when(
-            loading: () => Padding(
-              padding: const EdgeInsets.all(24),
-              child: Center(
-                  child: CircularProgressIndicator(color: context.palette.primary)),
-            ),
-            error: (e, _) => Text(l10n.emergencyContactsLoadError('$e'),
-                style: TextStyle(color: context.palette.danger, fontSize: 13)),
-            data: (list) => list.isEmpty
-                ? Container(
-                    padding: const EdgeInsets.all(20),
+              // ── Language ───────────────────────────────────────────────────
+              // Deliberately three options rather than a two-way English/Bangla
+              // toggle: "System default" is not the same as "English". A rider
+              // whose phone is already in Bangla should get Bangla without
+              // touching this screen, and should keep getting whatever their
+              // phone says later — pinning them to a language is an explicit act.
+              Text(l10n.languageSection,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: context.palette.textPrimary)),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: context.palette.surface,
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.border),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.languageSystemLabel,
+                        description: l10n.languageSystemDescription,
+                        selected: appLocale == AppLocale.system,
+                        onTap: () => ref
+                            .read(localeProvider.notifier)
+                            .setLocale(AppLocale.system),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.languageEnglishLabel,
+                        description: l10n.languageEnglishDescription,
+                        selected: appLocale == AppLocale.english,
+                        onTap: () => ref
+                            .read(localeProvider.notifier)
+                            .setLocale(AppLocale.english),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: _SegmentedOption(
+                        label: l10n.languageBanglaLabel,
+                        description: l10n.languageBanglaDescription,
+                        selected: appLocale == AppLocale.bangla,
+                        onTap: () => ref
+                            .read(localeProvider.notifier)
+                            .setLocale(AppLocale.bangla),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── Ride tracking ──────────────────────────────────────────────
+              const AutoTrackingTile(),
+              const AutoTrackingScheduleTile(),
+              const SizedBox(height: 12),
+              const _OverspeedLimitTile(),
+
+              const SizedBox(height: 24),
+
+              // ── Emergency contacts ─────────────────────────────────────────
+              Row(
+                children: [
+                  Text(l10n.emergencyContactsSection,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.textPrimary)),
+                  const Spacer(),
+                  TextButton.icon(
+                    onPressed: () => _showContactDialog(context, ref),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(l10n.addAction),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              // A warning-colored banner, not fine print: until crash alerts
+              // actually send, having contacts here must not read as being
+              // protected (grill §3.6.3).
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.palette.warning.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  border: Border.all(color: context.palette.warning),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.warning_amber_rounded,
+                        color: context.palette.warning, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.emergencyContactsNotAlertedBanner,
+                        style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textPrimary),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                l10n.emergencyContactsDescription,
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textTertiary),
+              ),
+              const SizedBox(height: 12),
+
+              contacts.when(
+                loading: () => Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Center(
+                      child: CircularProgressIndicator(
+                          color: context.palette.primary)),
+                ),
+                error: (e, _) => Text(l10n.emergencyContactsLoadError('$e'),
+                    style:
+                        TextStyle(color: context.palette.danger, fontSize: 13)),
+                data: (list) => list.isEmpty
+                    ? Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: context.palette.surface,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: context.palette.border),
+                        ),
+                        child: Center(
+                          child: Text(l10n.emergencyContactsEmpty,
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  color: context.palette.textSecondary)),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          for (final c in list)
+                            Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 14, vertical: 10),
+                              decoration: BoxDecoration(
+                                color: context.palette.surface,
+                                borderRadius: BorderRadius.circular(12),
+                                border:
+                                    Border.all(color: context.palette.border),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(Icons.contact_emergency_outlined,
+                                      color: context.palette.primary, size: 20),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(c.name,
+                                            style: TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w600,
+                                                color: context
+                                                    .palette.textPrimary)),
+                                        Text(
+                                            c.email == null
+                                                ? c.phone
+                                                : '${c.phone} · ${c.email}',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: context
+                                                    .palette.textSecondary)),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: context.l10n.delete,
+                                    onPressed: () => ref
+                                        .read(emergencyContactsNotifierProvider
+                                            .notifier)
+                                        .deleteContact(c.id),
+                                    icon: Icon(Icons.delete_outline,
+                                        color: context.palette.textTertiary,
+                                        size: 20),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+              ),
+
+              const SizedBox(height: 24),
+
+              // ── SafeQR ─────────────────────────────────────────────────────
+              // A separate screen, not inlined here: it owns its own editable
+              // fields plus a live QR preview, which doesn't fit this screen's
+              // "one row per setting" shape. This tile is just the doorway.
+              Material(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => context.push('/safe-qr'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
                     decoration: BoxDecoration(
-                      color: context.palette.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: context.palette.border),
                     ),
-                    child: Center(
-                      child: Text(l10n.emergencyContactsEmpty,
-                          style: TextStyle(
-                              fontSize: 13, color: context.palette.textSecondary)),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      for (final c in list)
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: context.palette.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: context.palette.border),
-                          ),
-                          child: Row(
+                    child: Row(
+                      children: [
+                        Icon(Icons.qr_code_2_outlined,
+                            color: context.palette.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.contact_emergency_outlined,
-                                  color: context.palette.primary, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(c.name,
-                                        style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: context.palette.textPrimary)),
-                                    Text(
-                                        c.email == null
-                                            ? c.phone
-                                            : '${c.phone} · ${c.email}',
-                                        style: TextStyle(
-                                            fontSize: 12,
-                                            color: context.palette.textSecondary)),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                tooltip: context.l10n.delete,
-                                onPressed: () => ref
-                                    .read(emergencyContactsNotifierProvider
-                                        .notifier)
-                                    .deleteContact(c.id),
-                                icon: Icon(Icons.delete_outline,
-                                    color: context.palette.textTertiary, size: 20),
-                              ),
+                              Text(l10n.safeQrTitle,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text(l10n.safeQrSettingsSubtitle,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.palette.textSecondary)),
                             ],
                           ),
                         ),
-                    ],
-                  ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // ── SafeQR ─────────────────────────────────────────────────────
-          // A separate screen, not inlined here: it owns its own editable
-          // fields plus a live QR preview, which doesn't fit this screen's
-          // "one row per setting" shape. This tile is just the doorway.
-          Material(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => context.push('/safe-qr'),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.palette.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.qr_code_2_outlined,
-                        color: context.palette.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.safeQrTitle,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.textPrimary)),
-                          const SizedBox(height: 2),
-                          Text(l10n.safeQrSettingsSubtitle,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.palette.textSecondary)),
-                        ],
-                      ),
+                        Icon(Icons.chevron_right,
+                            color: context.palette.textTertiary, size: 20),
+                      ],
                     ),
-                    Icon(Icons.chevron_right,
-                        color: context.palette.textTertiary, size: 20),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
 
-          const SizedBox(height: 24),
+              const SizedBox(height: 24),
 
-          // ── Sync issues (§69.O4) ───────────────────────────────────────
-          // Only shown while the outbox has given up on something, so the
-          // rider isn't handed a permanent "0 issues" row to wonder about.
-          const _SyncIssuesTile(),
+              // ── Sync issues (§69.O4) ───────────────────────────────────────
+              // Only shown while the outbox has given up on something, so the
+              // rider isn't handed a permanent "0 issues" row to wonder about.
+              const _SyncIssuesTile(),
 
-          // ── Privacy & Safety ───────────────────────────────────────────
-          Row(
-            children: [
-              Text(context.l10n.privacySafety,
-                  style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: context.palette.textPrimary)),
+              // ── Privacy & Safety ───────────────────────────────────────────
+              Row(
+                children: [
+                  Text(context.l10n.privacySafety,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.textPrimary)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Material(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => context.push('/blocked-users'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: context.palette.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.block,
+                            color: context.palette.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(context.l10n.blockedUsers,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text(context.l10n.manageAccountsHaveBlocked,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: context.palette.textTertiary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              const _AnalyticsToggleTile(),
+              const SizedBox(height: 10),
+              const _PublicLiveLinkToggleTile(),
+              const SizedBox(height: 10),
+              const _CrashResearchToggleTile(),
+              const SizedBox(height: 10),
+              Material(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () async {
+                    await resetOnboardingTour();
+                    if (context.mounted) {
+                      context.push('/auth/onboarding?demo=1');
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: context.palette.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.play_circle_outline,
+                            color: context.palette.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(context.l10n.seeDemoFeatureTour,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text(context.l10n.replayInteractiveFeatureGuides,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: context.palette.textTertiary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+              // ── Bug Report ─────────────────────────────────────────────────
+              Material(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  onTap: () => BugReportSheet.show(context),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: context.palette.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.bug_report_outlined,
+                            color: context.palette.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(context.l10n.sendBugReport,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text(context.l10n.somethingBrokenLetTeam,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: context.palette.textTertiary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
+
+              // ── Sign out ───────────────────────────────────────────────────
+              OutlinedButton.icon(
+                onPressed: () async {
+                  try {
+                    await ref.read(authNotifierProvider.notifier).signOut();
+                    if (context.mounted) context.go('/auth/login');
+                  } on Exception catch (e) {
+                    debugPrint('signOut failed: $e');
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(context.l10n.signOutFailed),
+                          backgroundColor: context.palette.danger,
+                        ),
+                      );
+                    }
+                  }
+                },
+                icon: const Icon(Icons.logout, size: 18),
+                label: Text(l10n.signOutAction),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  foregroundColor: context.palette.textSecondary,
+                  side: BorderSide(color: context.palette.border),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ── Delete account (Apple Guideline 5.1.1(v)) ──────────────────
+              TextButton.icon(
+                onPressed: () => _confirmDeleteAccount(context, ref),
+                icon: const Icon(Icons.delete_forever, size: 18),
+                label: Text(context.l10n.deleteAccount),
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 48),
+                  foregroundColor: context.palette.danger,
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          Material(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => context.push('/blocked-users'),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.palette.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.block, color: context.palette.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(context.l10n.blockedUsers,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.textPrimary)),
-                          const SizedBox(height: 2),
-                          Text(context.l10n.manageAccountsHaveBlocked,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.palette.textSecondary)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                        color: context.palette.textTertiary, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          const _AnalyticsToggleTile(),
-          const SizedBox(height: 10),
-          const _PublicLiveLinkToggleTile(),
-          const SizedBox(height: 10),
-          Material(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () async {
-                await resetOnboardingTour();
-                if (context.mounted) {
-                  context.push('/auth/onboarding?demo=1');
-                }
-              },
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.palette.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.play_circle_outline, color: context.palette.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(context.l10n.seeDemoFeatureTour,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.textPrimary)),
-                          const SizedBox(height: 2),
-                          Text(context.l10n.replayInteractiveFeatureGuides,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.palette.textSecondary)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                        color: context.palette.textTertiary, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-          // ── Bug Report ─────────────────────────────────────────────────
-          Material(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              onTap: () => BugReportSheet.show(context),
-              borderRadius: BorderRadius.circular(12),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: context.palette.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.bug_report_outlined,
-                        color: context.palette.primary, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(context.l10n.sendBugReport,
-                              style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                  color: context.palette.textPrimary)),
-                          const SizedBox(height: 2),
-                          Text(context.l10n.somethingBrokenLetTeam,
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.palette.textSecondary)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right,
-                        color: context.palette.textTertiary, size: 20),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // ── Sign out ───────────────────────────────────────────────────
-          OutlinedButton.icon(
-            onPressed: () async {
-              try {
-                await ref.read(authNotifierProvider.notifier).signOut();
-                if (context.mounted) context.go('/auth/login');
-              } on Exception catch (e) {
-                debugPrint('signOut failed: $e');
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(context.l10n.signOutFailed),
-                      backgroundColor: context.palette.danger,
-                    ),
-                  );
-                }
-              }
-            },
-            icon: const Icon(Icons.logout, size: 18),
-            label: Text(l10n.signOutAction),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size(0, 48),
-              foregroundColor: context.palette.textSecondary,
-              side: BorderSide(color: context.palette.border),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ── Delete account (Apple Guideline 5.1.1(v)) ──────────────────
-          TextButton.icon(
-            onPressed: () => _confirmDeleteAccount(context, ref),
-            icon: const Icon(Icons.delete_forever, size: 18),
-            label: Text(context.l10n.deleteAccount),
-            style: TextButton.styleFrom(
-              minimumSize: const Size(0, 48),
-              foregroundColor: context.palette.danger,
-            ),
+          const Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: TourFloatingBanner(),
           ),
         ],
       ),
-      const Positioned(
-        left: 0,
-        right: 0,
-        bottom: 0,
-        child: TourFloatingBanner(),
-      ),
-    ],
-  ),
-);
+    );
   }
 
-  Future<void> _confirmDeleteAccount(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmDeleteAccount(
+      BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
@@ -710,18 +731,20 @@ class SettingsScreen extends ConsumerWidget {
   /// Deletes the account; on `requires-recent-login` asks the rider to
   /// re-prove their identity (issues §101.A1) and retries exactly once.
   /// Raw exception text is never shown (issues §101.A4).
-  Future<void> _deleteAccountWithReauth(BuildContext context, WidgetRef ref) async {
+  Future<void> _deleteAccountWithReauth(
+      BuildContext context, WidgetRef ref) async {
     final auth = ref.read(authNotifierProvider.notifier);
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
     final l10n = context.l10n;
     final danger = context.palette.danger;
-    void fail(String message) =>
-        messenger.showSnackBar(SnackBar(content: Text(message), backgroundColor: danger));
+    void fail(String message) => messenger.showSnackBar(
+        SnackBar(content: Text(message), backgroundColor: danger));
 
     String deleteFailure(Object e) {
       debugPrint('deleteAccount failed: $e');
-      return e is firebase_auth.FirebaseAuthException && e.code == 'network-request-failed'
+      return e is firebase_auth.FirebaseAuthException &&
+              e.code == 'network-request-failed'
           ? l10n.deleteAccountOffline
           : l10n.deleteAccountFailed;
     }
@@ -804,7 +827,8 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _showContactDialog(BuildContext context, WidgetRef ref) async {
     final wasEmpty =
-        ref.read(emergencyContactsNotifierProvider).valueOrNull?.isEmpty ?? true;
+        ref.read(emergencyContactsNotifierProvider).valueOrNull?.isEmpty ??
+            true;
     final added = await showDialog<bool>(
       context: context,
       builder: (_) => const _AddContactDialog(),
@@ -822,9 +846,11 @@ class SettingsScreen extends ConsumerWidget {
       barrierDismissible: false,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: dialogContext.palette.surface,
-        icon: Icon(Icons.warning_amber_rounded, color: dialogContext.palette.warning, size: 32),
+        icon: Icon(Icons.warning_amber_rounded,
+            color: dialogContext.palette.warning, size: 32),
         title: Text(l10n.emergencyContactsAckTitle,
-            style: TextStyle(color: dialogContext.palette.textPrimary, fontSize: 18)),
+            style: TextStyle(
+                color: dialogContext.palette.textPrimary, fontSize: 18)),
         content: Text(l10n.emergencyContactsAckBody,
             style: TextStyle(color: dialogContext.palette.textSecondary)),
         actions: [
@@ -953,7 +979,8 @@ class _SyncIssuesTile extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
+                Icon(Icons.sync_problem,
+                    color: context.palette.warning, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -970,7 +997,8 @@ class _SyncIssuesTile extends ConsumerWidget {
                               ? context.l10n.n1UpdateCouldntBe
                               : context.l10n.updatesCouldntBeSent(count),
                           style: TextStyle(
-                              fontSize: 12, color: context.palette.textSecondary)),
+                              fontSize: 12,
+                              color: context.palette.textSecondary)),
                     ],
                   ),
                 ),
@@ -1016,7 +1044,9 @@ class _SegmentedOption extends StatelessWidget {
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: selected ? context.palette.surface : context.palette.textPrimary)),
+                    color: selected
+                        ? context.palette.surface
+                        : context.palette.textPrimary)),
             const SizedBox(height: 2),
             Text(description,
                 style: TextStyle(
@@ -1059,12 +1089,14 @@ class _OverspeedLimitTile extends ConsumerWidget {
                   children: [
                     Text(
                       l10n.overspeedSettingTitle,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       l10n.overspeedSettingSubtitle,
-                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                      style: TextStyle(
+                          fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -1083,7 +1115,8 @@ class _OverspeedLimitTile extends ConsumerWidget {
           SliderTheme(
             data: SliderTheme.of(context).copyWith(
               activeTrackColor: context.palette.primary,
-              inactiveTrackColor: context.palette.primary.withValues(alpha: 0.2),
+              inactiveTrackColor:
+                  context.palette.primary.withValues(alpha: 0.2),
               thumbColor: context.palette.primary,
             ),
             child: Slider(
@@ -1169,6 +1202,74 @@ class _PublicLiveLinkToggleTileState
   }
 }
 
+/// Settings → Privacy & Safety: the opt-in for sharing answered impacts with
+/// the crash-detection research set (`crashEvents`). Off by default;
+/// persisted by [CrashResearchConsent].
+class _CrashResearchToggleTile extends ConsumerStatefulWidget {
+  const _CrashResearchToggleTile();
+
+  @override
+  ConsumerState<_CrashResearchToggleTile> createState() =>
+      _CrashResearchToggleTileState();
+}
+
+class _CrashResearchToggleTileState
+    extends ConsumerState<_CrashResearchToggleTile> {
+  bool _enabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    CrashResearchConsent.isEnabled().then((v) {
+      if (mounted) setState(() => _enabled = v);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: context.palette.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.health_and_safety_outlined,
+              color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(context.l10n.crashResearchTitle,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(context.l10n.crashResearchDesc,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          Switch(
+            key: const Key('crash_research_switch'),
+            value: _enabled,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              unawaited(CrashResearchConsent.setEnabled(v,
+                  uid: ref.read(currentUserProvider)?.uid));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// Settings → Privacy & Safety: the opt-out for anonymous usage statistics
 /// (issues §83.27). Applies immediately and persists.
 class _AnalyticsToggleTile extends StatefulWidget {
@@ -1192,7 +1293,8 @@ class _AnalyticsToggleTileState extends State<_AnalyticsToggleTile> {
       ),
       child: Row(
         children: [
-          Icon(Icons.insights_outlined, color: context.palette.primary, size: 22),
+          Icon(Icons.insights_outlined,
+              color: context.palette.primary, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

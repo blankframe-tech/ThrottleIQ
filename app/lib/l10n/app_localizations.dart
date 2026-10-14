@@ -11063,6 +11063,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log two full-tank fill-ups to measure this.'**
   String get insightFuelNeedFullFills;
+
+  /// Ride-start label before the phone placement chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phonePlacementLabel;
+
+  /// Phone placement chip: phone held in a handlebar mount.
+  ///
+  /// In en, this message translates to:
+  /// **'On a mount'**
+  String get phonePlacementMount;
+
+  /// Phone placement chip: phone in a trouser or jacket pocket.
+  ///
+  /// In en, this message translates to:
+  /// **'In a pocket'**
+  String get phonePlacementPocket;
+
+  /// Phone placement chip: phone in a backpack or tank bag.
+  ///
+  /// In en, this message translates to:
+  /// **'In a bag'**
+  String get phonePlacementBag;
+
+  /// Small hint under the phone placement chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Helps the app tell a fall from a bump.'**
+  String get phonePlacementHint;
+
+  /// After-ride card title. {time} is a clock time like 9:28 PM.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible fall at {time}'**
+  String impactQuestionTitle(String time);
+
+  /// After-ride card question.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone felt a hard knock and then stopped moving. Did you fall?'**
+  String get impactQuestionBody;
+
+  /// Answer: the rider fell or crashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I fell'**
+  String get impactAnswerYes;
+
+  /// Answer: only the phone fell.
+  ///
+  /// In en, this message translates to:
+  /// **'No, my phone fell'**
+  String get impactAnswerPhoneFell;
+
+  /// Answer: a pothole, rail crossing or bump.
+  ///
+  /// In en, this message translates to:
+  /// **'No, just a bump'**
+  String get impactAnswerBump;
+
+  /// Answer: a hard stop, no fall.
+  ///
+  /// In en, this message translates to:
+  /// **'No, I braked hard'**
+  String get impactAnswerHardStop;
+
+  /// Answer: the rider doesn't know.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure'**
+  String get impactAnswerUnsure;
+
+  /// Shown after 'Yes, I fell'; both questions are optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Glad you\'re OK. Two quick questions help the app learn:'**
+  String get impactFollowUpTitle;
+
+  /// Follow-up question about injury.
+  ///
+  /// In en, this message translates to:
+  /// **'How bad was it?'**
+  String get impactSeverityLabel;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'No injury'**
+  String get impactSeverityNone;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Minor injury'**
+  String get impactSeverityMinor;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed medical help'**
+  String get impactSeverityMedical;
+
+  /// Follow-up question about the road.
+  ///
+  /// In en, this message translates to:
+  /// **'Road surface'**
+  String get impactSurfaceLabel;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Paved'**
+  String get surfacePaved;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Broken road'**
+  String get surfaceBroken;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Dirt'**
+  String get surfaceDirt;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Gravel'**
+  String get surfaceGravel;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Wet'**
+  String get surfaceWet;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rail crossing'**
+  String get surfaceRailCrossing;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed bump'**
+  String get surfaceSpeedBump;
+
+  /// Saves the follow-up answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get impactSaveAnswer;
+
+  /// Shown after the rider answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — that helps.'**
+  String get impactThanks;
+
+  /// Ride summary button for a fall the app did not detect.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a crash or fall'**
+  String get reportCrashAction;
+
+  /// Title of the report-a-crash sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'When did it happen?'**
+  String get reportCrashTitle;
+
+  /// Report-a-crash sheet explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to the moment you fell. It helps the app learn the falls it missed.'**
+  String get reportCrashBody;
+
+  /// Snackbar after a crash report is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported. Thank you.'**
+  String get reportCrashSaved;
+
+  /// Settings switch title.
+  ///
+  /// In en, this message translates to:
+  /// **'Help improve crash detection'**
+  String get crashResearchTitle;
+
+  /// Settings switch subtitle for the research data opt-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.'**
+  String get crashResearchDesc;
 }
 
 class _AppLocalizationsDelegate

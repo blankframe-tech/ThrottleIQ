@@ -8879,5 +8879,142 @@
   "insightFuelNeedFullFills": "Log two full-tank fill-ups to measure this.",
   "@insightFuelNeedFullFills": {
     "description": "Insight on efficiency charts when fewer than two full-tank fills exist."
+  },
+  "phonePlacementLabel": "Phone",
+  "@phonePlacementLabel": {
+    "description": "Ride-start label before the phone placement chips."
+  },
+  "phonePlacementMount": "On a mount",
+  "@phonePlacementMount": {
+    "description": "Phone placement chip: phone held in a handlebar mount."
+  },
+  "phonePlacementPocket": "In a pocket",
+  "@phonePlacementPocket": {
+    "description": "Phone placement chip: phone in a trouser or jacket pocket."
+  },
+  "phonePlacementBag": "In a bag",
+  "@phonePlacementBag": {
+    "description": "Phone placement chip: phone in a backpack or tank bag."
+  },
+  "phonePlacementHint": "Helps the app tell a fall from a bump.",
+  "@phonePlacementHint": {
+    "description": "Small hint under the phone placement chips."
+  },
+  "impactQuestionTitle": "Possible fall at {time}",
+  "@impactQuestionTitle": {
+    "description": "After-ride card title. {time} is a clock time like 9:28 PM.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "impactQuestionBody": "Your phone felt a hard knock and then stopped moving. Did you fall?",
+  "@impactQuestionBody": {
+    "description": "After-ride card question."
+  },
+  "impactAnswerYes": "Yes, I fell",
+  "@impactAnswerYes": {
+    "description": "Answer: the rider fell or crashed."
+  },
+  "impactAnswerPhoneFell": "No, my phone fell",
+  "@impactAnswerPhoneFell": {
+    "description": "Answer: only the phone fell."
+  },
+  "impactAnswerBump": "No, just a bump",
+  "@impactAnswerBump": {
+    "description": "Answer: a pothole, rail crossing or bump."
+  },
+  "impactAnswerHardStop": "No, I braked hard",
+  "@impactAnswerHardStop": {
+    "description": "Answer: a hard stop, no fall."
+  },
+  "impactAnswerUnsure": "Not sure",
+  "@impactAnswerUnsure": {
+    "description": "Answer: the rider doesn't know."
+  },
+  "impactFollowUpTitle": "Glad you're OK. Two quick questions help the app learn:",
+  "@impactFollowUpTitle": {
+    "description": "Shown after 'Yes, I fell'; both questions are optional."
+  },
+  "impactSeverityLabel": "How bad was it?",
+  "@impactSeverityLabel": {
+    "description": "Follow-up question about injury."
+  },
+  "impactSeverityNone": "No injury",
+  "@impactSeverityNone": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMinor": "Minor injury",
+  "@impactSeverityMinor": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMedical": "Needed medical help",
+  "@impactSeverityMedical": {
+    "description": "Severity chip."
+  },
+  "impactSurfaceLabel": "Road surface",
+  "@impactSurfaceLabel": {
+    "description": "Follow-up question about the road."
+  },
+  "surfacePaved": "Paved",
+  "@surfacePaved": {
+    "description": "Road surface chip."
+  },
+  "surfaceBroken": "Broken road",
+  "@surfaceBroken": {
+    "description": "Road surface chip."
+  },
+  "surfaceDirt": "Dirt",
+  "@surfaceDirt": {
+    "description": "Road surface chip."
+  },
+  "surfaceGravel": "Gravel",
+  "@surfaceGravel": {
+    "description": "Road surface chip."
+  },
+  "surfaceWet": "Wet",
+  "@surfaceWet": {
+    "description": "Road surface chip."
+  },
+  "surfaceRailCrossing": "Rail crossing",
+  "@surfaceRailCrossing": {
+    "description": "Road surface chip."
+  },
+  "surfaceSpeedBump": "Speed bump",
+  "@surfaceSpeedBump": {
+    "description": "Road surface chip."
+  },
+  "impactSaveAnswer": "Save",
+  "@impactSaveAnswer": {
+    "description": "Saves the follow-up answers."
+  },
+  "impactThanks": "Thanks — that helps.",
+  "@impactThanks": {
+    "description": "Shown after the rider answers."
+  },
+  "reportCrashAction": "Report a crash or fall",
+  "@reportCrashAction": {
+    "description": "Ride summary button for a fall the app did not detect."
+  },
+  "reportCrashTitle": "When did it happen?",
+  "@reportCrashTitle": {
+    "description": "Title of the report-a-crash sheet."
+  },
+  "reportCrashBody": "Slide to the moment you fell. It helps the app learn the falls it missed.",
+  "@reportCrashBody": {
+    "description": "Report-a-crash sheet explanation."
+  },
+  "reportCrashSaved": "Reported. Thank you.",
+  "@reportCrashSaved": {
+    "description": "Snackbar after a crash report is saved."
+  },
+  "crashResearchTitle": "Help improve crash detection",
+  "@crashResearchTitle": {
+    "description": "Settings switch title."
+  },
+  "crashResearchDesc": "Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.",
+  "@crashResearchDesc": {
+    "description": "Settings switch subtitle for the research data opt-in."
   }
 }

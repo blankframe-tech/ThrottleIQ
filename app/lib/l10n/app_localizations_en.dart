@@ -6461,4 +6461,109 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'Log two full-tank fill-ups to measure this.';
+
+  @override
+  String get phonePlacementLabel => 'Phone';
+
+  @override
+  String get phonePlacementMount => 'On a mount';
+
+  @override
+  String get phonePlacementPocket => 'In a pocket';
+
+  @override
+  String get phonePlacementBag => 'In a bag';
+
+  @override
+  String get phonePlacementHint => 'Helps the app tell a fall from a bump.';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return 'Possible fall at $time';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'Your phone felt a hard knock and then stopped moving. Did you fall?';
+
+  @override
+  String get impactAnswerYes => 'Yes, I fell';
+
+  @override
+  String get impactAnswerPhoneFell => 'No, my phone fell';
+
+  @override
+  String get impactAnswerBump => 'No, just a bump';
+
+  @override
+  String get impactAnswerHardStop => 'No, I braked hard';
+
+  @override
+  String get impactAnswerUnsure => 'Not sure';
+
+  @override
+  String get impactFollowUpTitle =>
+      'Glad you\'re OK. Two quick questions help the app learn:';
+
+  @override
+  String get impactSeverityLabel => 'How bad was it?';
+
+  @override
+  String get impactSeverityNone => 'No injury';
+
+  @override
+  String get impactSeverityMinor => 'Minor injury';
+
+  @override
+  String get impactSeverityMedical => 'Needed medical help';
+
+  @override
+  String get impactSurfaceLabel => 'Road surface';
+
+  @override
+  String get surfacePaved => 'Paved';
+
+  @override
+  String get surfaceBroken => 'Broken road';
+
+  @override
+  String get surfaceDirt => 'Dirt';
+
+  @override
+  String get surfaceGravel => 'Gravel';
+
+  @override
+  String get surfaceWet => 'Wet';
+
+  @override
+  String get surfaceRailCrossing => 'Rail crossing';
+
+  @override
+  String get surfaceSpeedBump => 'Speed bump';
+
+  @override
+  String get impactSaveAnswer => 'Save';
+
+  @override
+  String get impactThanks => 'Thanks — that helps.';
+
+  @override
+  String get reportCrashAction => 'Report a crash or fall';
+
+  @override
+  String get reportCrashTitle => 'When did it happen?';
+
+  @override
+  String get reportCrashBody =>
+      'Slide to the moment you fell. It helps the app learn the falls it missed.';
+
+  @override
+  String get reportCrashSaved => 'Reported. Thank you.';
+
+  @override
+  String get crashResearchTitle => 'Help improve crash detection';
+
+  @override
+  String get crashResearchDesc =>
+      'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.';
 }

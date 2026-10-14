@@ -74,6 +74,7 @@ async function seed() {
   set(`groupRides/r3/memberLocations/${OTHER}`, { lat: 2, lng: 2 });
 
   set(`liveSessions/${TOKEN}`, { uid: UID });
+  set('crashEvents/ev-1', { ownerUid: UID, label: 'crash' });
   set(`livePointers/${UID}`, { token: TOKEN });
   set(`chats/${CHAT_ID}`, { participants: [UID, OTHER].sort() });
   await batch.commit();
@@ -164,6 +165,7 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
 
   // Live share docs.
   assert.equal(await exists(`liveSessions/${TOKEN}`), false);
+  assert.equal(await exists('crashEvents/ev-1'), false);
   assert.equal(await exists(`livePointers/${UID}`), false);
 
   // RTDB.

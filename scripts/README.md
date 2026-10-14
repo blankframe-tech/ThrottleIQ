@@ -15,6 +15,8 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`update_places_google_ratings.js`](#update_places_google_ratingsjs--enrich-places-with-google-maps-ratings) | Enriches commercial places (fuel, garage, parts) with Google Maps ratings (`x`) alongside ThrottleIQ ratings (`y`) | Yes — re-running updates fields |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
+| [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
+| [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just

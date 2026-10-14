@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/daos/bike_dao.dart';
 import '../database/daos/maintenance_dao.dart';
 import '../database/daos/fuel_log_dao.dart';
+import '../database/daos/impact_event_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../../features/maintenance/presentation/providers/fuel_provider.dart';
@@ -510,6 +511,12 @@ class SyncManager {
       if (unsyncedFuel.isNotEmpty) {
         await _cloudRepository.uploadFuelLogs(uid, unsyncedFuel);
       }
+
+      // Shadow-mode impacts and the rider's answers about them: after the
+      // rides they belong to, and last, so research data never holds up a
+      // rider's own backups.
+      await _cloudRepository.uploadImpactEvents(
+          uid, await ImpactEventDao().unsyncedForUser(uid));
 
       _status = SyncStatus.success;
       _consecutiveFailures = 0;

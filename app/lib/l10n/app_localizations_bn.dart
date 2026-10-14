@@ -6425,4 +6425,110 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।';
+
+  @override
+  String get phonePlacementLabel => 'ফোন';
+
+  @override
+  String get phonePlacementMount => 'মাউন্টে';
+
+  @override
+  String get phonePlacementPocket => 'পকেটে';
+
+  @override
+  String get phonePlacementBag => 'ব্যাগে';
+
+  @override
+  String get phonePlacementHint =>
+      'পড়ে যাওয়া আর ঝাঁকুনির পার্থক্য বুঝতে অ্যাপকে সাহায্য করে।';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return '$time-এ সম্ভাব্য পতন';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'আপনার ফোনে জোরে ধাক্কা লেগেছে, তারপর ফোনটি থেমে গেছে। আপনি কি পড়ে গিয়েছিলেন?';
+
+  @override
+  String get impactAnswerYes => 'হ্যাঁ, পড়ে গিয়েছিলাম';
+
+  @override
+  String get impactAnswerPhoneFell => 'না, ফোন পড়ে গিয়েছিল';
+
+  @override
+  String get impactAnswerBump => 'না, শুধু ঝাঁকুনি';
+
+  @override
+  String get impactAnswerHardStop => 'না, জোরে ব্রেক করেছিলাম';
+
+  @override
+  String get impactAnswerUnsure => 'নিশ্চিত নই';
+
+  @override
+  String get impactFollowUpTitle =>
+      'আপনি ঠিক আছেন জেনে ভালো লাগল। দুটি ছোট প্রশ্ন অ্যাপকে শিখতে সাহায্য করবে:';
+
+  @override
+  String get impactSeverityLabel => 'কতটা গুরুতর ছিল?';
+
+  @override
+  String get impactSeverityNone => 'কোনো আঘাত নেই';
+
+  @override
+  String get impactSeverityMinor => 'সামান্য আঘাত';
+
+  @override
+  String get impactSeverityMedical => 'চিকিৎসা লেগেছে';
+
+  @override
+  String get impactSurfaceLabel => 'রাস্তার অবস্থা';
+
+  @override
+  String get surfacePaved => 'পাকা রাস্তা';
+
+  @override
+  String get surfaceBroken => 'ভাঙা রাস্তা';
+
+  @override
+  String get surfaceDirt => 'কাঁচা রাস্তা';
+
+  @override
+  String get surfaceGravel => 'নুড়ি-পাথর';
+
+  @override
+  String get surfaceWet => 'ভেজা রাস্তা';
+
+  @override
+  String get surfaceRailCrossing => 'রেলক্রসিং';
+
+  @override
+  String get surfaceSpeedBump => 'স্পিড ব্রেকার';
+
+  @override
+  String get impactSaveAnswer => 'সেভ করুন';
+
+  @override
+  String get impactThanks => 'ধন্যবাদ — এটা কাজে লাগবে।';
+
+  @override
+  String get reportCrashAction => 'দুর্ঘটনা বা পতন জানান';
+
+  @override
+  String get reportCrashTitle => 'কখন ঘটেছিল?';
+
+  @override
+  String get reportCrashBody =>
+      'যে মুহূর্তে পড়েছিলেন সেখানে টেনে আনুন। অ্যাপ যেসব পতন ধরতে পারেনি, সেগুলো শিখতে এটা সাহায্য করে।';
+
+  @override
+  String get reportCrashSaved => 'জানানো হয়েছে। ধন্যবাদ।';
+
+  @override
+  String get crashResearchTitle => 'দুর্ঘটনা শনাক্তকরণ উন্নত করতে সাহায্য করুন';
+
+  @override
+  String get crashResearchDesc =>
+      'পতন নিয়ে আপনার উত্তর আর তার আশপাশের সেন্সর রিডিং শেয়ার করে — আপনার নাম বা সঠিক অবস্থান ছাড়া (শুধু প্রায় 1 কিমি এলাকা)। শুরুতে বন্ধ থাকে।';
 }

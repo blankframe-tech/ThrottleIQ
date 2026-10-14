@@ -1,4 +1,3 @@
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +18,7 @@ import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
 import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
+import '../widgets/phone_placement_selector.dart';
 import '../widgets/rider_stat_strip.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
@@ -89,7 +89,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final quote = resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
+    final quote =
+        resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
     final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
@@ -175,6 +176,11 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       // friend picker or join-by-code, group-ride creation,
                       // invites, navigation.
                       const RideModeSelector(),
+                      const SizedBox(height: 16),
+
+                      // 4. Where the phone rides — shadow-mode crash
+                      // detection reads a mount and a pocket differently.
+                      const PhonePlacementSelector(),
 
                       if (rideState.error != null) ...[
                         const SizedBox(height: 16),
@@ -186,7 +192,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                             children: [
                               Text(recordingErrorText(context.l10n, rideState),
                                   style: TextStyle(
-                                      color: context.palette.danger, fontSize: 13),
+                                      color: context.palette.danger,
+                                      fontSize: 13),
                                   textAlign: TextAlign.center),
                               if (rideState.blockKind !=
                                   RecordingBlockKind.none) ...[
@@ -226,7 +233,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                 ),
               ),
 
-              // 4. Start ride, pinned.
+              // 5. Start ride, pinned.
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
                     AppDimensions.paddingMd, AppDimensions.paddingMd),
@@ -288,7 +295,8 @@ class _NoBikeCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             context.l10n.addBikeRideThrottleiq,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -509,5 +517,3 @@ class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
     );
   }
 }
-
-

@@ -2,7 +2,19 @@
 
 _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-13 (latest): dependabot merged, stale docs moved, branches synced — pushed
+## 2026-10-15 (latest): shadow-mode crash detection — branch `feat/crash-shadow-mode`, pushed, not merged
+
+- Built phases 1–3 of the crash-detection plan that followed the founder's 14 Oct crash: a tiered `ImpactDetector`,
+  50 Hz sensors, `impact_events` (schema v28) with sensor windows, phone-placement chips, the after-ride
+  "Did you fall?" card and "Report a crash", private `impactEvents` sync, and opt-in `crashEvents`. Live alarm
+  still **off**. Details in features.md ("Shadow-mode crash detection"); open items in issues_open.md §78.1.
+- **Needed before release:** deploy `firestore.rules` and `firestore.indexes.json` (Spark is fine), update the
+  privacy policy and store data-safety forms for the opt-in, and measure the battery cost of 50 Hz on a device.
+- Branched from `origin/main` (cc6bb1a) in its own worktree, because a parallel session's `oct14` batch was
+  mid-flight in the main checkout. Expect merge conflicts in `ride_recording_provider.dart`, `firestore.rules`
+  and the ARB files when the two meet.
+
+## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.

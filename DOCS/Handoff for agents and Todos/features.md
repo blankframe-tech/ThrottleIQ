@@ -738,6 +738,49 @@ Nothing below is visible until an RTDB instance exists and the app is built with
 - **Widgets:** themed button and DUE chip keep their 2dp rounded corners again.
 - **Follow QR:** links now use `www.blankframe.tech` (served by the landing-page repo's 404 router).
 
+## Shadow-mode crash detection (2026-10-15, branch `feat/crash-shadow-mode`, not checked on a device)
+
+Built from the plan written after the first real field crash (14 Oct 2026, a walking-pace fall at a rail
+crossing that the app never saw). The live alarm is still **off**; everything here only records and asks.
+
+- **Detector** (`impact_detector.dart`): three tiers. 0 = an impact (logged). 1 = a possible fall (asked
+  after the ride). 2 = a likely crash (the only tier that may alarm, behind `SensorConstants.crashAlertsEnabled
+  = false`). The rules:
+  - speed before an impact is looked up 10 s back (was 5 s, and missed sparse walking-pace fixes);
+  - GPS silence of 5 s after an impact counts as stopped, and stays counted;
+  - falls from ≥ 1 m/s count (was 2 m/s);
+  - "didn't ride on for 20 s" settles an impact, beside stillness and rotation;
+  - a tip-over from a standstill (an impact, then the phone held turned ≥ 60° for 5 s) is its own tier-1 rule;
+  - impacts open at 2.5 g on either stream (motion-filtered or raw minus 1 g), on a clipped run, or when a
+    ≥ 100 ms free fall ends;
+  - tier 2 needs ≥ 15 km/h before, ≥ 4 g or clipping, and 10 s of stillness or a held rotation.
+  Every outcome carries features: both peaks, free fall, gyro rotation, orientation change, vibration RMS,
+  speeds, GPS gap.
+- **Sensors:** 50 Hz on all three IMU streams (`imuSamplingPeriod`). The brake/accel low-pass is now
+  time-based, so its time constant didn't change. The raw accelerometer is always on while shadow mode is.
+- **Saved:** `impact_events` (schema v28) with a 12 s, 9-channel int16 gzip sensor window
+  (`impact_window_recorder.dart`, "TIQW" v1). Caps: at most 20 events and 5 windows per ride, a window
+  for every tier 1+ event and for 10% of tier 0. Rides gain `phone_placement` and `imu_rate_hz`. Rows go
+  with their ride in every delete path.
+- **Ride start:** "Phone: On a mount / In a pocket / In a bag" chips on the Record screen, remembered between
+  rides (`PhonePlacementSetting`). Auto-detected rides record `unknown`.
+- **After the ride:** a "Possible fall at 9:28 PM — did you fall?" card on the ride summary for each answered
+  tier-1+ impact. Answers: yes / phone fell / bump / braked hard / not sure; "yes" asks injury and road surface.
+  Plus a **Report a crash or fall** button for falls the detector missed (tier -1, label `missed`), so recall
+  can be measured.
+- **Cloud:** `users/{uid}/impactEvents/{id}` (private, owner-only, with the window as a Blob). With the opt-in
+  Settings switch **Help improve crash detection** (off by default, `CrashResearchConsent`), answered events
+  also go to `crashEvents/{id}`. That copy is de-identified: a geohash-6 cell, no position, no free text,
+  never readable by clients. Rules in `firestore.rules`, 9 emulator tests in
+  `scripts/test/rules/crash_events_rules.test.js`. Index exemptions for the window, maps and
+  `track.points`.
+- **Scripts:** `scripts/crash_stats.js` (the plan's honest numbers: detected crashes, missed falls, recall,
+  false questions, breakdowns by area / placement / surface / bike class / speed) and
+  `scripts/export_impact_events.js` (CSV plus sensor windows for calibration, riders as salted hashes).
+- **Tests:** detector rules, the 14 Oct crash replayed from its real GPS fixes in five phone situations and
+  both timing readings (`crash_2026_10_14_replay_test.dart`), window format, DAO and migration, payloads,
+  the question card, sensor-constant invariants.
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
