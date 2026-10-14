@@ -10,6 +10,7 @@ From `CrtiQue_Oct14.md` §6/§14. Parallel agents: tiq-ride (recording) and tiq-
 - **Record screen:** the slide-to-start track only existed on Boxy and is deleted; the hold ring is the start control. Tour copy no longer mentions boxy styles (manifest version unchanged: copy only).
 - **Cut:** the 28-combination UI tour and PDF generator (`integration_test/ui_tour_test.dart`, `app/scripts/ui_tour/`), and the two `live_UI_screenshots/` folders of removed looks. The Bangla overflow walk (`TOUR_LOCALE=bn`) went with the tour; restore it from git history if wanted. `DOCS/General/screenshots_ui/` is untouched (owner decides on history removal).
 - **Visual check:** headless widget-test shots at 375x812 (system fonts standing in for IBM Plex/Space Grotesk) of Settings, Maintenance, the feature tour and the start ring + cards, in both themes: all readable.
+- QA: `scripts/check.sh` passed (analyze clean, 2047 flutter tests). Not run: device, Android/iOS builds (one unread Kotlin and one Swift constant removed).
 
 ## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
 
