@@ -243,7 +243,7 @@ With a working beta app (2,100+ automated tests, 274 Firestore security-rule tes
 
 **Execution Track Record:**
 - Shipped `1.0.0-beta.2.2+7` with zero external funding.
-- 862 automated unit tests + 73 security-rule tests passing green.
+- 2,100+ automated unit tests + 274 security-rule tests passing green.
 - Internal test release live on Google Play Console.
 
 ---
