@@ -897,7 +897,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'আপনি কি ঠিক আছেন? টাইমার শেষ হলে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+      'আপনি কি ঠিক আছেন? টাইমার শেষ হওয়ার আগে উত্তর না দিলে রাইডটি সম্ভাব্য দুর্ঘটনা হিসেবে সেভ হবে। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
 
   @override
   String get seconds => 'সেকেন্ড';
@@ -2348,7 +2348,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get thisActionIrreversibleAll =>
-      'এই কাজটি ফেরানো যাবে না। আপনার সব রেকর্ড করা রাইড, বাইক প্রোফাইল, পরিসংখ্যান ও ব্যক্তিগত তথ্য চিরতরে মুছে যাবে।';
+      'এটি আর ফেরানো যাবে না। আপনার সাইন-ইন এবং এই ফোনে রাখা সবকিছু এখনই মুছে যাবে। আপনার ক্লাউড ডেটা (প্রোফাইল, রাইড ও GPS ট্র্যাক, বাইক, জরুরি কন্টাক্ট, পোস্ট ও মেসেজ) আপনার অনুরোধের 30 দিনের মধ্যে হাতে মুছে ফেলা হয়। অনুরোধ করতে, যে ইমেইল দিয়ে সাইন আপ করেছিলেন সেটি থেকে hello@blankframe.tech-এ ইমেইল করুন।';
 
   @override
   String get deletePermanently => 'চিরতরে মুছুন';
@@ -4229,26 +4229,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get badgeRungSaddle8h => 'আট ঘণ্টা';
 
   @override
-  String get badgeFamSpeedName => 'সর্বোচ্চ গতি';
-
-  @override
-  String get badgeFamSpeedAbout => 'আপনার সব রাইডে রেকর্ড করা সর্বোচ্চ গতি।';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return '$n কিমি/ঘণ্টা সর্বোচ্চ গতি রেকর্ড করুন।';
-  }
-
-  @override
-  String get badgeRungTonUp => 'টন-আপ';
-
-  @override
-  String get badgeRungSpeed140 => 'কুইক';
-
-  @override
-  String get badgeRungSpeedDemon => 'স্পিড ডেমন';
-
-  @override
   String get badgeFamNightName => 'নাইট রাইডার';
 
   @override
@@ -4349,9 +4329,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'ঘণ্টা';
-
-  @override
-  String get badgeUnitKmh => 'কিমি/ঘণ্টা';
 
   @override
   String get badgeUnitDays => 'দিন';
@@ -4458,7 +4435,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'আপনি \"আমি ঠিক আছি\"-তে ট্যাপ না করলে $seconds সেকেন্ডের মধ্যে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+    return 'আপনি ঠিক থাকলে $seconds সেকেন্ডের মধ্যে \"আমি ঠিক আছি\"-তে ট্যাপ করুন। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
   }
 
   @override
@@ -5795,12 +5772,6 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'লাইভ';
-
-  @override
-  String get groupRideRealtimeDelayed => 'বিলম্বিত';
-
-  @override
   String get chatTyping => 'টাইপ করছে…';
 
   @override
@@ -5813,6 +5784,16 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get deleteAccountOffline =>
       'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String get updateRequiredTitle => 'আপডেট দরকার';
+
+  @override
+  String get updateRequiredBody =>
+      'ThrottleIQ-এর এই সংস্করণটি আর সার্ভারের সঙ্গে কাজ করে না। অ্যাপটি ব্যবহার চালিয়ে যেতে সর্বশেষ সংস্করণ ইনস্টল করুন।';
+
+  @override
+  String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
 
   @override
   String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';
@@ -5900,33 +5881,6 @@ class AppLocalizationsBn extends AppLocalizations {
       'শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
 
   @override
-  String get badgeRarityCommon => 'সাধারণ';
-
-  @override
-  String get badgeRarityUncommon => 'কিছুটা বিরল';
-
-  @override
-  String get badgeRarityRare => 'দুর্লভ';
-
-  @override
-  String get badgeRarityEpic => 'এপিক';
-
-  @override
-  String get badgeRarityLegendary => 'কিংবদন্তি';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent রাইডারের কাছে এই ব্যাজ আছে';
-  }
-
-  @override
-  String get badgeOwnershipUnknown =>
-      'এই মুহূর্তে বিরলতার তথ্য পাওয়া যাচ্ছে না';
-
-  @override
-  String get badgeRarityLabel => 'বিরলতা';
-
-  @override
   String get badgeHowToEarn => 'কীভাবে পাবেন';
 
   @override
@@ -5956,11 +5910,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি।';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি। $rarity: $percent রাইডারের কাছে এটি আছে।';
   }
 
   @override

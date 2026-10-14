@@ -137,9 +137,10 @@ firebase deploy --only firestore:indexes
 Firebase Storage isn't enabled for this project (no `"storage"` key in
 `firebase.json`) — it requires the Blaze plan even within its free tier.
 Photo uploads (bike photos, profile pictures, forum images) go to Cloudinary
-instead, unsigned upload, cloud name `vjvcigkt`. If Storage is ever turned
-on, `storage.rules` exists in the repo with size/content-type constraints
-already written (`issues_open.md` §33.6/§33.15) but dormant.
+instead, unsigned upload, cloud name `vjvcigkt`. The dormant `storage.rules`
+was deleted on 2026-10-14 (dead file, not in `firebase.json`); if Storage is
+ever turned on, its size/content-type constraints are in git history
+(`issues_open.md` §33.6/§33.15).
 
 ## Cloud Functions — written, cannot deploy on the current plan
 

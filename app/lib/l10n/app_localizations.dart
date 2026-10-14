@@ -1727,7 +1727,7 @@ abstract class AppLocalizations {
   /// Text in active_ride_screen.
   ///
   /// In en, this message translates to:
-  /// **'Are you OK? Your emergency contacts will be notified when the timer ends.'**
+  /// **'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.'**
   String get okEmergencyContactsWill;
 
   /// Text in active_ride_screen.
@@ -4230,7 +4230,7 @@ abstract class AppLocalizations {
   /// Text in settings_screen.
   ///
   /// In en, this message translates to:
-  /// **'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.'**
+  /// **'This can\'t be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.'**
   String get thisActionIrreversibleAll;
 
   /// Text in settings_screen.
@@ -7488,42 +7488,6 @@ abstract class AppLocalizations {
   /// **'Eight hours'**
   String get badgeRungSaddle8h;
 
-  /// Badge family name (speed).
-  ///
-  /// In en, this message translates to:
-  /// **'Top speed'**
-  String get badgeFamSpeedName;
-
-  /// What the speed badge family measures.
-  ///
-  /// In en, this message translates to:
-  /// **'The highest speed recorded on any of your rides.'**
-  String get badgeFamSpeedAbout;
-
-  /// How to earn a speed badge rung; {n} is the threshold.
-  ///
-  /// In en, this message translates to:
-  /// **'Record a top speed of {n} km/h.'**
-  String badgeFamSpeedReq(String n);
-
-  /// Badge rung name (ton_up).
-  ///
-  /// In en, this message translates to:
-  /// **'Ton-up'**
-  String get badgeRungTonUp;
-
-  /// Badge rung name (speed_140).
-  ///
-  /// In en, this message translates to:
-  /// **'Quick'**
-  String get badgeRungSpeed140;
-
-  /// Badge rung name (speed_demon).
-  ///
-  /// In en, this message translates to:
-  /// **'Speed demon'**
-  String get badgeRungSpeedDemon;
-
   /// Badge family name (night).
   ///
   /// In en, this message translates to:
@@ -7703,12 +7667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'h'**
   String get badgeUnitHours;
-
-  /// Unit word after a badge figure (km/h).
-  ///
-  /// In en, this message translates to:
-  /// **'km/h'**
-  String get badgeUnitKmh;
 
   /// Unit word after a badge figure (days).
   ///
@@ -7911,7 +7869,7 @@ abstract class AppLocalizations {
   /// Crash-alert notification body; {seconds} is the countdown.
   ///
   /// In en, this message translates to:
-  /// **'Contacting your emergency contacts in {seconds}s unless you tap \"I\'m OK\".'**
+  /// **'Tap \"I\'m OK\" within {seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.'**
   String notifCrashBody(int seconds);
 
   /// Action button on the crash alert.
@@ -10002,18 +9960,6 @@ abstract class AppLocalizations {
   /// **'Could not upload photo(s): {e}'**
   String forumPhotoUploadFailed(String e);
 
-  /// Badge on the group ride map: positions are arriving over the realtime channel (every ~2s).
-  ///
-  /// In en, this message translates to:
-  /// **'Live'**
-  String get groupRideRealtimeLive;
-
-  /// Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback.
-  ///
-  /// In en, this message translates to:
-  /// **'Delayed'**
-  String get groupRideRealtimeDelayed;
-
   /// Shown under the chat partner's name while they are typing.
   ///
   /// In en, this message translates to:
@@ -10037,6 +9983,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection. Check your internet and try again.'**
   String get deleteAccountOffline;
+
+  /// Title of the blocking screen shown when this build is older than config/app.minBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateRequiredTitle;
+
+  /// Body of the blocking update screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.'**
+  String get updateRequiredBody;
+
+  /// Button on the blocking update screen; opens the install page.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the latest version'**
+  String get updateRequiredAction;
 
   /// Title of the re-authentication dialog before deleting an account.
   ///
@@ -10170,54 +10134,6 @@ abstract class AppLocalizations {
   /// **'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.'**
   String get couldNotArchiveSharedRides;
 
-  /// Badge rarity tier: 40% or more of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Common'**
-  String get badgeRarityCommon;
-
-  /// Badge rarity tier: 15–40% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Uncommon'**
-  String get badgeRarityUncommon;
-
-  /// Badge rarity tier: 5–15% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Rare'**
-  String get badgeRarityRare;
-
-  /// Badge rarity tier: 1–5% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Epic'**
-  String get badgeRarityEpic;
-
-  /// Badge rarity tier: under 1% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Legendary'**
-  String get badgeRarityLegendary;
-
-  /// Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent} of riders own this badge'**
-  String badgeOwnedByPercent(String percent);
-
-  /// Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity isn\'t available right now'**
-  String get badgeOwnershipUnknown;
-
-  /// Badge detail sheet: section label for the rarity figure.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity'**
-  String get badgeRarityLabel;
-
   /// Badge detail sheet: section label for the requirement.
   ///
   /// In en, this message translates to:
@@ -10265,12 +10181,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'I earned the {badge} badge on ThrottleIQ.'**
   String badgeShareText(String badge);
-
-  /// Share text for an earned badge when its rarity is known.
-  ///
-  /// In en, this message translates to:
-  /// **'I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.'**
-  String badgeShareTextRarity(String badge, String rarity, String percent);
 
   /// Accessibility hint on a badge row that opens the badge detail sheet.
   ///

@@ -114,6 +114,11 @@ dependencies:
   # Home-screen widgets (Android App Widget / iOS WidgetKit bridge)
   home_widget: ^0.10.0
 
+  # This build's number for the forced-update gate (core/services/
+  # app_update_gate.dart). Already compiled in as a dependency of
+  # wakelock_plus; listed here because the app now imports it.
+  package_info_plus: ^9.0.1
+
   # Storage
   shared_preferences: ^2.2.3
   path_provider: ^2.1.1

@@ -1165,7 +1165,7 @@
   "@crashDetected": {
     "description": "Text in active_ride_screen."
   },
-  "okEmergencyContactsWill": "Are you OK? Your emergency contacts will be notified when the timer ends.",
+  "okEmergencyContactsWill": "Are you OK? If you don't answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.",
   "@okEmergencyContactsWill": {
     "description": "Text in active_ride_screen."
   },
@@ -3240,7 +3240,7 @@
   "@deleteAccountQuestion": {
     "description": "Text in settings_screen."
   },
-  "thisActionIrreversibleAll": "This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.",
+  "thisActionIrreversibleAll": "This can't be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.",
   "@thisActionIrreversibleAll": {
     "description": "Text in settings_screen."
   },
@@ -5890,35 +5890,6 @@
   "@badgeRungSaddle8h": {
     "description": "Badge rung name (saddle_8h)."
   },
-  "badgeFamSpeedName": "Top speed",
-  "@badgeFamSpeedName": {
-    "description": "Badge family name (speed)."
-  },
-  "badgeFamSpeedAbout": "The highest speed recorded on any of your rides.",
-  "@badgeFamSpeedAbout": {
-    "description": "What the speed badge family measures."
-  },
-  "badgeFamSpeedReq": "Record a top speed of {n} km/h.",
-  "@badgeFamSpeedReq": {
-    "description": "How to earn a speed badge rung; {n} is the threshold.",
-    "placeholders": {
-      "n": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeRungTonUp": "Ton-up",
-  "@badgeRungTonUp": {
-    "description": "Badge rung name (ton_up)."
-  },
-  "badgeRungSpeed140": "Quick",
-  "@badgeRungSpeed140": {
-    "description": "Badge rung name (speed_140)."
-  },
-  "badgeRungSpeedDemon": "Speed demon",
-  "@badgeRungSpeedDemon": {
-    "description": "Badge rung name (speed_demon)."
-  },
   "badgeFamNightName": "Night rider",
   "@badgeFamNightName": {
     "description": "Badge family name (night)."
@@ -6059,10 +6030,6 @@
   "@badgeUnitHours": {
     "description": "Unit word after a badge figure (h)."
   },
-  "badgeUnitKmh": "km/h",
-  "@badgeUnitKmh": {
-    "description": "Unit word after a badge figure (km/h)."
-  },
   "badgeUnitDays": "days",
   "@badgeUnitDays": {
     "description": "Unit word after a badge figure (days)."
@@ -6200,7 +6167,7 @@
   "@notifCrashTitle": {
     "description": "Crash-alert notification title."
   },
-  "notifCrashBody": "Contacting your emergency contacts in {seconds}s unless you tap \"I'm OK\".",
+  "notifCrashBody": "Tap \"I'm OK\" within {seconds}s if you're fine. ThrottleIQ does not contact anyone for you.",
   "@notifCrashBody": {
     "description": "Crash-alert notification body; {seconds} is the countdown.",
     "placeholders": {
@@ -8067,14 +8034,6 @@
       }
     }
   },
-  "groupRideRealtimeLive": "Live",
-  "@groupRideRealtimeLive": {
-    "description": "Badge on the group ride map: positions are arriving over the realtime channel (every ~2s)."
-  },
-  "groupRideRealtimeDelayed": "Delayed",
-  "@groupRideRealtimeDelayed": {
-    "description": "Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback."
-  },
   "chatTyping": "typing…",
   "@chatTyping": {
     "description": "Shown under the chat partner's name while they are typing."
@@ -8090,6 +8049,18 @@
   "deleteAccountOffline": "No connection. Check your internet and try again.",
   "@deleteAccountOffline": {
     "description": "Snackbar when delete-account fails with network-request-failed."
+  },
+  "updateRequiredTitle": "Update required",
+  "@updateRequiredTitle": {
+    "description": "Title of the blocking screen shown when this build is older than config/app.minBuild."
+  },
+  "updateRequiredBody": "This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.",
+  "@updateRequiredBody": {
+    "description": "Body of the blocking update screen."
+  },
+  "updateRequiredAction": "Get the latest version",
+  "@updateRequiredAction": {
+    "description": "Button on the blocking update screen; opens the install page."
   },
   "reauthRequiredTitle": "Confirm it's you",
   "@reauthRequiredTitle": {
@@ -8197,43 +8168,6 @@
   "@couldNotArchiveSharedRides": {
     "description": "Snackbar when archiving fails because the shared rides could not be deleted."
   },
-  "badgeRarityCommon": "Common",
-  "@badgeRarityCommon": {
-    "description": "Badge rarity tier: 40% or more of riders own it."
-  },
-  "badgeRarityUncommon": "Uncommon",
-  "@badgeRarityUncommon": {
-    "description": "Badge rarity tier: 15–40% of riders own it."
-  },
-  "badgeRarityRare": "Rare",
-  "@badgeRarityRare": {
-    "description": "Badge rarity tier: 5–15% of riders own it."
-  },
-  "badgeRarityEpic": "Epic",
-  "@badgeRarityEpic": {
-    "description": "Badge rarity tier: 1–5% of riders own it."
-  },
-  "badgeRarityLegendary": "Legendary",
-  "@badgeRarityLegendary": {
-    "description": "Badge rarity tier: under 1% of riders own it."
-  },
-  "badgeOwnedByPercent": "{percent} of riders own this badge",
-  "@badgeOwnedByPercent": {
-    "description": "Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.",
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeOwnershipUnknown": "Rarity isn't available right now",
-  "@badgeOwnershipUnknown": {
-    "description": "Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available."
-  },
-  "badgeRarityLabel": "Rarity",
-  "@badgeRarityLabel": {
-    "description": "Badge detail sheet: section label for the rarity figure."
-  },
   "badgeHowToEarn": "How to earn it",
   "@badgeHowToEarn": {
     "description": "Badge detail sheet: section label for the requirement."
@@ -8291,21 +8225,6 @@
     "description": "Share text for an earned badge.",
     "placeholders": {
       "badge": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeShareTextRarity": "I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.",
-  "@badgeShareTextRarity": {
-    "description": "Share text for an earned badge when its rarity is known.",
-    "placeholders": {
-      "badge": {
-        "type": "String"
-      },
-      "rarity": {
-        "type": "String"
-      },
-      "percent": {
         "type": "String"
       }
     }

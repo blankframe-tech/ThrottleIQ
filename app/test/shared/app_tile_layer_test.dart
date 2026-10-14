@@ -51,7 +51,7 @@ void main() {
       expect(AppTileLayer.cachedTileProvider, isA<CachedTileProvider>());
       expect(
         layer.tileProvider.headers['User-Agent'],
-        'ThrottleIQ (com.bft.throttleiq; contact@blankframe.com)',
+        'ThrottleIQ (com.bft.throttleiq; hello@blankframe.tech)',
       );
       expect(layer.errorImage, isA<MemoryImage>());
 

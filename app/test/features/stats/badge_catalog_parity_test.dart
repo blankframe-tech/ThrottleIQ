@@ -12,8 +12,20 @@ import 'package:throttleiq/features/stats/data/badge_stats_counter.dart';
 ///  - functions/src/badge-catalog.ts: the Blaze-plan Cloud Functions
 ///    alternative (not deployed on Spark), kept in step so it can be
 ///    switched on without surprises.
+///
+/// Both copies may also hold [retiredIds]: rungs cut from badges.dart that
+/// builds already in riders' hands still award and count. The server must
+/// keep accepting them until those builds are gone (raise config/app.minBuild
+/// first), and the ids must never be reused.
 void main() {
   final appIds = {for (final def in badgeDefs) def.id};
+
+  // The top-speed family, cut on 2026-10-14 (CrtiQue_Oct14 §14).
+  const retiredIds = {'ton_up', 'speed_140', 'speed_demon'};
+
+  test('a retired id never comes back into the catalog', () {
+    expect(appIds.intersection(retiredIds), isEmpty);
+  });
 
   test('the client allow-list is exactly the badge catalog', () {
     expect(countedBadgeIds, appIds);
@@ -40,7 +52,7 @@ void main() {
       reason: 'duplicate id in milestoneBadgeIds()',
     );
     expect(
-      ruleIds.toSet(),
+      ruleIds.toSet().difference(retiredIds),
       appIds,
       reason: 'Update milestoneBadgeIds() in firestore.rules',
     );
@@ -65,7 +77,7 @@ void main() {
       reason: 'Add these to MILESTONE_BADGE_IDS in badge-catalog.ts',
     );
     expect(
-      serverIds.length,
+      serverIds.difference(retiredIds).length,
       badgeDefs.length,
       reason: 'badge-catalog.ts lists ids that badges.dart does not',
     );

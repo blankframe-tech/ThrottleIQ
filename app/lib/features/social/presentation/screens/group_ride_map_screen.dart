@@ -15,11 +15,6 @@ import 'package:record/record.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/realtime/realtime_connection_manager.dart';
-import '../../../../core/realtime/realtime_health.dart';
-import '../../../../core/realtime/realtime_location.dart';
-import '../../../../core/realtime/realtime_location_publisher.dart';
-import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
@@ -27,7 +22,6 @@ import '../../../ride/presentation/widgets/recording_gate.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../../domain/utilities/group_ride_positions.dart';
-import '../../data/repositories/group_ride_live_channel.dart';
 import '../providers/group_ride_providers.dart';
 import '../utils/group_ride_colors.dart';
 import '../widgets/share_group_ride_code_sheet.dart';
@@ -81,27 +75,6 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   StreamSubscription<Map<String, Map<String, dynamic>>>? _locationsSub;
 
   Map<String, Map<String, dynamic>> _locations = const {};
-
-  // -- Realtime Database channel (moving dots) ----------------------------
-  //
-  // Firestore `memberLocations` above stays subscribed and published (on a
-  // 2-minute heartbeat while RTDB is healthy): riders on older builds only
-  // read it, and it's the fallback if the socket dies. Each marker shows
-  // whichever of the two is fresher — see freshestMemberPosition.
-
-  RealtimeLease? _rtLease;
-  StreamSubscription<Map<String, RealtimeLocation>>? _rtSub;
-  RealtimeLocationPublisher? _rtPublisher;
-  Timer? _rtTimer;
-  Map<String, RealtimeLocation> _rtLocations = const {};
-
-  /// Only true once RTDB `meta.creatorId` matched Firestore's creator —
-  /// see [isGroupRideChannelTrusted].
-  bool _rtTrusted = false;
-
-  /// Seq gap / reorder counts for the RTDB stream, logged on dispose — the
-  /// on-device evidence that the channel delivered what it should.
-  final RealtimeDeliveryStats _rtStats = RealtimeDeliveryStats();
 
   String? _locationError;
   bool _hasLocationPermission = false;
@@ -187,11 +160,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       },
       onError: (Object e) {
         if (!mounted) return;
-        setState(() => _locationError = context.l10n.livePositionsUnavailable(e));
+        setState(
+            () => _locationError = context.l10n.livePositionsUnavailable(e));
       },
     );
-
-    unawaited(_startRealtime());
 
     // Publish once immediately so the rest of the group sees this rider
     // without waiting a full interval, then keep it ticking.
@@ -216,84 +188,6 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   }
 
   Timer? _heartbeatTimer;
-
-  /// Opens the RTDB channel for this ride: subscribes to everyone's dots and
-  /// starts publishing this rider's own every [kGroupRideRealtimeInterval]
-  /// (gated by movement). Does nothing — leaving Firestore to carry
-  /// everything — when RTDB isn't configured or its `meta` doesn't match the
-  /// ride's real creator.
-  Future<void> _startRealtime() async {
-    final live = ref.read(groupRideLiveChannelProvider);
-    final uid = ref.read(currentUserProvider)?.uid;
-    if (!live.isEnabled || uid == null) return;
-
-    _rtLease = ref.read(realtimeServicesProvider).acquire('group-ride-map');
-    final ride = await ref
-        .read(groupRideRepositoryProvider)
-        .getGroupRide(widget.groupRideId)
-        .catchError((Object _) => null);
-    final realtimeCreator =
-        ride == null ? null : await live.creatorOf(widget.groupRideId);
-    if (!mounted) return;
-    if (ride == null ||
-        !isGroupRideChannelTrusted(
-          realtimeCreatorId: realtimeCreator,
-          firestoreCreatorId: ride.creatorId,
-        )) {
-      debugPrint('[GroupRideMap] realtime channel not trusted for '
-          '${widget.groupRideId} (rtdb creator: $realtimeCreator) — '
-          'Firestore only');
-      _rtLease?.release();
-      _rtLease = null;
-      return;
-    }
-
-    setState(() => _rtTrusted = true);
-    _rtSub = live.watchLocations(widget.groupRideId).listen(
-      (locations) {
-        for (final entry in locations.entries) {
-          _rtStats.observe(entry.key, entry.value.seq);
-        }
-        if (!mounted) return;
-        setState(() => _rtLocations = locations);
-      },
-      onError: (Object e) {
-        // Permission denied (kicked) or the node vanished: fall back to
-        // Firestore positions rather than freezing the dots.
-        debugPrint('[GroupRideMap] realtime locations error: $e');
-        if (!mounted) return;
-        setState(() {
-          _rtTrusted = false;
-          _rtLocations = const {};
-        });
-      },
-    );
-    _rtPublisher = live.publisherFor(widget.groupRideId, uid);
-    _rtTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      // The recorder's hot fix only — polling Geolocator every second for a
-      // rider who isn't recording would burn the battery. They still get
-      // published on the 20 s Firestore tick (see _broadcastPosition).
-      final ride = ref.read(rideRecordingProvider);
-      final position = ride.currentPosition;
-      if (position == null) return;
-      _offerRealtime(position, speedMs: ride.currentSpeedMs);
-    });
-  }
-
-  void _offerRealtime(LatLng position, {double? speedMs}) {
-    _rtPublisher?.offer(LocationSample(
-      lat: position.latitude,
-      lng: position.longitude,
-      speedMs: speedMs,
-    ));
-  }
-
-  /// Whether RTDB is the thing carrying this rider's position right now.
-  bool get _realtimeCarriesPosition =>
-      _rtTrusted &&
-      _rtPublisher != null &&
-      ref.read(realtimeServicesProvider).transportNow() ==
-          RealtimeTransport.realtime;
 
   Future<void> _heartbeatIfCreator() async {
     final uid = ref.read(currentUserProvider)?.uid;
@@ -330,9 +224,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         _hasLocationPermission = granted;
         // Not fatal: without permission this rider can still watch everyone
         // else move, they just don't appear on the group's maps.
-        _locationError = granted
-            ? null
-            : context.l10n.locationPermissionOffGroup;
+        _locationError =
+            granted ? null : context.l10n.locationPermissionOffGroup;
       });
     } catch (e) {
       if (!mounted) return;
@@ -370,21 +263,17 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
     final position = await _resolvePosition();
     if (!mounted || position == null) return;
-    _offerRealtime(position);
 
     // Parked or crawling: skip the write unless the heartbeat is due
     // (issues §90.A2) — every publish is billed against every member's
-    // listener. While RTDB carries the moving dot, Firestore drops to the
-    // heartbeat alone: it's then only for older builds and the fallback.
+    // listener.
     final now = DateTime.now();
     if (!shouldBroadcastPosition(
       current: position,
       now: now,
       lastSent: _lastSentPosition,
       lastSentAt: _lastSentAt,
-      minMoveMeters: _realtimeCarriesPosition
-          ? double.infinity
-          : kGroupRideMinMoveMeters,
+      minMoveMeters: kGroupRideMinMoveMeters,
     )) {
       return;
     }
@@ -424,7 +313,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: Text(dialogContext.l10n.leave, style: TextStyle(color: dialogContext.palette.danger)),
+            child: Text(dialogContext.l10n.leave,
+                style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -436,11 +326,6 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     // tick could re-create the location document we're about to delete.
     _broadcastTimer?.cancel();
     _broadcastTimer = null;
-    _rtTimer?.cancel();
-    _rtTimer = null;
-    // No remove here: leaveGroupRide clears the RTDB dot (or the whole ride,
-    // for the creator) after the Firestore write.
-    unawaited(_rtPublisher?.stop(remove: false));
 
     try {
       await ref.read(groupRideRepositoryProvider).leaveGroupRide(
@@ -521,7 +406,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       if (_voicePlayer.processingState != ProcessingState.completed &&
           _voicePlayer.processingState != ProcessingState.idle) {
         await _voicePlayer.processingStateStream
-            .firstWhere((s) => s == ProcessingState.completed || s == ProcessingState.idle)
+            .firstWhere((s) =>
+                s == ProcessingState.completed || s == ProcessingState.idle)
             .timeout(const Duration(seconds: 70));
       }
     } catch (_) {
@@ -581,8 +467,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     }
     if (!mounted) return;
     if (!status.isGranted) {
-      setState(() => _voiceNoteError =
-          context.l10n.microphoneAccessOffCan);
+      setState(() => _voiceNoteError = context.l10n.microphoneAccessOffCan);
       return;
     }
 
@@ -690,17 +575,6 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     _staleTicker?.cancel();
     _heartbeatTimer?.cancel();
     _locationsSub?.cancel();
-    _rtTimer?.cancel();
-    _rtSub?.cancel();
-    // The rider is still on the ride (they may just be back on the cockpit),
-    // so their dot stays and simply ages, as the Firestore one always has.
-    unawaited(_rtPublisher?.stop(remove: false));
-    _rtLease?.release();
-    if (_rtTrusted) {
-      debugPrint('[GroupRideMap] realtime delivery: $_rtStats; '
-          'published ${_rtPublisher?.writesIssued ?? 0} '
-          '(${_rtPublisher?.writesFailed ?? 0} failed)');
-    }
     // Best-effort: if the rider navigates away mid-hold there is nobody left
     // to send the clip to anyway, so the recording is simply abandoned
     // rather than raced to finish.
@@ -721,8 +595,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   /// `mergeGroupRideMembers` — not by join time or list order — so a member's
   /// colour index (and therefore their colour) can't shift when somebody else
   /// joins or leaves.
-  List<_MemberView> _buildMembers(
-      List<GroupRideMember> roster, String? myUid) {
+  List<_MemberView> _buildMembers(List<GroupRideMember> roster, String? myUid) {
     final ordered = roster;
 
     return [
@@ -747,7 +620,6 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   /// in the Gulf of Guinea.
   MemberPosition? _freshestFor(GroupRideMember member) =>
       freshestMemberPosition(
-        realtime: _rtTrusted ? _rtLocations[member.userId] : null,
         firestore: _locations[member.userId],
         rosterLat: member.currentLat,
         rosterLng: member.currentLng,
@@ -806,20 +678,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: Text(context.l10n.groupRide)),
-            if (ref.watch(groupRideLiveChannelProvider).isEnabled) ...[
-              const SizedBox(width: 8),
-              _TransportBadge(
-                live: _rtTrusted &&
-                    (ref.watch(realtimeHealthProvider).valueOrNull?.isRealtime ??
-                        false),
-              ),
-            ],
-          ],
-        ),
+        title: Text(context.l10n.groupRide),
         actions: [
           if (recording)
             IconButton(
@@ -841,14 +700,16 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             ),
           TextButton(
             onPressed: _leaving ? null : _leave,
-            child: Text(context.l10n.leave, style: TextStyle(color: context.palette.danger)),
+            child: Text(context.l10n.leave,
+                style: TextStyle(color: context.palette.danger)),
           ),
         ],
       ),
       body: rideAsync.when(
-        loading: () =>
-            Center(child: CircularProgressIndicator(color: context.palette.primary)),
-        error: (e, _) => _ErrorState(message: mapFirestoreError(e, context.l10n)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) =>
+            _ErrorState(message: mapFirestoreError(e, context.l10n)),
         data: (ride) {
           if (ride == null) {
             return _ErrorState(
@@ -879,8 +740,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
           return Column(
             children: [
-              for (final message in [_locationError, _voiceNoteError]
-                  .whereType<String>())
+              for (final message
+                  in [_locationError, _voiceNoteError].whereType<String>())
                 _Banner(message: message),
               Expanded(
                 flex: 3,
@@ -929,7 +790,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             : _isPlayingVoiceNote
                 ? context.l10n.playing(_playingVoiceNoteSender ?? 'voice note')
                 : context.l10n.holdTalk;
-    final accent = _isRecordingVoiceNote ? context.palette.danger : context.palette.primary;
+    final accent = _isRecordingVoiceNote
+        ? context.palette.danger
+        : context.palette.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -945,8 +808,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
               child: GestureDetector(
                 onTapDown: (_) => unawaited(_startRecordingVoiceNote()),
                 onTapUp: (_) => unawaited(_stopRecordingVoiceNoteAndSend()),
-                onTapCancel: () =>
-                    unawaited(_stopRecordingVoiceNoteAndSend()),
+                onTapCancel: () => unawaited(_stopRecordingVoiceNoteAndSend()),
                 child: Container(
                   height: 48,
                   alignment: Alignment.center,
@@ -974,7 +836,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                       const SizedBox(width: 8),
                       Text(
                         label,
-                        style: TextStyle(fontWeight: FontWeight.w600, color: accent),
+                        style: TextStyle(
+                            fontWeight: FontWeight.w600, color: accent),
                       ),
                     ],
                   ),
@@ -1008,10 +871,12 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       options: MapOptions(
         initialCenter: me.isNotEmpty
             ? me.first.position!
-            : (members.firstWhere(
-                  (m) => m.position != null,
-                  orElse: () => _MemberView.empty,
-                ).position ??
+            : (members
+                    .firstWhere(
+                      (m) => m.position != null,
+                      orElse: () => _MemberView.empty,
+                    )
+                    .position ??
                 _fallbackCenter),
         initialZoom: 14,
       ),
@@ -1110,9 +975,7 @@ class _MemberMarker extends StatelessWidget {
         // A stale marker is drawn washed out rather than removed — "he was
         // here 40 seconds ago" is useful; silently showing it as current is
         // not.
-        color: view.isStale
-            ? view.color.withValues(alpha: 0.45)
-            : view.color,
+        color: view.isStale ? view.color.withValues(alpha: 0.45) : view.color,
         border: Border.all(color: Colors.white, width: 2),
         boxShadow: [
           BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 4),
@@ -1249,7 +1112,9 @@ class _MemberRow extends StatelessWidget {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              view.isMe ? context.l10n.you(view.member.userName) : view.member.userName,
+              view.isMe
+                  ? context.l10n.you(view.member.userName)
+                  : view.member.userName,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
@@ -1266,39 +1131,6 @@ class _MemberRow extends StatelessWidget {
                   ? context.palette.attention
                   : context.palette.textTertiary,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// "Live" while dots arrive over the realtime channel, "Delayed" while the
-/// map is on the slower Firestore fallback — so a rider can tell a quiet
-/// group from a degraded connection.
-class _TransportBadge extends StatelessWidget {
-  final bool live;
-  const _TransportBadge({required this.live});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = live ? context.palette.primary : context.palette.attention;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, size: 8, color: color),
-          const SizedBox(width: 4),
-          Text(
-            live
-                ? context.l10n.groupRideRealtimeLive
-                : context.l10n.groupRideRealtimeDelayed,
-            style: TextStyle(fontSize: 11, color: context.palette.textPrimary),
           ),
         ],
       ),
@@ -1323,7 +1155,8 @@ class _Banner extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: TextStyle(fontSize: 12, color: context.palette.textPrimary),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textPrimary),
             ),
           ),
         ],

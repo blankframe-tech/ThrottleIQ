@@ -1,3 +1,12 @@
+> **2026-10-14: v1 and v2 are frozen.** `posters.py`, `posters_v2.py` and
+> `illus.py` were deleted (critique `CrtiQue_Oct14.md` §14); the last copy is on
+> branch `oct14-int`. Their rendered files stay as they are and can no longer be
+> regenerated. Posters that advertised crash detection, SOS or emergency
+> dispatch were removed too, because the detector is off in every build: v1 #05
+> (black box), #09 (resale passport, "crash spikes" row), #13 (family safety)
+> and v2 #05. `posters_v3.py` is the only live generator. The v1/v2 sections
+> below are kept as a record.
+
 ## V3 — street-ad ("Lalamove style"), 1080×1350
 
 `posters_v3.py` builds a third pass in the flat-icon Dhaka-billboard grammar
@@ -67,6 +76,7 @@ read from across the street. Same skin-per-poster and campaign IDs as v1
 (QR links get a `_v2` campaign suffix for separate attribution).
 
 ```bash
+# posters_v2.py was deleted 2026-10-14; this is how the files were made
 .venv/bin/python3 posters_v2.py          # writes svg/v2/*.svg
 .venv/bin/python3 -c "
 import cairosvg, glob, os
@@ -124,7 +134,7 @@ rows and technical terms stay English, matching how the app itself reads.
 - `web/*.png` — 800×1200, for social and the site
 - `svg/*.svg` — vector source, scales to any size. All text is **converted to outlines**,
   so these open correctly anywhere with no fonts installed — hand them to a press as-is.
-- `posters.py`, `lib.py`, `bn.py` — the generator. Edit copy/numbers and re-run.
+- `lib.py`, `bn.py` — shared drawing and Bangla shaping, used by `posters_v3.py` and `social/social.py`. The v1 generator `posters.py` was deleted 2026-10-14.
 - `fonts/` — Noto Sans Bengali (SIL OFL) and DejaVu Sans fonts.
 
 ## QR codes
@@ -169,7 +179,7 @@ The `/install` page automatically sniffs the device OS and presents:
 
 ```bash
 pip install qrcode cairosvg --break-system-packages
-python3 posters.py                     # writes out/*.svg
+python3 posters_v3.py                  # v1's posters.py was deleted 2026-10-14
 python3 -c "import cairosvg,glob,os
 for f in glob.glob('out/*.svg'):
     n=os.path.basename(f)[:-4]

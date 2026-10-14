@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'core/cloud/sync_manager.dart';
 import 'core/i18n/locale_provider.dart';
 import 'core/router/app_router.dart';
+import 'core/services/app_update_gate.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
@@ -25,6 +26,7 @@ import 'features/stats/presentation/providers/badge_sync_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'shared/widgets/keyboard_dismiss_wrapper.dart';
 import 'shared/widgets/root_messenger.dart';
+import 'shared/widgets/update_required_screen.dart';
 import 'features/social/presentation/follow_link_listener.dart';
 import 'core/i18n/l10n_context.dart';
 
@@ -253,6 +255,10 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
       ref.watch(homeWidgetThemeSyncProvider);
 
       final router = ref.watch(routerProvider);
+      // Forced update: true only once config/app.minBuild says this build is
+      // too old. Loading and errors leave the app usable.
+      final updateRequired =
+          ref.watch(updateRequiredProvider).valueOrNull ?? false;
       final appearance = ref.watch(appearanceProvider);
       // null = follow the device language, resolved against supportedLocales.
       final locale = ref.watch(appLocaleProvider);
@@ -275,7 +281,9 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
         scaffoldMessengerKey: rootScaffoldMessengerKey,
         builder: (context, child) => _ClampedTextScale(
           child: KeyboardDismissWrapper(
-            child: child ?? const SizedBox.shrink(),
+            child: updateRequired
+                ? const UpdateRequiredScreen()
+                : child ?? const SizedBox.shrink(),
           ),
         ),
       );

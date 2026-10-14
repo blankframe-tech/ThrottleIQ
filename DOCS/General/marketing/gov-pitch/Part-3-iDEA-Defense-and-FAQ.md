@@ -1,3 +1,5 @@
+> **⚠️ Superseded 2026-10-14. Do not submit this file as written.** It still claims crash detection and emergency alerts that are switched off (crash detection) or not built (alert delivery) in every build. The corrected package is [`../iDEA_PITCH_SUBMISSION.md`](../iDEA_PITCH_SUBMISSION.md) (critique `CrtiQue_Oct14.md` §11).
+
 # Part 3: iDEA Selection Committee Defense & FAQ Cheat Sheet
 **Strategic Answers for the Pitch Interview & Q&A Defense Panel**
 

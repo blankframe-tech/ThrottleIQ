@@ -888,12 +888,6 @@ badgeRungSaddle1h
 badgeRungSaddle2h
 badgeRungSaddle4h
 badgeRungSaddle8h
-badgeFamSpeedName
-badgeFamSpeedAbout
-badgeFamSpeedReq
-badgeRungTonUp
-badgeRungSpeed140
-badgeRungSpeedDemon
 badgeFamNightName
 badgeFamNightAbout
 badgeFamNightReq
@@ -924,7 +918,6 @@ badgeRungSmooth98
 badgeUnitRides
 badgeUnitKm
 badgeUnitHours
-badgeUnitKmh
 badgeUnitDays
 badgeUnitPts
 badgeTierBronze
@@ -1373,8 +1366,6 @@ forumAddPhotos
 paddockPosts
 
 # batch: realtime
-groupRideRealtimeLive
-groupRideRealtimeDelayed
 chatTyping
 
 # batch: audit101-g5
@@ -1408,14 +1399,6 @@ archivedPurgesIn
 couldNotExportBike
 couldNotArchiveSharedRides
 # batch: badge-rarity
-badgeRarityCommon
-badgeRarityUncommon
-badgeRarityRare
-badgeRarityEpic
-badgeRarityLegendary
-badgeOwnedByPercent
-badgeOwnershipUnknown
-badgeRarityLabel
 badgeHowToEarn
 badgeEarnedOn
 badgeEarnedStatus
@@ -1424,7 +1407,6 @@ badgeProgressFraction
 badgeProgressToGo
 badgeShareAction
 badgeShareText
-badgeShareTextRarity
 badgeViewDetails
 # batch: rides-analytics
 ridesAnalyticsTab
@@ -1652,3 +1634,7 @@ analyticsColDistance
 insightPeakMonth
 insightFuelAverage
 insightFuelNeedFullFills
+# batch: oct14 update gate
+updateRequiredTitle
+updateRequiredBody
+updateRequiredAction

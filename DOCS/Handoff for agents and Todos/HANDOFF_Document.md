@@ -1,8 +1,21 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
+_Last updated: 2026-10-14 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, not deployed
+## 2026-10-14 (latest): critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
+
+From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another branch (tiq-rules).
+- **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console.
+- **B1 copy:** delete dialog (EN/BN) and `privacy.html` §9 say cloud data is deleted by hand within 30 days of an email to hello@blankframe.tech; the page now uses that address throughout (was a personal Gmail), effective date 14 Oct 2026. Owner runbook: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
+- **B11:** crash overlay and crash notification show only with `impactDetectorLiveEnabled`; EN/BN copy no longer promises contact delivery. **B14:** OSM User-Agent contact is hello@blankframe.tech.
+- **Claims:** README analytics line (on by default, opt-out); store listing and `iDEA_PITCH_SUBMISSION.md` no longer claim crash detection or emergency alerts; `gov-pitch/` carries a "superseded, do not submit" banner (not rewritten). Data-safety CSV now declares App interactions (collected, optional = opt-out, Analytics) and Analytics as a Device ID purpose; v1/v2 posters with crash/SOS claims deleted.
+- **iOS:** `app/ios/Runner/PrivacyInfo.xcprivacy` added to the Runner target. `flutter build ios --no-codesign` passes; `Podfile.lock` from that build committed (identical to the main checkout's copy: home_widget moved to SPM). Widget extension has no manifest yet.
+- **deploy.sh:** also builds and attaches the three `--split-per-abi` APKs (universal APK kept; the install page links it).
+- **Cuts:** challenges (B6), top-speed badge family, badge rarity UI (B7), RTDB group-ride client (parked on branch `park/rtdb-group-ride`), `storage.rules`, `posters.py` / `posters_v2.py` / `illus.py`. Speed ids `ton_up`, `speed_140`, `speed_demon` stay in `firestore.rules` and `badge-catalog.ts` on purpose (old builds still award them); the parity test treats them as retired.
+- **Not cut:** `seed_police_checkposts.js` / `_v2.js`. They are not superseded: v1, v2 and v3 seed three different batches (30 + 25 + 35 places). Delete only if the 55 v1/v2 places are confirmed in production and never need re-seeding.
+- QA: `scripts/check.sh` passed (analyze clean, 2113 flutter tests; rules and functions unchanged on this branch, so skipped). `flutter build ios --no-codesign` passes. Not run: device, Android release build, rules emulator.
+
+## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, merged into `oct14-int`, not deployed
 
 - **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
 - **B3:** chat create/update, notifications and follow create refuse writes across a block.
@@ -15,7 +28,7 @@ _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indri
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.
 - **Docs:** stale material moved to `DOCS/old/` (see its README): `scripts/archive/`, `archives/`, `ANTIGRAVRITY_GRILL/`, `issues_solved.md`, `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`, `setup-android.*`. Live links updated; historical logs keep the old paths. The 2026-09-21 triage order is now in `DOCS/old/DEBT_FIX_PLAN.md`.
-- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (superseded by `_v3`, still wired in `scripts/package.json`).
+- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (still wired in `scripts/package.json`; not superseded by `_v3`, see 2026-10-14).
 - **Gate note:** `check.sh`'s format check compares against `origin/main`, so touching a Dart file also requires it to be `dart format`-clean (it caught `auto_tracking_service.dart`).
 
 ## 2026-10-09: one quality gate + per-family analytics charts — `experimental`, not pushed

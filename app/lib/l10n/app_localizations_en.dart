@@ -895,7 +895,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'Are you OK? Your emergency contacts will be notified when the timer ends.';
+      'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.';
 
   @override
   String get seconds => 'seconds';
@@ -2341,7 +2341,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thisActionIrreversibleAll =>
-      'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.';
+      'This can\'t be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.';
 
   @override
   String get deletePermanently => 'Delete Permanently';
@@ -4249,27 +4249,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get badgeRungSaddle8h => 'Eight hours';
 
   @override
-  String get badgeFamSpeedName => 'Top speed';
-
-  @override
-  String get badgeFamSpeedAbout =>
-      'The highest speed recorded on any of your rides.';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return 'Record a top speed of $n km/h.';
-  }
-
-  @override
-  String get badgeRungTonUp => 'Ton-up';
-
-  @override
-  String get badgeRungSpeed140 => 'Quick';
-
-  @override
-  String get badgeRungSpeedDemon => 'Speed demon';
-
-  @override
   String get badgeFamNightName => 'Night rider';
 
   @override
@@ -4369,9 +4348,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'h';
-
-  @override
-  String get badgeUnitKmh => 'km/h';
 
   @override
   String get badgeUnitDays => 'days';
@@ -4478,7 +4454,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'Contacting your emergency contacts in ${seconds}s unless you tap \"I\'m OK\".';
+    return 'Tap \"I\'m OK\" within ${seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.';
   }
 
   @override
@@ -5830,12 +5806,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'Live';
-
-  @override
-  String get groupRideRealtimeDelayed => 'Delayed';
-
-  @override
   String get chatTyping => 'typing…';
 
   @override
@@ -5848,6 +5818,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteAccountOffline =>
       'No connection. Check your internet and try again.';
+
+  @override
+  String get updateRequiredTitle => 'Update required';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.';
+
+  @override
+  String get updateRequiredAction => 'Get the latest version';
 
   @override
   String get reauthRequiredTitle => 'Confirm it\'s you';
@@ -5936,32 +5916,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.';
 
   @override
-  String get badgeRarityCommon => 'Common';
-
-  @override
-  String get badgeRarityUncommon => 'Uncommon';
-
-  @override
-  String get badgeRarityRare => 'Rare';
-
-  @override
-  String get badgeRarityEpic => 'Epic';
-
-  @override
-  String get badgeRarityLegendary => 'Legendary';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent of riders own this badge';
-  }
-
-  @override
-  String get badgeOwnershipUnknown => 'Rarity isn\'t available right now';
-
-  @override
-  String get badgeRarityLabel => 'Rarity';
-
-  @override
   String get badgeHowToEarn => 'How to earn it';
 
   @override
@@ -5991,11 +5945,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'I earned the $badge badge on ThrottleIQ.';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'I earned the $badge badge on ThrottleIQ. $rarity: $percent of riders have it.';
   }
 
   @override

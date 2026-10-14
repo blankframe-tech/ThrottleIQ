@@ -8,8 +8,8 @@ set -euo pipefail
 #   1. Commit release changes
 #   2. Quality gate (scripts/check.sh) and push the current branch
 #   3. Build and launch release build on connected iPhone
-#   4. Build Android APK & AAB
-#   5. Create GitHub Release with tag and attach APK & AAB
+#   4. Build Android APKs (universal and per-ABI) & AAB
+#   5. Create GitHub Release with tag and attach the APKs & AAB
 #
 # Usage:
 #   bash scripts/deploy.sh [OPTIONS]
@@ -189,6 +189,19 @@ if [ "$SKIP_ANDROID" = false ]; then
   fi
   echo "APK ready: $APK_PATH ($(du -h "$APK_PATH" | cut -f1))"
 
+  # Per-ABI APKs are much smaller than the universal one. The universal APK
+  # stays because the install page links releases/latest/download/app-release.apk.
+  echo "--- Building per-ABI release APKs ---"
+  flutter build apk --release --split-per-abi ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
+  for abi in arm64-v8a armeabi-v7a x86_64; do
+    SPLIT_PATH="${APP_DIR}/build/app/outputs/flutter-apk/app-${abi}-release.apk"
+    if [ ! -f "$SPLIT_PATH" ]; then
+      echo "❌ Per-ABI APK build failed — file not found: $SPLIT_PATH" >&2
+      exit 1
+    fi
+    echo "APK ready: $SPLIT_PATH ($(du -h "$SPLIT_PATH" | cut -f1))"
+  done
+
   echo "--- Building release AAB ---"
   flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   AAB_PATH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"
@@ -226,7 +239,10 @@ if [ "$SKIP_GITHUB" = false ]; then
 ${COMMITS_LOG}
 
 ### Binaries Attached
-- \`app-release.apk\` (Direct Android Install)
+- \`app-arm64-v8a-release.apk\` (Direct Android Install, most phones)
+- \`app-armeabi-v7a-release.apk\` (Direct Android Install, older 32-bit phones)
+- \`app-x86_64-release.apk\` (emulators)
+- \`app-release.apk\` (Direct Android Install, any phone, largest)
 - \`app-release.aab\` (Google Play App Bundle)
 EOF
 )
@@ -236,6 +252,10 @@ EOF
   AAB_ATTACH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"
 
   ATTACHMENTS=()
+  for abi in arm64-v8a armeabi-v7a x86_64; do
+    SPLIT_ATTACH="${APP_DIR}/build/app/outputs/flutter-apk/app-${abi}-release.apk"
+    [ -f "$SPLIT_ATTACH" ] && ATTACHMENTS+=("$SPLIT_ATTACH")
+  done
   [ -f "$APK_ATTACH" ] && ATTACHMENTS+=("$APK_ATTACH")
   [ -f "$AAB_ATTACH" ] && ATTACHMENTS+=("$AAB_ATTACH")
 

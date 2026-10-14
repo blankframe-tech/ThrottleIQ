@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import '../constants/sensor_constants.dart';
 import '../i18n/l10n_lookup.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -164,7 +165,8 @@ class NotificationService {
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
-      return await ios.requestPermissions(alert: true, badge: true, sound: true) ??
+      return await ios.requestPermissions(
+              alert: true, badge: true, sound: true) ??
           false;
     }
     return false;
@@ -184,6 +186,8 @@ class NotificationService {
   /// swiping away a crash alert must not silently cancel the countdown *or*
   /// silently let it run — the rider has to answer it.
   Future<void> showCrashAlert({required int secondsRemaining}) async {
+    // Crash copy only with the detector on (CrtiQue_Oct14 B11).
+    if (!SensorConstants.impactDetectorLiveEnabled) return;
     await init();
     final l10n = await savedL10n();
     await _plugin.show(

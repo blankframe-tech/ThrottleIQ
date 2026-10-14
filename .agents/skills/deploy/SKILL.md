@@ -49,13 +49,14 @@ bash scripts/deploy.sh
    cd app && flutter run --release -d 00008120-001E5D190A85A01E
    ```
 
-4. **Build Android APK & AAB**:
+4. **Build Android APKs & AAB**:
    ```bash
    cd app && flutter build apk --release
+   flutter build apk --release --split-per-abi
    flutter build appbundle --release
    ```
 
 5. **GitHub Release**:
    ```bash
-   gh release create <tag> app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes>"
+   gh release create <tag> app/build/app/outputs/flutter-apk/app-*-release.apk app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes>"
    ```
