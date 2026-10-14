@@ -85,6 +85,20 @@ flutter {
     source = "../.."
 }
 
+// One versionCode on every artifact: the pubspec build number (the part after
+// `+`). `--split-per-abi` makes Flutter set abi * 1000 + build (2027 for an
+// arm64 build 27), which the `config/app.minBuild` gate would read, and which
+// makes a later universal APK or Play install a refused downgrade (CrtiQue_Oct15
+// N1). Splits only go to GitHub, never Play, so they need no unique codes.
+// The Flutter plugin registered its variant hook when it was applied, so this
+// one runs after it and wins. scripts/deploy.sh checks every APK before release.
+android.applicationVariants.configureEach {
+    val base = versionCode
+    outputs.forEach {
+        (it as com.android.build.gradle.api.ApkVariantOutput).versionCodeOverride = base
+    }
+}
+
 
 
 dependencies {

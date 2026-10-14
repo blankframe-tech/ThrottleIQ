@@ -11,8 +11,9 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// can't survive gets shipped.
 
 /// This build's number: the part after `+` in pubspec.yaml, which Flutter
-/// writes into the Android versionCode and the iOS CFBundleVersion. 0 when it
-/// can't be read, which never blocks.
+/// writes into the Android versionCode and the iOS CFBundleVersion. Per-ABI
+/// APKs carry the same number (build.gradle.kts resets Flutter's
+/// abi * 1000 + build). 0 when it can't be read, which never blocks.
 Future<int> currentBuildNumber() async {
   try {
     return int.tryParse((await PackageInfo.fromPlatform()).buildNumber) ?? 0;

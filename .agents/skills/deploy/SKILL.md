@@ -55,6 +55,10 @@ bash scripts/deploy.sh
    flutter build apk --release --split-per-abi
    flutter build appbundle --release
    ```
+   Every artifact gets the same versionCode: the pubspec build number after `+`.
+   `build.gradle.kts` undoes Flutter's `abi * 1000 + build` for splits, and
+   `deploy.sh` refuses to release if any APK differs. The `config/app.minBuild`
+   gate compares that number, so bump it for every release and never reuse it.
 
 5. **GitHub Release**:
    ```bash
