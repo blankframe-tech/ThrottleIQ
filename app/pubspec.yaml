@@ -162,6 +162,8 @@ dependencies:
   firebase_analytics: ^11.6.0
   printing: ^5.15.1
   pdf: ^3.13.1
+  # SHA-256 for the emailLookup doc id (ProfileRepository's emailLookupId).
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
