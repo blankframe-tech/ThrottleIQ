@@ -54,15 +54,17 @@ import '../../features/social/presentation/screens/shared_ride_detail_screen.dar
 import '../../features/social/domain/entities/shared_ride_entity.dart';
 import '../../features/social/presentation/screens/all_people_screen.dart';
 import '../analytics/analytics_service.dart';
+import '../services/app_modules.dart';
 
 /// Notifies GoRouter's `redirect` to re-run whenever [authStateProvider]
-/// emits, without rebuilding [routerProvider] itself — rebuilding would
+/// or [appModulesProvider] emits, without rebuilding [routerProvider] itself — rebuilding would
 /// construct a brand-new GoRouter and reset the whole Navigator back to
 /// initialLocation, wiping any in-progress screen state (e.g. onboarding's
 /// bike-entry step).
 class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(Ref ref) {
     ref.listen(authStateProvider, (_, __) => notifyListeners());
+    ref.listen(appModulesProvider, (_, __) => notifyListeners());
   }
 }
 
@@ -92,11 +94,17 @@ final routerProvider = Provider<GoRouter>((ref) {
       // Read fresh on every call — redirect must never close over a stale
       // auth snapshot from provider-build time.
       final auth = ref.read(authStateProvider);
-      return computeAuthRedirect(
+      final authRedirect = computeAuthRedirect(
         isAuth: auth.valueOrNull != null,
         isOnboarding: auth.valueOrNull?.displayName == null,
         loc: state.matchedLocation,
       );
+      // A screen whose module the rider turned off (Settings → Your
+      // ThrottleIQ) lands on their home tab instead — deep links, widgets
+      // and notifications included.
+      final modules = ref.read(appModulesProvider);
+      return modules.redirectFor(authRedirect ?? state.matchedLocation) ??
+          authRedirect;
     },
     routes: [
       GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),

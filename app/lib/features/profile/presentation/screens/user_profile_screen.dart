@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/services/app_modules.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -219,38 +220,42 @@ class _ProfileBody extends ConsumerWidget {
               ],
             ),
           ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _CountStat(
-                  label: context.l10n.followersLabel, value: followerCount),
-              const SizedBox(width: 28),
-              _CountStat(
-                  label: context.l10n.followingLabel, value: followingCount),
-            ],
-          ),
-          if (isMe) ...[
-            const SizedBox(height: 16),
+          // Follows and the follow QR are social; a rider with social off
+          // sees their own profile without them.
+          if (ref.watch(appModulesProvider).social) ...[
+            const SizedBox(height: 20),
             Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/profile/qr'),
-                    icon: const Icon(Icons.qr_code_2, size: 18),
-                    label: Text(context.l10n.myQrTitle),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/profile/scan'),
-                    icon: const Icon(Icons.qr_code_scanner, size: 18),
-                    label: Text(context.l10n.scanQrAction),
-                  ),
-                ),
+                _CountStat(
+                    label: context.l10n.followersLabel, value: followerCount),
+                const SizedBox(width: 28),
+                _CountStat(
+                    label: context.l10n.followingLabel, value: followingCount),
               ],
             ),
+            if (isMe) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/profile/qr'),
+                      icon: const Icon(Icons.qr_code_2, size: 18),
+                      label: Text(context.l10n.myQrTitle),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => context.push('/profile/scan'),
+                      icon: const Icon(Icons.qr_code_scanner, size: 18),
+                      label: Text(context.l10n.scanQrAction),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
           if (!isMe && myUid != null && isFollowingAsync != null) ...[
             const SizedBox(height: 16),

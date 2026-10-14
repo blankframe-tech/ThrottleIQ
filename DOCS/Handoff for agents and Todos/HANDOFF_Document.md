@@ -2,7 +2,12 @@
 
 _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-13 (latest): dependabot merged, stale docs moved, branches synced — pushed
+## 2026-10-15 (latest): modular ThrottleIQ — branch `modular-throttleiq`, pushed, not merged
+
+- Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
+- Not done: the feature tour still offers Social/Places/Record steps when those are off (Show me just lands on the home tab); forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
+
+## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.

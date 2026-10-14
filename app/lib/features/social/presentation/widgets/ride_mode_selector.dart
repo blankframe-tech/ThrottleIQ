@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -127,6 +128,8 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
 
   @override
   Widget build(BuildContext context) {
+    // Group rides are social; a solo-only rider has nothing to choose.
+    if (!ref.watch(appModulesProvider).social) return const SizedBox.shrink();
     final l10n = AppLocalizations.of(context);
     final liveGroupRide = ref.watch(currentLiveGroupRideProvider);
     return Column(
@@ -245,7 +248,9 @@ class _ModeSegment extends StatelessWidget {
           children: [
             Icon(icon,
                 size: 18,
-                color: selected ? context.palette.surface : context.palette.textPrimary),
+                color: selected
+                    ? context.palette.surface
+                    : context.palette.textPrimary),
             const SizedBox(width: 6),
             Flexible(
               child: Text(
@@ -254,7 +259,9 @@ class _ModeSegment extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: selected ? context.palette.surface : context.palette.textPrimary,
+                  color: selected
+                      ? context.palette.surface
+                      : context.palette.textPrimary,
                 ),
               ),
             ),
@@ -264,7 +271,6 @@ class _ModeSegment extends StatelessWidget {
     );
   }
 }
-
 
 class _LiveGroupRideBanner extends StatelessWidget {
   const _LiveGroupRideBanner({

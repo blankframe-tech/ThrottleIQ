@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/bike_image_resolver.dart';
@@ -72,7 +73,8 @@ class VisitTile extends ConsumerWidget {
                 ),
                 const SizedBox(height: 3),
                 Text(meta,
-                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
                 if (v.items.length > 1) ...[
                   const SizedBox(height: 6),
                   Wrap(
@@ -81,8 +83,8 @@ class VisitTile extends ConsumerWidget {
                     children: [
                       for (final i in v.items)
                         Container(
-                          padding:
-                              const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
                           decoration: BoxDecoration(
                             color: context.palette.surfaceVariant,
                             borderRadius:
@@ -99,7 +101,8 @@ class VisitTile extends ConsumerWidget {
                 if ((v.notes ?? '').isNotEmpty) ...[
                   const SizedBox(height: 4),
                   Text(v.notes!,
-                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+                      style: TextStyle(
+                          fontSize: 12, color: context.palette.textTertiary)),
                 ],
               ],
             ),
@@ -108,11 +111,13 @@ class VisitTile extends ConsumerWidget {
             const SizedBox(width: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(context.shape.radiusSm),
-              child: Image.file(File(receipt), width: 40, height: 40, fit: BoxFit.cover),
+              child: Image.file(File(receipt),
+                  width: 40, height: 40, fit: BoxFit.cover),
             ),
           ],
           PopupMenuButton<String>(
-            icon: Icon(Icons.more_vert, size: 18, color: context.palette.textTertiary),
+            icon: Icon(Icons.more_vert,
+                size: 18, color: context.palette.textTertiary),
             onSelected: (choice) async {
               if (choice == 'share') {
                 await showForumPickerSheet(
@@ -126,7 +131,9 @@ class VisitTile extends ConsumerWidget {
                         ? l10n.freeServiceN(v.freeServiceNumber!)
                         : (v.items.length == 1
                             ? v.items.first.localizedDisplayLabel(l10n)
-                            : v.items.map((i) => i.localizedDisplayLabel(l10n)).join(', ')),
+                            : v.items
+                                .map((i) => i.localizedDisplayLabel(l10n))
+                                .join(', ')),
                     subtitle: [
                       meta,
                       if (v.totalCost != null) '৳${formatTaka(v.totalCost!)}',
@@ -140,9 +147,11 @@ class VisitTile extends ConsumerWidget {
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: ctx.palette.surface,
-                  title: Text(ctx.l10n.deleteVisitTitle, style: display(ctx, 16)),
+                  title:
+                      Text(ctx.l10n.deleteVisitTitle, style: display(ctx, 16)),
                   content: Text(ctx.l10n.deleteVisitBody(v.items.length),
-                      style: TextStyle(fontSize: 13, color: ctx.palette.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 13, color: ctx.palette.textSecondary)),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(ctx).pop(false),
@@ -164,7 +173,9 @@ class VisitTile extends ConsumerWidget {
               }
             },
             itemBuilder: (ctx) => [
-              PopupMenuItem(value: 'share', child: Text(ctx.l10n.shareToForum)),
+              if (ref.read(appModulesProvider).forums)
+                PopupMenuItem(
+                    value: 'share', child: Text(ctx.l10n.shareToForum)),
               PopupMenuItem(value: 'delete', child: Text(ctx.l10n.delete)),
             ],
           ),

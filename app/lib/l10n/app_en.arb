@@ -8879,5 +8879,109 @@
   "insightFuelNeedFullFills": "Log two full-tank fill-ups to measure this.",
   "@insightFuelNeedFullFills": {
     "description": "Insight on efficiency charts when fewer than two full-tank fills exist."
+  },
+  "yourThrottleIqSection": "Your ThrottleIQ",
+  "@yourThrottleIqSection": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "yourThrottleIqDescription": "Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.",
+  "@yourThrottleIqDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFieldLabel": "Community",
+  "@communityFieldLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullLabel": "Everything",
+  "@communityFullLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullDescription": "Rides, riders & forums",
+  "@communityFullDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsLabel": "Forums only",
+  "@communityForumsLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsDescription": "No feed or people",
+  "@communityForumsDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffLabel": "Off",
+  "@communityOffLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffDescription": "No community",
+  "@communityOffDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleTitle": "Places & routes",
+  "@placesModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleSubtitle": "Fuel, mechanics, checkposts and saved routes",
+  "@placesModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleTitle": "Ride tracking",
+  "@rideTrackingModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleSubtitle": "Recording, ride analytics, automatic odometer and crash detection. Uses your location.",
+  "@rideTrackingModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleKeepOnAction": "Keep it on",
+  "@moduleKeepOnAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleTurnOffAction": "Turn off",
+  "@moduleTurnOffAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningTitle": "Hide rides and riders?",
+  "@communityForumsOnlyWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningBody": "You won't see rides others share, and you can't follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.",
+  "@communityForumsOnlyWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningTitle": "Turn off the community?",
+  "@communityOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningBody": "You'll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.",
+  "@communityOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningTitle": "Turn off Places?",
+  "@placesOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningBody": "You won't see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.",
+  "@placesOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningTitle": "Turn off ride tracking?",
+  "@rideTrackingOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningBody": "ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.",
+  "@rideTrackingOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffDuringRide": "Finish your ride before turning ride tracking off.",
+  "@rideTrackingOffDuringRide": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "modulesUpdatedSnack": "Done. Your tabs now show only what you use.",
+  "@modulesUpdatedSnack": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
+  "@manualOdometerHint": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
   }
 }
