@@ -1,39 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// The selectable color families ("color modes"). Brightness is a SEPARATE
-/// axis — see [AppColorPalette.forMode] — so every mode here has both a dark
-/// and a light [AppColorPalette], and a rider picks color and brightness
-/// independently (plus a third, independent shape axis — see
-/// [AppShapeVibe]). A skin used to be "one name = one fixed color + fixed
-/// brightness + fixed shape"; it is now the combination of three separate
-/// choices, which is what makes "sharp dark" and "curvy light" reachable
-/// from every color family rather than from whichever one happened to ship
-/// with that brightness.
-///
-/// Enum member names are the persisted values (see `theme_style_provider.dart`)
-/// — renaming one silently resets riders who had it selected.
-///
-/// Named after riding modes rather than the palettes' design-deck names. The
-/// families behind them (and the names a pre-rename install may still have
-/// on disk, decoded in `theme_style_provider.dart`):
-///   - [sport]   → Carbon Mono  (lime/magenta instrument panel)
-///   - [rain]    → Nocturne     (deep indigo, lavender, teal)
-///   - [race]    → Retro        (mustard/rust 70s race-poster livery)
-///   - [commute] → Calming      (cream, sage, tan) — the default
-///   - [tour]    → Trail Social (kudos orange, sky blue)
-///   - [adv]     → Analyst Blue (navy console, cyan telemetry)
-///   - [city]    → Editorial    (warm paper, blue and orange)
-enum AppColorMode {
-  sport,
-  rain,
-  race,
-  commute,
-  tour,
-  adv,
-  city,
-}
-
-/// One immutable set of color tokens.
+/// The app has exactly two themes (critique 2026-10-14 §6/§14: two themes,
+/// not 28 combinations): [calmingLight], the sage-on-cream default every new
+/// install starts on, and [carbonMonoDark], the lime-on-carbon flagship whose
+/// accent stays visible over the bright OSM map at night. A rider picks only
+/// Light, Dark or System (see `theme_style_provider.dart`).
 ///
 /// Registered on [ThemeData.extensions] by `AppTheme.build` and read with
 /// `context.palette` (see `app_theme_context.dart`). Because it travels
@@ -73,26 +44,7 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
   /// Whether this palette sits on a dark base. Drives the Material
   /// `ThemeData` brightness, the `ColorScheme` variant and the status-bar
   /// icon color in `app_theme.dart`, and which app mark `AppLogo` shows.
-  /// Always agrees with the [Brightness] it was resolved for in
-  /// [forMode] — kept as a field (rather than derived) so a palette that's
-  /// handed around on its own still knows what it is.
   final bool isDark;
-
-  /// Whether surfaces in this palette should carry a hard, unblurred offset
-  /// shadow (`4px 4px 0 border`, no blur) instead of no shadow at all.
-  /// Defaulted to `false` so every existing palette needs no change — only
-  /// [retroLight]/[retroDark] opt in, matching the "Retro (Rawblock)" style
-  /// direction's `box-shadow:8px 8px 0 #1a1a1a`. See `AppCard`/`StatCard`,
-  /// the two shared surfaces that read this.
-  final bool hasHardShadow;
-
-  /// Whether display type (headings, big numbers) is set in a monospace face
-  /// instead of the shared proportional one. Only Retro opts in: its whole
-  /// identity is a terminal, and a proportional face on square corners and
-  /// hard rules reads as an unfinished theme. Independent of shape and
-  /// brightness — Retro is monospace whether it's Boxy or Curvy, dark or
-  /// light. See `AppTypography.display`.
-  final bool monoDisplay;
 
   const AppColorPalette({
     required this.background,
@@ -118,8 +70,6 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     required this.shimmerBase,
     required this.shimmerHighlight,
     required this.isDark,
-    this.hasHardShadow = false,
-    this.monoDisplay = false,
   });
 
   @override
@@ -147,8 +97,6 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     Color? shimmerBase,
     Color? shimmerHighlight,
     bool? isDark,
-    bool? hasHardShadow,
-    bool? monoDisplay,
   }) =>
       AppColorPalette(
         background: background ?? this.background,
@@ -174,17 +122,14 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
         shimmerBase: shimmerBase ?? this.shimmerBase,
         shimmerHighlight: shimmerHighlight ?? this.shimmerHighlight,
         isDark: isDark ?? this.isDark,
-        hasHardShadow: hasHardShadow ?? this.hasHardShadow,
-        monoDisplay: monoDisplay ?? this.monoDisplay,
       );
 
-  /// Colors cross-fade while `MaterialApp` animates a theme change; the three
-  /// flags are not interpolable, so they flip at the halfway point.
+  /// Colors cross-fade while `MaterialApp` animates a theme change; [isDark]
+  /// is not interpolable, so it flips at the halfway point.
   @override
   AppColorPalette lerp(ThemeExtension<AppColorPalette>? other, double t) {
     if (other is! AppColorPalette) return this;
     Color c(Color a, Color b) => Color.lerp(a, b, t)!;
-    final flags = t < 0.5 ? this : other;
     return AppColorPalette(
       background: c(background, other.background),
       surface: c(surface, other.surface),
@@ -208,248 +153,11 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
       overlayDark: c(overlayDark, other.overlayDark),
       shimmerBase: c(shimmerBase, other.shimmerBase),
       shimmerHighlight: c(shimmerHighlight, other.shimmerHighlight),
-      isDark: flags.isDark,
-      hasHardShadow: flags.hasHardShadow,
-      monoDisplay: flags.monoDisplay,
+      isDark: t < 0.5 ? isDark : other.isDark,
     );
   }
 
-  // ── Carbon Mono ─────────────────────────────────────────────────────────
-  // Dark instrument-panel base, lime primary, magenta secondary. The app's
-  // flagship identity — kept unchanged from the original single-brightness
-  // skin. The light companion is a genuine daylight mode for the SAME brand,
-  // not a different color story: it darkens the lime/magenta hues just
-  // enough to clear body-text contrast on white (verified below; ≥4.5:1),
-  // rather than switching to an unrelated accent the way "Editorial" would.
-
-  static const AppColorPalette carbonMonoDark = AppColorPalette(
-    background: Color(0xFF0D0D0D),
-    surface: Color(0xFF161616),
-    border: Color(0xFF393939),
-    surfaceVariant: Color(0xFF262626),
-    ink: Color(0xFF000000),
-    onInk: Color(0xFFF4F4F4),
-    onInkMuted: Color(0xFF6F6F6F),
-    primary: Color(0xFFC8FF3D), // lime
-    primaryHighlight: Color(0xFFE4FF8F),
-    primaryDark: Color(0xFF9FCC1F),
-    secondary: Color(0xFFD633FF), // magenta
-    secondaryLight: Color(0xFFE88CFF),
-    attention: Color(0xFFFF7A45),
-    success: Color(0xFF42BE65),
-    warning: Color(0xFFFF7A45),
-    danger: Color(0xFFFA4D56),
-    textPrimary: Color(0xFFF4F4F4),
-    textSecondary: Color(0xFFA8A8A8),
-    textTertiary: Color(0xFF6F6F6F),
-    overlayDark: Color(0xCC000000),
-    shimmerBase: Color(0xFF262626),
-    shimmerHighlight: Color(0xFF393939),
-    isDark: true,
-  );
-
-  /// Carbon Mono's daylight companion. `primary`/`secondary` are the same
-  /// lime/magenta hues, darkened for AA contrast on a near-white base
-  /// (`#5C7A1E` ≈ 4.9:1, `#A82BC0` ≈ 5.6:1 against `background` below) —
-  /// deliberately NOT Editorial's unrelated blue/orange, so switching
-  /// brightness never reads as switching brands.
-  static const AppColorPalette carbonMonoLight = AppColorPalette(
-    background: Color(0xFFF7F8F4), // cool near-white, faint green undertone
-    surface: Color(0xFFFFFFFF),
-    border: Color(0xFFE2E5DC),
-    surfaceVariant: Color(0xFFEDF0E6),
-    ink: Color(0xFF101010),
-    onInk: Color(0xFFF7F8F4),
-    onInkMuted: Color(0xFFADB2A2),
-    primary: Color(0xFF5C7A1E), // moss/olive — dark end of the lime hue line
-    primaryHighlight: Color(0xFF8CB53F),
-    primaryDark: Color(0xFF3F5714),
-    secondary: Color(0xFFA82BC0), // darkened magenta
-    secondaryLight: Color(0xFFD66FE8),
-    attention: Color(0xFFC85A2A),
-    success: Color(0xFF2F9E52),
-    warning: Color(0xFFC85A2A),
-    danger: Color(0xFFD6303B),
-    textPrimary: Color(0xFF141414),
-    textSecondary: Color(0xFF5C5C55),
-    textTertiary: Color(0xFF8B8F80),
-    overlayDark: Color(0xCC000000),
-    shimmerBase: Color(0xFFE7EAE0),
-    shimmerHighlight: Color(0xFFF2F4EC),
-    isDark: false,
-  );
-
-  // ── Editorial ───────────────────────────────────────────────────────────
-  // Warm paper base, blue primary, orange secondary. The dark companion
-  // keeps the same two hues, lightened (reusing what used to be named
-  // `primaryHighlight`/`secondaryLight`) rather than introducing a third
-  // color story.
-
-  static const AppColorPalette editorialLight = AppColorPalette(
-    background: Color(0xFFF4F1EC),
-    surface: Color(0xFFFAF9F6),
-    border: Color(0xFFE8E5DF),
-    surfaceVariant: Color(0xFFF0EEE9),
-    ink: Color(0xFF121212),
-    onInk: Color(0xFFF4F1EC),
-    onInkMuted: Color(0xFFB0B0B0),
-    primary: Color(0xFF3B6CF6),
-    primaryHighlight: Color(0xFF6B90F8),
-    primaryDark: Color(0xFF2952C8),
-    secondary: Color(0xFFF2703C),
-    secondaryLight: Color(0xFFF58C5F),
-    attention: Color(0xFFF2703C),
-    success: Color(0xFF1AA568),
-    warning: Color(0xFFF2703C),
-    danger: Color(0xFFE5484D),
-    textPrimary: Color(0xFF141414),
-    textSecondary: Color(0xFF6B6B6B),
-    textTertiary: Color(0xFF9A9A9A),
-    overlayDark: Color(0xCC141414),
-    shimmerBase: Color(0xFFE8E5DF),
-    shimmerHighlight: Color(0xFFF0EEE9),
-    isDark: false,
-  );
-
-  static const AppColorPalette editorialDark = AppColorPalette(
-    background: Color(0xFF15130F),
-    surface: Color(0xFF1E1B16),
-    border: Color(0xFF35312A),
-    surfaceVariant: Color(0xFF262219),
-    ink: Color(0xFF0A0908),
-    onInk: Color(0xFFF4F1EC),
-    onInkMuted: Color(0xFF6B665D),
-    primary: Color(0xFF6B90F8), // was editorialLight.primaryHighlight
-    primaryHighlight: Color(0xFF9CB4FA),
-    primaryDark: Color(0xFF3B6CF6), // was editorialLight.primary
-    secondary: Color(0xFFF58C5F), // was editorialLight.secondaryLight
-    secondaryLight: Color(0xFFFAB08A),
-    attention: Color(0xFFF58C5F),
-    success: Color(0xFF2ECC81),
-    warning: Color(0xFFF58C5F),
-    danger: Color(0xFFF0666B),
-    textPrimary: Color(0xFFF4F1EC),
-    textSecondary: Color(0xFFB0AAA0),
-    textTertiary: Color(0xFF7D786E),
-    overlayDark: Color(0xCC141414),
-    shimmerBase: Color(0xFF262219),
-    shimmerHighlight: Color(0xFF35312A),
-    isDark: true,
-  );
-
-  // ── Nocturne ────────────────────────────────────────────────────────────
-  // Deep indigo dark mode, lavender primary, teal secondary.
-
-  static const AppColorPalette nocturneDark = AppColorPalette(
-    background: Color(0xFF0B0C16),
-    surface: Color(0xFF14151F),
-    border: Color(0xFF2C2D38),
-    surfaceVariant: Color(0xFF1C1E2D),
-    ink: Color(0xFF05050D),
-    onInk: Color(0xFFEDEEF5),
-    onInkMuted: Color(0xFF7D7F8C),
-    primary: Color(0xFFA0A6F3),
-    primaryHighlight: Color(0xFFC2C8FF),
-    primaryDark: Color(0xFF7377C6),
-    secondary: Color(0xFF56B6BB),
-    secondaryLight: Color(0xFF8DD2D6),
-    attention: Color(0xFFE6857E),
-    success: Color(0xFF62BB78),
-    warning: Color(0xFFE29E47),
-    danger: Color(0xFFE85854),
-    textPrimary: Color(0xFFEDEEF5),
-    textSecondary: Color(0xFFA2A4AE),
-    textTertiary: Color(0xFF6F717D),
-    overlayDark: Color(0xCC030309),
-    shimmerBase: Color(0xFF1D1E29),
-    shimmerHighlight: Color(0xFF31323D),
-    isDark: true,
-  );
-
-  static const AppColorPalette nocturneLight = AppColorPalette(
-    background: Color(0xFFF3F3FA),
-    surface: Color(0xFFFFFFFF),
-    border: Color(0xFFE1E1F0),
-    surfaceVariant: Color(0xFFEAEAF6),
-    ink: Color(0xFF0D0E1A),
-    onInk: Color(0xFFF3F3FA),
-    onInkMuted: Color(0xFFABADC2),
-    primary: Color(0xFF5A5FC0), // darkened lavender
-    primaryHighlight: Color(0xFF8286DE),
-    primaryDark: Color(0xFF3E4291),
-    secondary: Color(0xFF2A8A8F), // darkened teal
-    secondaryLight: Color(0xFF56B6BB),
-    attention: Color(0xFFC85850),
-    success: Color(0xFF3F9A57),
-    warning: Color(0xFFB97D2C),
-    danger: Color(0xFFD03530),
-    textPrimary: Color(0xFF14151F),
-    textSecondary: Color(0xFF5C5E70),
-    textTertiary: Color(0xFF8B8DA0),
-    overlayDark: Color(0xCC030309),
-    shimmerBase: Color(0xFFE7E7F2),
-    shimmerHighlight: Color(0xFFF0F0F8),
-    isDark: false,
-  );
-
-  // ── Trail Social ────────────────────────────────────────────────────────
-  // Dark social-feed base, kudos-orange primary, blue secondary.
-
-  static const AppColorPalette trailSocialDark = AppColorPalette(
-    background: Color(0xFF101418),
-    surface: Color(0xFF1C2024),
-    border: Color(0xFF2F3338),
-    surfaceVariant: Color(0xFF25292E),
-    ink: Color(0xFF05080B),
-    onInk: Color(0xFFF8F8F8),
-    onInkMuted: Color(0xFF7C8186),
-    primary: Color(0xFFF5642B),
-    primaryHighlight: Color(0xFFFF9661),
-    primaryDark: Color(0xFFBF4213),
-    secondary: Color(0xFF53A3F2),
-    secondaryLight: Color(0xFF8CC3FC),
-    attention: Color(0xFFEB881F),
-    success: Color(0xFF54B85B),
-    warning: Color(0xFFE49E22),
-    danger: Color(0xFFE64343),
-    textPrimary: Color(0xFFF3F5F8),
-    textSecondary: Color(0xFFA0A5AB),
-    textTertiary: Color(0xFF6D7277),
-    overlayDark: Color(0xCC030507),
-    shimmerBase: Color(0xFF25292E),
-    shimmerHighlight: Color(0xFF393E42),
-    isDark: true,
-  );
-
-  static const AppColorPalette trailSocialLight = AppColorPalette(
-    background: Color(0xFFF8F7F5),
-    surface: Color(0xFFFFFFFF),
-    border: Color(0xFFE5E2DE),
-    surfaceVariant: Color(0xFFEFECE8),
-    ink: Color(0xFF0A0C0E),
-    onInk: Color(0xFFF8F7F5),
-    onInkMuted: Color(0xFFB0ADA8),
-    primary: Color(0xFFC2451A), // darkened kudos orange
-    primaryHighlight: Color(0xFFF5642B),
-    primaryDark: Color(0xFF8F3110),
-    secondary: Color(0xFF1F6FC4), // darkened blue
-    secondaryLight: Color(0xFF53A3F2),
-    attention: Color(0xFFB9660F),
-    success: Color(0xFF2F8F37),
-    warning: Color(0xFFB67A15),
-    danger: Color(0xFFC22626),
-    textPrimary: Color(0xFF14171A),
-    textSecondary: Color(0xFF5E6367),
-    textTertiary: Color(0xFF8D9195),
-    overlayDark: Color(0xCC030507),
-    shimmerBase: Color(0xFFEDEAE6),
-    shimmerHighlight: Color(0xFFF5F3F0),
-    isDark: false,
-  );
-
-  // ── Calming ─────────────────────────────────────────────────────────────
-  // Warm cream light mode, sage primary, tan secondary.
-
+  /// The light theme. Warm cream, sage primary, tan secondary.
   static const AppColorPalette calmingLight = AppColorPalette(
     background: Color(0xFFF8F5EF),
     surface: Color(0xFFFEFBF8),
@@ -479,190 +187,33 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     isDark: false,
   );
 
-  static const AppColorPalette calmingDark = AppColorPalette(
-    background: Color(0xFF17170F),
-    surface: Color(0xFF211F16),
-    border: Color(0xFF3A3826),
-    surfaceVariant: Color(0xFF262418),
-    ink: Color(0xFF0A0A07),
-    onInk: Color(0xFFF8F5EF),
-    onInkMuted: Color(0xFF706E60),
-    primary: Color(0xFFA8C7AD), // was calmingLight.primaryHighlight
-    primaryHighlight: Color(0xFFC7DECB),
-    primaryDark: Color(0xFF84A98B), // was calmingLight.primary
-    secondary: Color(0xFFDBB597), // was calmingLight.secondaryLight
-    secondaryLight: Color(0xFFEAD0BC),
-    attention: Color(0xFFD6A578),
-    success: Color(0xFF7EBB8A),
-    warning: Color(0xFFE0B784),
-    danger: Color(0xFFDC7672),
-    textPrimary: Color(0xFFF8F5EF),
-    textSecondary: Color(0xFFB4B0A5),
-    textTertiary: Color(0xFF837F72),
-    overlayDark: Color(0xCC24211C),
-    shimmerBase: Color(0xFF262418),
-    shimmerHighlight: Color(0xFF3A3826),
+  /// The dark theme. Instrument-panel black, lime primary, magenta secondary.
+  static const AppColorPalette carbonMonoDark = AppColorPalette(
+    background: Color(0xFF0D0D0D),
+    surface: Color(0xFF161616),
+    border: Color(0xFF393939),
+    surfaceVariant: Color(0xFF262626),
+    ink: Color(0xFF000000),
+    onInk: Color(0xFFF4F4F4),
+    onInkMuted: Color(0xFF6F6F6F),
+    primary: Color(0xFFC8FF3D), // lime
+    primaryHighlight: Color(0xFFE4FF8F),
+    primaryDark: Color(0xFF9FCC1F),
+    secondary: Color(0xFFD633FF), // magenta
+    secondaryLight: Color(0xFFE88CFF),
+    attention: Color(0xFFFF7A45),
+    success: Color(0xFF42BE65),
+    warning: Color(0xFFFF7A45),
+    danger: Color(0xFFFA4D56),
+    textPrimary: Color(0xFFF4F4F4),
+    textSecondary: Color(0xFFA8A8A8),
+    textTertiary: Color(0xFF6F6F6F),
+    overlayDark: Color(0xCC000000),
+    shimmerBase: Color(0xFF262626),
+    shimmerHighlight: Color(0xFF393939),
     isDark: true,
   );
 
-  // ── Retro ───────────────────────────────────────────────────────────────
-  // "Retro (Rawblock)" from the style-direction deck: blocky 70s-poster
-  // energy — cream paper, thick black rules, hard offset shadows (no blur),
-  // mustard/rust accents, no rounded corners. Values are converted from the
-  // deck's OKLCH swatches (background `oklch(.95 .02 70)`, accent
-  // `oklch(.65 .15 55)`, alert `oklch(.55 .18 25)`). The dark companion keeps
-  // the same mustard/rust hues (lightened, like every other mode's dark
-  // variant) and inverts which end is "ink" — on paper the boldest mark is
-  // black-on-cream; on the dark companion it's cream-on-near-black — so
-  // `ink`/`onInk` swap roles rather than just darkening in place. Both opt
-  // into [hasHardShadow].
-
-  static const AppColorPalette retroLight = AppColorPalette(
-    background: Color(0xFFF8ECE0),
-    surface: Color(0xFFFFFFFF),
-    border: Color(0xFF1A1A1A), // the hard rule, not a hairline tint
-    surfaceVariant: Color(0xFFEBDBC9),
-    ink: Color(0xFF1A1A1A),
-    onInk: Color(0xFFF8ECE0),
-    onInkMuted: Color(0xFF978D82),
-    primary: Color(0xFFD3721E), // mustard
-    primaryHighlight: Color(0xFFF7A062),
-    primaryDark: Color(0xFFA44100),
-    secondary: Color(0xFF534C44), // warm neutral, not a second accent hue
-    secondaryLight: Color(0xFF777068),
-    attention: Color(0xFFC53637), // rust
-    success: Color(0xFF518046), // olive, recedes
-    warning: Color(0xFFBB6802), // burnt amber
-    danger: Color(0xFFC53637), // rust — the deck's one alert color
-    textPrimary: Color(0xFF1A1A1A),
-    textSecondary: Color(0xFF534C44),
-    textTertiary: Color(0xFF978D82),
-    overlayDark: Color(0xCC1A1A1A),
-    shimmerBase: Color(0xFFEBDBC9),
-    shimmerHighlight: Color(0xFFF3E5D6),
-    isDark: false,
-    hasHardShadow: true,
-    monoDisplay: true,
-  );
-
-  static const AppColorPalette retroDark = AppColorPalette(
-    background: Color(0xFF130C05),
-    surface: Color(0xFF1D1409),
-    border: Color(0xFFFCF4EB), // the hard rule, inverted: matches `ink` exactly
-    surfaceVariant: Color(0xFF2B1F11),
-    ink: Color(0xFFFCF4EB), // boldest fill is cream-on-near-black here
-    onInk: Color(0xFF130C05),
-    onInkMuted: Color(0xFF6B6157),
-    primary: Color(0xFFF7A062), // brighter mustard for contrast on dark
-    primaryHighlight: Color(0xFFFFBD8E),
-    primaryDark: Color(0xFFD3721E),
-    secondary: Color(0xFFA1968B),
-    secondaryLight: Color(0xFFB4ACA4),
-    attention: Color(0xFFEA6A64), // rust, lightened
-    success: Color(0xFF6FAA62),
-    warning: Color(0xFFE59B5B),
-    danger: Color(0xFFEA6A64),
-    textPrimary: Color(0xFFFCF4EB),
-    textSecondary: Color(0xFFA1968B),
-    textTertiary: Color(0xFF6B6157),
-    overlayDark: Color(0xCC0A0603),
-    shimmerBase: Color(0xFF2B1F11),
-    shimmerHighlight: Color(0xFF322618),
-    isDark: true,
-    hasHardShadow: true,
-    monoDisplay: true,
-  );
-
-  // ── Analyst Blue ────────────────────────────────────────────────────────
-  // Navy monitoring console, cyan telemetry primary, coral secondary.
-
-  static const AppColorPalette analystBlueDark = AppColorPalette(
-    background: Color(0xFF0B1C2C),
-    surface: Color(0xFF172534),
-    border: Color(0xFF2F3C4A),
-    surfaceVariant: Color(0xFF222F3C),
-    ink: Color(0xFF050C13),
-    onInk: Color(0xFFFCFCFC),
-    onInkMuted: Color(0xFF738292),
-    primary: Color(0xFF25C0E6),
-    primaryHighlight: Color(0xFF7DDDFB),
-    primaryDark: Color(0xFF008FBA),
-    secondary: Color(0xFFF3906D),
-    secondaryLight: Color(0xFFFEB391),
-    attention: Color(0xFFF3906D),
-    success: Color(0xFF5DC879),
-    warning: Color(0xFFEBA941),
-    danger: Color(0xFFF14D4C),
-    textPrimary: Color(0xFFF3F5F8),
-    textSecondary: Color(0xFF9BA6B1),
-    textTertiary: Color(0xFF69737D),
-    overlayDark: Color(0xCC020A15),
-    shimmerBase: Color(0xFF222F3C),
-    shimmerHighlight: Color(0xFF364452),
-    isDark: true,
-  );
-
-  static const AppColorPalette analystBlueLight = AppColorPalette(
-    background: Color(0xFFF2F7FA),
-    surface: Color(0xFFFFFFFF),
-    border: Color(0xFFDCE6EC),
-    surfaceVariant: Color(0xFFE8F0F5),
-    ink: Color(0xFF061019),
-    onInk: Color(0xFFF2F7FA),
-    onInkMuted: Color(0xFFA3B0BB),
-    primary: Color(0xFF0A7F9E), // darkened console cyan
-    primaryHighlight: Color(0xFF25C0E6),
-    primaryDark: Color(0xFF075A70),
-    secondary: Color(0xFFC15A38), // darkened coral
-    secondaryLight: Color(0xFFF3906D),
-    attention: Color(0xFFC15A38),
-    success: Color(0xFF2E9A4C),
-    warning: Color(0xFFB87F1F),
-    danger: Color(0xFFCC2A29),
-    textPrimary: Color(0xFF0C1620),
-    textSecondary: Color(0xFF5A6A77),
-    textTertiary: Color(0xFF8A97A2),
-    overlayDark: Color(0xCC020A15),
-    shimmerBase: Color(0xFFE4EDF2),
-    shimmerHighlight: Color(0xFFEFF5F8),
-    isDark: false,
-  );
-
-  // ── Ride-mode aliases ───────────────────────────────────────────────────
-  // The names [forMode] resolves through, one pair per [AppColorMode].
-  static const AppColorPalette sportDark = carbonMonoDark;
-  static const AppColorPalette sportLight = carbonMonoLight;
-  static const AppColorPalette rainDark = nocturneDark;
-  static const AppColorPalette rainLight = nocturneLight;
-  static const AppColorPalette raceDark = retroDark;
-  static const AppColorPalette raceLight = retroLight;
-  static const AppColorPalette commuteDark = calmingDark;
-  static const AppColorPalette commuteLight = calmingLight;
-  static const AppColorPalette tourDark = trailSocialDark;
-  static const AppColorPalette tourLight = trailSocialLight;
-  static const AppColorPalette advDark = analystBlueDark;
-  static const AppColorPalette advLight = analystBlueLight;
-  static const AppColorPalette cityDark = editorialDark;
-  static const AppColorPalette cityLight = editorialLight;
-
-  /// Exhaustive by design — a nested `switch` with no `default`, so adding a
-  /// member to [AppColorMode] or to [Brightness] without a palette is a
-  /// compile error rather than a mode that silently renders as default.
-  static AppColorPalette forMode(AppColorMode mode, Brightness brightness) =>
-      switch ((mode, brightness)) {
-        (AppColorMode.sport, Brightness.dark) => sportDark,
-        (AppColorMode.sport, Brightness.light) => sportLight,
-        (AppColorMode.rain, Brightness.dark) => rainDark,
-        (AppColorMode.rain, Brightness.light) => rainLight,
-        (AppColorMode.race, Brightness.dark) => raceDark,
-        (AppColorMode.race, Brightness.light) => raceLight,
-        (AppColorMode.commute, Brightness.dark) => commuteDark,
-        (AppColorMode.commute, Brightness.light) => commuteLight,
-        (AppColorMode.tour, Brightness.dark) => tourDark,
-        (AppColorMode.tour, Brightness.light) => tourLight,
-        (AppColorMode.adv, Brightness.dark) => advDark,
-        (AppColorMode.adv, Brightness.light) => advLight,
-        (AppColorMode.city, Brightness.dark) => cityDark,
-        (AppColorMode.city, Brightness.light) => cityLight,
-      };
+  static AppColorPalette forBrightness(Brightness brightness) =>
+      brightness == Brightness.dark ? carbonMonoDark : calmingLight;
 }

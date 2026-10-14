@@ -1,17 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_shape_profile.dart';
-import 'app_theme_style.dart';
 
-const _colorModeKey = 'color_mode';
-const _shapeVibeKey = 'shape_vibe';
 const _brightnessKey = 'brightness';
 
-/// The legacy single-key value written before Vibe/Brightness/Color were
-/// three separate choices. Kept around only to migrate a rider's existing
-/// pick the first time this build loads — see [_legacyTriple].
+/// Keys older builds wrote. Only read, to migrate a rider's pick to the
+/// nearest of the two remaining themes — see [AppearanceNotifier._loadPersisted].
+/// `color_mode`/`shape_vibe` held one of 7 color families x 2 shapes (cut
+/// 2026-10-14); `theme_style` is the single-key skin from before that.
+const _colorModeKey = 'color_mode';
+const _shapeVibeKey = 'shape_vibe';
 const _legacyThemeStyleKey = 'theme_style';
+
+/// The pre-split single-key skins that were dark. Every other value was a
+/// light skin (or `genesis`, which already fell back to the light default).
+const _legacyDarkSkins = {
+  'carbon',
+  'nocturne',
+  'trailSocial',
+  'analystBlue',
+  'cuteAnalyst',
+};
 
 /// How the app decides between the light and dark palette.
 ///
@@ -22,15 +31,10 @@ const _legacyThemeStyleKey = 'theme_style';
 /// currently dark" have to be told apart when the OS changes underneath us.
 enum AppBrightnessMode { light, dark, system }
 
-/// One fully-resolved appearance: a color family, a shape vibe, and a
-/// brightness, chosen independently. This is the whole point of the
-/// Vibe/Brightness/Color split — any of the seven [AppColorMode]s can pair
-/// with either [AppShapeVibe] and either [Brightness].
+/// The rider's appearance: light or dark, chosen directly or by the OS.
+/// Each brightness has exactly one theme (`AppColorPalette.forBrightness`).
 @immutable
 class AppAppearance {
-  final AppColorMode colorMode;
-  final AppShapeVibe shapeVibe;
-
   /// The brightness actually in force — already resolved, so every consumer
   /// (palette lookup, `ThemeData`, status-bar icons) reads one value and
   /// never has to know whether the rider picked it or the OS did.
@@ -52,144 +56,21 @@ class AppAppearance {
   final AppBrightnessMode? _brightnessMode;
 
   const AppAppearance({
-    required this.colorMode,
-    required this.shapeVibe,
     required this.brightness,
     AppBrightnessMode? brightnessMode,
   }) : _brightnessMode = brightnessMode;
 
-  /// Commute (the Calming palette), Curvy, Light — the default for every new
-  /// install and every
-  /// newly-created account (changed 2026-08-27, from the original Carbon
-  /// Mono / Boxy / Dark). Also what any single un-set axis falls back to for
-  /// a returning rider who only ever changed the other two — see
-  /// [AppearanceNotifier._loadPersisted].
-  static const defaultAppearance = AppAppearance(
-    colorMode: AppColorMode.commute,
-    shapeVibe: AppShapeVibe.curvy,
-    brightness: Brightness.light,
-  );
-
-  AppAppearance copyWith({
-    AppColorMode? colorMode,
-    AppShapeVibe? shapeVibe,
-    Brightness? brightness,
-    AppBrightnessMode? brightnessMode,
-  }) =>
-      AppAppearance(
-        colorMode: colorMode ?? this.colorMode,
-        shapeVibe: shapeVibe ?? this.shapeVibe,
-        brightness: brightness ?? this.brightness,
-        brightnessMode: brightnessMode ?? this.brightnessMode,
-      );
+  /// Light — the default for every new install.
+  static const defaultAppearance = AppAppearance(brightness: Brightness.light);
 
   @override
   bool operator ==(Object other) =>
       other is AppAppearance &&
-      other.colorMode == colorMode &&
-      other.shapeVibe == shapeVibe &&
       other.brightness == brightness &&
       other.brightnessMode == brightnessMode;
 
   @override
-  int get hashCode =>
-      Object.hash(colorMode, shapeVibe, brightness, brightnessMode);
-}
-
-/// The full (colorMode, shapeVibe, brightness) triple a pre-migration rider's
-/// single skin choice decodes to. Every surviving family maps EXACTLY to the
-/// ride mode that now carries its palette; the three skins dropped in the
-/// Vibe/Brightness/Color split map to their closest equivalent:
-///   - `positiveVibes` (light, rounded, green) → Commute (Calming's palette).
-///   - `cuteAnalyst` (Analyst Blue's colors, rounded) → Adv, Curvy, Dark —
-///     exact, since that skin was always Analyst Blue with a rounder shape.
-///   - `genesis` (dark, boxy, gold/violet) → no close hue survives, so it
-///     falls back to [AppAppearance.defaultAppearance].
-const Map<String, AppAppearance> _legacyTriple = {
-  'carbon': AppAppearance(
-    colorMode: AppColorMode.sport,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.dark,
-  ),
-  'editorial': AppAppearance(
-    colorMode: AppColorMode.city,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.light,
-  ),
-  'nocturne': AppAppearance(
-    colorMode: AppColorMode.rain,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.dark,
-  ),
-  'trailSocial': AppAppearance(
-    colorMode: AppColorMode.tour,
-    shapeVibe: AppShapeVibe.curvy,
-    brightness: Brightness.dark,
-  ),
-  'calming': AppAppearance(
-    colorMode: AppColorMode.commute,
-    shapeVibe: AppShapeVibe.curvy,
-    brightness: Brightness.light,
-  ),
-  'positiveVibes': AppAppearance(
-    colorMode: AppColorMode.commute,
-    shapeVibe: AppShapeVibe.curvy,
-    brightness: Brightness.light,
-  ),
-  'retro': AppAppearance(
-    colorMode: AppColorMode.race,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.light,
-  ),
-  'analystBlue': AppAppearance(
-    colorMode: AppColorMode.adv,
-    shapeVibe: AppShapeVibe.boxy,
-    brightness: Brightness.dark,
-  ),
-  'genesis': AppAppearance.defaultAppearance,
-  'cuteAnalyst': AppAppearance(
-    colorMode: AppColorMode.adv,
-    shapeVibe: AppShapeVibe.curvy,
-    brightness: Brightness.dark,
-  ),
-};
-
-/// Decodes a persisted `color_mode` value. Current values are the
-/// [AppColorMode] names; older builds wrote either the palette-family names
-/// (`carbonMono`, `calming`, `retro`, …) or, briefly, the three-mode names
-/// (`daily`, `sport`, `adventure`). Each maps to the ride mode that now
-/// carries the same palette, so no rider's colors change on upgrade.
-AppColorMode? _decodeColorMode(String? saved) {
-  if (saved == null) return null;
-  for (final mode in AppColorMode.values) {
-    if (mode.name == saved) return mode;
-  }
-  return switch (saved) {
-    // Three-mode build (c3a74fe).
-    'daily' => AppColorMode.commute,
-    'adventure' => AppColorMode.adv,
-    // Palette-family names, from before the three-mode build.
-    'carbonMono' || 'carbon' => AppColorMode.sport,
-    'nocturne' => AppColorMode.rain,
-    'retro' => AppColorMode.race,
-    'calming' => AppColorMode.commute,
-    'trailSocial' => AppColorMode.tour,
-    'analystBlue' => AppColorMode.adv,
-    'editorial' => AppColorMode.city,
-    _ => null, // a mode removed since this was written
-  };
-}
-
-AppShapeVibe? _decodeShapeVibe(String? saved) {
-  if (saved == null) return null;
-  for (final vibe in AppShapeVibe.values) {
-    if (vibe.name == saved) return vibe;
-  }
-  // 'rounded'/'terminal' are what the pre-split AppShapeProfile persisted
-  // under, on the rare chance anything ever wrote a shape key directly.
-  if (saved == 'rounded') return AppShapeVibe.curvy;
-  if (saved == 'terminal') return AppShapeVibe.boxy;
-  return null;
+  int get hashCode => Object.hash(brightness, brightnessMode);
 }
 
 AppBrightnessMode? _decodeBrightnessMode(String? saved) {
@@ -209,14 +90,10 @@ Brightness _resolveBrightness(AppBrightnessMode mode) => switch (mode) {
       AppBrightnessMode.system => _platformBrightness(),
     };
 
-/// Persisted appearance preference: three independent choices — color
-/// family, shape vibe, brightness — rather than one flat skin name.
+/// Persisted appearance preference: Light, Dark or System.
 ///
-/// Defaults to [AppAppearance.defaultAppearance] (Commute / Curvy / Light)
-/// until a saved choice loads from
-/// [SharedPreferences]. A rider who already had a skin picked under the old
-/// single-key scheme has it decoded via [_legacyTriple] on first load under
-/// this build, then persisted forward under the three new keys.
+/// Defaults to [AppAppearance.defaultAppearance] (Light) until a saved
+/// choice loads from [SharedPreferences].
 class AppearanceNotifier extends StateNotifier<AppAppearance>
     with WidgetsBindingObserver {
   AppearanceNotifier() : super(AppAppearance.defaultAppearance) {
@@ -231,8 +108,8 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
     if (state.brightnessMode != AppBrightnessMode.system) return;
     final resolved = _platformBrightness();
     if (resolved == state.brightness) return;
-    final next = state.copyWith(brightness: resolved);
-    state = next;
+    state = AppAppearance(
+        brightness: resolved, brightnessMode: AppBrightnessMode.system);
   }
 
   @override
@@ -241,59 +118,29 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
     super.dispose();
   }
 
+  /// A rider on a removed color family or shape keeps their brightness
+  /// choice, which picks the nearest remaining theme: any light family →
+  /// the light theme, any dark one → the dark theme. A rider who only ever
+  /// changed color or shape was on light, so stays light.
   Future<void> _loadPersisted() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return; // disposed while the read was in flight
 
-    final rawColorMode = prefs.getString(_colorModeKey);
-    final rawShapeVibe = prefs.getString(_shapeVibeKey);
-    final rawBrightness = prefs.getString(_brightnessKey);
-
-    AppAppearance resolved;
-    if (rawColorMode == null && rawShapeVibe == null && rawBrightness == null) {
-      // Nothing under the new three-key scheme at all — this is either a
-      // fresh install or a rider migrating from the old single-key scheme.
-      final legacy = _legacyTriple[prefs.getString(_legacyThemeStyleKey)];
-      if (legacy == null) return; // nothing saved under either scheme
-      resolved = legacy;
-    } else {
-      // At least one axis has been changed under the new scheme — trust it
-      // for that axis, and default any axis the rider never touched, rather
-      // than falling back to the legacy value (which may be stale, or may
-      // not exist at all for a rider who started on this build). Each axis
-      // is independently settable, so this is the common case, not an edge
-      // case: a rider who only ever changed Brightness has no `color_mode`
-      // key on disk at all.
-      final mode = _decodeBrightnessMode(rawBrightness) ??
-          AppAppearance.defaultAppearance.brightnessMode;
-      resolved = AppAppearance(
-        colorMode: _decodeColorMode(rawColorMode) ??
-            AppAppearance.defaultAppearance.colorMode,
-        shapeVibe: _decodeShapeVibe(rawShapeVibe) ??
-            AppAppearance.defaultAppearance.shapeVibe,
-        brightnessMode: mode,
-        brightness: _resolveBrightness(mode),
-      );
+    var mode = _decodeBrightnessMode(prefs.getString(_brightnessKey));
+    final usedSplitScheme =
+        prefs.containsKey(_colorModeKey) || prefs.containsKey(_shapeVibeKey);
+    final legacy = prefs.getString(_legacyThemeStyleKey);
+    if (mode == null && !usedSplitScheme && legacy != null) {
+      mode = _legacyDarkSkins.contains(legacy)
+          ? AppBrightnessMode.dark
+          : AppBrightnessMode.light;
     }
+    if (mode == null) return; // nothing saved: keep the default
 
+    final resolved = AppAppearance(
+        brightness: _resolveBrightness(mode), brightnessMode: mode);
     if (resolved == state) return;
     state = resolved;
-  }
-
-  Future<void> setColorMode(AppColorMode colorMode) async {
-    if (colorMode == state.colorMode) return;
-    final next = state.copyWith(colorMode: colorMode);
-    state = next;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_colorModeKey, colorMode.name);
-  }
-
-  Future<void> setShapeVibe(AppShapeVibe shapeVibe) async {
-    if (shapeVibe == state.shapeVibe) return;
-    final next = state.copyWith(shapeVibe: shapeVibe);
-    state = next;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_shapeVibeKey, shapeVibe.name);
   }
 
   /// Sets how brightness is chosen. [AppBrightnessMode.system] resolves
@@ -301,11 +148,8 @@ class AppearanceNotifier extends StateNotifier<AppAppearance>
   /// [didChangePlatformBrightness].
   Future<void> setBrightnessMode(AppBrightnessMode mode) async {
     if (mode == state.brightnessMode) return;
-    final next = state.copyWith(
-      brightnessMode: mode,
-      brightness: _resolveBrightness(mode),
-    );
-    state = next;
+    state = AppAppearance(
+        brightness: _resolveBrightness(mode), brightnessMode: mode);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_brightnessKey, mode.name);
   }

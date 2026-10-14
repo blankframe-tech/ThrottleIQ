@@ -36,6 +36,10 @@ class MaintenanceModel {
         'custom_label': e.customLabel,
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
+        // Every toMap is a local write: the edit time last-writer-wins
+        // sync compares (C4). Also in the outbox snapshot, so the first
+        // upload carries it.
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
         if (e.visitId != null) 'visit_id': e.visitId,
         if (e.checkKey != null) 'check_key': e.checkKey,
         if (e.shopName != null) 'shop_name': e.shopName,

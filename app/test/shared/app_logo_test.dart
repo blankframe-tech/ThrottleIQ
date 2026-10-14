@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/shared/widgets/app_logo.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
@@ -26,8 +25,9 @@ void main() {
     testWidgets('always renders the dark mark', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,home: AppLogo(size: 40)),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: AppLogo(size: 40)),
       );
       await tester.pump();
 
@@ -42,24 +42,23 @@ void main() {
         UncontrolledProviderScope(
           container: container,
           child: const MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,home: AppLogo(size: 40)),
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              home: AppLogo(size: 40)),
         ),
       );
 
       for (final brightness in Brightness.values) {
-        await container.read(appearanceProvider.notifier).setBrightnessMode(brightness == Brightness.dark
+        await container.read(appearanceProvider.notifier).setBrightnessMode(
+            brightness == Brightness.dark
                 ? AppBrightnessMode.dark
                 : AppBrightnessMode.light);
-        for (final mode in AppColorMode.values) {
-          await container.read(appearanceProvider.notifier).setColorMode(mode);
-          await tester.pump();
-          expect(
-            assetNameOf(tester),
-            'assets/icons/throttleiq-icon-dark.svg',
-            reason: '$mode/$brightness',
-          );
-        }
+        await tester.pump();
+        expect(
+          assetNameOf(tester),
+          'assets/icons/throttleiq-icon-dark.svg',
+          reason: '$brightness',
+        );
       }
     });
   });

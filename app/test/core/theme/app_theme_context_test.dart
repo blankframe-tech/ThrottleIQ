@@ -23,8 +23,8 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   ThemeData themeFor(AppAppearance a) => ThemeData(extensions: [
-        AppColorPalette.forMode(a.colorMode, a.brightness),
-        AppShapeProfile.forVibe(a.shapeVibe),
+        AppColorPalette.forBrightness(a.brightness),
+        AppShapeProfile.curvy,
       ]);
 
   Widget app(Widget probe) => ProviderScope(
@@ -43,58 +43,14 @@ void main() {
 
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
-  testWidgets('a color change re-themes a live widget and keeps its State',
+  testWidgets('a brightness change re-themes a live widget and keeps its State',
       (tester) async {
     await tester.pumpWidget(app(const _Probe()));
     await tester.pumpAndSettle();
-
     final probe = tester.state<_ProbeState>(find.byType(_Probe));
     probe.counter = 7; // stands in for a scroll offset / half-typed form
-    final before = tester.widget<Container>(find.byKey(_Probe.swatch)).color;
-    expect(before, AppColorPalette.commuteLight.primary);
-
-    final container =
-        ProviderScope.containerOf(tester.element(find.byType(_Probe)));
-    await container
-        .read(appearanceProvider.notifier)
-        .setColorMode(AppColorMode.sport);
-    await tester.pumpAndSettle();
-
-    // Re-themed everywhere it reads a token...
     expect(tester.widget<Container>(find.byKey(_Probe.swatch)).color,
-        AppColorPalette.sportLight.primary);
-    // ...without being remounted: same State object, same in-memory value.
-    expect(tester.state<_ProbeState>(find.byType(_Probe)), same(probe));
-    expect(probe.counter, 7);
-    expect(probe.initCount, 1, reason: 'initState must not run again');
-  });
-
-  testWidgets('a shape change re-themes a live widget and keeps its State',
-      (tester) async {
-    await tester.pumpWidget(app(const _Probe()));
-    await tester.pumpAndSettle();
-
-    final probe = tester.state<_ProbeState>(find.byType(_Probe));
-    expect(tester.widget<Text>(find.byKey(_Probe.radius)).data,
-        '${AppShapeProfile.curvy.radiusMd}');
-
-    final container =
-        ProviderScope.containerOf(tester.element(find.byType(_Probe)));
-    await container
-        .read(appearanceProvider.notifier)
-        .setShapeVibe(AppShapeVibe.boxy);
-    await tester.pumpAndSettle();
-
-    expect(tester.widget<Text>(find.byKey(_Probe.radius)).data,
-        '${AppShapeProfile.boxy.radiusMd}');
-    expect(tester.state<_ProbeState>(find.byType(_Probe)), same(probe));
-    expect(probe.initCount, 1);
-  });
-
-  testWidgets('brightness flips the palette in place too', (tester) async {
-    await tester.pumpWidget(app(const _Probe()));
-    await tester.pumpAndSettle();
-    final probe = tester.state<_ProbeState>(find.byType(_Probe));
+        AppColorPalette.calmingLight.primary);
 
     final container =
         ProviderScope.containerOf(tester.element(find.byType(_Probe)));
@@ -104,8 +60,11 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<Container>(find.byKey(_Probe.swatch)).color,
-        AppColorPalette.calmingDark.primary);
+        AppColorPalette.carbonMonoDark.primary);
+    // ...without being remounted: same State object, same in-memory value.
     expect(tester.state<_ProbeState>(find.byType(_Probe)), same(probe));
+    expect(probe.counter, 7);
+    expect(probe.initCount, 1, reason: 'initState must not run again');
   });
 
   testWidgets(

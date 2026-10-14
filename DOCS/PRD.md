@@ -223,7 +223,7 @@ flowchart LR
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-1 | The rider can choose Vibe (Boxy, Curvy), Brightness, and one of 7 color families. | ✅ |
+| SET-1 | The rider can choose System, Dark or Light: one light theme (Calming) and one dark (Carbon Mono). | ✅ |
 | SET-2 | The rider can choose English or Bangla. Numbers stay 0–9. | ✅ |
 | SET-3 | The rider can turn usage statistics off. | ✅ |
 | SET-4 | Home-screen widgets: Start ride, Start auto-tracking, Ride stats, Next service. | ✅ Android · 🟡 iOS 📱 |

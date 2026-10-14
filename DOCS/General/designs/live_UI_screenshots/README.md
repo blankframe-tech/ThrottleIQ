@@ -1,19 +1,16 @@
 # ThrottleIQ — Screen Walkthrough
 
 Every main screen in the app, captured from the iOS Simulator (iPhone 17, iOS 26.5, 9:41 status bar,
-Dhaka location) by the automated UI tour (`app/scripts/ui_tour/run_tour.sh`), and numbered in the
-order you would walk someone new through it. Each look has 55 screens with identical
-filenames, so `04_record_record_dashboard.png` in any folder is the same screen in a different look.
+Dhaka location) by the UI tour that was deleted on 2026-10-14, numbered in the order you would walk
+someone new through it.
 
-| Folder | Color mode | Shape | Brightness |
-|--------|-----------|-------|------------|
-| [`daily_curvy_light/`](daily_curvy_light/) | Daily (app default) | Curvy | Light |
-| [`sport_boxy_dark/`](sport_boxy_dark/) | Sport | Boxy | Dark |
-| [`adventure_boxy_dark/`](adventure_boxy_dark/) | Adventure | Boxy | Dark |
+| Folder | Theme |
+|--------|-------|
+| [`daily_curvy_light/`](daily_curvy_light/) | Light (Calming, the app default; "Daily" was its old name) |
 
-The themes are three independent axes (color mode x shape x brightness = 12 looks); these three are a
-representative sample. Re-run the tour with other combo ids (e.g. `sport_curvy_light`) to capture more.
-Each folder has its own README listing every screenshot.
+The app has two themes since 2026-10-14: this light one and Carbon Mono dark. The dark theme has no
+capture here yet; the two captures of removed looks (`sport_boxy_dark`, `adventure_boxy_dark`) were deleted.
+The folder has its own README listing every screenshot.
 
 ## Not captured
 

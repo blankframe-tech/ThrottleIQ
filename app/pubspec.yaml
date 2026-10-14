@@ -173,7 +173,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # Drives the automated UI screenshot tour (integration_test/ui_tour_test.dart).
+  # Runs integration_test/e2e_test.dart and realtime_emulator_test.dart.
   integration_test:
     sdk: flutter
   flutter_lints: ^3.0.0

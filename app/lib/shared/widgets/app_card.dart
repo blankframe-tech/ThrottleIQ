@@ -18,25 +18,12 @@ class AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hardShadow = context.palette.hasHardShadow;
     final radius = BorderRadius.circular(context.shape.radiusXl);
-    // The fill has to live in the same decoration as the shadow. A hard
-    // (blur-less) BoxShadow paints a solid offset copy of the whole card, so a
-    // fill supplied by a widget *behind* this one — as it used to be, via a
-    // Material — is painted over by that copy, and the card renders as a block
-    // of border color with its own text unreadable on top (issues §74: near-
-    // black cards on Retro Light). Decoration order is shadow, fill, border.
     return Container(
       decoration: BoxDecoration(
         color: color ?? context.palette.surface,
         borderRadius: radius,
-        border: Border.all(
-          color: context.palette.border,
-          width: hardShadow ? 2 : 1,
-        ),
-        boxShadow: hardShadow
-            ? [BoxShadow(color: context.palette.border, offset: const Offset(4, 4))]
-            : null,
+        border: Border.all(color: context.palette.border),
       ),
       // Transparent Material so InkWell still has somewhere to paint its
       // splash, above the decoration rather than beneath it.

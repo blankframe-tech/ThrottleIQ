@@ -19,8 +19,8 @@ Widget _wrap(Widget child) {
     supportedLocales: AppLocalizations.supportedLocales,
     theme: ThemeData.dark().copyWith(
       extensions: [
-        AppColorPalette.sportDark,
-        AppShapeProfile.forVibe(AppShapeVibe.boxy),
+        AppColorPalette.carbonMonoDark,
+        AppShapeProfile.curvy,
       ],
     ),
     home: Scaffold(body: child),

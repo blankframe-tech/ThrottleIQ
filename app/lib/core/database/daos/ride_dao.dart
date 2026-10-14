@@ -284,7 +284,10 @@ class RideDao {
     );
   }
 
-  /// Rides finishing within [day], for the daily prompt and the weekly digest.
+  /// Rides starting in `[from, to)`, for the daily prompt and the weekly
+  /// digest. `start_time` is stored UTC (v28), so the bounds are compared
+  /// as UTC too: pass the rider's local midnights and the day is the local
+  /// day, whatever zone the rides were recorded in.
   Future<List<Map<String, dynamic>>> getCompletedBetween(
     String userId,
     DateTime from,
@@ -297,8 +300,8 @@ class RideDao {
           'AND start_time >= ? AND start_time < ?',
       whereArgs: [
         userId,
-        from.toIso8601String(),
-        to.toIso8601String(),
+        from.toUtc().toIso8601String(),
+        to.toUtc().toIso8601String(),
       ],
       orderBy: 'start_time ASC',
     );

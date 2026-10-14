@@ -128,36 +128,6 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearanceSection;
 
-  /// Label above the Boxy/Curvy shape selector.
-  ///
-  /// In en, this message translates to:
-  /// **'Vibe'**
-  String get vibeFieldLabel;
-
-  /// Name of the sharp-cornered shape vibe.
-  ///
-  /// In en, this message translates to:
-  /// **'Boxy'**
-  String get vibeBoxyLabel;
-
-  /// One-line description under the Boxy vibe option.
-  ///
-  /// In en, this message translates to:
-  /// **'Sharp corners'**
-  String get vibeBoxyDescription;
-
-  /// Name of the rounded-corner shape vibe.
-  ///
-  /// In en, this message translates to:
-  /// **'Curvy'**
-  String get vibeCurvyLabel;
-
-  /// One-line description under the Curvy vibe option.
-  ///
-  /// In en, this message translates to:
-  /// **'Rounded corners'**
-  String get vibeCurvyDescription;
-
   /// Label above the Dark/Light brightness selector.
   ///
   /// In en, this message translates to:
@@ -199,96 +169,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Match your phone'**
   String get brightnessSystemDescription;
-
-  /// Label above the dropdown that picks the app's color mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Color'**
-  String get colorFieldLabel;
-
-  /// Name of the Sport color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Sport'**
-  String get themeSportLabel;
-
-  /// One-line description of the Sport color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Lime and magenta, carbon-black panel'**
-  String get themeSportDescription;
-
-  /// Name of the Rain color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Rain'**
-  String get themeRainLabel;
-
-  /// One-line description of the Rain color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Indigo dusk, lavender and teal'**
-  String get themeRainDescription;
-
-  /// Name of the Race color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Race'**
-  String get themeRaceLabel;
-
-  /// One-line description of the Race color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Blocky race poster, mustard and rust'**
-  String get themeRaceDescription;
-
-  /// Name of the Commute color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Commute'**
-  String get themeCommuteLabel;
-
-  /// One-line description of the Commute color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Calm cream, sage and tan'**
-  String get themeCommuteDescription;
-
-  /// Name of the Tour color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Tour'**
-  String get themeTourLabel;
-
-  /// One-line description of the Tour color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Punchy orange and sky blue'**
-  String get themeTourDescription;
-
-  /// Name of the ADV color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'ADV'**
-  String get themeAdvLabel;
-
-  /// One-line description of the ADV color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Navy console, cyan telemetry'**
-  String get themeAdvDescription;
-
-  /// Name of the City color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'City'**
-  String get themeCityLabel;
-
-  /// One-line description of the City color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Paper warmth, blue and orange'**
-  String get themeCityDescription;
 
   /// Section header for the app language control.
   ///
@@ -1825,12 +1705,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SETTINGS'**
   String get settingsCaps;
-
-  /// Text in record_screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Slide to start ride'**
-  String get slideStartRide;
 
   /// Tooltip in ride_summary_screen (+1 more).
   ///
@@ -10269,13 +10143,13 @@ abstract class AppLocalizations {
   /// Feature tour, Record step: callout about the start control.
   ///
   /// In en, this message translates to:
-  /// **'Hold or slide to start'**
+  /// **'Hold to start'**
   String get tourRecordStartTitle;
 
-  /// Feature tour, Record step: explains hold-to-start / slide-to-start.
+  /// Feature tour, Record step: explains hold-to-start.
   ///
   /// In en, this message translates to:
-  /// **'Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.'**
+  /// **'Press and hold the start ring, so a stray tap never starts a ride.'**
   String get tourRecordStartBody;
 
   /// Feature tour, live ride step: title.

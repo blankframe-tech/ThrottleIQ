@@ -11,7 +11,7 @@ import 'package:throttleiq/core/theme/app_typography.dart';
 /// covers, so it needs its own guard against the same missing-Bengali-glyph
 /// regression. See AppTypography.bengaliFallback for why this matters.
 ///
-/// The styles read the theme (which face, which default color), so each is
+/// The styles read the theme (the default color), so each is
 /// resolved through a real [BuildContext] under a theme carrying just the
 /// palette — the same lookup the app does, without building a full ThemeData.
 void main() {
@@ -50,34 +50,18 @@ void main() {
   }
 
   group('AppTypography.display', () {
-    testWidgets(
-        'carries the Bengali fallback on every color mode, mono or proportional',
+    testWidgets('is Space Grotesk with the Bengali fallback in both themes',
         (tester) async {
-      for (final mode in AppColorMode.values) {
+      for (final brightness in Brightness.values) {
         final style = await resolve(
             tester,
-            AppColorPalette.forMode(mode, Brightness.dark),
+            AppColorPalette.forBrightness(brightness),
             (c) => AppTypography.display(c, 20));
+        expect(style.fontFamily, contains('SpaceGrotesk'),
+            reason: '$brightness');
         expect(style.fontFamilyFallback,
             contains(AppTypography.bengaliFallback.single),
-            reason: '$mode');
-      }
-    });
-
-    testWidgets(
-        'sets Race in a monospace face and every other mode in Space Grotesk',
-        (tester) async {
-      for (final mode in AppColorMode.values) {
-        final style = await resolve(
-            tester,
-            AppColorPalette.forMode(mode, Brightness.light),
-            (c) => AppTypography.display(c, 20));
-        final isMono = style.fontFamily!.contains('IBMPlexMono');
-        expect(isMono, mode == AppColorMode.race, reason: '$mode');
-        if (!isMono) {
-          expect(style.fontFamily!.contains('SpaceGrotesk'), isTrue,
-              reason: '$mode');
-        }
+            reason: '$brightness');
       }
     });
 

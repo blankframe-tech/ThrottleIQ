@@ -119,11 +119,14 @@ class DailyRideSummaryRepository {
     final segments = <DaySegment>[];
 
     for (final r in await _rideDao.getCompletedBetween(userId, from, to)) {
-      final start = DateTime.tryParse(r['start_time'] as String? ?? '');
+      // Stored UTC (v28); segments are local time like the rest of the day.
+      final start =
+          DateTime.tryParse(r['start_time'] as String? ?? '')?.toLocal();
       if (start == null) continue;
       final duration = (r['duration_s'] as num?)?.toInt() ?? 0;
-      final end = DateTime.tryParse(r['end_time'] as String? ?? '') ??
-          start.add(Duration(seconds: duration));
+      final end =
+          DateTime.tryParse(r['end_time'] as String? ?? '')?.toLocal() ??
+              start.add(Duration(seconds: duration));
       segments.add(DaySegment(
         source: DaySegmentSource.recorded,
         start: start,
@@ -152,8 +155,8 @@ class DailyRideSummaryRepository {
         for (final r in await _detectionDao.fixesFor(d['id'] as String))
           stagedFixFromRow(r),
       ];
-      for (final run in runsClearOfRides<StagedFix>(
-          staged, (f) => f.timestamp, windows)) {
+      for (final run
+          in runsClearOfRides<StagedFix>(staged, (f) => f.timestamp, windows)) {
         final m = _reconciler.measure(run);
         if (m == null) continue;
         segments.add(DaySegment(
