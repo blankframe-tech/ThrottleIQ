@@ -145,28 +145,20 @@
             </intent-filter>
         </activity>
 
-        <!-- Background GPS during a ride is handled by geolocator's own
-             foreground service, configured from Dart via
-             ForegroundNotificationConfig (ride_recording_provider.dart). A
-             `com.bft.throttleiq.LocationForegroundService` used to be declared
-             here, but that class never existed anywhere in the repo — nothing
-             started it, so it was dead config, removed per docs/Issues.md §27
-             (declaring a location-type service the app doesn't implement is
-             the kind of mismatch that draws a rejection in Google's
-             Background Location Access review). -->
-
-        <!-- flutter_foreground_task's service: the free-tier auto-tracking
-             detector (auto_tracking_service.dart), replacing the paid
-             flutter_background_geolocation plugin as of 2026-08-28 — see
-             that file's doc comment and
-             DOCS/old/archives/flutter_background_geolocation-2026-08-28/. Unlike
-             the plugin this replaces, this one does NOT merge its own
-             service declaration in automatically; it must be declared here,
-             with the exact name below (per the library's own install
-             instructions — do not rename). foregroundServiceType="location"
-             matches what this service actually does (watches for motion,
-             then GPS), keeping the Background Location Access review honest
-             — the same reasoning that removed the dead declaration above. -->
+        <!-- flutter_foreground_task's service hosts both background jobs:
+             a ride the rider starts (ride_recording_provider.dart hosts it
+             via AutoTrackingService.beginManualRide, so recording survives
+             the UI going away; geolocator's own ForegroundNotificationConfig
+             is only the fallback when this service can't start) and the
+             free-tier auto-tracking detector (auto_tracking_service.dart),
+             which replaced the paid flutter_background_geolocation plugin on
+             2026-08-28 (DOCS/old/archives/flutter_background_geolocation-2026-08-28/).
+             This plugin does NOT merge its own service declaration in; it
+             must be declared here with the exact name below (per its install
+             instructions, do not rename). foregroundServiceType="location"
+             matches what it does, keeping the Background Location Access
+             review honest. A `com.bft.throttleiq.LocationForegroundService`
+             was once declared here but never existed (docs/Issues.md §27). -->
         <service
             android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
             android:foregroundServiceType="location"

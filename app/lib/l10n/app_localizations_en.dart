@@ -4471,6 +4471,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notifRecordingStoppedTitle => 'Recording stopped';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.';
+
+  @override
   String get notifConfirm => 'Confirm';
 
   @override

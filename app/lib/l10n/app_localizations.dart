@@ -7890,6 +7890,18 @@ abstract class AppLocalizations {
   /// **'We logged this to {bike}. Tap to confirm or change.'**
   String notifRideDetectedBody(String bike);
 
+  /// Notification when the phone stopped the ride's foreground service mid-ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording stopped'**
+  String get notifRecordingStoppedTitle;
+
+  /// Body of the recording-stopped notification; tapping opens the app on the paused ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.'**
+  String get notifRecordingStoppedBody;
+
   /// Action button on the ride-detected notification.
   ///
   /// In en, this message translates to:

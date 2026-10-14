@@ -12,7 +12,10 @@ import 'package:uuid/uuid.dart';
 
 import '../../features/ride/data/repositories/daily_ride_summary_repository.dart';
 import '../constants/ride_prefs_keys.dart';
+import '../constants/sensor_constants.dart';
 import '../database/daos/auto_detection_dao.dart';
+import '../database/daos/ride_point_dao.dart';
+import 'notification_service.dart';
 
 const _serviceId = 1000;
 const _channelId = 'auto_tracking';
@@ -32,6 +35,11 @@ void autoTrackingTaskCallback() {
 /// is until [AutoTrackingService.stop] is called, independent of whether the
 /// app's own UI is open, backgrounded, or swiped from recents.
 ///
+/// The same service hosts a manual ride (critique B5): see
+/// [AutoTrackingService.beginManualRide]. The UI isolate still records the
+/// ride; this handler watches its heartbeat and, if the UI goes away
+/// mid-ride, keeps storing fixes for the ride itself ([_watchManualRide]).
+///
 /// Unlike the paid `flutter_background_geolocation` plugin this replaces,
 /// there is only **one** handler, not a UI-isolate/headless-isolate pair: the
 /// task handler isolate is the single place activity events and location
@@ -50,6 +58,15 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   DateTime? _lastManualCheck;
   static const _manualCheckInterval = Duration(seconds: 15);
 
+  // Hosting a manual ride (B5).
+  var _starter = TaskStarter.developer;
+  String? _hostedRideId;
+  DateTime _hostedSince = DateTime.now();
+  DateTime? _lastUiBeat;
+  Timer? _hostWatchdog;
+  StreamSubscription<Position>? _takeoverSub;
+  var _stoppedNotified = false;
+
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     // Plugins are not registered automatically in every background-isolate
@@ -59,8 +76,106 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     // preserved here out of caution even though flutter_foreground_task's own
     // FlutterEngine is expected to register plugins itself.
     DartPluginRegistrant.ensureInitialized();
+    _starter = starter;
+    _hostWatchdog = Timer.periodic(AutoTrackingService.uiBeatTimeout ~/ 2,
+        (_) => unawaited(_watchManualRide()));
+    // Started only to host a manual ride: no activity watching for a rider
+    // who never turned auto-tracking on.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    if (!(prefs.getBool(AutoTrackingService.prefsEnabled) ?? false)) return;
     _activitySub = ar.FlutterActivityRecognition.instance.activityStream
         .listen(_onActivity);
+  }
+
+  @override
+  void onReceiveData(Object data) {
+    if (data != AutoTrackingService.uiBeatMessage) return;
+    _lastUiBeat = DateTime.now();
+    // The UI is recording again, so it owns the fixes.
+    unawaited(_stopTakeover());
+  }
+
+  /// Runs every few seconds. While a manual ride is hosted and the UI's
+  /// heartbeat has stopped (the UI engine was destroyed: swiped from
+  /// recents, or the process was killed and this service restarted), either
+  /// keeps the ride recording here or, when this service can't get location
+  /// on its own, tells the rider and stops.
+  Future<void> _watchManualRide() async {
+    try {
+      final rideId = await AutoTrackingService.hostedManualRideId();
+      if (rideId != _hostedRideId) {
+        _hostedRideId = rideId;
+        _hostedSince = DateTime.now();
+        _stoppedNotified = false;
+      }
+      if (rideId == null) {
+        await _stopTakeover();
+        return;
+      }
+      if (_takeoverSub != null || _stoppedNotified) return;
+      if (!AutoTrackingService.uiGone(
+          now: DateTime.now(),
+          hostedSince: _hostedSince,
+          lastUiBeat: _lastUiBeat)) {
+        return;
+      }
+      // A key left behind by a ride that has ended (its recorder marker is
+      // gone) must not stop the auto-tracker.
+      if (!await AutoTrackingService.isManualRecordingActive()) {
+        await FlutterForegroundTask.removeData(
+            key: AutoTrackingService.manualRideKey);
+        return;
+      }
+      if (AutoTrackingService.canRecordWithoutUi(
+          startedBySystem: _starter == TaskStarter.system,
+          permission: await Geolocator.checkPermission())) {
+        await _startTakeover(rideId);
+      } else {
+        _stoppedNotified = true;
+        await NotificationService.instance.showRecordingStopped();
+        // The marker stays set, so the next launch restores the ride paused.
+        await FlutterForegroundTask.stopService();
+      }
+    } catch (e) {
+      debugPrint('[ride-service] watchdog failed: $e');
+    }
+  }
+
+  /// Stores the hosted ride's fixes straight to `ride_points`, the rows a
+  /// restore rebuilds the ride from, and advances the restore's ride clock.
+  Future<void> _startTakeover(String rideId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.reload();
+    final baseSeconds = prefs.getInt(RidePrefsKeys.elapsedSeconds) ?? 0;
+    // shortcut: the clock resumes from the UI's last heartbeat; after a
+    // process kill the dead time before this restart is not counted.
+    // Upgrade if restarted rides show short durations.
+    final clockFrom = _lastUiBeat ?? _hostedSince;
+    final points = RidePointDao();
+    debugPrint('[ride-service] UI gone, recording ride $rideId here');
+    _takeoverSub = Geolocator.getPositionStream(
+      locationSettings: AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+        intervalDuration: const Duration(seconds: 1),
+      ),
+    ).listen(
+      (position) => unawaited(AutoTrackingService.guardedFix(() async {
+        final row = AutoTrackingService.takeoverPointRow(rideId, position);
+        if (row == null) return;
+        await points.insert(row);
+        await prefs.setInt(RidePrefsKeys.elapsedSeconds,
+            baseSeconds + DateTime.now().difference(clockFrom).inSeconds);
+      })),
+      onError: (Object e) => debugPrint('[ride-service] position error $e'),
+    );
+  }
+
+  Future<void> _stopTakeover() async {
+    final sub = _takeoverSub;
+    _takeoverSub = null;
+    await sub?.cancel();
   }
 
   /// A ride-shaped activity report from the platform classifier.
@@ -241,6 +356,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
           await AutoTrackingService.isManualRecordingActive()) {
         await _suspendForManualRide();
       }
+      // Hosting a manual ride only: auto-tracking is off.
+      if (_activitySub == null) return;
       // End-of-day summary notification, once per day after 9pm. Silent on
       // a day with no rides; see DailyRideSummaryRepository.
       final uid = await AutoTrackingService.readOwner();
@@ -266,6 +383,8 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     await _activitySub?.cancel();
     await _positionSub?.cancel();
     _stillnessTimer?.cancel();
+    _hostWatchdog?.cancel();
+    await _stopTakeover();
   }
 }
 
@@ -311,7 +430,9 @@ class AutoTrackingService {
   static final AutoTrackingService instance = AutoTrackingService._();
 
   static const _uuid = Uuid();
-  static const _prefsEnabled = 'auto_tracking_enabled';
+  // Package-visible: the task handler reads it to decide whether to watch
+  // for rides at all.
+  static const prefsEnabled = 'auto_tracking_enabled';
   static const _prefsCurrentDetection = 'auto_tracking_current_detection';
 
   /// Non-vehicle activity this long ends a detection. See
@@ -347,12 +468,12 @@ class AutoTrackingService {
   /// privacy-policy change.
   static Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_prefsEnabled) ?? false;
+    return prefs.getBool(prefsEnabled) ?? false;
   }
 
   static Future<void> setEnabled(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_prefsEnabled, value);
+    await prefs.setBool(prefsEnabled, value);
   }
 
   /// Whether the rider has restricted auto-tracking to a daily window,
@@ -472,9 +593,146 @@ class AutoTrackingService {
   }
 
   Future<void> stop() async {
+    // The service is hosting a ride; endManualRide stops it after.
+    if (_hostingManualRide) return;
     if (await FlutterForegroundTask.isRunningService) {
       await FlutterForegroundTask.stopService();
     }
+  }
+
+  // ── Hosting a manual ride (critique B5) ────────────────────────────────
+
+  /// `FlutterForegroundTask` data key: the id of the manual ride the service
+  /// hosts. It outlives this process, so the next launch can clear it.
+  static const manualRideKey = 'manual_ride_id';
+
+  /// What the UI sends the handler every second while it records.
+  static const uiBeatMessage = 'ui_beat';
+
+  /// No heartbeat for this long means the UI isolate is gone.
+  static const uiBeatTimeout = Duration(seconds: 20);
+
+  /// Whether this (UI) process is hosting a ride right now.
+  var _hostingManualRide = false;
+
+  /// Hosts a manual ride in this foreground service, Android only, so the
+  /// ride outlives the UI: geolocator's own foreground notification used to
+  /// keep it alive only as long as the UI engine. When auto-tracking is
+  /// already running, its handler (which stands its detection down for a
+  /// manual ride) is kept and only the notification changes.
+  ///
+  /// Returns false when the service can't start (iOS, or Android refused a
+  /// start from the background); the caller then keeps geolocator's
+  /// notification.
+  Future<bool> beginManualRide(String rideId,
+      {required String title, required String text}) async {
+    if (!Platform.isAndroid) return false;
+    try {
+      await configure();
+      await FlutterForegroundTask.saveData(key: manualRideKey, value: rideId);
+      final result = await FlutterForegroundTask.isRunningService
+          ? await FlutterForegroundTask.updateService(
+              notificationTitle: title, notificationText: text)
+          : await FlutterForegroundTask.startService(
+              serviceId: _serviceId,
+              serviceTypes: const [ForegroundServiceTypes.location],
+              notificationTitle: title,
+              notificationText: text,
+              callback: autoTrackingTaskCallback,
+            );
+      _hostingManualRide = result is ServiceRequestSuccess;
+      if (!_hostingManualRide) {
+        await FlutterForegroundTask.removeData(key: manualRideKey);
+      }
+      return _hostingManualRide;
+    } catch (e) {
+      debugPrint('[ride-service] begin failed: $e');
+      return false;
+    }
+  }
+
+  /// Stops hosting: on pause, stop and discard, and when a restore finds a
+  /// ride the previous process was hosting. Auto-tracking, if on, starts
+  /// again fresh, which also ends any recording the handler took over.
+  Future<void> endManualRide() async {
+    if (!Platform.isAndroid) return;
+    try {
+      if (!_hostingManualRide && await hostedManualRideId() == null) return;
+      await FlutterForegroundTask.removeData(key: manualRideKey);
+      _hostingManualRide = false;
+      await stop();
+      await start();
+    } catch (e) {
+      debugPrint('[ride-service] end failed: $e');
+    }
+  }
+
+  /// Tells the handler the UI is alive and recording. Never throws.
+  static void sendUiBeat() {
+    try {
+      FlutterForegroundTask.sendDataToTask(uiBeatMessage);
+    } catch (_) {}
+  }
+
+  static Future<String?> hostedManualRideId() async {
+    try {
+      return await FlutterForegroundTask.getData<String>(key: manualRideKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Whether the UI's heartbeat has been silent for [uiBeatTimeout], counting
+  /// from when hosting began if no beat has arrived yet.
+  @visibleForTesting
+  static bool uiGone({
+    required DateTime now,
+    required DateTime hostedSince,
+    DateTime? lastUiBeat,
+  }) {
+    final last = lastUiBeat != null && lastUiBeat.isAfter(hostedSince)
+        ? lastUiBeat
+        : hostedSince;
+    return now.difference(last) >= uiBeatTimeout;
+  }
+
+  /// Whether the handler can get location with the UI gone. A service the
+  /// app started from the foreground keeps while-in-use access; one the
+  /// system restarted after a kill was started from the background, which on
+  /// Android 11+ gets location only with "Allow all the time".
+  @visibleForTesting
+  static bool canRecordWithoutUi({
+    required bool startedBySystem,
+    required LocationPermission permission,
+  }) =>
+      permission == LocationPermission.always ||
+      (!startedBySystem && permission == LocationPermission.whileInUse);
+
+  /// The `ride_points` row for a fix stored by the handler, or null when the
+  /// recorder's accuracy gate would drop it. Same columns and units as the
+  /// recorder's own rows; the motion columns it derives stay null.
+  @visibleForTesting
+  static Map<String, Object?>? takeoverPointRow(
+      String rideId, Position position) {
+    if (!position.accuracy.isFinite ||
+        position.accuracy > SensorConstants.maxGpsAccuracyM) {
+      return null;
+    }
+    final speed =
+        position.speed.isFinite && position.speed > 0 ? position.speed : 0.0;
+    return {
+      'ride_id': rideId,
+      'timestamp': position.timestamp.toIso8601String(),
+      'lat': position.latitude,
+      'lng': position.longitude,
+      'speed_ms': speed,
+      'altitude_m': position.altitude,
+      'period_type': speed < 1 ? 'idle' : 'moving',
+      'accuracy_m': position.accuracy,
+      'heading_deg': position.heading.isFinite && position.heading >= 0
+          ? position.heading
+          : null,
+    };
   }
 
   /// Key under which the signed-in rider's uid is handed to the task-handler

@@ -1298,6 +1298,8 @@
   "notifImOk": "আমি ঠিক আছি",
   "notifRideDetectedTitle": "রাইড শনাক্ত হয়েছে — {km} কিমি",
   "notifRideDetectedBody": "{bike}-এ এটি লগ করা হয়েছে। নিশ্চিত করতে বা বদলাতে ট্যাপ করুন।",
+  "notifRecordingStoppedTitle": "রেকর্ডিং বন্ধ হয়ে গেছে",
+  "notifRecordingStoppedBody": "রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।",
   "notifConfirm": "নিশ্চিত করুন",
   "notifDigestTitle": "আজ রাস্তায়",
   "notifDigestTap": "আপনার দিনটি দেখতে ট্যাপ করুন।",

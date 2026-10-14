@@ -1638,3 +1638,6 @@ insightFuelNeedFullFills
 updateRequiredTitle
 updateRequiredBody
 updateRequiredAction
+# batch: oct14 ride recording
+notifRecordingStoppedTitle
+notifRecordingStoppedBody

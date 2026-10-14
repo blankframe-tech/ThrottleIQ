@@ -4452,6 +4452,13 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get notifRecordingStoppedTitle => 'রেকর্ডিং বন্ধ হয়ে গেছে';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।';
+
+  @override
   String get notifConfirm => 'নিশ্চিত করুন';
 
   @override

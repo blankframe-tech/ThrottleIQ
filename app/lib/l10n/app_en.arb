@@ -6198,6 +6198,14 @@
       }
     }
   },
+  "notifRecordingStoppedTitle": "Recording stopped",
+  "@notifRecordingStoppedTitle": {
+    "description": "Notification when the phone stopped the ride's foreground service mid-ride."
+  },
+  "notifRecordingStoppedBody": "Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.",
+  "@notifRecordingStoppedBody": {
+    "description": "Body of the recording-stopped notification; tapping opens the app on the paused ride."
+  },
   "notifConfirm": "Confirm",
   "@notifConfirm": {
     "description": "Action button on the ride-detected notification."

@@ -19,6 +19,7 @@ import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
 import '../../../../core/realtime/realtime_location_publisher.dart';
 import '../../../../core/realtime/realtime_providers.dart';
+import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/gps_drop_log.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/home_widget_service.dart';
@@ -344,6 +345,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   int _gpsKept = 0;
   int _gpsDropped = 0;
 
+  /// Whether the ride is hosted in the foreground-task service (B5); false
+  /// means geolocator's own foreground notification keeps it alive.
+  bool _inService = false;
+
+  /// The service died while this UI kept running; re-hosted on resume.
+  bool _serviceLost = false;
+
   bool get isLiveShareEnabled => _liveCoordinator.isLiveShareEnabled;
   bool get isAutoStarted => !_userInitiated;
 
@@ -510,6 +518,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       );
 
       await _persistenceCoordinator.persistRecordingState(ride);
+      _inService = await _hostInService(ride.id);
       WidgetsBinding.instance.addObserver(this);
       if (_userInitiated) {
         await WakelockPlus.enable();
@@ -530,6 +539,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _persistenceCoordinator.dispose();
       _sessionLive = false;
       WidgetsBinding.instance.removeObserver(this);
+      await _endHosting();
       try {
         await WakelockPlus.disable();
       } catch (_) {}
@@ -558,6 +568,59 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       unawaited(_persistenceCoordinator.flushPointBuffer());
       unawaited(_persistenceCoordinator.persistElapsed(this.state.elapsed,
           force: true));
+    }
+    if (state == AppLifecycleState.resumed && _serviceLost) {
+      unawaited(_rehost());
+    }
+  }
+
+  /// Hosts the ride in the foreground-task service so the recording outlives
+  /// the UI (B5). False on iOS or when the service can't start.
+  Future<bool> _hostInService(String rideId) {
+    final l10n = resolveL10n(_ref.read(appLocaleProvider));
+    return AutoTrackingService.instance.beginManualRide(
+      rideId,
+      title: _userInitiated ? l10n.rideRecordingActive : l10n.rideDetected,
+      text: _userInitiated
+          ? l10n.recordingNotificationTextUser
+          : l10n.recordingNotificationTextAuto,
+    );
+  }
+
+  Future<void> _endHosting() async {
+    _inService = false;
+    _serviceLost = false;
+    await AutoTrackingService.instance.endManualRide();
+  }
+
+  /// The once-every-30-s check behind "Recording stopped, tap to resume"
+  /// for a service that died while this UI lives on: in the background the
+  /// UI's own GPS stream gets nothing without a foreground service.
+  Future<void> _checkServiceAlive() async {
+    if (await AutoTrackingService.isServiceRunning() || !_inService) return;
+    _inService = false;
+    _serviceLost = true;
+    try {
+      await NotificationService.instance.showRecordingStopped();
+    } catch (e) {
+      debugPrint('[RideRecording] stopped notice failed: $e');
+    }
+  }
+
+  /// Back in the foreground after the service died: host the ride again and
+  /// reopen the streams (under geolocator's notification if hosting fails).
+  Future<void> _rehost() async {
+    if (state.status != RecordingStatus.active || !_latch.tryEnter()) return;
+    try {
+      _serviceLost = false;
+      _inService = await _hostInService(state.ride!.id);
+      if (!mounted || state.status != RecordingStatus.active) return;
+      _openStreams();
+      unawaited(NotificationService.instance
+          .cancel(NotificationService.recordingStoppedId)
+          .catchError((Object _) {}));
+    } finally {
+      _latch.exit();
     }
   }
 
@@ -594,14 +657,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
             forceLocationManager: false,
             intervalDuration:
                 Duration(milliseconds: _userInitiated ? 500 : 2000),
-            foregroundNotificationConfig: ForegroundNotificationConfig(
-              notificationText: _userInitiated
-                  ? l10n.recordingNotificationTextUser
-                  : l10n.recordingNotificationTextAuto,
-              notificationTitle:
-                  _userInitiated ? l10n.rideRecordingActive : l10n.rideDetected,
-              enableWakeLock: true,
-            ),
+            // Hosted in the foreground-task service (B5), that service is
+            // the location foreground service; a second one would only
+            // duplicate its notification.
+            foregroundNotificationConfig: _inService
+                ? null
+                : ForegroundNotificationConfig(
+                    notificationText: _userInitiated
+                        ? l10n.recordingNotificationTextUser
+                        : l10n.recordingNotificationTextAuto,
+                    notificationTitle: _userInitiated
+                        ? l10n.rideRecordingActive
+                        : l10n.rideDetected,
+                    enableWakeLock: true,
+                  ),
           );
     return Geolocator.getPositionStream(locationSettings: settings).listen(
       _onPosition,
@@ -918,6 +987,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           keepError: true,
         );
         unawaited(_persistenceCoordinator.persistElapsed(state.elapsed));
+        // Beats go on after the service is lost: the plugin may restart it,
+        // and the restarted handler must see the UI is still recording.
+        if (_inService || _serviceLost) AutoTrackingService.sendUiBeat();
+        if (_inService && state.elapsed.inSeconds % 30 == 0) {
+          unawaited(_checkServiceAlive());
+        }
       }
     });
   }
@@ -995,6 +1070,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           elapsed: _accumulatedDuration,
           keepError: true);
       await _subs.cancel();
+      await _endHosting();
       await _persistenceCoordinator.flushPointBuffer();
       // Stop the 10s live-share tick — otherwise it keeps republishing a stale
       // fix (and burning battery/network) for as long as the ride sits paused.
@@ -1056,6 +1132,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         _persistenceCoordinator.startFlushTimer();
         _sessionLive = true;
       }
+      _inService = await _hostInService(state.ride!.id);
       // Status first, then a fresh subscription set: a new subscription on a
       // broadcast stream sees only what happens from now on (§90.C1).
       state = state.copyWith(
@@ -1083,6 +1160,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     _elapsedTimer?.cancel();
     _elapsedTimer = null;
     _sessionLive = false;
+    await _endHosting();
   }
 
   Future<void> cancelRide() async {
@@ -1252,6 +1330,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     final rideId = await _persistenceCoordinator.getSavedActiveRideId();
     if (rideId == null) return;
+    // Before reading the points: the service may still be storing fixes for
+    // this ride after the previous UI went away (B5).
+    await AutoTrackingService.instance.endManualRide();
+    unawaited(NotificationService.instance
+        .cancel(NotificationService.recordingStoppedId)
+        .catchError((Object _) {}));
 
     final row = await _rideDao.getById(rideId);
     if (row == null) {
