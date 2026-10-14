@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:throttleiq/core/services/app_update_gate.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 import 'package:throttleiq/shared/widgets/update_required_screen.dart';
@@ -25,6 +26,26 @@ void main() {
       expect(isUpdateRequired(currentBuild: 0, minBuild: 27), isFalse);
       expect(isUpdateRequired(currentBuild: 26, minBuild: null), isFalse);
       expect(isUpdateRequired(currentBuild: 26, minBuild: '27'), isFalse);
+    });
+  });
+
+  group('currentBuildNumber', () {
+    void mockBuild(String build) => PackageInfo.setMockInitialValues(
+          appName: 'ThrottleIQ',
+          packageName: 'com.bft.throttleiq',
+          version: '1.0.0',
+          buildNumber: build,
+          buildSignature: '',
+        );
+
+    test('reads the platform build number', () async {
+      mockBuild('26');
+      expect(await currentBuildNumber(), 26);
+    });
+
+    test('an unreadable build number is 0, which never blocks', () async {
+      mockBuild('');
+      expect(await currentBuildNumber(), 0);
     });
   });
 
@@ -58,7 +79,7 @@ void main() {
       expect(await check(() => never.future), isFalse);
     });
 
-    test('a build without APP_BUILD never reads the doc', () async {
+    test('an unknown build number never reads the doc', () async {
       var read = false;
       final blocked = await check(() async {
         read = true;

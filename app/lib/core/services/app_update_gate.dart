@@ -3,18 +3,24 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 /// Forced update: a build older than `config/app.minBuild` shows a blocking
 /// "Update required" screen instead of the app (CrtiQue_Oct14 §10). Raising
 /// `minBuild` in the Firebase console is how a rules change that old builds
 /// can't survive gets shipped.
 
-/// This build's number, the part after `+` in pubspec.yaml. scripts/deploy.sh
-/// passes it as `--dart-define=APP_BUILD=<n>`.
-///
-/// shortcut: a build made without the define reads 0 and is never blocked;
-/// switch to package_info_plus if releases are ever built outside deploy.sh.
-const int kAppBuild = int.fromEnvironment('APP_BUILD');
+/// This build's number: the part after `+` in pubspec.yaml, which Flutter
+/// writes into the Android versionCode and the iOS CFBundleVersion. 0 when it
+/// can't be read, which never blocks.
+Future<int> currentBuildNumber() async {
+  try {
+    return int.tryParse((await PackageInfo.fromPlatform()).buildNumber) ?? 0;
+  } catch (e) {
+    debugPrint('[update-gate] build number unavailable: $e');
+    return 0;
+  }
+}
 
 /// Where riders get new builds (APK, Play beta and the iOS waitlist).
 const String kInstallUrl = 'https://blankframe.tech/ThrottleIQ/install';
@@ -48,8 +54,8 @@ Future<bool> checkUpdateRequired({
 /// Read once per app start. Loading and error both count as "no update
 /// required", so the app is never held back waiting for it.
 final updateRequiredProvider = FutureProvider<bool>(
-  (ref) => checkUpdateRequired(
-    currentBuild: kAppBuild,
+  (ref) async => checkUpdateRequired(
+    currentBuild: await currentBuildNumber(),
     readConfig: () async =>
         (await FirebaseFirestore.instance.doc('config/app').get()).data(),
   ),

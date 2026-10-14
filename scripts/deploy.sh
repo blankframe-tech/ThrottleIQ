@@ -143,14 +143,10 @@ echo "✅ Git push complete!"
 TILES_ENV="$(dirname "$0")/../secret/tiles.env"
 # shellcheck disable=SC1090
 [ -z "${TILE_URL_TEMPLATE:-}" ] && [ -f "$TILES_ENV" ] && . "$TILES_ENV"
-DART_DEFINES=()
-[ -n "${TILE_URL_TEMPLATE:-}" ] && DART_DEFINES+=("--dart-define=TILE_URL_TEMPLATE=${TILE_URL_TEMPLATE}")
-[ -n "${TILE_API_KEY:-}" ] && DART_DEFINES+=("--dart-define=TILE_API_KEY=${TILE_API_KEY}")
-[ -n "${TILE_ATTRIBUTION:-}" ] && DART_DEFINES+=("--dart-define=TILE_ATTRIBUTION=${TILE_ATTRIBUTION}")
-# The build number (after the "+") goes into the app as APP_BUILD, which the
-# forced-update gate compares with config/app.minBuild (core/config/app_update.dart).
-# A build made without it is never blocked.
-DART_DEFINES+=("--dart-define=APP_BUILD=${PUBSPEC_VERSION##*+}")
+TILE_DEFINES=()
+[ -n "${TILE_URL_TEMPLATE:-}" ] && TILE_DEFINES+=("--dart-define=TILE_URL_TEMPLATE=${TILE_URL_TEMPLATE}")
+[ -n "${TILE_API_KEY:-}" ] && TILE_DEFINES+=("--dart-define=TILE_API_KEY=${TILE_API_KEY}")
+[ -n "${TILE_ATTRIBUTION:-}" ] && TILE_DEFINES+=("--dart-define=TILE_ATTRIBUTION=${TILE_ATTRIBUTION}")
 if [ -z "${TILE_URL_TEMPLATE:-}" ]; then
   echo "NOTE: TILE_URL_TEMPLATE is not set — release builds will use the public OpenStreetMap tile server. Fine for testing, not for a launch (issues §78.16)."
 fi
@@ -171,7 +167,7 @@ if [ "$SKIP_IOS" = false ]; then
     fi
   fi
   echo "Targeting iOS Device: ${IOS_DEVICE_ID}"
-  flutter run --release -d "${IOS_DEVICE_ID}" ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
+  flutter run --release -d "${IOS_DEVICE_ID}" ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   cd "${REPO_ROOT}"
   echo "✅ iOS Release run complete!"
 else
@@ -185,7 +181,7 @@ if [ "$SKIP_ANDROID" = false ]; then
   echo "==> [4/5] Building Android Release Binaries (APK & AAB)..."
   cd "${APP_DIR}"
   echo "--- Building release APK ---"
-  flutter build apk --release ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
+  flutter build apk --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   APK_PATH="${APP_DIR}/build/app/outputs/flutter-apk/app-release.apk"
   if [ ! -f "$APK_PATH" ]; then
     echo "❌ APK build failed — file not found: $APK_PATH" >&2
@@ -193,10 +189,10 @@ if [ "$SKIP_ANDROID" = false ]; then
   fi
   echo "APK ready: $APK_PATH ($(du -h "$APK_PATH" | cut -f1))"
 
-  # Per-ABI APKs are a third of the universal one's size. The universal APK
+  # Per-ABI APKs are much smaller than the universal one. The universal APK
   # stays because the install page links releases/latest/download/app-release.apk.
   echo "--- Building per-ABI release APKs ---"
-  flutter build apk --release --split-per-abi ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
+  flutter build apk --release --split-per-abi ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   for abi in arm64-v8a armeabi-v7a x86_64; do
     SPLIT_PATH="${APP_DIR}/build/app/outputs/flutter-apk/app-${abi}-release.apk"
     if [ ! -f "$SPLIT_PATH" ]; then
@@ -207,7 +203,7 @@ if [ "$SKIP_ANDROID" = false ]; then
   done
 
   echo "--- Building release AAB ---"
-  flutter build appbundle --release ${DART_DEFINES[@]+"${DART_DEFINES[@]}"}
+  flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   AAB_PATH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"
   if [ ! -f "$AAB_PATH" ]; then
     echo "❌ AAB build failed — file not found: $AAB_PATH" >&2
@@ -243,7 +239,7 @@ if [ "$SKIP_GITHUB" = false ]; then
 ${COMMITS_LOG}
 
 ### Binaries Attached
-- \`app-arm64-v8a-release.apk\` (Direct Android Install, most phones from 2017 on)
+- \`app-arm64-v8a-release.apk\` (Direct Android Install, most phones)
 - \`app-armeabi-v7a-release.apk\` (Direct Android Install, older 32-bit phones)
 - \`app-x86_64-release.apk\` (emulators)
 - \`app-release.apk\` (Direct Android Install, any phone, largest)

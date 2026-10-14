@@ -46,14 +46,14 @@ bash scripts/deploy.sh
 
 3. **Deploy to connected iPhone**:
    ```bash
-   cd app && flutter run --release -d 00008120-001E5D190A85A01E --dart-define=APP_BUILD=<n>
+   cd app && flutter run --release -d 00008120-001E5D190A85A01E
    ```
 
-4. **Build Android APKs & AAB** (`<n>` is the build number after `+` in `pubspec.yaml`; without `APP_BUILD` the forced-update gate never blocks that build):
+4. **Build Android APKs & AAB**:
    ```bash
-   cd app && flutter build apk --release --dart-define=APP_BUILD=<n>
-   flutter build apk --release --split-per-abi --dart-define=APP_BUILD=<n>
-   flutter build appbundle --release --dart-define=APP_BUILD=<n>
+   cd app && flutter build apk --release
+   flutter build apk --release --split-per-abi
+   flutter build appbundle --release
    ```
 
 5. **GitHub Release**:
