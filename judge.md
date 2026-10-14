@@ -55,3 +55,7 @@ Scored 2026-10-14 from the README, `DOCS/Handoff for agents and Todos/HANDOFF_Do
 Done: real `SECURITY.md` (private reports to the owner's email), `AGENTS.md`, `CODING_STANDARDS.md`; `check.sh` passed.
 **Deployed to `throttleiqfb`:** Firestore indexes and Hosting. **Not deployed, on purpose:** `firestore.rules`. Per the handoff, old builds lose search, All People and forum post create and delete when the new rules go live, and `users` docs need a `visibility: 'public'` backfill first. Rules compile with one warning (line 455). Functions cannot deploy on Spark.
 **Skipped:** the old `seed_police_checkposts` v1 and v2 scripts are required by tests and docs, so they stay. `app/ios/Podfile.lock` stays uncommitted: its diff removes `home_widget`, but `pubspec.yaml` and `pubspec.lock` still list it, so the lockfile and pubspec disagree and need a human look. Local branch `test` and `screenshots_ui` untouched. Score unchanged at 45%.
+
+## Update 2 (2026-10-14): Firestore rules deployed
+
+`firebase deploy --only firestore:rules` to `throttleiqfb` at the owner's request; the CLI reported the rules released ("already up to date, skipping upload": the file matched an existing ruleset, so the live rules may have been unchanged). Compile warning at line 455 remains. The `users` `visibility: 'public'` backfill was **not** run, and no old-build behaviour was checked: if beta riders on old builds report broken search, All People or forum posts, that is the cause named in the handoff.
