@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 
 /// issues §101.A1 (re-auth on delete) and §101.A2 (revoke live share before
@@ -19,8 +20,7 @@ class _FakeUser extends Fake implements User {
   @override
   String? get email => 'rider@example.com';
   @override
-  List<UserInfo> get providerData =>
-      [for (final p in providers) _FakeInfo(p)];
+  List<UserInfo> get providerData => [for (final p in providers) _FakeInfo(p)];
 
   @override
   Future<UserCredential> reauthenticateWithCredential(
@@ -38,6 +38,39 @@ class _FakeUser extends Fake implements User {
 }
 
 class _FakeCred extends Fake implements UserCredential {}
+
+/// An email/password user for CrtiQue_Oct15 N3: reload() picks up a click
+/// on the verification link when [clickedLink] is set.
+class _VerifyUser extends Fake implements User {
+  _VerifyUser({this.verified = false, this.clickedLink = false});
+  bool verified;
+  final bool clickedLink;
+  final List<String> log = [];
+
+  @override
+  String get uid => 'u1';
+  @override
+  String? get email => 'rider@example.com';
+  @override
+  bool get emailVerified => verified;
+  @override
+  Future<void> reload() async {
+    log.add('reload');
+    if (clickedLink) verified = true;
+  }
+
+  @override
+  Future<void> sendEmailVerification(
+      [ActionCodeSettings? actionCodeSettings]) async {
+    log.add('sendVerification');
+  }
+
+  @override
+  Future<String?> getIdToken([bool forceRefresh = false]) async {
+    log.add('getIdToken($forceRefresh)');
+    return 'token';
+  }
+}
 
 class _FakeInfo extends Fake implements UserInfo {
   _FakeInfo(this._id);
@@ -57,6 +90,34 @@ class _FakeAuth extends Fake implements FirebaseAuth {
 }
 
 void main() {
+  group('completeEmailVerification (Oct15 N3)', () {
+    setUp(() => SharedPreferences.setMockInitialValues({}));
+
+    test('an unverified rider gets the link once, not on every start',
+        () async {
+      final user = _VerifyUser();
+      final n = AuthNotifier(_FakeAuth(user, []));
+      await n.completeEmailVerification();
+      await n.completeEmailVerification();
+      expect(user.log, ['reload', 'sendVerification', 'reload']);
+    });
+
+    test('after the click, the token is refreshed before the lookup write',
+        () async {
+      final user = _VerifyUser(clickedLink: true);
+      final n = AuthNotifier(_FakeAuth(user, []));
+      // ensureProfile then fails without Firebase; the step never throws.
+      await n.completeEmailVerification();
+      expect(user.log, ['reload', 'getIdToken(true)']);
+    });
+
+    test('a verified rider costs nothing', () async {
+      final user = _VerifyUser(verified: true);
+      await AuthNotifier(_FakeAuth(user, [])).completeEmailVerification();
+      expect(user.log, isEmpty);
+    });
+  });
+
   group('signOut pre-sign-out hook (A2)', () {
     test('runs while still signed in, before FirebaseAuth.signOut', () async {
       final events = <String>[];
@@ -106,7 +167,8 @@ void main() {
     test('reauthenticate(password) then retry delete succeeds', () async {
       final user = _FakeUser(deleteError: needsLogin());
       final n = AuthNotifier(_FakeAuth(user, []));
-      await expectLater(n.deleteAccount(), throwsA(isA<FirebaseAuthException>()));
+      await expectLater(
+          n.deleteAccount(), throwsA(isA<FirebaseAuthException>()));
       expect(await n.reauthenticate(password: 'hunter2'), isTrue);
       expect(user.reauthCredential, isA<EmailAuthCredential>());
       await n.deleteAccount();
@@ -117,7 +179,8 @@ void main() {
         () async {
       final user = _FakeUser();
       final n = AuthNotifier(_FakeAuth(user, []));
-      await expectLater(n.reauthenticate(), throwsA(isA<FirebaseAuthException>()));
+      await expectLater(
+          n.reauthenticate(), throwsA(isA<FirebaseAuthException>()));
       expect(user.log, isEmpty);
     });
   });

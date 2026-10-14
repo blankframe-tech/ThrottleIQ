@@ -126,6 +126,9 @@ class ProfileRepository {
   /// Separate writes, and permission errors are swallowed: rules that predate
   /// B2 refuse the lookup, and that must not cost the private copy or fail
   /// sign-in.
+  ///
+  /// The lookup needs a verified email (firestore.rules, CrtiQue_Oct15 N3);
+  /// AuthNotifier.completeEmailVerification calls this again once it is.
   Future<void> _saveEmail(User user) async {
     final email = user.email;
     if (email == null || email.isEmpty) return;
@@ -134,6 +137,7 @@ class ProfileRepository {
         {'email': email, 'emailLower': email.toLowerCase()},
         SetOptions(merge: true),
       );
+      if (!user.emailVerified) return;
       await _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid});
     } on FirebaseException catch (e) {
       if (e.code != 'permission-denied') rethrow;

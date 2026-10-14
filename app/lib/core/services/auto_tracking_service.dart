@@ -552,24 +552,28 @@ class AutoTrackingService {
 
   /// Begins watching for rides. No-op unless the rider has opted in.
   ///
-  /// Collects the two permissions this needs beyond location (already
-  /// gathered by [AutoTrackingNotifier.enable] before this is ever called):
-  /// activity recognition, without which the platform classifier never
-  /// starts, and — Android 13+ — the notification permission the persistent
-  /// "watching for rides" notification needs to actually show.
-  Future<bool> start() async {
+  /// With [askForMissingPermissions] (only [AutoTrackingNotifier.enable]),
+  /// collects the permissions this needs beyond location: activity
+  /// recognition, without which the platform classifier never starts, the
+  /// Android 13+ notification permission for the persistent "watching for
+  /// rides" notification, and the battery-optimisation exemption. Every other
+  /// caller (app start, the end of a manual ride) starts silently: it used to
+  /// re-ask on every pause and ride end (CrtiQue_Oct15 N5, §90.C11), and
+  /// without activity recognition it returns false instead of asking.
+  Future<bool> start({bool askForMissingPermissions = false}) async {
     if (!await isEnabled()) return false;
     await configure();
 
     final activityPermission =
         await ar.FlutterActivityRecognition.instance.checkPermission();
     if (activityPermission != ar.ActivityPermission.GRANTED) {
+      if (!askForMissingPermissions) return false;
       final requested =
           await ar.FlutterActivityRecognition.instance.requestPermission();
       if (requested != ar.ActivityPermission.GRANTED) return false;
     }
 
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid && askForMissingPermissions) {
       if (await FlutterForegroundTask.checkNotificationPermission() !=
           NotificationPermission.granted) {
         await FlutterForegroundTask.requestNotificationPermission();

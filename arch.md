@@ -223,7 +223,7 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
 - **Nothing here is deployed** (Spark plan). Deploy order and secrets: `SECURITY.md`.
 
 ### Profiles and email
-- `users/{uid}` is readable by signed-in riders, so it holds no email. The address lives in owner-only `users/{uid}/private/account`; find-by-email is a keyed `get` on `emailLookup/{sha256(lowercased email)}` → `{uid}` (no `list`). A `users` list query is capped at 20 docs.
+- `users/{uid}` is readable by signed-in riders, so it holds no email. The address lives in owner-only `users/{uid}/private/account`; find-by-email is a keyed `get` on `emailLookup/{sha256(lowercased email)}` → `{uid}` (no `list`; a write needs the caller's own verified token email). A `users` list query is capped at 20 docs.
 - `config/app` (world-readable, console-written) carries `minBuild` for the forced-update gate.
 - Realtime Database is retired: `database.rules.json` denies everything.
 

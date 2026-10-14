@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter_activity_recognition/flutter_activity_recognition.dart'
+    as ar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -60,7 +62,12 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
 
     final servicesOn = await Geolocator.isLocationServiceEnabled();
     final permission = await Geolocator.checkPermission();
-    final stillGranted = servicesOn && permission == LocationPermission.always;
+    // Activity recognition too: start() no longer re-asks for it outside
+    // enable() (CrtiQue_Oct15 N5), so a revoked grant must show as "off".
+    final stillGranted = servicesOn &&
+        permission == LocationPermission.always &&
+        await ar.FlutterActivityRecognition.instance.checkPermission() ==
+            ar.ActivityPermission.GRANTED;
     if (stillGranted) return true;
 
     await AutoTrackingService.setEnabled(false);
@@ -105,7 +112,8 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     await NotificationService.instance.requestPermissions();
 
     await AutoTrackingService.setEnabled(true);
-    final started = await AutoTrackingService.instance.start();
+    final started = await AutoTrackingService.instance
+        .start(askForMissingPermissions: true);
     if (!started) {
       await AutoTrackingService.setEnabled(false);
       return AutoTrackingEnableFailure.startFailed;

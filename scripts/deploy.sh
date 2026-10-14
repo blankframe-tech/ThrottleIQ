@@ -202,6 +202,32 @@ if [ "$SKIP_ANDROID" = false ]; then
     echo "APK ready: $SPLIT_PATH ($(du -h "$SPLIT_PATH" | cut -f1))"
   done
 
+  # Version codes (CrtiQue_Oct15 N1). Every artifact carries the pubspec build
+  # number, the part after `+` (26 for 1.0.0-beta.4.5.0+26): the universal APK,
+  # each per-ABI APK and the AAB. Flutter's default for splits is
+  # abi * 1000 + build (2026 for arm64), which app/android/app/build.gradle.kts
+  # resets. One number matters because the forced-update gate compares it with
+  # config/app.minBuild, and Android refuses to install a lower code over a
+  # higher one, so a rider on a 2026 split could never move to build 27.
+  # Bump the build number for every release; never reuse or lower it.
+  # The AAB is built from defaultConfig, which the split override never touches.
+  echo "--- Checking every APK's versionCode ---"
+  EXPECTED_CODE="${PUBSPEC_VERSION##*+}"
+  SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
+  AAPT2="$(ls "${SDK_DIR}"/build-tools/*/aapt2 2>/dev/null | tail -n 1 || true)"
+  if [ -z "$AAPT2" ]; then
+    echo "❌ aapt2 not found under ${SDK_DIR}/build-tools; cannot check version codes." >&2
+    exit 1
+  fi
+  for apk in "${APP_DIR}"/build/app/outputs/flutter-apk/app-*release.apk; do
+    CODE="$("$AAPT2" dump badging "$apk" | sed -n "s/.*versionCode='\([0-9]*\)'.*/\1/p" | head -n 1)"
+    if [ "$CODE" != "$EXPECTED_CODE" ]; then
+      echo "❌ $(basename "$apk") has versionCode '${CODE}', expected ${EXPECTED_CODE}." >&2
+      exit 1
+    fi
+    echo "versionCode ${CODE}: $(basename "$apk")"
+  done
+
   echo "--- Building release AAB ---"
   flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   AAB_PATH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"

@@ -8,7 +8,10 @@
  * signed-in rider could list them. For every profile that still has either
  * field this:
  *   1. copies {email, emailLower} to the owner-only `users/{uid}/private/account`;
- *   2. writes `emailLookup/{sha256(lowercased email)}` -> {uid} (find-by-email);
+ *   2. writes `emailLookup/{sha256(lowercased email)}` -> {uid} (find-by-email),
+ *      only when Firebase Auth says that address is verified for that uid
+ *      (CrtiQue_Oct15 N3: the rules refuse an unverified lookup, and the
+ *      migration must not hand out what the rules refuse);
  *   3. deletes `email` and `emailLower` from the public profile.
  * The app does the same for each rider on their next sign-in
  * (ProfileRepository.ensureProfile); this covers riders who don't come back.
@@ -47,14 +50,31 @@ function emailLookupId(email) {
 /**
  * What to do for one profile doc, or null when it has no email field.
  * `email` wins over `emailLower`; an empty or non-string value is only
- * stripped.
+ * stripped. `verifiedEmail` is the Auth record's email when it is verified,
+ * else null; the lookup is written only when it is the profile's address.
  */
-function planForProfile(uid, data) {
+function planForProfile(uid, data, verifiedEmail) {
   if (!('email' in data) && !('emailLower' in data)) return null;
   const raw = [data.email, data.emailLower].find((v) => typeof v === 'string' && v.trim() !== '');
   if (!raw) return { uid, account: null, lookupId: null };
   const email = raw.trim();
-  return { uid, account: { email, emailLower: email.toLowerCase() }, lookupId: emailLookupId(email) };
+  const verified = typeof verifiedEmail === 'string' &&
+    verifiedEmail.trim().toLowerCase() === email.toLowerCase();
+  return {
+    uid,
+    account: { email, emailLower: email.toLowerCase() },
+    lookupId: verified ? emailLookupId(email) : null,
+  };
+}
+
+/** uid -> verified email (or null) from Firebase Auth, 100 uids per call. */
+async function verifiedEmails(auth, uids) {
+  const out = new Map();
+  for (let i = 0; i < uids.length; i += 100) {
+    const { users } = await auth.getUsers(uids.slice(i, i + 100).map((uid) => ({ uid })));
+    for (const u of users) out.set(u.uid, u.emailVerified ? u.email || null : null);
+  }
+  return out;
 }
 
 /** Lookup ids claimed by more than one uid; the last write would win. */
@@ -120,8 +140,9 @@ async function main() {
     const snap = await q.get();
     if (snap.empty) break;
     scanned += snap.size;
+    const verified = await verifiedEmails(admin.auth(app), snap.docs.map((d) => d.id));
     for (const doc of snap.docs) {
-      const plan = planForProfile(doc.id, doc.data());
+      const plan = planForProfile(doc.id, doc.data(), verified.get(doc.id));
       if (plan) plans.push(plan);
     }
     last = snap.docs[snap.docs.length - 1];
@@ -129,7 +150,8 @@ async function main() {
   }
 
   const dupes = duplicateLookups(plans);
-  console.log(`  Scanned ${scanned} profiles; ${plans.length} carry an email field.`);
+  console.log(`  Scanned ${scanned} profiles; ${plans.length} carry an email field; ` +
+    `${plans.filter((p) => p.lookupId).length} verified, so they get a lookup.`);
   if (dupes.length > 0) {
     console.warn(`  WARNING ${dupes.length} email(s) are on more than one profile; uids: ${dupes.map((u) => u.join('+')).join(', ')}`);
   }
@@ -145,8 +167,8 @@ async function main() {
       const user = db.collection('users').doc(p.uid);
       if (p.account) {
         batch.set(user.collection('private').doc('account'), p.account, { merge: true });
-        batch.set(db.collection('emailLookup').doc(p.lookupId), { uid: p.uid });
       }
+      if (p.lookupId) batch.set(db.collection('emailLookup').doc(p.lookupId), { uid: p.uid });
       batch.update(user, { email: FieldValue.delete(), emailLower: FieldValue.delete() });
     }
     await batch.commit();

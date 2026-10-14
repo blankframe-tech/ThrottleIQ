@@ -2,7 +2,17 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (latest): ride recording fixes (B4, B5, B12) — branch `fix/oct14-tiq-ride`, merged with `oct14-int`, not pushed, not on a device
+## 2026-10-15 (latest): re-critique fixes (N1-N5) — branch `fix/oct15-throttleiq`, not pushed, not deployed, not on a device
+
+From `CrtiQue_Oct15.md` §3.
+- **N1 version codes:** every Android artifact carries the pubspec build number. `build.gradle.kts` resets Flutter's split codes (`abi * 1000 + build`); `deploy.sh` checks each APK with `aapt2` and stops on a mismatch. Bump the build number every release.
+- **N2 old builds:** the rules still refuse beta 4.5's profile write (it carries the email; letting it through would publish it again). `SECURITY.md` now gates the rules deploy on testers having moved to build 27+, sets `minBuild` first, and runs the email migration in the same hour.
+- **N3 email lookup:** `emailLookup` writes need `email_verified`. `AuthNotifier.completeEmailVerification` (app start and sign-in) sends the link once per unverified account and writes the lookup after the click. The migration writes lookups only for Auth-verified addresses.
+- **N4 install page:** the iPhone section is a mailto plus WhatsApp and says there is no iPhone build. No localStorage waitlist, no `console.log` tracking, no TestFlight or crash-alert claims (`hosting_repo_hygiene.test.js`). Needs a Hosting deploy.
+- **N5 permissions:** `AutoTrackingService.start()` asks for nothing unless `enable()` passes `askForMissingPermissions`, so pause and ride end no longer bring up the battery dialog. The switch reads off when activity recognition is revoked.
+- Not done: N6-N12 (Low), deletion without email (owner: Blaze or admin script).
+
+## 2026-10-15: ride recording fixes (B4, B5, B12) — branch `fix/oct14-tiq-ride`, merged with `oct14-int`, not pushed, not on a device
 
 From `CrtiQue_Oct14.md` §3, §4. Parallel agents: tiq-sync and tiq-themes (both already in `oct14-int`).
 - **B4 permissions:** a ride start asks for while-in-use location once (`ensureRideLocationPermission`): no "Allow all the time" upgrade, no trip to Settings. The Play disclosure (`ensureBackgroundLocationDisclosure`, `recording_gate.dart`) moved from the record, route and group-ride starts to the auto-tracking switch; shown until accepted once (`background_location_disclosure_accepted`). Copy (EN/BN) now describes automatic detection. Play notes in `DOCS/General/store_listing/data_safety_and_permissions.md` and `privacy.html` §3 say only auto-tracking asks for background location.
@@ -40,14 +50,14 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 - **B11:** crash overlay and crash notification show only with `impactDetectorLiveEnabled`; EN/BN copy no longer promises contact delivery. **B14:** OSM User-Agent contact is hello@blankframe.tech.
 - **Claims:** README analytics line (on by default, opt-out); store listing and `iDEA_PITCH_SUBMISSION.md` no longer claim crash detection or emergency alerts; `gov-pitch/` carries a "superseded, do not submit" banner (not rewritten). Data-safety CSV now declares App interactions (collected, optional = opt-out, Analytics) and Analytics as a Device ID purpose; v1/v2 posters with crash/SOS claims deleted.
 - **iOS:** `app/ios/Runner/PrivacyInfo.xcprivacy` added to the Runner target. `flutter build ios --no-codesign` passes; `Podfile.lock` from that build committed (identical to the main checkout's copy: home_widget moved to SPM). Widget extension has no manifest yet.
-- **deploy.sh:** also builds and attaches the three `--split-per-abi` APKs (universal APK kept; the install page links it).
+- **deploy.sh:** also builds and attaches the three `--split-per-abi` APKs (universal APK kept; the install page links it). 2026-10-15 (CrtiQue_Oct15 N1): Flutter gave splits `abi * 1000 + build` (2026 for arm64), which slipped past `minBuild` and blocked a later universal or Play install as a downgrade. `build.gradle.kts` now resets every split to the pubspec build number and `deploy.sh` checks each APK with `aapt2` (verified on a profile build: 26 on all three; 2026 without the reset).
 - **Cuts:** challenges (B6), top-speed badge family, badge rarity UI (B7), RTDB group-ride client (parked on branch `park/rtdb-group-ride`), `storage.rules`, `posters.py` / `posters_v2.py` / `illus.py`. Speed ids `ton_up`, `speed_140`, `speed_demon` stay in `firestore.rules` and `badge-catalog.ts` on purpose (old builds still award them); the parity test treats them as retired.
 - **Not cut:** `seed_police_checkposts.js` / `_v2.js`. They are not superseded: v1, v2 and v3 seed three different batches (30 + 25 + 35 places). Delete only if the 55 v1/v2 places are confirmed in production and never need re-seeding.
 - QA: `scripts/check.sh` passed (analyze clean, 2113 flutter tests; rules and functions unchanged on this branch, so skipped). `flutter build ios --no-codesign` passes. Not run: device, Android release build, rules emulator.
 
 ## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, merged into `oct14-int`, not deployed
 
-- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
+- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only; writes need a verified email since 2026-10-15). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
 - **B3:** chat create/update, notifications and follow create refuse writes across a block.
 - **B1 groundwork:** `onUserAccountDeleted` now also deletes chats and the email lookup, and reads Cloudinary credentials from secrets. The `userId` and `track.syncedAt` collection-group overrides are in `firestore.indexes.json`. New `purgeOldGpsTracks` (12-month raw-track retention). Nothing deployed: Blaze needed.
 - **B9:** `database.rules.json` denies everything; the delivery suite and `verify_realtime.js` are gone. `config/{doc}` is world-readable, never client-written (`minBuild`).
