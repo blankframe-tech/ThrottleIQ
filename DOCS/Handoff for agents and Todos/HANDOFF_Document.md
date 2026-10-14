@@ -1,8 +1,19 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-14 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
+_Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-14 (latest): two themes, not 28 — branch `fix/oct14-tiq-themes`, merged into `oct14-int`, not pushed, not on a device
+## 2026-10-15 (latest): ride recording fixes (B4, B5, B12) — branch `fix/oct14-tiq-ride`, merged with `oct14-int`, not pushed, not on a device
+
+From `CrtiQue_Oct14.md` §3, §4. Parallel agents: tiq-sync and tiq-themes (both already in `oct14-int`).
+- **B4 permissions:** a ride start asks for while-in-use location once (`ensureRideLocationPermission`): no "Allow all the time" upgrade, no trip to Settings. The Play disclosure (`ensureBackgroundLocationDisclosure`, `recording_gate.dart`) moved from the record, route and group-ride starts to the auto-tracking switch; shown until accepted once (`background_location_disclosure_accepted`). Copy (EN/BN) now describes automatic detection. Play notes in `DOCS/General/store_listing/data_safety_and_permissions.md` and `privacy.html` §3 say only auto-tracking asks for background location.
+- **B5 kill mid-ride:** on Android the ride is hosted in the `flutter_foreground_task` service (`AutoTrackingService.beginManualRide`/`endManualRide`); geolocator's own notification is only the fallback. The UI beats every second; after 20 s of silence the handler writes the ride's fixes to `ride_points` and advances `ride_elapsed_s`, so the existing restore gets the whole ride. A system-restarted service without "Allow all the time", or a service that dies under a live UI, posts "Recording stopped, tap to resume". Channel renamed "Ride recording" (same id).
+- **OEM guide:** after the first finished ride, Xiaomi/Redmi/POCO, OPPO, realme and vivo/iQOO get a one-time guide (`oem_guide_screen.dart`, channel `throttleiq/oem` in `MainActivity.kt`, `<queries>` for the vendor apps). No new dependency.
+- **B12:** `RideDao.setStatus`; a dismissed crash alert changes the status only.
+- **GPS drops:** per-ride kept/dropped counts for the 25 m gate in `GpsDropLog` (last 20 rides), included in the bug-report JSON. Threshold unchanged.
+- **Pocket rides:** the cockpit's IMU g bar is hidden until `AccelAxisCalibrator` is calibrated. Lean and the summary g peaks are not hidden: they come from GPS (`CorneringEstimator`), not the mount.
+- QA: `scripts/check.sh` (see the branch report); `flutter build apk --debug` (arm64) compiles the Kotlin. **Not run:** any device. Device test: start a ride, swipe the app from recents, ride 2 min, reopen: the restored ride includes those 2 min. Then the same on a Xiaomi or realme with default settings.
+
+## 2026-10-14: two themes, not 28 — branch `fix/oct14-tiq-themes`, merged into `oct14-int`, not pushed, not on a device
 
 From `CrtiQue_Oct14.md` §6/§14. Parallel agents: tiq-ride (recording) and tiq-sync (models/sync) on their own branches.
 - **Themes:** one light (**Calming**: cream/sage, the default since 2026-08-27) and one dark (**Carbon Mono**: carbon/lime, whose accent stays visible over OSM tiles at night). Curvy shape only. Settings › Appearance is System / Dark / Light. Gone: the 7 ride-mode color families, the Boxy/Curvy Vibe, the color picker (`appearance_picker.dart`), the Retro-only hard shadow and mono type, 14 theme/vibe/color l10n keys, and `ti_theme_mode` for the home widgets.
