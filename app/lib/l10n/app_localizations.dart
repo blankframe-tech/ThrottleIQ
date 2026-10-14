@@ -10146,54 +10146,6 @@ abstract class AppLocalizations {
   /// **'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.'**
   String get couldNotArchiveSharedRides;
 
-  /// Badge rarity tier: 40% or more of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Common'**
-  String get badgeRarityCommon;
-
-  /// Badge rarity tier: 15–40% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Uncommon'**
-  String get badgeRarityUncommon;
-
-  /// Badge rarity tier: 5–15% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Rare'**
-  String get badgeRarityRare;
-
-  /// Badge rarity tier: 1–5% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Epic'**
-  String get badgeRarityEpic;
-
-  /// Badge rarity tier: under 1% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Legendary'**
-  String get badgeRarityLegendary;
-
-  /// Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent} of riders own this badge'**
-  String badgeOwnedByPercent(String percent);
-
-  /// Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity isn\'t available right now'**
-  String get badgeOwnershipUnknown;
-
-  /// Badge detail sheet: section label for the rarity figure.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity'**
-  String get badgeRarityLabel;
-
   /// Badge detail sheet: section label for the requirement.
   ///
   /// In en, this message translates to:
@@ -10241,12 +10193,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'I earned the {badge} badge on ThrottleIQ.'**
   String badgeShareText(String badge);
-
-  /// Share text for an earned badge when its rarity is known.
-  ///
-  /// In en, this message translates to:
-  /// **'I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.'**
-  String badgeShareTextRarity(String badge, String rarity, String percent);
 
   /// Accessibility hint on a badge row that opens the badge detail sheet.
   ///

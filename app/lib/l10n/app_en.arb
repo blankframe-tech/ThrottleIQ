@@ -8176,43 +8176,6 @@
   "@couldNotArchiveSharedRides": {
     "description": "Snackbar when archiving fails because the shared rides could not be deleted."
   },
-  "badgeRarityCommon": "Common",
-  "@badgeRarityCommon": {
-    "description": "Badge rarity tier: 40% or more of riders own it."
-  },
-  "badgeRarityUncommon": "Uncommon",
-  "@badgeRarityUncommon": {
-    "description": "Badge rarity tier: 15–40% of riders own it."
-  },
-  "badgeRarityRare": "Rare",
-  "@badgeRarityRare": {
-    "description": "Badge rarity tier: 5–15% of riders own it."
-  },
-  "badgeRarityEpic": "Epic",
-  "@badgeRarityEpic": {
-    "description": "Badge rarity tier: 1–5% of riders own it."
-  },
-  "badgeRarityLegendary": "Legendary",
-  "@badgeRarityLegendary": {
-    "description": "Badge rarity tier: under 1% of riders own it."
-  },
-  "badgeOwnedByPercent": "{percent} of riders own this badge",
-  "@badgeOwnedByPercent": {
-    "description": "Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.",
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeOwnershipUnknown": "Rarity isn't available right now",
-  "@badgeOwnershipUnknown": {
-    "description": "Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available."
-  },
-  "badgeRarityLabel": "Rarity",
-  "@badgeRarityLabel": {
-    "description": "Badge detail sheet: section label for the rarity figure."
-  },
   "badgeHowToEarn": "How to earn it",
   "@badgeHowToEarn": {
     "description": "Badge detail sheet: section label for the requirement."
@@ -8270,21 +8233,6 @@
     "description": "Share text for an earned badge.",
     "placeholders": {
       "badge": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeShareTextRarity": "I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.",
-  "@badgeShareTextRarity": {
-    "description": "Share text for an earned badge when its rarity is known.",
-    "placeholders": {
-      "badge": {
-        "type": "String"
-      },
-      "rarity": {
-        "type": "String"
-      },
-      "percent": {
         "type": "String"
       }
     }

@@ -5887,33 +5887,6 @@ class AppLocalizationsBn extends AppLocalizations {
       'শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
 
   @override
-  String get badgeRarityCommon => 'সাধারণ';
-
-  @override
-  String get badgeRarityUncommon => 'কিছুটা বিরল';
-
-  @override
-  String get badgeRarityRare => 'দুর্লভ';
-
-  @override
-  String get badgeRarityEpic => 'এপিক';
-
-  @override
-  String get badgeRarityLegendary => 'কিংবদন্তি';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent রাইডারের কাছে এই ব্যাজ আছে';
-  }
-
-  @override
-  String get badgeOwnershipUnknown =>
-      'এই মুহূর্তে বিরলতার তথ্য পাওয়া যাচ্ছে না';
-
-  @override
-  String get badgeRarityLabel => 'বিরলতা';
-
-  @override
   String get badgeHowToEarn => 'কীভাবে পাবেন';
 
   @override
@@ -5943,11 +5916,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি।';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি। $rarity: $percent রাইডারের কাছে এটি আছে।';
   }
 
   @override

@@ -5922,32 +5922,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.';
 
   @override
-  String get badgeRarityCommon => 'Common';
-
-  @override
-  String get badgeRarityUncommon => 'Uncommon';
-
-  @override
-  String get badgeRarityRare => 'Rare';
-
-  @override
-  String get badgeRarityEpic => 'Epic';
-
-  @override
-  String get badgeRarityLegendary => 'Legendary';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent of riders own this badge';
-  }
-
-  @override
-  String get badgeOwnershipUnknown => 'Rarity isn\'t available right now';
-
-  @override
-  String get badgeRarityLabel => 'Rarity';
-
-  @override
   String get badgeHowToEarn => 'How to earn it';
 
   @override
@@ -5977,11 +5951,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'I earned the $badge badge on ThrottleIQ.';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'I earned the $badge badge on ThrottleIQ. $rarity: $percent of riders have it.';
   }
 
   @override

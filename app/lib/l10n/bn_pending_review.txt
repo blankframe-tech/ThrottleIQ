@@ -1401,14 +1401,6 @@ archivedPurgesIn
 couldNotExportBike
 couldNotArchiveSharedRides
 # batch: badge-rarity
-badgeRarityCommon
-badgeRarityUncommon
-badgeRarityRare
-badgeRarityEpic
-badgeRarityLegendary
-badgeOwnedByPercent
-badgeOwnershipUnknown
-badgeRarityLabel
 badgeHowToEarn
 badgeEarnedOn
 badgeEarnedStatus
@@ -1417,7 +1409,6 @@ badgeProgressFraction
 badgeProgressToGo
 badgeShareAction
 badgeShareText
-badgeShareTextRarity
 badgeViewDetails
 # batch: rides-analytics
 ridesAnalyticsTab
