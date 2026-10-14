@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../constants/sensor_constants.dart';
@@ -45,7 +46,8 @@ class GpsDropLog {
         for (final e in jsonDecode(raw) as List)
           Map<String, Object?>.from(e as Map),
       ];
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[GpsDropLog] unreadable log: $e');
       return [];
     }
   }

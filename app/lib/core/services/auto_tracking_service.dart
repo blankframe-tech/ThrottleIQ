@@ -673,13 +673,16 @@ class AutoTrackingService {
   static void sendUiBeat() {
     try {
       FlutterForegroundTask.sendDataToTask(uiBeatMessage);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[ride-service] beat failed: $e');
+    }
   }
 
   static Future<String?> hostedManualRideId() async {
     try {
       return await FlutterForegroundTask.getData<String>(key: manualRideKey);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[ride-service] hosted ride read failed: $e');
       return null;
     }
   }

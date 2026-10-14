@@ -60,7 +60,8 @@ Future<OemBrand?> currentOemBrand() async {
   if (!Platform.isAndroid) return null;
   try {
     return oemBrandFor(await _channel.invokeMethod<String>('manufacturer'));
-  } catch (_) {
+  } catch (e) {
+    debugPrint('[OemGuide] manufacturer unavailable: $e');
     return null;
   }
 }
@@ -119,7 +120,9 @@ class OemGuideScreen extends StatelessWidget {
       opened =
           await _channel.invokeMethod<bool>('openFirst', brand.autostart) ??
               false;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[OemGuide] autostart screen failed: $e');
+    }
     // App info carries the autostart switch on some of these builds.
     if (!opened) await Geolocator.openAppSettings();
   }
