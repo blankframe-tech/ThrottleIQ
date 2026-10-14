@@ -9,7 +9,7 @@ From `CrtiQue_Oct14.md` B10, B13 and the "Sync conflicts" / "Clock skew" rows. *
 - **Sync:** a newer cloud copy replaces a synced local row on download; uploads (SyncManager and the outbox's maintenance and fuel deliveries) are read-then-write transactions that never overwrite a newer copy. Fuel logs use the `updated_at` they already had. Docs from older builds (no `updated_at`) count as oldest. One full pull per rider after the upgrade. Rules unchanged (rides, bikes and maintenance have no field validation; fuel already allowed `updated_at`). Details and limits: `arch.md` §5, "Multi-device conflicts".
 - **Mixed versions:** beta 4.4/4.5 keep syncing rides and bikes (they drop the unknown column) but skip maintenance logs written by v28 builds until they update, and they show v28 rides' times in UTC. **Owner:** set `config/app.minBuild` to the v28 build once it is released.
 - **Not covered:** deletions (tombstones, unchanged); a wrong phone clock still decides conflicts and "today"; bike totals are whole-row LWW (two phones riding one bike between syncs keep one phone's increment).
-- QA: `scripts/check.sh` (see the final commit). Not run: device, two-device sync against real Firestore (the transaction path has no unit test, as `CloudRepository` binds `FirebaseFirestore.instance`).
+- QA: `scripts/check.sh` passed (analyze clean, 2145 flutter tests, rules emulator 288/288, functions 12/12). Not run: device, two-device sync against real Firestore (the transaction path has no unit test, as `CloudRepository` binds `FirebaseFirestore.instance`).
 
 ## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
 
