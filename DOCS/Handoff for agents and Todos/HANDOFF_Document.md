@@ -2,7 +2,16 @@
 
 _Last updated: 2026-10-14 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-14 (latest): critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
+## 2026-10-14 (latest): multi-device sync and UTC ride times — branch `fix/oct14-tiq-sync`, not merged, not pushed, not on a device
+
+From `CrtiQue_Oct14.md` B10, B13 and the "Sync conflicts" / "Clock skew" rows. **Founder decision C4 is made: last-writer-wins.**
+- **Schema v28:** `updated_at` (UTC) on `rides`, `bikes`, `maintenance_logs`, backfilled from the best existing time; `*_touch_updated_at` triggers stamp every UPDATE that leaves a row unsynced, so new DAO methods (e.g. a ride `setStatus`) need nothing extra. Ride `start_time`/`end_time`/`created_at` rewritten to UTC ISO-8601 in place (legacy strings read as device-local); no row is dropped or re-uploaded.
+- **Sync:** a newer cloud copy replaces a synced local row on download; uploads (SyncManager and the outbox's maintenance and fuel deliveries) are read-then-write transactions that never overwrite a newer copy. Fuel logs use the `updated_at` they already had. Docs from older builds (no `updated_at`) count as oldest. One full pull per rider after the upgrade. Rules unchanged (rides, bikes and maintenance have no field validation; fuel already allowed `updated_at`). Details and limits: `arch.md` §5, "Multi-device conflicts".
+- **Mixed versions:** beta 4.4/4.5 keep syncing rides and bikes (they drop the unknown column) but skip maintenance logs written by v28 builds until they update, and they show v28 rides' times in UTC. **Owner:** set `config/app.minBuild` to the v28 build once it is released.
+- **Not covered:** deletions (tombstones, unchanged); a wrong phone clock still decides conflicts and "today"; bike totals are whole-row LWW (two phones riding one bike between syncs keep one phone's increment).
+- QA: `scripts/check.sh` passed (analyze clean, 2145 flutter tests, rules emulator 288/288, functions 12/12). Not run: device, two-device sync against real Firestore (the transaction path has no unit test, as `CloudRepository` binds `FirebaseFirestore.instance`).
+
+## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
 
 From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another branch (tiq-rules).
 - **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console.

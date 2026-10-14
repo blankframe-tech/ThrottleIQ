@@ -207,6 +207,23 @@ class SyncManager {
     }
   }
 
+  /// One full pull of every collection after upgrading to schema v28
+  /// (last-writer-wins, C4). Before it, a download skipped every id already
+  /// held, so a newer edit another device made meanwhile was passed over and
+  /// the pull mark moved past it; a full pull picks those up once.
+  @visibleForTesting
+  static Future<void> resetPullMarksOnceForV28(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final flag = 'pull_reset_v28_$uid';
+      if (prefs.getBool(flag) == true) return;
+      await PullWatermark.clear(uid);
+      await prefs.setBool(flag, true);
+    } catch (e) {
+      debugPrint('[SyncManager] v28 pull mark reset skipped: $e');
+    }
+  }
+
   static Future<bool> _hasRows(String sql, List<Object?> args) async {
     final db = await DatabaseHelper.instance.database;
     return (await db.rawQuery(sql, args)).isNotEmpty;
@@ -316,6 +333,7 @@ class SyncManager {
       var pulledBikes = false;
       var pulledRides = false;
       if (!skipDownloads) {
+        await resetPullMarksOnceForV28(uid);
         pulledBikes = await _pull(
           uid,
           'bikes',
