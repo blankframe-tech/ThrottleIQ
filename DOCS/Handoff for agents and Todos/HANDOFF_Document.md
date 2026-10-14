@@ -2,7 +2,16 @@
 
 _Last updated: 2026-10-14 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-14 (latest): critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
+## 2026-10-14 (latest): two themes, not 28 — branch `fix/oct14-tiq-themes`, not merged, not on a device
+
+From `CrtiQue_Oct14.md` §6/§14. Parallel agents: tiq-ride (recording) and tiq-sync (models/sync) on their own branches.
+- **Themes:** one light (**Calming**: cream/sage, the default since 2026-08-27) and one dark (**Carbon Mono**: carbon/lime, whose accent stays visible over OSM tiles at night). Curvy shape only. Settings › Appearance is System / Dark / Light. Gone: the 7 ride-mode color families, the Boxy/Curvy Vibe, the color picker (`appearance_picker.dart`), the Retro-only hard shadow and mono type, 14 theme/vibe/color l10n keys, and `ti_theme_mode` for the home widgets.
+- **Migration:** riders keep their saved brightness (`brightness` key), which picks the nearest theme; color/shape-only riders were on light and stay light; legacy `theme_style` skins map by brightness (`theme_style_provider_test.dart`).
+- **Record screen:** the slide-to-start track only existed on Boxy and is deleted; the hold ring is the start control. Tour copy no longer mentions boxy styles (manifest version unchanged: copy only).
+- **Cut:** the 28-combination UI tour and PDF generator (`integration_test/ui_tour_test.dart`, `app/scripts/ui_tour/`), and the two `live_UI_screenshots/` folders of removed looks. The Bangla overflow walk (`TOUR_LOCALE=bn`) went with the tour; restore it from git history if wanted. `DOCS/General/screenshots_ui/` is untouched (owner decides on history removal).
+- **Visual check:** headless widget-test shots at 375x812 (system fonts standing in for IBM Plex/Space Grotesk) of Settings, Maintenance, the feature tour and the start ring + cards, in both themes: all readable.
+
+## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
 
 From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another branch (tiq-rules).
 - **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console.
@@ -28,7 +37,7 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.
 - **Docs:** stale material moved to `DOCS/old/` (see its README): `scripts/archive/`, `archives/`, `ANTIGRAVRITY_GRILL/`, `issues_solved.md`, `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`, `setup-android.*`. Live links updated; historical logs keep the old paths. The 2026-09-21 triage order is now in `DOCS/old/DEBT_FIX_PLAN.md`.
-- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (still wired in `scripts/package.json`; not superseded by `_v3`, see 2026-10-14).
+- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by the since-deleted `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (still wired in `scripts/package.json`; not superseded by `_v3`, see 2026-10-14).
 - **Gate note:** `check.sh`'s format check compares against `origin/main`, so touching a Dart file also requires it to be `dart format`-clean (it caught `auto_tracking_service.dart`).
 
 ## 2026-10-09: one quality gate + per-family analytics charts — `experimental`, not pushed
@@ -1340,13 +1349,9 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   the plugin's native schedule actually starts/stops GPS at the configured
   boundary, and whether editing the window while already running takes
   effect without a restart, on a real device.
-- [ ] **Nine (now seven) Appearance color families across a whole screen
-  each**, not just a swatch — only Carbon Mono has been seen rendering a
-  real screen past Record. Retro (recolored 2026-09-19 to a cream/mustard/
-  rust "Rawblock" palette with hard offset shadows on `AppCard`/`StatCard` —
-  see `features.md`'s Appearance section — has NOT yet been checked on a
-  real device past that swatch) and any `curvy` family on a screen with the
-  210px Record photo hero are the two highest-value checks.
+- [ ] **Both themes (Calming light, Carbon Mono dark) across a whole screen
+  on a real device**, especially the Record screen's 210px photo hero and the
+  live-ride map in dark (critique §6: the OSM tiles stay bright).
 - [ ] **Ride with friends** — needs two real accounts on two devices: invite,
   accept, confirm both riders appear on each other's live map and stale
   positions grey out. The deployed `groupRides` rules have never been
@@ -1822,7 +1827,7 @@ group first matters more than speed.
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
 | DB schema | **v11** (`is_auto`/`bike_confidence` on `rides`, plus `auto_detections`/`auto_fixes` for auto-tracking, added 2026-08-16 — `auto_tracking_plan.md`). v10 added `outbox`, the offline write queue (`issues_fixed.md` §25); v9 added `rides.moving_s`; v7 added `custom_label` on `maintenance_logs` |
 | Offline writes | Anything the rider explicitly asked for that needs the cloud goes through `core/cloud/outbox_service.dart`, **not** a bare `await` on Firestore. An awaited Firestore write with no connection never completes — it doesn't throw — so a direct `await` on a user-facing path hangs the app. `SyncManager` drains the queue on connectivity change, login, and its 5-minute timer. Optional telemetry uses `_bestEffortWrite()` (same idea, just a timeout, no durability) |
-| UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in all 28 appearance combinations (7 colors × Curvy/Boxy × Light/Dark), with one walkthrough PDF per combination, captured 2026-09-19 on the `rider@example.com` test account. Regenerate after UI changes with `app/scripts/ui_tour/run_tour.sh` then `build_docs.py`; the commands are in that folder's README. The tour is `app/integration_test/ui_tour_test.dart`. It is launched directly on the simulator rather than through `flutter test`, because reinstalls reset the location permission and the prompt would cover the screenshots |
+| UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in the 28 appearance combinations that existed until 2026-10-14, captured 2026-09-19. Stale: the app now has two themes, and the tour and PDF generator that wrote this set were deleted 2026-10-14 (critique §14). The owner decides whether to move it out of the repo and its history. |
 
 ---
 

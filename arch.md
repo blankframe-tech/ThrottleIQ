@@ -125,7 +125,7 @@ app/lib/
 │   ├── i18n/                  # l10n context/lookup helpers, locale provider
 │   ├── services/              # Background tracking, notifications, home widgets, Cloudinary
 │   ├── router/                # GoRouter routing tree & auth redirects
-│   ├── theme/                 # 7-color family appearance engine (dark/light, boxy/curvy)
+│   ├── theme/                 # Two themes: Calming light, Carbon Mono dark (+ follow system)
 │   └── utils/                 # Pure helpers: geo math, geohash, formatters, badges
 ├── l10n/                      # ARB files + checked-in generated AppLocalizations
 ├── shared/                    # AppShell, shared widgets and screens
