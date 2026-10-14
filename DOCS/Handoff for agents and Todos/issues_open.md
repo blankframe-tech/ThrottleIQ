@@ -373,6 +373,39 @@ What remains open:
   - the founder's choice of alert delivery (`DOCS/needs_attention.md` b);
   - field rides plus a padded drop test to calibrate the thresholds
     (claude_sol §1.1.1 step 6).
+  **First real field crash, 2026-10-14:** a low-speed fall at a railway crossing, not detected because the flag is off.
+  No IMU spike was saved, so it gives no calibration value. Speed drop was ≤2 m/s, borderline for the
+  `minSpeedDropMs` rule. Analysis in `DOCS/CRASH TESTING/` (the raw track exports and the phone DB copy stay on
+  the founder's machine). Rider's account: accelerating over the second rail of a double-track crossing at an
+  angle, the rear kicked out to the left. Public write-up: blankframe.tech/throttleiq/crash/1.
+  The real `ImpactDetector` was replayed over this crash's GPS fixes with simulated impacts. Even with the flag
+  on, today's rules confirm it in only 2 of 5 placement scenarios, for three reasons:
+  - the speed before an impact is only looked up within 5 s, but fixes at walking pace are 2–9 s apart;
+  - GPS silence after an impact only counts as "stopped" if the phone is completely still;
+  - the 2 m/s drop rule rules out slower falls.
+  The iPhone system log shows a motion wake at 21:28:58.9, about 10 s after the phone stopped: the phone being moved,
+  per the rider. Tip-overs from a standstill are still a real gap, though, and no speed-based rule can catch one.
+  Six rule changes (a tip-over rule included) plus a shadow-mode, labelling and cloud-logging plan were written
+  up in `DOCS/CRASH TESTING/crash_analysis_and_detection_plan.html`.
+  **BUILT 2026-10-15 on `feat/crash-shadow-mode`: phases 1–3 of that plan.** See features.md, "Shadow-mode crash
+  detection". The live alarm stays OFF (`SensorConstants.crashAlertsEnabled = false`). Still open:
+  - **Deploy** `firestore.rules` and `firestore.indexes.json` (both work on Spark). Until then the new
+    `impactEvents`/`crashEvents` writes are rejected, and the `track.points` exemption isn't live.
+  - **Privacy policy / Play Data safety / App Store labels** must mention the opt-in research sharing before
+    a release ships it. The toggle defaults OFF.
+  - **Battery** cost of 50 Hz IMU sampling is unmeasured (plan Phase 1).
+  - **Not built:** the next-app-open prompt for auto-detected rides (the ride summary card covers any ride
+    whose summary is opened), Track v2, the retention job for old sensor windows, and Phase 0 phyphox
+    recordings (the founder's task).
+  - `onUserAccountDeleted` now also erases `crashEvents`. Like the rest of server-side erasure, it can't run
+    until Cloud Functions can deploy (Spark).
+- **Track sync gaps (2026-10-14, see `DOCS/gaps/phone_vs_cloud_data.md`):**
+  - (a) `track.points` has no index exemption in `firestore.indexes.json`. That is an estimated ~695 B of index
+    per point against ~41 B of data, about 25 MB for one heavy rider on Spark's 1 GiB.
+  - (b) Only 5 of the 16 `ride_points` columns sync. A reinstall loses altitude, accuracy, heading, confidence,
+    period_type and segment_start. This has already happened for 115 of the founder's rides.
+  - (c) The codec's "append a field at the end" rule is unsafe. Older builds step through flat chunks 5 values at a
+    time and would misread wider ones. The track format needs a version number before any field is added.
 - **78.12 Gyro heading sign and axis** (`vehicle_state_estimator.dart`).
   This needs a mounted phone to verify, so it wasn't attempted.
 - **78.16 Tile provider not chosen.** The shared cached tile layer is in

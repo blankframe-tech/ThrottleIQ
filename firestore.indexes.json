@@ -377,6 +377,26 @@
           "queryScope": "COLLECTION_GROUP"
         }
       ]
+    },
+    {
+      "collectionGroup": "impactEvents",
+      "fieldPath": "imu",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "impactEvents",
+      "fieldPath": "features",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "impactEvents",
+      "fieldPath": "labelDetail",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "track",
+      "fieldPath": "points",
+      "indexes": []
     }
   ]
 }

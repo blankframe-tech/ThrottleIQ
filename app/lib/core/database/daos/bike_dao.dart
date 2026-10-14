@@ -174,6 +174,8 @@ class BikeDao {
       for (final ride in rides) {
         await txn.delete('ride_points',
             where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [id]);
       await txn

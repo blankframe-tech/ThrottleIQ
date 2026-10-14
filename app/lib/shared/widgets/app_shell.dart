@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/services/app_modules.dart';
 import '../../core/theme/app_theme_context.dart';
 import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
 import '../../l10n/app_localizations.dart';
 
-/// The bottom-nav destinations, in display order — a location's index in this
-/// list *is* its `BottomNavigationBar` index.
+/// Every bottom-nav destination with all modules on, in display order. The
+/// live list is [AppModules.tabs]; a location's index in that list *is* its
+/// `BottomNavigationBar` index.
 const List<String> shellTabs = [
   '/home/social',
   '/home/places',
@@ -13,9 +16,6 @@ const List<String> shellTabs = [
   '/home/stats',
   '/home/profile',
 ];
-
-const int _recordTabIndex = 2;
-const int _profileTabIndex = 4;
 
 /// Shell routes that are *not* tabs of their own, mapped to the tab they
 /// logically belong under.
@@ -26,42 +26,79 @@ const int _profileTabIndex = 4;
 /// opens the maintenance page correctly." Maintenance is only ever reached
 /// from a bike card on the Profile tab's garage section, so it highlights
 /// Profile.
-const Map<String, int> _nonTabShellRoutes = {
-  '/home/maintenance': _profileTabIndex,
+/// Maintenance is its own tab when ride tracking is off, which wins over this.
+const Map<String, String> _nonTabShellRoutes = {
+  '/home/maintenance': '/home/profile',
 };
 
 /// Maps a shell location to the bottom-nav index that should appear selected.
 ///
 /// Pure so it can be unit-tested without a widget tree. Matches a tab when the
 /// location *is* the tab path or is nested under it (`/home/profile/abc/edit`
-/// → Profile), then falls back to Record for anything unrecognised. The
-/// fallback exists only so `BottomNavigationBar` always gets a valid index —
-/// a new shell route that should highlight a specific tab belongs in
-/// [_nonTabShellRoutes], not in the fallback.
-int shellTabIndexForLocation(String location) {
+/// → Profile), then falls back to the home tab (Record, or Maintenance with
+/// tracking off) for anything unrecognised. The fallback exists only so
+/// `BottomNavigationBar` always gets a valid index — a new shell route that
+/// should highlight a specific tab belongs in [_nonTabShellRoutes], not in the
+/// fallback.
+int shellTabIndexForLocation(String location,
+    [AppModules modules = const AppModules()]) {
+  final tabs = modules.tabs;
   final path = location.split('?').first;
 
   bool matches(String base) => path == base || path.startsWith('$base/');
 
+  final idx = tabs.indexWhere(matches);
+  if (idx >= 0) return idx;
+
   for (final entry in _nonTabShellRoutes.entries) {
-    if (matches(entry.key)) return entry.value;
+    if (matches(entry.key)) return tabs.indexOf(entry.value);
   }
 
-  final idx = shellTabs.indexWhere(matches);
-  return idx < 0 ? _recordTabIndex : idx;
+  return tabs.indexOf(modules.home);
 }
 
-class AppShell extends StatelessWidget {
+class AppShell extends ConsumerWidget {
   final Widget child;
   const AppShell({super.key, required this.child});
 
-  int _currentIndex(BuildContext context) =>
-      shellTabIndexForLocation(GoRouterState.of(context).matchedLocation);
-
   @override
-  Widget build(BuildContext context) {
-    final idx = _currentIndex(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modules = ref.watch(appModulesProvider);
+    final tabs = modules.tabs;
+    final idx = shellTabIndexForLocation(
+        GoRouterState.of(context).matchedLocation, modules);
     final l10n = AppLocalizations.of(context);
+    final items = {
+      '/home/social': modules.social
+          ? BottomNavigationBarItem(
+              icon: const Icon(Icons.people_outline),
+              activeIcon: const Icon(Icons.people),
+              label: l10n.navSocialLabel)
+          : BottomNavigationBarItem(
+              icon: const Icon(Icons.forum_outlined),
+              activeIcon: const Icon(Icons.forum),
+              label: l10n.forums),
+      '/home/places': BottomNavigationBarItem(
+          icon: const Icon(Icons.place_outlined),
+          activeIcon: const Icon(Icons.place),
+          label: l10n.navPlacesLabel),
+      '/home/record': BottomNavigationBarItem(
+          icon: const Icon(Icons.radio_button_checked_outlined),
+          activeIcon: const Icon(Icons.radio_button_checked),
+          label: l10n.navRecordLabel),
+      '/home/stats': BottomNavigationBarItem(
+          icon: const Icon(Icons.insights_outlined),
+          activeIcon: const Icon(Icons.insights),
+          label: l10n.navRidesLabel),
+      '/home/maintenance': BottomNavigationBarItem(
+          icon: const Icon(Icons.build_outlined),
+          activeIcon: const Icon(Icons.build),
+          label: l10n.maintenance),
+      '/home/profile': BottomNavigationBarItem(
+          icon: const Icon(Icons.two_wheeler_outlined),
+          activeIcon: const Icon(Icons.two_wheeler),
+          label: l10n.navGarageLabel),
+    };
     return Scaffold(
       body: Stack(
         children: [
@@ -77,25 +114,21 @@ class AppShell extends StatelessWidget {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: context.palette.surface,
-          border: Border(top: BorderSide(color: context.palette.border, width: 1)),
+          border:
+              Border(top: BorderSide(color: context.palette.border, width: 1)),
         ),
         child: BottomNavigationBar(
           currentIndex: idx,
-          onTap: (i) => context.go(shellTabs[i]),
+          onTap: (i) => context.go(tabs[i]),
           backgroundColor: Colors.transparent,
           elevation: 0,
           type: BottomNavigationBarType.fixed,
           selectedItemColor: context.palette.primary,
           unselectedItemColor: context.palette.textTertiary,
-          selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+          selectedLabelStyle:
+              const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
           unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: [
-            BottomNavigationBarItem(icon: const Icon(Icons.people_outline), activeIcon: const Icon(Icons.people), label: l10n.navSocialLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.place_outlined), activeIcon: const Icon(Icons.place), label: l10n.navPlacesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.radio_button_checked_outlined), activeIcon: const Icon(Icons.radio_button_checked), label: l10n.navRecordLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.insights_outlined), activeIcon: const Icon(Icons.insights), label: l10n.navRidesLabel),
-            BottomNavigationBarItem(icon: const Icon(Icons.two_wheeler_outlined), activeIcon: const Icon(Icons.two_wheeler), label: l10n.navGarageLabel),
-          ],
+          items: [for (final t in tabs) items[t]!],
         ),
       ),
     );

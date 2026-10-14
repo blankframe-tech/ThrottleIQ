@@ -36,36 +36,52 @@ class SensorConstants {
   // AutoRideReconciler replay, which only records "crash suspected".
   static const double crashAccelThreshold = 80.0; // m/s² (~8.2g)
 
-  // ImpactDetector (§78.1) — raw-IMU crash detection.
+  // ImpactDetector (§78.1) — raw-IMU crash detection, in three tiers:
+  // 0 = an impact (logged only), 1 = a possible fall (asked about after the
+  // ride), 2 = a likely crash (the only tier that may raise the live alarm).
   //
   // UNCALIBRATED. 4 g is a provisional starting point, not a measured value:
   // it has not been validated against real rides, drop tests, or the range
   // of budget-phone accelerometers (some saturate at 4-8 g, which is why
   // ImpactDetector also treats a run of samples pinned at the ride's max as
-  // a spike). Re-tune from field data before any safety claim.
+  // a spike). Re-tune from field data before any safety claim. Tier 2 only.
   static const double impactThreshold = 39.0; // m/s² (~4 g)
+
+  // The lower bar for tiers 0-1. A 20-50 Hz phone stream under-reads a
+  // 10-50 ms impact, and a pocket or bag softens it; the 14 Oct 2026 crash
+  // (DOCS/CRASH TESTING) may never have reached 4 g. Also uncalibrated.
+  static const double impactAskThreshold = 24.5; // m/s² (~2.5 g)
 
   // A run of samples pinned near the ride's max only counts as a saturated
   // spike above this floor, so a phone at rest (all samples ≈ 0 = the max)
   // doesn't look saturated. Also uncalibrated.
   static const double impactSaturationFloorMs2 = 19.6; // ~2 g
 
-  // Master switch for live crash alerts from ImpactDetector. OFF until the
+  // Shadow mode: build the ImpactDetector pipeline on every ride and save
+  // what it sees (impact_events) so the after-ride question can label it.
+  // Never alarms by itself.
+  static const bool impactShadowEnabled = true;
+
+  // Master switch for the live crash alarm (tier 2 only). OFF until the
   // founder decides how crash alerts are delivered (see grill §2.1:
   // escalation is still a mock) and the thresholds above are field-
-  // validated. While false, the ride recorder builds no ImpactDetector
-  // pipeline and live rides behave exactly as before, except that the
-  // unreachable GPS crash branch is no longer called either. Tests force it
-  // on via SensorFusionCoordinator(impactDetectionEnabled: true).
-  static const bool impactDetectorLiveEnabled = false;
+  // validated from shadow-mode labels. Tests force it on via
+  // SensorFusionCoordinator(crashAlertsEnabled: true).
+  static const bool crashAlertsEnabled = false;
+
+  // IMU sampling period while recording. 50 Hz: an impact lasts tens of
+  // milliseconds, and 20 Hz (the old rate) can step over its peak.
+  static const Duration imuSamplingPeriod = Duration(milliseconds: 20);
 
   // Sensor validation ceilings — reject obviously-broken samples (NaN,
   // sensor glitches/clipping), not legitimate high-g crash spikes
-  // (ImpactDetector's spike threshold is impactThreshold)
+  // (ImpactDetector's spike thresholds are impactAskThreshold/impactThreshold)
   static const double maxPlausibleAccelMs2 = 300.0;
   static const double maxPlausibleYawRateRadS = 34.9; // ~2000°/s
-  static const double maxPlausibleSpeedMs = 70.0; // ~252 km/h; reject GPS spikes & jumps
-  static const double maxPhysicalAccelMs2 = 12.0; // ~1.2g; maximum physically plausible motorcycle acceleration
+  static const double maxPlausibleSpeedMs =
+      70.0; // ~252 km/h; reject GPS spikes & jumps
+  static const double maxPhysicalAccelMs2 =
+      12.0; // ~1.2g; maximum physically plausible motorcycle acceleration
 
   // Auto-tracking daily summary: two background-detected segments whose gap
   // (last fix of one → first fix of the next) is at most this long are
@@ -84,7 +100,8 @@ class SensorConstants {
   static const Duration autoRideMergeGap = Duration(minutes: 20);
 
   // Motion classification
-  static const double movingSpeedThresholdMs = 1.0; // matches existing periodType cutoff
+  static const double movingSpeedThresholdMs =
+      1.0; // matches existing periodType cutoff
   static const double corneringYawRateThresholdRadS = 0.26; // ~15°/s
 
   // Some GPS chipsets (the iOS Simulator's location playback, and a subset
@@ -94,7 +111,8 @@ class SensorConstants {
   // instead of recording the ride as stationary (issues §49). Reuses
   // movingSpeedThresholdMs's cutoff — the same value already used to decide
   // "is this fix idle or moving" everywhere else.
-  static const double unreliableSpeedFallbackThresholdMs = movingSpeedThresholdMs;
+  static const double unreliableSpeedFallbackThresholdMs =
+      movingSpeedThresholdMs;
 
   // Complementary filter heading blend — favor GPS course when the fix is
   // accurate, lean more on gyro dead-reckoning when it isn't
@@ -115,7 +133,8 @@ class SensorConstants {
   // minPersistIntervalOnSteadyStretches — matching the original vision's
   // "1 point every 5 seconds on a straight highway" example.
   static const int minConfidenceToThinRecording = 70;
-  static const Duration minPersistIntervalOnSteadyStretches = Duration(seconds: 5);
+  static const Duration minPersistIntervalOnSteadyStretches =
+      Duration(seconds: 5);
 
   // Maintenance intervals live with the maintenance feature: per-type
   // defaults in maintenance_entity.dart, per-model schedules in

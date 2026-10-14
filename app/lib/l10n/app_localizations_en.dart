@@ -6395,4 +6395,197 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get oemGuideShowMe => 'Show me';
+
+  @override
+  String get yourThrottleIqSection => 'Your ThrottleIQ';
+
+  @override
+  String get yourThrottleIqDescription =>
+      'Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.';
+
+  @override
+  String get communityFieldLabel => 'Community';
+
+  @override
+  String get communityFullLabel => 'Everything';
+
+  @override
+  String get communityFullDescription => 'Rides, riders & forums';
+
+  @override
+  String get communityForumsLabel => 'Forums only';
+
+  @override
+  String get communityForumsDescription => 'No feed or people';
+
+  @override
+  String get communityOffLabel => 'Off';
+
+  @override
+  String get communityOffDescription => 'No community';
+
+  @override
+  String get placesModuleTitle => 'Places & routes';
+
+  @override
+  String get placesModuleSubtitle =>
+      'Fuel, mechanics, checkposts and saved routes';
+
+  @override
+  String get rideTrackingModuleTitle => 'Ride tracking';
+
+  @override
+  String get rideTrackingModuleSubtitle =>
+      'Recording, ride analytics, automatic odometer and crash detection. Uses your location.';
+
+  @override
+  String get moduleKeepOnAction => 'Keep it on';
+
+  @override
+  String get moduleTurnOffAction => 'Turn off';
+
+  @override
+  String get communityForumsOnlyWarningTitle => 'Hide rides and riders?';
+
+  @override
+  String get communityForumsOnlyWarningBody =>
+      'You won\'t see rides others share, and you can\'t follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.';
+
+  @override
+  String get communityOffWarningTitle => 'Turn off the community?';
+
+  @override
+  String get communityOffWarningBody =>
+      'You\'ll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.';
+
+  @override
+  String get placesOffWarningTitle => 'Turn off Places?';
+
+  @override
+  String get placesOffWarningBody =>
+      'You won\'t see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.';
+
+  @override
+  String get rideTrackingOffWarningTitle => 'Turn off ride tracking?';
+
+  @override
+  String get rideTrackingOffWarningBody =>
+      'ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.';
+
+  @override
+  String get rideTrackingOffDuringRide =>
+      'Finish your ride before turning ride tracking off.';
+
+  @override
+  String get modulesUpdatedSnack =>
+      'Done. Your tabs now show only what you use.';
+
+  @override
+  String get manualOdometerHint =>
+      'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.';
+
+  @override
+  String get phonePlacementLabel => 'Phone';
+
+  @override
+  String get phonePlacementMount => 'On a mount';
+
+  @override
+  String get phonePlacementPocket => 'In a pocket';
+
+  @override
+  String get phonePlacementBag => 'In a bag';
+
+  @override
+  String get phonePlacementHint => 'Helps the app tell a fall from a bump.';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return 'Possible fall at $time';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'Your phone felt a hard knock and then stopped moving. Did you fall?';
+
+  @override
+  String get impactAnswerYes => 'Yes, I fell';
+
+  @override
+  String get impactAnswerPhoneFell => 'No, my phone fell';
+
+  @override
+  String get impactAnswerBump => 'No, just a bump';
+
+  @override
+  String get impactAnswerHardStop => 'No, I braked hard';
+
+  @override
+  String get impactAnswerUnsure => 'Not sure';
+
+  @override
+  String get impactFollowUpTitle =>
+      'Glad you\'re OK. Two quick questions help the app learn:';
+
+  @override
+  String get impactSeverityLabel => 'How bad was it?';
+
+  @override
+  String get impactSeverityNone => 'No injury';
+
+  @override
+  String get impactSeverityMinor => 'Minor injury';
+
+  @override
+  String get impactSeverityMedical => 'Needed medical help';
+
+  @override
+  String get impactSurfaceLabel => 'Road surface';
+
+  @override
+  String get surfacePaved => 'Paved';
+
+  @override
+  String get surfaceBroken => 'Broken road';
+
+  @override
+  String get surfaceDirt => 'Dirt';
+
+  @override
+  String get surfaceGravel => 'Gravel';
+
+  @override
+  String get surfaceWet => 'Wet';
+
+  @override
+  String get surfaceRailCrossing => 'Rail crossing';
+
+  @override
+  String get surfaceSpeedBump => 'Speed bump';
+
+  @override
+  String get impactSaveAnswer => 'Save';
+
+  @override
+  String get impactThanks => 'Thanks — that helps.';
+
+  @override
+  String get reportCrashAction => 'Report a crash or fall';
+
+  @override
+  String get reportCrashTitle => 'When did it happen?';
+
+  @override
+  String get reportCrashBody =>
+      'Slide to the moment you fell. It helps the app learn the falls it missed.';
+
+  @override
+  String get reportCrashSaved => 'Reported. Thank you.';
+
+  @override
+  String get crashResearchTitle => 'Help improve crash detection';
+
+  @override
+  String get crashResearchDesc =>
+      'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.';
 }

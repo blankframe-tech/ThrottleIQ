@@ -64,7 +64,7 @@ flowchart TD
   N --> T[Rides<br/>Stats · History]
   N --> F[Profile<br/>Garage · Settings]
   F --> M[Maintenance]
-  F --> ST[Settings<br/>Appearance · Language · SafeQR]
+  F --> ST[Settings<br/>Appearance · Language · Your ThrottleIQ · SafeQR]
   R --> AR[Active ride] --> SU[Ride summary]
   SU --> SH[Share]
   SU --> SR[Save as route]
@@ -227,6 +227,7 @@ flowchart LR
 | SET-2 | The rider can choose English or Bangla. Numbers stay 0–9. | ✅ |
 | SET-3 | The rider can turn usage statistics off. | ✅ |
 | SET-4 | Home-screen widgets: Start ride, Start auto-tracking, Ride stats, Next service. | ✅ Android · 🟡 iOS 📱 |
+| SET-5 | The rider can turn parts of the app off (Your ThrottleIQ): Community (everything, forums only, off), Places and routes, Ride tracking. A part that is off loses its tab, entry points and routes; nothing is deleted. Ride tracking off gives a maintenance-only app with manual odometer and no location use. | ✅ 📱 |
 
 ---
 

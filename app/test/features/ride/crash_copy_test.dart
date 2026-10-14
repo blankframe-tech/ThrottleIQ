@@ -11,7 +11,7 @@ void main() {
   test('the crash takeover follows the detector flag', () {
     expect(
       showCrashOverlay(detected: true),
-      SensorConstants.impactDetectorLiveEnabled,
+      SensorConstants.crashAlertsEnabled,
     );
     expect(showCrashOverlay(detected: true, detectorOn: true), isTrue);
     expect(showCrashOverlay(detected: true, detectorOn: false), isFalse);

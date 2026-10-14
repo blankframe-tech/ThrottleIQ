@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 28;
+  static const int schemaVersion = 29;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -364,6 +364,20 @@ class DatabaseHelper {
     if (oldVersion < 28 && newVersion >= 28) {
       await _migrateSyncStampsV28(db);
     }
+    // Shadow-mode crash detection: the impacts the detector saw, with their
+    // sensor windows and the rider's answers, plus which pocket the phone
+    // rode in and the IMU rate the OS actually delivered. New table and
+    // nullable columns only, so a re-run or a skipped version is harmless.
+    // Shipped on main as v28 while the sync stamps above were also v28, so
+    // a phone at v28 has one of the two: v29 runs both (each re-runnable).
+    if (oldVersion < 29 && newVersion >= 29) {
+      await db.execute(_createImpactEventsSql);
+      await db.execute(_createImpactEventsIndexSql);
+      for (final col in _rideV29Columns) {
+        await _addColumnIfMissing(db, 'rides', col[0], col[1]);
+      }
+      if (oldVersion == 28) await _migrateSyncStampsV28(db);
+    }
   }
 
   /// A stored timestamp as UTC ISO-8601 (`…Z`). Strings without an offset
@@ -465,6 +479,64 @@ class DatabaseHelper {
     ['elevation_gain_m', 'elevation_gain_m REAL'],
     ['elevation_loss_m', 'elevation_loss_m REAL'],
   ];
+
+  /// The v29 ride columns: where the phone rode (`PhonePlacement.name`, NULL
+  /// for rides from before the question existed) and the IMU sample rate
+  /// the OS delivered (NULL when the ride had no sensor stream).
+  static const List<List<String>> _rideV29Columns = [
+    ['phone_placement', 'phone_placement TEXT'],
+    ['imu_rate_hz', 'imu_rate_hz REAL'],
+  ];
+
+  /// Impacts seen by ImpactDetector (schema v29) — see ImpactEventDao.
+  ///
+  /// `tier` is 0 (impact), 1 (possible fall) or 2 (likely crash); -1 marks a
+  /// fall the rider reported that the detector missed. `features` is JSON
+  /// (ImpactCandidate.toFeatures), `imu` the gzip'd sensor window
+  /// (ImpactWindowRecorder), `label_detail` JSON from the after-ride card.
+  /// `consent_research` is copied from the setting at labelling time; it
+  /// decides whether sync also writes the de-identified `crashEvents` copy.
+  static const String _createImpactEventsSql = '''
+    CREATE TABLE IF NOT EXISTS impact_events (
+      id TEXT PRIMARY KEY,
+      ride_id TEXT NOT NULL,
+      user_id TEXT,
+      at TEXT NOT NULL,
+      tier INTEGER NOT NULL,
+      reason TEXT,
+      peak_user_g REAL,
+      peak_raw_g REAL,
+      freefall_ms INTEGER,
+      rotation_deg REAL,
+      orientation_change_deg REAL,
+      still_after INTEGER,
+      resumed_after INTEGER,
+      speed_before_ms REAL,
+      speed_after_ms REAL,
+      gps_gap_s REAL,
+      lat REAL,
+      lng REAL,
+      placement_declared TEXT,
+      app_foreground INTEGER,
+      charging INTEGER,
+      vibration_rms REAL,
+      sample_rate_hz REAL,
+      features TEXT,
+      imu BLOB,
+      label TEXT,
+      label_detail TEXT,
+      label_source TEXT,
+      labeled_at TEXT,
+      consent_research INTEGER NOT NULL DEFAULT 0,
+      synced INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  ''';
+
+  static const String _createImpactEventsIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_impact_events_ride
+      ON impact_events(ride_id)
+  ''';
 
   /// Fuel fill-ups (schema v27) — see FuelLogEntity. Money in ৳, volume in
   /// litres, distance in km. Both `total_cost` and `price_per_liter` are
@@ -953,6 +1025,8 @@ class DatabaseHelper {
         bike_confidence TEXT NOT NULL DEFAULT 'high',
         route_id TEXT,
         route_name TEXT,
+        phone_placement TEXT,
+        imu_rate_hz REAL,
         synced INTEGER NOT NULL DEFAULT 0,
         track_synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
@@ -1061,6 +1135,8 @@ class DatabaseHelper {
     await db.execute(_createFuelLogsSql);
     await db.execute(_createFuelLogsIndexSql);
     await db.execute(_createDeletedFuelLogsSql);
+    await db.execute(_createImpactEventsSql);
+    await db.execute(_createImpactEventsIndexSql);
     for (final sql in _touchTriggersSql()) {
       await db.execute(sql);
     }
@@ -1113,10 +1189,14 @@ class DatabaseHelper {
       for (final ride in rides) {
         await txn.delete('ride_points',
             where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
       await txn
           .delete('deleted_rides', where: 'user_id = ?', whereArgs: [userId]);
+      await txn
+          .delete('impact_events', where: 'user_id = ?', whereArgs: [userId]);
 
       final bikes = await txn.query('bikes',
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);

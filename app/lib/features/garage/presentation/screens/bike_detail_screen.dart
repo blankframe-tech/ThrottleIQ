@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -32,6 +33,7 @@ class BikeDetailScreen extends ConsumerWidget {
         [];
     final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
     final ridesAsync = ref.watch(rideHistoryProvider(bikeId));
+    final modules = ref.watch(appModulesProvider);
 
     if (bike == null) {
       return Scaffold(
@@ -153,124 +155,127 @@ class BikeDetailScreen extends ConsumerWidget {
             const SizedBox(height: 16),
             // "Discuss in Forum": the model's board, or straight into a new
             // question for its owners.
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openForum(context, bike),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.palette.primary,
-                      side: BorderSide(color: context.palette.primary),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+            if (modules.forums) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openForum(context, bike),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.palette.primary,
+                        side: BorderSide(color: context.palette.primary),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.forum_outlined),
+                      label: Text(context.l10n.discussThisBike,
+                          overflow: TextOverflow.ellipsis),
                     ),
-                    icon: const Icon(Icons.forum_outlined),
-                    label: Text(context.l10n.discussThisBike,
-                        overflow: TextOverflow.ellipsis),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: FilledButton.icon(
-                    key: const Key('bike_ask_owners'),
-                    onPressed: () => _openForum(context, bike, compose: true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: context.palette.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton.icon(
+                      key: const Key('bike_ask_owners'),
+                      onPressed: () => _openForum(context, bike, compose: true),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: context.palette.primary,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      icon: const Icon(Icons.help_outline),
+                      label: Text(context.l10n.askOwners,
+                          overflow: TextOverflow.ellipsis),
                     ),
-                    icon: const Icon(Icons.help_outline),
-                    label: Text(context.l10n.askOwners,
-                        overflow: TextOverflow.ellipsis),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
             _ServiceCard(bikeId: bikeId),
             const SizedBox(height: 12),
             _FuelCard(bikeId: bikeId),
-            const SizedBox(height: 24),
-
-            // Ride history
-            Text(context.l10n.rideHistory,
-                style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: context.palette.textPrimary)),
-            const SizedBox(height: 12),
-            ridesAsync.when(
-              loading: () => Center(
-                  child: CircularProgressIndicator(
-                      color: context.palette.primary)),
-              error: (e, _) => ErrorView(
-                error: e,
-                onRetry: () => ref.invalidate(rideHistoryProvider(bikeId)),
-              ),
-              data: (rides) {
-                if (rides.isEmpty) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(32),
-                      child: Text(context.l10n.noRidesYetThis,
-                          style:
-                              TextStyle(color: context.palette.textTertiary)),
-                    ),
-                  );
-                }
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: rides.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) {
-                    final ride = rides[i];
-                    return Container(
-                      padding: const EdgeInsets.all(AppDimensions.paddingMd),
-                      decoration: BoxDecoration(
-                        color: context.palette.surface,
-                        borderRadius:
-                            BorderRadius.circular(context.shape.radiusMd),
-                        border: Border.all(color: context.palette.border),
-                      ),
-                      child: InkWell(
-                        onTap: () => context.push('/ride/summary/${ride.id}'),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _formatDate(ride.startTime),
-                                    style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: context.palette.textPrimary),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
-                                    style: TextStyle(
-                                        fontSize: 13,
-                                        color: context.palette.textSecondary),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Text(
-                              '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-                              style: TextStyle(
-                                  fontSize: 13,
-                                  color: context.palette.primaryHighlight,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ],
-                        ),
+            // Ride history; hidden for maintenance-only riders.
+            if (modules.rideTracking) ...[
+              const SizedBox(height: 24),
+              Text(context.l10n.rideHistory,
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary)),
+              const SizedBox(height: 12),
+              ridesAsync.when(
+                loading: () => Center(
+                    child: CircularProgressIndicator(
+                        color: context.palette.primary)),
+                error: (e, _) => ErrorView(
+                  error: e,
+                  onRetry: () => ref.invalidate(rideHistoryProvider(bikeId)),
+                ),
+                data: (rides) {
+                  if (rides.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Text(context.l10n.noRidesYetThis,
+                            style:
+                                TextStyle(color: context.palette.textTertiary)),
                       ),
                     );
-                  },
-                );
-              },
-            ),
+                  }
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: rides.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (_, i) {
+                      final ride = rides[i];
+                      return Container(
+                        padding: const EdgeInsets.all(AppDimensions.paddingMd),
+                        decoration: BoxDecoration(
+                          color: context.palette.surface,
+                          borderRadius:
+                              BorderRadius.circular(context.shape.radiusMd),
+                          border: Border.all(color: context.palette.border),
+                        ),
+                        child: InkWell(
+                          onTap: () => context.push('/ride/summary/${ride.id}'),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _formatDate(ride.startTime),
+                                      style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: context.palette.textPrimary),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${SpeedFormatter.distanceKm(ride.distanceM)} · ${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
+                                      style: TextStyle(
+                                          fontSize: 13,
+                                          color: context.palette.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                '${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: context.palette.primaryHighlight,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
           ],
         ),
       ),

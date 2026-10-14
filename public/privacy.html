@@ -197,9 +197,9 @@
             <td>Same as above</td>
           </tr>
           <tr>
-            <td><strong>Accelerometer and gyroscope readings</strong> (roughly 20 samples per second while recording)</td>
-            <td>Crash detection, hard-braking / rapid-acceleration alerts, cornering and heading estimation</td>
-            <td>Processed on your phone as it arrives. The raw sensor stream is never stored or uploaded; only a per-point acceleration figure is kept alongside the route</td>
+            <td><strong>Accelerometer and gyroscope readings</strong> (roughly 50 samples per second while recording)</td>
+            <td>Crash detection (being tested, see §7), hard-braking / rapid-acceleration alerts, cornering and heading estimation</td>
+            <td>Processed on your phone as it arrives. The raw sensor stream is not stored, with one exception: a 12-second recording around each hard knock the app notices, kept with that ride's impact record (§7). Otherwise only a per-point acceleration figure is kept alongside the route</td>
           </tr>
           <tr>
             <td><strong>Phone battery percentage</strong></td>
@@ -273,7 +273,8 @@
         <p>Two things are uploaded for each ride: the <strong>summary</strong> (date, distance,
         duration, max speed, event counts, bike) and the <strong>point-by-point GPS trail</strong>
         — the full route, with a timestamp, speed and acceleration figure at each point. Your
-        bikes, maintenance logs and saved routes are backed up too.</p>
+        bikes, maintenance logs, saved routes and the impact records described in §7 are backed
+        up too.</p>
         <p>All of it lands in a private area of the database keyed to your account. Database
         security rules restrict every one of those records — the GPS trail especially — to your
         account alone. No other rider can read them, and none of it appears anywhere in the app
@@ -338,6 +339,14 @@
         import nearby places, the app takes a single position fix to find what's around you.</li>
       </ul>
 
+      <p>If you would rather the app not use your location at all, turn off <strong>Ride
+      tracking</strong> in Settings → Your ThrottleIQ. Ride recording, automatic trip detection,
+      ride analytics and crash detection are then switched off, and the app keeps only the
+      odometer readings and maintenance records you enter yourself. Turning off
+      <strong>Places &amp; routes</strong> in the same place also stops the one-off position fix
+      that Places uses. Rides you already recorded are kept until you delete them or your
+      account.</p>
+
       <h2>4. Third parties, and exactly what each one receives</h2>
 
       <div class="table-wrap">
@@ -352,7 +361,7 @@
           </tr>
           <tr>
             <td><strong>Cloud Firestore</strong> (Google)</td>
-            <td>Your profile, ride summaries and ride GPS trails, bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, direct messages, places, reviews, follows, and live-session records. This is the app's database.</td>
+            <td>Your profile, ride summaries and ride GPS trails, impact records and, if you opt in, crash research records (§7), bikes, maintenance logs, saved routes, emergency contacts, earned badges, in-app notifications, forum posts, shared rides, direct messages, places, reviews, follows, and live-session records. This is the app's database.</td>
           </tr>
           <tr>
             <td><strong>Firebase Analytics</strong> (Google)</td>
@@ -413,6 +422,13 @@
         are visible to other signed-in riders and carry your name.</li>
       </ul>
 
+      <p>In Settings → Your ThrottleIQ you can set the community to <strong>Forums only</strong>
+      or <strong>Off</strong>. This changes what you see in the app: the ride feed, people, chat,
+      follows and group rides (and, when Off, the forums) are hidden, and follow links are
+      ignored. It does <strong>not</strong> hide your profile from other riders or remove
+      anything you have already shared or posted. To do that, change your profile visibility,
+      delete the shared rides or posts, or delete your account (section 9).</p>
+
       <h2>6. Live-ride sharing links</h2>
 
       <p>If you start live sharing during a ride, the app creates a session identified by a random
@@ -440,21 +456,42 @@
 
       <h2>7. Crash detection</h2>
 
-      <p>The app watches for a sudden impact combined with a sharp drop in speed. If it thinks
-      you've crashed, it starts an on-screen countdown you can cancel. If you don't cancel it, the
-      app records a crash alert containing your account ID, the ride ID, the time, and your last
-      known coordinates.</p>
+      <p>Crash detection is still being tested and <strong>does not alert anyone</strong>: no
+      alarm, no countdown, no message to you or your emergency contacts. While a ride records,
+      the app looks for a hard knock followed by the bike stopping. When it notices one it shows
+      nothing during the ride and saves an <strong>impact record</strong> on your phone: the time
+      and position, your speed before and after, figures measured from the motion sensors (peak
+      force, free fall, rotation), a 12-second recording of the motion sensors around the moment,
+      whether the app was on screen and the phone charging, and where you said the phone was (for
+      example a pocket or a mount).</p>
 
-      <div class="callout callout-warn">
-        <p><strong>ThrottleIQ is not an emergency service, and does not call one.</strong> The
-        automatic SMS and email escalation to your emergency contacts is not live yet — the crash
-        alert is recorded, but at this stage the app does not itself contact anybody on your
-        behalf. Do not rely on ThrottleIQ as a safety net. The one thing that genuinely works
-        today is the live-share link you send out yourself before or during a ride.</p>
+      <p>After the ride, the summary may ask whether you fell, and you can report a fall the app
+      missed. Your answer, and the road surface and severity if you pick them, are saved with the
+      record. Impact records are backed up to your private cloud area like the ride (§2), and
+      only your account can read them. Deleting the ride removes them from your phone; their
+      cloud copies are removed when your account is deleted (§9).</p>
+
+      <div class="callout">
+        <h3>Optional: help improve crash detection</h3>
+        <p>Off unless you turn on <strong>Help improve crash detection</strong> in Settings →
+        Privacy &amp; Safety. With it on, every impact record you have answered, including answers
+        given before you turned it on, is also copied to a research set used to tune the detector:
+        your answer, the surface and severity you picked, the measured figures, your speed before,
+        where the phone was, your bike's engine size and type, the phone platform, when the record
+        was made (date and time, plus the local hour and weekday), and a map cell of roughly
+        1.2 × 0.6 km.</p>
+        <p>The copy carries no name, no exact position, no sensor recording and nothing you typed.
+        It does carry your account ID, so it can be deleted with your account; no app user can
+        read the research set. That makes it de-identified, not anonymous. Turn the setting off
+        and your copies are removed from the research set the next time the app syncs.</p>
       </div>
 
-      <p>If you cancel a crash countdown, the app records that as a false positive against your
-      own account, so detection thresholds can be improved.</p>
+      <div class="callout callout-warn">
+        <p><strong>ThrottleIQ is not an emergency service, and does not call one.</strong> It does
+        not contact anybody on your behalf after a crash. Do not rely on ThrottleIQ as a safety
+        net. The one thing that genuinely works today is the live-share link you send out yourself
+        before or during a ride.</p>
+      </div>
 
       <h2>8. How long data is kept</h2>
 
@@ -462,8 +499,10 @@
         <li><strong>On your phone:</strong> rides, GPS trails, bikes and maintenance logs stay
         until you delete them in the app or uninstall it.</li>
         <li><strong>In the cloud:</strong> your profile, ride summaries, ride GPS trails, bikes,
-        maintenance logs, routes, emergency contacts, posts, reviews and shared rides are kept for
-        as long as your account exists. There is no automatic expiry on any of it.</li>
+        maintenance logs, routes, emergency contacts, impact records, posts, reviews and shared
+        rides are kept for as long as your account exists. There is no automatic expiry on any of
+        it. Crash research records (§7) are kept until you turn that setting off or delete your
+        account.</li>
         <li><strong>Live-share sessions:</strong> stop being viewable 24 hours after they start;
         the underlying record persists until deleted (see §6).</li>
         <li><strong>Deleted content:</strong> when you delete a ride, post, review, or emergency
@@ -478,8 +517,9 @@
       and everything the app stored on your phone straight away. It does <strong>not</strong>
       remove your cloud records on its own: there is no automatic clean-up yet. Your cloud
       records — profile, username reservation, ride summaries and GPS trails, bikes, maintenance
-      logs, saved routes, emergency contacts, badges, notifications, shared rides, live sessions,
-      crash alerts, follows, messages, photos and voice clips — are deleted <strong>by hand,
+      logs, saved routes, emergency contacts, impact and crash research records, badges,
+      notifications, shared rides, live sessions, crash alerts, follows, messages, photos and
+      voice clips — are deleted <strong>by hand,
       within 30 days of your request</strong>. To make the request, email as below; do it before
       or after deleting in the app.</p>
 
@@ -492,7 +532,8 @@
         signup address is how the request is verified as yours.</li>
         <li>Your sign-in credential and every cloud record tied to your account is deleted:
         profile, username reservation, ride summaries, ride GPS trails, bikes, maintenance logs,
-        saved routes, emergency contacts, badges, notifications, live sessions, and crash alerts.
+        saved routes, emergency contacts, impact and crash research records, badges,
+        notifications, live sessions, and crash alerts.
         Uploaded photos are removed from Cloudinary.</li>
         <li>Content you posted in public — forum posts and replies, comments, place entries and
         reviews — is deleted on request too. Say so in your email if you want it removed;

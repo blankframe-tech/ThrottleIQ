@@ -188,7 +188,7 @@ class NotificationService {
   /// silently let it run — the rider has to answer it.
   Future<void> showCrashAlert({required int secondsRemaining}) async {
     // Crash copy only with the detector on (CrtiQue_Oct14 B11).
-    if (!SensorConstants.impactDetectorLiveEnabled) return;
+    if (!SensorConstants.crashAlertsEnabled) return;
     await init();
     final l10n = await savedL10n();
     await _plugin.show(

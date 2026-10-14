@@ -2,7 +2,30 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (latest): re-critique fixes (N1-N5) — branch `fix/oct15-throttleiq`, not pushed, not deployed, not on a device
+## 2026-10-15 (latest): `origin/main` merged into the oct14/oct15 fix round — branch `merge/oct15-origin-main`, not pushed, not deployed, not on a device
+
+- **Schema v29.** Both sides shipped a v28: ours (`updated_at` + touch triggers, UTC ride times) and main's (`impact_events`, `rides.phone_placement`/`imu_rate_hz`). v28 stays ours; v29 adds main's table and columns and, for a phone that is on main's v28, re-runs our (re-runnable) v28 step. Paths tested in `schema_v29_merge_test.dart`: 27 → 29, our 28 → 29, main's 28 → 29.
+- **Crash gate:** main renamed `impactDetectorLiveEnabled` to `crashAlertsEnabled`; the B11 gates (notification, crash overlay, `crash_copy_test`) now read it. Shadow mode raises nothing.
+- **Ride tracking off** also stops `startRide` and the Places "Record this ride?" prompt, so nothing (foreground service, permission ask) reads location. `BikeDao.delete` now removes the bike's rides' impact rows.
+- **privacy.html:** our deletion, background-location and contact text plus main's modules text; §1, §2, §4, §7, §8 and §9 now describe impact records, the 12 s sensor window and the opt-in research copy (which carries the uid and the exact time).
+- **Deploy order:** main deployed its `firestore.rules` and indexes. The next rules or indexes deploy must come from this merge, or the `crashEvents`/`impactEvents` rules and overrides go away.
+- Owner decisions: see the merge report (cloud impact copies outlive a ride delete; `crashEvents.createdAt` is exact).
+
+## 2026-10-15: shadow-mode crash detection — merged to `main`; rules and indexes deployed
+
+- Built phases 1–3 of the crash-detection plan that followed the founder's 14 Oct crash: a tiered `ImpactDetector`,
+  50 Hz sensors, `impact_events` (schema v28) with sensor windows, phone-placement chips, the after-ride
+  "Did you fall?" card and "Report a crash", private `impactEvents` sync, and opt-in `crashEvents`. Live alarm
+  still **off**. Details in features.md ("Shadow-mode crash detection"); open items in issues_open.md §78.1.
+- **Needed before release:** update the privacy policy and store data-safety forms for the opt-in, and measure
+  the battery cost of 50 Hz on a device. `firestore.rules` and `firestore.indexes.json` are deployed.
+- Built in its own worktree (`feat/crash-shadow-mode`), then merged with the modular-ThrottleIQ commits below.
+  The parallel `oct14` fix branches (`fix/oct14-tiq-*`) were not merged yet; expect conflicts in
+  `ride_recording_provider.dart`, `firestore.rules` and the ARB files when they land.
+- Crash report: `DOCS/CRASH TESTING/` (full analysis, exports, phone DB, iOS log extract) and a public write-up
+  at blankframe.tech/throttleiq/crash/1 (landing-page repo, `throttle-iq/crash/1/`).
+
+## 2026-10-15: re-critique fixes (N1-N5) — branch `fix/oct15-throttleiq`, not pushed, not deployed, not on a device
 
 From `CrtiQue_Oct15.md` §3.
 - **N1 version codes:** every Android artifact carries the pubspec build number. `build.gradle.kts` resets Flutter's split codes (`abi * 1000 + build`); `deploy.sh` checks each APK with `aapt2` and stops on a mismatch. Bump the build number every release.
@@ -11,6 +34,12 @@ From `CrtiQue_Oct15.md` §3.
 - **N4 install page:** the iPhone section is a mailto plus WhatsApp and says there is no iPhone build. No localStorage waitlist, no `console.log` tracking, no TestFlight or crash-alert claims (`hosting_repo_hygiene.test.js`). Needs a Hosting deploy.
 - **N5 permissions:** `AutoTrackingService.start()` asks for nothing unless `enable()` passes `askForMissingPermissions`, so pause and ride end no longer bring up the battery dialog. The switch reads off when activity recognition is revoked.
 - Not done: N6-N12 (Low), deletion without email (owner: Blaze or admin script).
+
+## 2026-10-15: modular ThrottleIQ — on `main` (`c90b2cd`), pushed; branch deleted
+
+- Merged to `main` by fast-forward; `modular-throttleiq` deleted locally and on origin. Gate green (2149 tests). With nothing turned off the app behaves as before.
+- Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
+- Not done: the feature tour still offers Social/Places/Record steps when those are off (Show me just lands on the home tab); forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
 
 ## 2026-10-15: ride recording fixes (B4, B5, B12) — branch `fix/oct14-tiq-ride`, merged with `oct14-int`, not pushed, not on a device
 
@@ -62,6 +91,7 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 - **B1 groundwork:** `onUserAccountDeleted` now also deletes chats and the email lookup, and reads Cloudinary credentials from secrets. The `userId` and `track.syncedAt` collection-group overrides are in `firestore.indexes.json`. New `purgeOldGpsTracks` (12-month raw-track retention). Nothing deployed: Blaze needed.
 - **B9:** `database.rules.json` denies everything; the delivery suite and `verify_realtime.js` are gone. `config/{doc}` is world-readable, never client-written (`minBuild`).
 - **Deploy order and the App Check runbook:** `SECURITY.md`.
+
 
 ## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 

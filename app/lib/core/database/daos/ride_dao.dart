@@ -311,6 +311,7 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('impact_events', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
     });
   }
@@ -324,6 +325,7 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('impact_events', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
       await txn.insert(
         'deleted_rides',
@@ -396,6 +398,8 @@ class RideDao {
       for (final ride in rides) {
         await txn.delete('ride_points',
             where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [bikeId]);
     });
@@ -409,8 +413,13 @@ class RideDao {
       for (final ride in rides) {
         await txn.delete('ride_points',
             where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
+      // Including any whose ride row is already gone.
+      await txn
+          .delete('impact_events', where: 'user_id = ?', whereArgs: [userId]);
     });
   }
 }

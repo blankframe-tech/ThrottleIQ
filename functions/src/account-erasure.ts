@@ -271,6 +271,9 @@ export async function deleteUserData(
     ["rides", db.collection("rides").where("userId", "==", uid)],
     ["liveSessions", db.collection("liveSessions").where("uid", "==", uid)],
     ["crashNotifications", db.collection("crashNotifications").where("uid", "==", uid)],
+    // Opt-in research copies of answered impacts (shadow-mode crash
+    // detection). Their private originals go with users/{uid} below.
+    ["crashEvents", db.collection("crashEvents").where("ownerUid", "==", uid)],
     // Follow edges in both directions, so counts elsewhere stop including
     // a rider who no longer exists.
     ["follows (out)", db.collection("follows").where("followerUid", "==", uid)],

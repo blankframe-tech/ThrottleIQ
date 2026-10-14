@@ -850,7 +850,7 @@ class _RideClock extends ConsumerWidget {
 @visibleForTesting
 bool showCrashOverlay({
   required bool detected,
-  bool detectorOn = SensorConstants.impactDetectorLiveEnabled,
+  bool detectorOn = SensorConstants.crashAlertsEnabled,
 }) =>
     detectorOn && detected;
 

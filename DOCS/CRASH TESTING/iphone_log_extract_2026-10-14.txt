@@ -1,0 +1,77 @@
+iPhone 15 system log, curated extract, 14 Oct 2026, 21:27:30-21:31:30 local (+06).
+Source: `log collect` from the device into ~/Desktop/iphone_crash_2026-10-14.logarchive (472 MB, not in git).
+Only screen, lock, motion-wake, proximity, ThrottleIQ focus, screenshot, camera and step-batch lines are kept; pointers replaced by 0x….
+
+21:27:30.056  powerd     Backlight state changed from 0 to 1
+21:27:30.056  powerd     Backlight turned on due to MotionGesture
+21:27:32.841  SpringBoard Transition: locked -> unlocked
+21:27:32.927  SpringBoard [com.google.Maps] Foreground app will not request ephemeral notifications
+21:27:33.006  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:27:40.835  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: YES
+21:27:41.168  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:27:41.493  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:27:42.530  SpringBoard [Notification Long Press Gesture] Lift detected
+21:27:56.918  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m
+21:27:57.666  Runner     [0x…] [keyboardFocus] Recreation of event deferring records requested: removing recreation reason: detachedContext; for reason: _UIEventDeferringManager: 0x…: recreating 
+21:27:57.676  Runner     Scene became target of keyboard event deferring environment: UIWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Acom.bft.t
+21:27:57.703  SpringBoard [com.bft.throttleiq] Foreground app will not request ephemeral notifications
+21:27:58.940  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m
+21:27:59.560  SpringBoard [com.google.Maps] Foreground app will not request ephemeral notifications
+21:28:00.232  Runner     [0x…] [keyboardFocus] Disabling event deferring records requested: adding recreation reason: detachedContext; for reason: _UIEventDeferringManager: 0x…: disabling keyboar
+21:28:14.796  SpringBoard [Notification Long Press Gesture] Lock button pressed
+21:28:14.999  powerd     Display state: Off NotificationWake : 0
+21:28:15.080  powerd     Backlight state changed from 1 to 0
+21:28:15.080  powerd     Backlight turned off
+21:28:15.081  SpringBoard Transition: unlocked -> locking
+21:28:15.189  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m
+21:28:25.088  SpringBoard Transition: locking -> locked
+21:28:58.901  SpringBoard [Notification Long Press Gesture] Lift detected
+21:28:58.917  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: YES
+21:28:59.004  powerd     Display state: On NotificationWake : 0
+21:28:59.221  powerd     Backlight state changed from 0 to 1
+21:28:59.221  powerd     Backlight turned on due to MotionGesture
+21:29:00.923  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:29:01.112  powerd     Display state: Off NotificationWake : 0
+21:29:01.220  powerd     Backlight state changed from 1 to 0
+21:29:01.220  powerd     Backlight turned off
+21:29:34.617  locationd  <HKDataCollector:0x… HKQuantityTypeIdentifierStepCount>: Batch EFCD67: Sending 25 datums from Wed Oct 14 21:19:34 2026 to Wed Oct 14 21:29:10 2026
+21:30:07.785  SpringBoard [Notification Long Press Gesture] Lift detected
+21:30:07.808  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:30:07.900  powerd     Display state: On NotificationWake : 0
+21:30:08.094  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:30:08.099  SpringBoard [Notification Long Press Gesture] Lock button pressed
+21:30:08.112  powerd     Backlight state changed from 0 to 1
+21:30:08.112  powerd     Backlight turned on due to Button
+21:30:09.245  SpringBoard Transition: locked -> inBioUnlock
+21:30:09.425  SpringBoard [com.google.Maps] Foreground app will not request ephemeral notifications
+21:30:09.577  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:30:11.439  SpringBoard [com.apple.ScreenshotServicesService] Foreground app will not request ephemeral notifications
+21:30:11.501  ScreenshotServicesService active until 21:30:19.678 (63 log lines)
+21:30:12.880  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m
+21:30:13.574  Runner     [0x…] [keyboardFocus] Recreation of event deferring records requested: removing recreation reason: detachedContext; for reason: _UIEventDeferringManager: 0x…: recreating 
+21:30:13.586  SpringBoard [com.bft.throttleiq] Foreground app will not request ephemeral notifications
+21:30:13.590  Runner     Scene became target of keyboard event deferring environment: UIWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Acom.bft.t
+21:30:19.286  SpringBoard [Notification Long Press Gesture] Lock button pressed
+21:30:19.487  powerd     Display state: Off NotificationWake : 0
+21:30:19.552  powerd     Backlight state changed from 1 to 0
+21:30:19.552  powerd     Backlight turned off
+21:30:19.554  SpringBoard Transition: inBioUnlock -> locking
+21:30:19.668  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m
+21:30:19.693  Runner     [0x…] [keyboardFocus] Disabling event deferring records requested: adding recreation reason: detachedContext; for reason: _UIEventDeferringManager: 0x…: disabling keyboar
+21:30:29.561  SpringBoard Transition: locking -> locked
+21:30:53.629  powerd     Backlight turned off
+21:30:53.676  SpringBoard [Notification Long Press Gesture] Proximity Sensor changed to objectWithinProximity: NO
+21:30:53.753  powerd     Display state: On NotificationWake : 0
+21:30:53.755  SpringBoard [Notification Long Press Gesture] Lock button pressed
+21:30:53.975  powerd     Backlight state changed from 0 to 1
+21:30:53.975  powerd     Backlight turned on due to Button
+21:30:54.405  SpringBoard Transition: locked -> inBioUnlock
+21:30:54.650  Camera active until 21:31:23.273 (247 log lines)
+21:30:54.657  SpringBoard [com.apple.camera] Foreground app will not request ephemeral notifications
+21:30:57.272  SpringBoard [Notification Long Press Gesture] Lift detected
+21:31:22.270  SpringBoard [Notification Long Press Gesture] Lock button pressed
+21:31:22.550  powerd     Display state: Off NotificationWake : 0
+21:31:22.917  powerd     Backlight state changed from 1 to 0
+21:31:22.917  powerd     Backlight turned off
+21:31:22.962  SpringBoard Transition: inBioUnlock -> locking
+21:31:23.183  SpringBoard Scene became target of keyboard event deferring environment: SBWindowScene: 0x…; scene identity: com.apple.frontboard.systemappservices/SSK.primary.root(mainDisplay):SB-m

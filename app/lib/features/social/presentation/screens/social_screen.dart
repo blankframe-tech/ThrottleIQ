@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/riding_score.dart';
@@ -124,34 +125,59 @@ class SocialScreen extends StatefulWidget {
 }
 
 class _SocialScreenState extends State<SocialScreen> {
+  AppBar _appBar(BuildContext context, String title,
+          {PreferredSizeWidget? bottom, bool bell = true}) =>
+      AppBar(
+        titleSpacing: AppDimensions.paddingMd,
+        title: Text(title,
+            style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: context.palette.textPrimary)),
+        actions: [
+          IconButton(
+            tooltip: context.l10n.searchRidersForums,
+            icon: Icon(Icons.search,
+                color: context.palette.textSecondary, size: 24),
+            onPressed: () =>
+                showSearch(context: context, delegate: _SocialSearchDelegate()),
+          ),
+          if (bell)
+            Consumer(
+              builder: (_, ref, __) => NotificationBellButton(
+                  unreadCount: ref.watch(unreadNotificationCountProvider)),
+            ),
+          const SizedBox(width: 8),
+        ],
+        bottom: bottom,
+      );
+
   @override
   Widget build(BuildContext context) {
+    return Consumer(builder: (context, ref, _) {
+      if (ref.watch(appModulesProvider).social) return _buildSocial(context);
+      // Forums-only (Settings → Your ThrottleIQ): the same Forums page, as the
+      // whole tab — no ride feed, people or notifications.
+      return Scaffold(
+        backgroundColor: context.palette.background,
+        appBar: _appBar(context, context.l10n.forums, bell: false),
+        body: ForumsHomeScreen(
+          onOpenSearch: () =>
+              showSearch(context: context, delegate: _SocialSearchDelegate()),
+        ),
+      );
+    });
+  }
+
+  Widget _buildSocial(BuildContext context) {
     return DefaultTabController(
       length: 3,
       initialIndex: widget.initialTab.clamp(0, 2),
       child: Scaffold(
         backgroundColor: context.palette.background,
-        appBar: AppBar(
-          titleSpacing: AppDimensions.paddingMd,
-          title: Text(context.l10n.navSocialLabel,
-              style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: context.palette.textPrimary)),
-          actions: [
-            IconButton(
-              tooltip: context.l10n.searchRidersForums,
-              icon: Icon(Icons.search,
-                  color: context.palette.textSecondary, size: 24),
-              onPressed: () => showSearch(
-                  context: context, delegate: _SocialSearchDelegate()),
-            ),
-            Consumer(
-              builder: (_, ref, __) => NotificationBellButton(
-                  unreadCount: ref.watch(unreadNotificationCountProvider)),
-            ),
-            const SizedBox(width: 8),
-          ],
+        appBar: _appBar(
+          context,
+          context.l10n.navSocialLabel,
           bottom: TabBar(
             labelColor: context.palette.textPrimary,
             unselectedLabelColor: context.palette.textSecondary,

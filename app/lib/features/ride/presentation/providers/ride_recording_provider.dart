@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -14,6 +16,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/cloud/sync_manager.dart';
 import '../../../../core/constants/sensor_constants.dart';
+import '../../../../core/database/daos/impact_event_dao.dart';
 import '../../../../core/database/daos/bike_dao.dart';
 import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/database/daos/ride_point_dao.dart';
@@ -21,6 +24,8 @@ import '../../../../core/realtime/realtime_location_publisher.dart';
 import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/gps_drop_log.dart';
+import '../../../../core/services/battery_service.dart';
+import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/services/home_widget_service.dart';
 import '../../../../core/services/notification_service.dart';
@@ -28,6 +33,7 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../maintenance/data/services/maintenance_alerts.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../profile/presentation/providers/speed_alert_provider.dart';
+import '../../data/models/impact_event_row.dart';
 import '../../data/models/ride_model.dart';
 import '../../domain/calculators/average_speed.dart';
 import '../../domain/calculators/cornering_estimator.dart';
@@ -35,9 +41,11 @@ import '../../domain/calculators/elevation_profile.dart';
 import '../../domain/calculators/event_detector.dart';
 import '../../domain/calculators/final_ride_stats.dart';
 import '../../domain/calculators/fix_kinematics.dart';
+import '../../domain/calculators/impact_detector.dart';
 import '../../domain/calculators/motion_calculator.dart';
 import '../../domain/calculators/recording_cadence_policy.dart';
 import '../../domain/calculators/ride_resume.dart';
+import '../../domain/entities/impact_event_types.dart';
 import '../../domain/entities/live_session_entity.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/entities/ride_point_entity.dart';
@@ -255,13 +263,27 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     NotificationService.instance.onCrashDismissed = () {
       if (state.crashDetected) unawaited(dismissCrashAlert());
     };
-    // Only ever called while SensorConstants.impactDetectorLiveEnabled.
+    // Only ever called while SensorConstants.crashAlertsEnabled (tier 2).
     _sensorCoordinator.onImpactCrash = _onImpactCrash;
+    // Shadow mode: every resolved impact is saved for the after-ride card.
+    _sensorCoordinator.onImpactCandidate = _onImpactCandidate;
   }
 
   final Ref _ref;
   final _rideDao = RideDao();
   final _pointDao = RidePointDao();
+  final _impactEventDao = ImpactEventDao();
+
+  /// Where the phone rides this time (the ride-start chips; unknown for an
+  /// auto-detected ride). Saved on the ride and on every impact.
+  PhonePlacement _placement = PhonePlacement.unknown;
+
+  /// Whether the phone was charging when the ride started — a mount hint
+  /// (crash-detection plan §6). Null until read.
+  bool? _chargingAtStart;
+
+  /// Whether the app is in front: a phone in use is in a hand or on a mount.
+  bool _appForeground = true;
   final _calculator = MotionCalculator();
   final _detector = EventDetector();
 
@@ -454,6 +476,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         return;
       }
 
+      _placement = userInitiated
+          ? await PhonePlacementSetting.current()
+          : PhonePlacement.unknown;
+      _chargingAtStart = null;
+      unawaited(_readCharging());
+
       final ride = RideEntity(
         id: _uuid.v4(),
         userId: uid,
@@ -555,8 +583,18 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
   }
 
+  /// Best effort: battery_plus can be missing or slow on some devices.
+  Future<void> _readCharging() async {
+    final s = await BatteryService.getBatteryState().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => BatteryState.unknown);
+    if (s == BatteryState.unknown) return;
+    _chargingAtStart = s == BatteryState.charging || s == BatteryState.full;
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    _appForeground = state == AppLifecycleState.resumed;
     if (this.state.status != RecordingStatus.active &&
         this.state.status != RecordingStatus.paused) {
       return;
@@ -685,14 +723,14 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         debugPrint('[RideRecording] sensor error: $e');
     return [
       userAccelerometerEventStream(
-        samplingPeriod: const Duration(milliseconds: 50),
+        samplingPeriod: SensorConstants.imuSamplingPeriod,
       ).listen(_onSensor, onError: onSensorError),
       gyroscopeEventStream(
-        samplingPeriod: const Duration(milliseconds: 50),
+        samplingPeriod: SensorConstants.imuSamplingPeriod,
       ).listen(_onGyro, onError: onSensorError),
       if (_sensorCoordinator.impactDetectionEnabled)
         accelerometerEventStream(
-          samplingPeriod: const Duration(milliseconds: 50),
+          samplingPeriod: SensorConstants.imuSamplingPeriod,
         ).listen(_onGravity, onError: onSensorError),
     ];
   }
@@ -744,7 +782,43 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     return RideAlert.none;
   }
 
-  /// A crash confirmed by [ImpactDetector]. Same confidence gate the GPS
+  /// One resolved impact (shadow mode): saved with where the phone was and
+  /// what it was doing, for the after-ride card and calibration. Never
+  /// alarms. Fire-and-forget: a failed insert costs one data point, never
+  /// the ride.
+  void _onImpactCandidate(ImpactCandidate candidate, Uint8List? window) {
+    final ride = state.ride;
+    if (ride == null) return;
+    final last = _lastPoint;
+    final row = impactEventRowFromCandidate(
+      candidate: candidate,
+      id: _uuid.v4(),
+      rideId: ride.id,
+      userId: ride.userId,
+      lat: last?.lat,
+      lng: last?.lng,
+      placement: _placement,
+      appForeground: _appForeground,
+      charging: _chargingAtStart,
+      sampleRateHz: _sensorCoordinator.achievedImuRateHz,
+      imu: window,
+    );
+    unawaited(_impactEventDao.insert(row).catchError((Object e) {
+      debugPrint('[RideRecording] impact event not saved: $e');
+    }));
+  }
+
+  /// What the ride row keeps about the sensors (schema v28): where the phone
+  /// rode, and the IMU rate the OS actually delivered.
+  Map<String, dynamic> _sensorSummary() => {
+        if (_placement != PhonePlacement.unknown)
+          'phone_placement': _placement.wire,
+        if (_sensorCoordinator.achievedImuRateHz != null)
+          'imu_rate_hz':
+              (_sensorCoordinator.achievedImuRateHz! * 10).round() / 10,
+      };
+
+  /// A tier-2 crash from [ImpactDetector]. Same confidence gate the GPS
   /// crash path had: don't act on a signal derived from garbage sensor data.
   void _onImpactCrash(CrashSignal signal) {
     if (!mounted || state.status != RecordingStatus.active) return;
@@ -913,7 +987,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     }
 
     // Crash detection is off this path (it could never fire here — §78.1);
-    // it lives in ImpactDetector, behind impactDetectorLiveEnabled. Brake/
+    // it lives in ImpactDetector, behind crashAlertsEnabled. Brake/
     // accel counts belong to the IMU once its axis is calibrated, and to
     // this GPS path before that — never both (§78.3).
     final alert = _detector.detect(
@@ -1218,6 +1292,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     final ride = state.ride!;
     var finalized = false;
     try {
+      // Before the streams close: an impact inside its 25 s window — likely
+      // if the rider ends the ride right after a fall — is saved, not lost.
+      _sensorCoordinator.flushPendingImpact();
       await _stopMachinery();
       // Flush BEFORE dispose. dispose() fires its own unawaited flush, which
       // empties the buffer synchronously — so an awaited flush placed after it
@@ -1238,9 +1315,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // §90.C8: finalize first, recovery marker last. The marker used to be
       // cleared before the row was finalized, so a kill in between left the
       // ride `active` forever — out of history, never synced, unrecoverable.
-      final finalStats = _buildFinalStats(
-        elevation: await _elevationFor(ride.id),
-      );
+      final finalStats = {
+        ..._buildFinalStats(elevation: await _elevationFor(ride.id)),
+        ..._sensorSummary(),
+      };
       // Publish only if the ride measured any cornering, so a short ride
       // through town doesn't wipe the last real ride's figures to 0°.
       if (_cornering.peaks.maxLeanDeg != null) {
@@ -1347,6 +1425,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       await _persistenceCoordinator.clearRecordingState();
       return;
     }
+
+    // The original answer isn't stored until the ride ends; the remembered
+    // one is the best guess for a ride picked back up after a kill.
+    _placement = row['is_auto'] == 1
+        ? PhonePlacement.unknown
+        : await PhonePlacementSetting.current();
 
     final points = await _pointDao.getForRide(rideId);
     if (points.length < 2) {
@@ -1461,6 +1545,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // the ride ever gets if the phone doesn't survive (§69.O10).
     await _rideDao.finalizeRide(state.ride!.id, {
       ..._buildFinalStats(),
+      ..._sensorSummary(),
       'status': 'crash',
     });
 

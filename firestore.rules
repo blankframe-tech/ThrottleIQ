@@ -224,6 +224,71 @@ service cloud.firestore {
         d.syncedAt == request.time;
     }
 
+    // Shadow-mode crash detection (crash-detection plan §8), shared with
+    // impact_event_payload.dart: the field lists must match it.
+    function impactLabelValid(label) {
+      return label in ['crash', 'fall', 'phone_fell', 'bump', 'hard_stop',
+          'unsure', 'missed'];
+    }
+
+    // A rider's own impact (impactEventCloudPayload + syncedAt). `imu` is the
+    // gzip'd sensor window (ImpactWindowRecorder), capped at 64 KiB; tier -1
+    // is a fall the rider reported that the detector missed.
+    function impactEventValid(d) {
+      return d.keys().hasOnly(['schema', 'rideId', 'at', 'tier', 'reason',
+          'peakUserG', 'peakRawG', 'freefallMs', 'rotationDeg',
+          'orientationChangeDeg', 'stillAfter', 'resumedAfter',
+          'speedBeforeMs', 'speedAfterMs', 'gpsGapS', 'lat', 'lng',
+          'placement', 'appForeground', 'charging', 'vibrationRms',
+          'sampleRateHz', 'features', 'imu', 'label', 'labelDetail',
+          'labelSource', 'labeledAt', 'consent', 'createdAt', 'syncedAt']) &&
+        d.keys().hasAll(['schema', 'rideId', 'at', 'tier', 'consent',
+          'createdAt', 'syncedAt']) &&
+        d.schema == 1 &&
+        d.rideId is string && d.rideId.size() > 0 && d.rideId.size() <= 128 &&
+        d.at is string && d.at.size() <= 40 &&
+        d.createdAt is string && d.createdAt.size() <= 40 &&
+        d.tier is int && d.tier >= -1 && d.tier <= 2 &&
+        d.consent is bool &&
+        (!('imu' in d) || (d.imu is bytes && d.imu.size() <= 65536)) &&
+        (!('features' in d) || (d.features is map && d.features.size() <= 40)) &&
+        (!('labelDetail' in d) ||
+          (d.labelDetail is map && d.labelDetail.size() <= 10)) &&
+        (!('label' in d) || impactLabelValid(d.label)) &&
+        optionalString(d, 'reason', 32) &&
+        optionalString(d, 'placement', 16) &&
+        optionalString(d, 'labelSource', 16) &&
+        optionalString(d, 'labeledAt', 40) &&
+        d.syncedAt == request.time;
+    }
+
+    // The de-identified research copy of an answered impact
+    // (crashEventCloudPayload + updatedAt): no exact position (a geohash-6
+    // cell), no free text, and the owner only so they can delete it.
+    function crashEventValid(d) {
+      return d.keys().hasOnly(['ownerUid', 'createdAt', 'platform', 'label',
+          'detectedTier', 'reason', 'peakG', 'freefallMs', 'rotationDeg',
+          'orientationChangeDeg', 'speedBeforeKmh', 'placement', 'bikeCc',
+          'bikeClass', 'surface', 'severity', 'geohash6', 'hourLocal',
+          'weekday', 'rulesVersion', 'consentVersion', 'updatedAt']) &&
+        d.keys().hasAll(['ownerUid', 'label', 'consentVersion', 'updatedAt']) &&
+        d.ownerUid is string &&
+        impactLabelValid(d.label) &&
+        d.consentVersion is int && d.consentVersion >= 1 &&
+        (!('detectedTier' in d) ||
+          (d.detectedTier is int && d.detectedTier >= 0 && d.detectedTier <= 2)) &&
+        (!('geohash6' in d) || (d.geohash6 is string && d.geohash6.size() <= 6)) &&
+        (!('surface' in d) || d.surface in ['paved', 'broken', 'dirt',
+          'gravel', 'wet', 'rail_crossing', 'speed_bump']) &&
+        (!('severity' in d) || d.severity in ['none', 'minor', 'medical']) &&
+        optionalString(d, 'createdAt', 40) &&
+        optionalString(d, 'platform', 16) &&
+        optionalString(d, 'reason', 32) &&
+        optionalString(d, 'placement', 16) &&
+        optionalString(d, 'bikeClass', 16) &&
+        d.updatedAt == request.time;
+    }
+
     function forumImageUrlValid(url, uid) {
       return url is string && url.size() <= 1000 &&
         url.matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?forumPhotos/' + uid + '/.+');
@@ -586,6 +651,15 @@ service cloud.firestore {
         allow read: if request.auth.uid == uid;
       }
 
+      // Shadow-mode crash detection: the impacts this rider's phone logged,
+      // with their sensor windows and the rider's answers. Owner-only.
+      match /impactEvents/{eventId} {
+        allow read, delete: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if request.auth != null &&
+          request.auth.uid == uid &&
+          impactEventValid(request.resource.data);
+      }
+
       // Rider Stats milestone badges (Epic F). Earned/not-earned is always
       // recomputed client-side from local ride data
       // (core/utils/badges.dart) — this collection is just a durable
@@ -835,6 +909,25 @@ service cloud.firestore {
         (!('timestamp' in request.resource.data) ||
          request.resource.data.timestamp is string);
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
+
+    // Research copies of answered impacts, written only with the rider's
+    // opt-in (Settings → "Help improve crash detection"). Never readable by
+    // clients: the Admin SDK scripts (scripts/crash_stats.js) aggregate them.
+    // The owner can create, change their answer, and delete — including a
+    // delete of a copy that doesn't exist, which is how withdrawing consent
+    // is applied without first having to read the collection.
+    match /crashEvents/{eventId} {
+      allow create: if request.auth != null &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        crashEventValid(request.resource.data);
+      allow update: if request.auth != null &&
+        resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        crashEventValid(request.resource.data);
+      allow delete: if request.auth != null &&
+        (resource == null || resource.data.ownerUid == request.auth.uid);
+      allow read: if false;
     }
 
     // Shared/public rides (Social feed) — top-level collection.

@@ -6359,4 +6359,198 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get oemGuideShowMe => 'দেখান';
+
+  @override
+  String get yourThrottleIqSection => 'আপনার ThrottleIQ';
+
+  @override
+  String get yourThrottleIqDescription =>
+      'শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।';
+
+  @override
+  String get communityFieldLabel => 'কমিউনিটি';
+
+  @override
+  String get communityFullLabel => 'সবকিছু';
+
+  @override
+  String get communityFullDescription => 'রাইড, রাইডার ও ফোরাম';
+
+  @override
+  String get communityForumsLabel => 'শুধু ফোরাম';
+
+  @override
+  String get communityForumsDescription => 'ফিড বা মানুষ নেই';
+
+  @override
+  String get communityOffLabel => 'বন্ধ';
+
+  @override
+  String get communityOffDescription => 'কমিউনিটি নেই';
+
+  @override
+  String get placesModuleTitle => 'প্লেস ও রুট';
+
+  @override
+  String get placesModuleSubtitle =>
+      'পেট্রোল পাম্প, মেকানিক, চেকপোস্ট ও সেভ করা রুট';
+
+  @override
+  String get rideTrackingModuleTitle => 'রাইড ট্র্যাকিং';
+
+  @override
+  String get rideTrackingModuleSubtitle =>
+      'রেকর্ডিং, রাইড অ্যানালিটিক্স, স্বয়ংক্রিয় ওডোমিটার ও ক্র্যাশ শনাক্তকরণ। আপনার লোকেশন ব্যবহার করে।';
+
+  @override
+  String get moduleKeepOnAction => 'চালু রাখুন';
+
+  @override
+  String get moduleTurnOffAction => 'বন্ধ করুন';
+
+  @override
+  String get communityForumsOnlyWarningTitle => 'রাইড ও রাইডার লুকাবেন?';
+
+  @override
+  String get communityForumsOnlyWarningBody =>
+      'অন্যদের শেয়ার করা রাইড দেখবেন না, আর কাউকে ফলো, মেসেজ বা গ্রুপ রাইড করতে পারবেন না। একই রাস্তার রাইডাররাই প্রায়ই প্রথম বন্ধ রাস্তার খবর দেন।';
+
+  @override
+  String get communityOffWarningTitle => 'কমিউনিটি বন্ধ করবেন?';
+
+  @override
+  String get communityOffWarningBody =>
+      'ফোরামও হারাবেন, যেখানে আপনার একই বাইকের মালিকরা প্রশ্নের উত্তর দেন ও সমাধান শেয়ার করেন। আগে পোস্ট করা সবকিছু থেকে যাবে।';
+
+  @override
+  String get placesOffWarningTitle => 'প্লেস বন্ধ করবেন?';
+
+  @override
+  String get placesOffWarningBody =>
+      'পেট্রোল পাম্প, মেকানিক, পুলিশ চেকপোস্ট, স্পিড ক্যামেরা বা আপনার সেভ করা রুট দেখবেন না, যা আশেপাশের রাইডাররা যাচাই করেছেন।';
+
+  @override
+  String get rideTrackingOffWarningTitle => 'রাইড ট্র্যাকিং বন্ধ করবেন?';
+
+  @override
+  String get rideTrackingOffWarningBody =>
+      'ThrottleIQ আপনার লোকেশন ব্যবহার বন্ধ করবে। রাইড রেকর্ডিং, অ্যানালিটিক্স, ট্রিপ শনাক্তকরণ ও ক্র্যাশ শনাক্তকরণ বন্ধ হবে, আর সার্ভিস রিমাইন্ডার শুধু আপনার দেওয়া ওডোমিটার রিডিং ব্যবহার করবে। আগের রাইডগুলো থেকে যাবে।';
+
+  @override
+  String get rideTrackingOffDuringRide =>
+      'রাইড ট্র্যাকিং বন্ধ করার আগে রাইড শেষ করুন।';
+
+  @override
+  String get modulesUpdatedSnack =>
+      'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
+
+  @override
+  String get manualOdometerHint =>
+      'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
+
+  @override
+  String get phonePlacementLabel => 'ফোন';
+
+  @override
+  String get phonePlacementMount => 'মাউন্টে';
+
+  @override
+  String get phonePlacementPocket => 'পকেটে';
+
+  @override
+  String get phonePlacementBag => 'ব্যাগে';
+
+  @override
+  String get phonePlacementHint =>
+      'পড়ে যাওয়া আর ঝাঁকুনির পার্থক্য বুঝতে অ্যাপকে সাহায্য করে।';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return '$time-এ সম্ভাব্য পতন';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'আপনার ফোনে জোরে ধাক্কা লেগেছে, তারপর ফোনটি থেমে গেছে। আপনি কি পড়ে গিয়েছিলেন?';
+
+  @override
+  String get impactAnswerYes => 'হ্যাঁ, পড়ে গিয়েছিলাম';
+
+  @override
+  String get impactAnswerPhoneFell => 'না, ফোন পড়ে গিয়েছিল';
+
+  @override
+  String get impactAnswerBump => 'না, শুধু ঝাঁকুনি';
+
+  @override
+  String get impactAnswerHardStop => 'না, জোরে ব্রেক করেছিলাম';
+
+  @override
+  String get impactAnswerUnsure => 'নিশ্চিত নই';
+
+  @override
+  String get impactFollowUpTitle =>
+      'আপনি ঠিক আছেন জেনে ভালো লাগল। দুটি ছোট প্রশ্ন অ্যাপকে শিখতে সাহায্য করবে:';
+
+  @override
+  String get impactSeverityLabel => 'কতটা গুরুতর ছিল?';
+
+  @override
+  String get impactSeverityNone => 'কোনো আঘাত নেই';
+
+  @override
+  String get impactSeverityMinor => 'সামান্য আঘাত';
+
+  @override
+  String get impactSeverityMedical => 'চিকিৎসা লেগেছে';
+
+  @override
+  String get impactSurfaceLabel => 'রাস্তার অবস্থা';
+
+  @override
+  String get surfacePaved => 'পাকা রাস্তা';
+
+  @override
+  String get surfaceBroken => 'ভাঙা রাস্তা';
+
+  @override
+  String get surfaceDirt => 'কাঁচা রাস্তা';
+
+  @override
+  String get surfaceGravel => 'নুড়ি-পাথর';
+
+  @override
+  String get surfaceWet => 'ভেজা রাস্তা';
+
+  @override
+  String get surfaceRailCrossing => 'রেলক্রসিং';
+
+  @override
+  String get surfaceSpeedBump => 'স্পিড ব্রেকার';
+
+  @override
+  String get impactSaveAnswer => 'সেভ করুন';
+
+  @override
+  String get impactThanks => 'ধন্যবাদ — এটা কাজে লাগবে।';
+
+  @override
+  String get reportCrashAction => 'দুর্ঘটনা বা পতন জানান';
+
+  @override
+  String get reportCrashTitle => 'কখন ঘটেছিল?';
+
+  @override
+  String get reportCrashBody =>
+      'যে মুহূর্তে পড়েছিলেন সেখানে টেনে আনুন। অ্যাপ যেসব পতন ধরতে পারেনি, সেগুলো শিখতে এটা সাহায্য করে।';
+
+  @override
+  String get reportCrashSaved => 'জানানো হয়েছে। ধন্যবাদ।';
+
+  @override
+  String get crashResearchTitle => 'দুর্ঘটনা শনাক্তকরণ উন্নত করতে সাহায্য করুন';
+
+  @override
+  String get crashResearchDesc =>
+      'পতন নিয়ে আপনার উত্তর আর তার আশপাশের সেন্সর রিডিং শেয়ার করে — আপনার নাম বা সঠিক অবস্থান ছাড়া (শুধু প্রায় 1 কিমি এলাকা)। শুরুতে বন্ধ থাকে।';
 }

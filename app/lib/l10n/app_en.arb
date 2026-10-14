@@ -8782,5 +8782,246 @@
   "oemGuideShowMe": "Show me",
   "@oemGuideShowMe": {
     "description": "Button that opens the OEM guide."
+  },
+  "yourThrottleIqSection": "Your ThrottleIQ",
+  "@yourThrottleIqSection": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "yourThrottleIqDescription": "Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.",
+  "@yourThrottleIqDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFieldLabel": "Community",
+  "@communityFieldLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullLabel": "Everything",
+  "@communityFullLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullDescription": "Rides, riders & forums",
+  "@communityFullDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsLabel": "Forums only",
+  "@communityForumsLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsDescription": "No feed or people",
+  "@communityForumsDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffLabel": "Off",
+  "@communityOffLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffDescription": "No community",
+  "@communityOffDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleTitle": "Places & routes",
+  "@placesModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleSubtitle": "Fuel, mechanics, checkposts and saved routes",
+  "@placesModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleTitle": "Ride tracking",
+  "@rideTrackingModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleSubtitle": "Recording, ride analytics, automatic odometer and crash detection. Uses your location.",
+  "@rideTrackingModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleKeepOnAction": "Keep it on",
+  "@moduleKeepOnAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleTurnOffAction": "Turn off",
+  "@moduleTurnOffAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningTitle": "Hide rides and riders?",
+  "@communityForumsOnlyWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningBody": "You won't see rides others share, and you can't follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.",
+  "@communityForumsOnlyWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningTitle": "Turn off the community?",
+  "@communityOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningBody": "You'll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.",
+  "@communityOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningTitle": "Turn off Places?",
+  "@placesOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningBody": "You won't see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.",
+  "@placesOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningTitle": "Turn off ride tracking?",
+  "@rideTrackingOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningBody": "ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.",
+  "@rideTrackingOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffDuringRide": "Finish your ride before turning ride tracking off.",
+  "@rideTrackingOffDuringRide": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "modulesUpdatedSnack": "Done. Your tabs now show only what you use.",
+  "@modulesUpdatedSnack": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
+  "@manualOdometerHint": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "phonePlacementLabel": "Phone",
+  "@phonePlacementLabel": {
+    "description": "Ride-start label before the phone placement chips."
+  },
+  "phonePlacementMount": "On a mount",
+  "@phonePlacementMount": {
+    "description": "Phone placement chip: phone held in a handlebar mount."
+  },
+  "phonePlacementPocket": "In a pocket",
+  "@phonePlacementPocket": {
+    "description": "Phone placement chip: phone in a trouser or jacket pocket."
+  },
+  "phonePlacementBag": "In a bag",
+  "@phonePlacementBag": {
+    "description": "Phone placement chip: phone in a backpack or tank bag."
+  },
+  "phonePlacementHint": "Helps the app tell a fall from a bump.",
+  "@phonePlacementHint": {
+    "description": "Small hint under the phone placement chips."
+  },
+  "impactQuestionTitle": "Possible fall at {time}",
+  "@impactQuestionTitle": {
+    "description": "After-ride card title. {time} is a clock time like 9:28 PM.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "impactQuestionBody": "Your phone felt a hard knock and then stopped moving. Did you fall?",
+  "@impactQuestionBody": {
+    "description": "After-ride card question."
+  },
+  "impactAnswerYes": "Yes, I fell",
+  "@impactAnswerYes": {
+    "description": "Answer: the rider fell or crashed."
+  },
+  "impactAnswerPhoneFell": "No, my phone fell",
+  "@impactAnswerPhoneFell": {
+    "description": "Answer: only the phone fell."
+  },
+  "impactAnswerBump": "No, just a bump",
+  "@impactAnswerBump": {
+    "description": "Answer: a pothole, rail crossing or bump."
+  },
+  "impactAnswerHardStop": "No, I braked hard",
+  "@impactAnswerHardStop": {
+    "description": "Answer: a hard stop, no fall."
+  },
+  "impactAnswerUnsure": "Not sure",
+  "@impactAnswerUnsure": {
+    "description": "Answer: the rider doesn't know."
+  },
+  "impactFollowUpTitle": "Glad you're OK. Two quick questions help the app learn:",
+  "@impactFollowUpTitle": {
+    "description": "Shown after 'Yes, I fell'; both questions are optional."
+  },
+  "impactSeverityLabel": "How bad was it?",
+  "@impactSeverityLabel": {
+    "description": "Follow-up question about injury."
+  },
+  "impactSeverityNone": "No injury",
+  "@impactSeverityNone": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMinor": "Minor injury",
+  "@impactSeverityMinor": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMedical": "Needed medical help",
+  "@impactSeverityMedical": {
+    "description": "Severity chip."
+  },
+  "impactSurfaceLabel": "Road surface",
+  "@impactSurfaceLabel": {
+    "description": "Follow-up question about the road."
+  },
+  "surfacePaved": "Paved",
+  "@surfacePaved": {
+    "description": "Road surface chip."
+  },
+  "surfaceBroken": "Broken road",
+  "@surfaceBroken": {
+    "description": "Road surface chip."
+  },
+  "surfaceDirt": "Dirt",
+  "@surfaceDirt": {
+    "description": "Road surface chip."
+  },
+  "surfaceGravel": "Gravel",
+  "@surfaceGravel": {
+    "description": "Road surface chip."
+  },
+  "surfaceWet": "Wet",
+  "@surfaceWet": {
+    "description": "Road surface chip."
+  },
+  "surfaceRailCrossing": "Rail crossing",
+  "@surfaceRailCrossing": {
+    "description": "Road surface chip."
+  },
+  "surfaceSpeedBump": "Speed bump",
+  "@surfaceSpeedBump": {
+    "description": "Road surface chip."
+  },
+  "impactSaveAnswer": "Save",
+  "@impactSaveAnswer": {
+    "description": "Saves the follow-up answers."
+  },
+  "impactThanks": "Thanks — that helps.",
+  "@impactThanks": {
+    "description": "Shown after the rider answers."
+  },
+  "reportCrashAction": "Report a crash or fall",
+  "@reportCrashAction": {
+    "description": "Ride summary button for a fall the app did not detect."
+  },
+  "reportCrashTitle": "When did it happen?",
+  "@reportCrashTitle": {
+    "description": "Title of the report-a-crash sheet."
+  },
+  "reportCrashBody": "Slide to the moment you fell. It helps the app learn the falls it missed.",
+  "@reportCrashBody": {
+    "description": "Report-a-crash sheet explanation."
+  },
+  "reportCrashSaved": "Reported. Thank you.",
+  "@reportCrashSaved": {
+    "description": "Snackbar after a crash report is saved."
+  },
+  "crashResearchTitle": "Help improve crash detection",
+  "@crashResearchTitle": {
+    "description": "Settings switch title."
+  },
+  "crashResearchDesc": "Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.",
+  "@crashResearchDesc": {
+    "description": "Settings switch subtitle for the research data opt-in."
   }
 }

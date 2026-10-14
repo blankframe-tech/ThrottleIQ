@@ -55,7 +55,8 @@ class _DebouncedSearchResults extends StatefulWidget {
   const _DebouncedSearchResults({required this.query});
 
   @override
-  State<_DebouncedSearchResults> createState() => _DebouncedSearchResultsState();
+  State<_DebouncedSearchResults> createState() =>
+      _DebouncedSearchResultsState();
 }
 
 class _DebouncedSearchResultsState extends State<_DebouncedSearchResults> {
@@ -93,7 +94,10 @@ class _SearchResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final myUid = ref.watch(currentUserProvider)?.uid;
-    final ridersAsync = ref.watch(_riderSearchProvider(query));
+    // Forums-only riders search forums alone (Settings → Your ThrottleIQ).
+    final social = ref.watch(appModulesProvider).social;
+    final AsyncValue<List<UserProfileEntity>> ridersAsync =
+        social ? ref.watch(_riderSearchProvider(query)) : const AsyncData([]);
     final forumsAsync = ref.watch(_forumSearchProvider(query));
 
     // Never offer to follow yourself.
@@ -115,7 +119,8 @@ class _SearchResults extends ConsumerWidget {
               Text(
                 context.l10n.nothingFoundTryUsername(query),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
+                style: TextStyle(
+                    color: context.palette.textSecondary, fontSize: 14),
               ),
               const SizedBox(height: 12),
               _OpenBrandForumTile(brand: query.trim()),
@@ -128,26 +133,30 @@ class _SearchResults extends ConsumerWidget {
     return ListView(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       children: [
-        EditorialLabel(context.l10n.ridersLabel),
-        const SizedBox(height: 10),
-        if (ridersAsync.isLoading)
-          const _SectionSpinner()
-        else if (ridersAsync.hasError)
-          _SectionMessage(context.l10n.couldntSearchRiders(ridersAsync.error ?? ''))
-        else if (riders.isEmpty)
-          _SectionMessage(context.l10n.noRidersMatchThat)
-        else
-          for (final rider in riders) ...[
-            RiderResultTile(rider: rider),
-            const SizedBox(height: 8),
-          ],
-        const SizedBox(height: 16),
+        if (social) ...[
+          EditorialLabel(context.l10n.ridersLabel),
+          const SizedBox(height: 10),
+          if (ridersAsync.isLoading)
+            const _SectionSpinner()
+          else if (ridersAsync.hasError)
+            _SectionMessage(
+                context.l10n.couldntSearchRiders(ridersAsync.error ?? ''))
+          else if (riders.isEmpty)
+            _SectionMessage(context.l10n.noRidersMatchThat)
+          else
+            for (final rider in riders) ...[
+              RiderResultTile(rider: rider),
+              const SizedBox(height: 8),
+            ],
+          const SizedBox(height: 16),
+        ],
         EditorialLabel(context.l10n.forums),
         const SizedBox(height: 10),
         if (forumsAsync.isLoading)
           const _SectionSpinner()
         else if (forumsAsync.hasError)
-          _SectionMessage(context.l10n.couldntSearchForums(forumsAsync.error ?? ''))
+          _SectionMessage(
+              context.l10n.couldntSearchForums(forumsAsync.error ?? ''))
         else if (forums.isEmpty)
           _SectionMessage(context.l10n.noForumsMatchThat)
         else
@@ -160,7 +169,8 @@ class _SearchResults extends ConsumerWidget {
         // for a brand nobody has a forum for yet. Hidden once a forum by
         // that exact name already shows above.
         if (!forumsAsync.isLoading &&
-            !forums.any((f) => f.displayName.toLowerCase() == query.trim().toLowerCase())) ...[
+            !forums.any((f) =>
+                f.displayName.toLowerCase() == query.trim().toLowerCase())) ...[
           const SizedBox(height: 4),
           _OpenBrandForumTile(brand: query.trim()),
         ],
@@ -184,7 +194,8 @@ class _OpenBrandForumTileState extends State<_OpenBrandForumTile> {
     if (_resolving) return;
     setState(() => _resolving = true);
     try {
-      final forum = await ForumRepository().getOrCreateForum(brand: widget.brand);
+      final forum =
+          await ForumRepository().getOrCreateForum(brand: widget.brand);
       if (!mounted) return;
       context.push('/forums/${forum.id}');
     } catch (e) {
@@ -211,7 +222,8 @@ class _OpenBrandForumTileState extends State<_OpenBrandForumTile> {
           ? SizedBox(
               width: 18,
               height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2, color: context.palette.primary),
+              child: CircularProgressIndicator(
+                  strokeWidth: 2, color: context.palette.primary),
             )
           : null,
       onTap: _resolving ? null : _open,
@@ -225,8 +237,8 @@ class _SectionSpinner extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 12),
-        child:
-            Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        child: Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
       );
 }
 
@@ -282,13 +294,15 @@ class _ForumResultTile extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                           color: context.palette.textPrimary)),
                   Text(
-                      context.l10n.followersPosts(forum.followerCount, forum.postCount),
+                      context.l10n
+                          .followersPosts(forum.followerCount, forum.postCount),
                       style: TextStyle(
                           fontSize: 12, color: context.palette.textSecondary)),
                 ],
               ),
             ),
-            Icon(Icons.chevron_right, color: context.palette.textTertiary, size: 20),
+            Icon(Icons.chevron_right,
+                color: context.palette.textTertiary, size: 20),
           ],
         ),
       ),

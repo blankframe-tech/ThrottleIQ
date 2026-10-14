@@ -13,6 +13,9 @@ import '../utils/bike_image_resolver.dart';
 import 'maintenance_settings_sync.dart';
 import '../database/daos/maintenance_dao.dart';
 import '../database/daos/fuel_log_dao.dart';
+import '../database/daos/impact_event_dao.dart';
+import '../services/crash_detection_settings.dart';
+import 'impact_event_payload.dart';
 import '../../features/maintenance/data/models/fuel_log_model.dart';
 import 'last_writer_wins.dart';
 import 'pull_watermark.dart';
@@ -211,6 +214,51 @@ class CloudRepository {
         ..remove('track_synced')
         ..remove('map_snapshot_path');
 
+  /// Shadow-mode impacts (`impact_events`): the rider's private copy under
+  /// `users/{uid}/impactEvents`, plus — once they've answered and opted in —
+  /// the de-identified central `crashEvents` record (see
+  /// crashEventCloudPayload). An answered row without consent removes any
+  /// central copy, so withdrawing consent takes effect on the next sync.
+  ///
+  /// One row at a time, like [uploadRides]' fallback: a row Firestore
+  /// rejects stays unsynced and is named in the log, and its siblings still
+  /// go through.
+  Future<void> uploadImpactEvents(
+      String uid, List<Map<String, Object?>> rows) async {
+    if (rows.isEmpty) return;
+    final mine =
+        _firestore.collection('users').doc(uid).collection('impactEvents');
+    final central = _firestore.collection('crashEvents');
+    final dao = ImpactEventDao();
+    for (final row in rows) {
+      final id = row['id'] as String;
+      try {
+        await mine.doc(id).set({
+          ...impactEventCloudPayload(row),
+          'syncedAt': FieldValue.serverTimestamp(),
+        });
+        final shared = crashEventCloudPayload(
+          row,
+          ownerUid: uid,
+          platform: Platform.operatingSystem,
+          consentVersion: CrashResearchConsent.version,
+        );
+        if (shared != null) {
+          await central.doc(id).set({
+            ...shared,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        } else if (row['label'] != null) {
+          await central.doc(id).delete();
+        }
+        await dao.markSynced(id, labeledAt: row['labeled_at'] as String?);
+      } catch (e) {
+        debugPrint(
+            '[CloudRepository] impact event upload rejected for $id: $e');
+      }
+    }
+  }
+
   /// A local ride row as it should be written to Firestore.
   ///
   /// `track_synced` is this device's own bookkeeping (has *my* copy of the
@@ -239,8 +287,16 @@ class CloudRepository {
     for (final key in rideV26PayloadKeys) {
       if (out[key] == null) out.remove(key);
     }
+    for (final key in rideV28PayloadKeys) {
+      if (out[key] == null) out.remove(key);
+    }
     return out;
   }
+
+  /// The schema v28 ride columns (phone placement, achieved IMU rate),
+  /// dropped from the payload when NULL like [rideV26PayloadKeys].
+  @visibleForTesting
+  static const rideV28PayloadKeys = ['phone_placement', 'imu_rate_hz'];
 
   /// The schema v26 ride columns, dropped from the payload when NULL.
   @visibleForTesting
