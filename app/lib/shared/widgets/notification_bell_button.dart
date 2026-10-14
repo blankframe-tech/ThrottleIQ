@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/services/app_modules.dart';
 import '../../core/theme/app_theme_context.dart';
 import '../../core/i18n/l10n_context.dart';
 
@@ -8,12 +10,16 @@ import '../../core/i18n/l10n_context.dart';
 ///
 /// Moved here from `RecordScreen` 2026-08-17 when Notifications (and
 /// Settings) moved to the Profile tab's header — see `GarageScreen`.
-class NotificationBellButton extends StatelessWidget {
+///
+/// Hidden when the rider has the social side turned off: every notification
+/// is a follow, like, comment or group-ride invite.
+class NotificationBellButton extends ConsumerWidget {
   final int unreadCount;
   const NotificationBellButton({super.key, required this.unreadCount});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(appModulesProvider).social) return const SizedBox.shrink();
     return Stack(
       clipBehavior: Clip.none,
       children: [

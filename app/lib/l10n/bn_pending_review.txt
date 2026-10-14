@@ -1652,6 +1652,33 @@ analyticsColDistance
 insightPeakMonth
 insightFuelAverage
 insightFuelNeedFullFills
+# batch: app modules (Settings → Your ThrottleIQ)
+yourThrottleIqSection
+yourThrottleIqDescription
+communityFieldLabel
+communityFullLabel
+communityFullDescription
+communityForumsLabel
+communityForumsDescription
+communityOffLabel
+communityOffDescription
+placesModuleTitle
+placesModuleSubtitle
+rideTrackingModuleTitle
+rideTrackingModuleSubtitle
+moduleKeepOnAction
+moduleTurnOffAction
+communityForumsOnlyWarningTitle
+communityForumsOnlyWarningBody
+communityOffWarningTitle
+communityOffWarningBody
+placesOffWarningTitle
+placesOffWarningBody
+rideTrackingOffWarningTitle
+rideTrackingOffWarningBody
+rideTrackingOffDuringRide
+modulesUpdatedSnack
+manualOdometerHint
 
 # batch: crash shadow mode
 phonePlacementLabel

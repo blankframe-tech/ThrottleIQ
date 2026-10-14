@@ -6,6 +6,7 @@ Contains external service integrations (e.g., APIs, platform channels, device se
 
 The following files are present in this directory:
 
+- `app_modules.dart`: Settings → Your ThrottleIQ. Which app parts are on (community, places, ride tracking), the bottom-nav tabs they give, and the route redirect for parts that are off.
 - `auto_tracking_service.dart`: Foreground-service isolate for auto ride detection.
 - `battery_service.dart`: Dart source code.
 - `bug_report_service.dart`: Collects a minimal diagnostic bundle and shares it via the native share sheet.

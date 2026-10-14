@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -30,20 +32,21 @@ Future<EndRideChoice?> showEndRideSheet(BuildContext context) {
     showDragHandle: false,
     isScrollControlled: true,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
     ),
     builder: (_) => const EndRideSheet(),
   );
 }
 
-class EndRideSheet extends StatefulWidget {
+class EndRideSheet extends ConsumerStatefulWidget {
   const EndRideSheet({super.key});
 
   @override
-  State<EndRideSheet> createState() => _EndRideSheetState();
+  ConsumerState<EndRideSheet> createState() => _EndRideSheetState();
 }
 
-class _EndRideSheetState extends State<EndRideSheet> {
+class _EndRideSheetState extends ConsumerState<EndRideSheet> {
   bool _share = false;
 
   @override
@@ -56,50 +59,57 @@ class _EndRideSheetState extends State<EndRideSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(context.l10n.endRideQuestion, style: display(context, 22, letterSpacing: 0)),
+            Text(context.l10n.endRideQuestion,
+                style: display(context, 22, letterSpacing: 0)),
             const SizedBox(height: 4),
             Text(context.l10n.rideWillBeSaved,
-                style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+                style: TextStyle(
+                    fontSize: 15, color: context.palette.textSecondary)),
             const SizedBox(height: 16),
-            // Whole row is the target, not just the switch.
-            Material(
-              color: context.palette.surfaceVariant,
-              borderRadius: BorderRadius.circular(context.shape.radiusMd),
-              child: InkWell(
-                key: const Key('endRideShareToggle'),
+            // Sharing posts to the social feed, so it goes with social.
+            if (ref.watch(appModulesProvider).social) ...[
+              // Whole row is the target, not just the switch.
+              Material(
+                color: context.palette.surfaceVariant,
                 borderRadius: BorderRadius.circular(context.shape.radiusMd),
-                onTap: () => setState(() => _share = !_share),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: 56),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        Icon(Icons.ios_share, color: context.palette.textPrimary),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(context.l10n.shareRideAfterSaving,
-                              style: TextStyle(
-                                  fontSize: 16, color: context.palette.textPrimary)),
-                        ),
-                        // Excluded so the row's InkWell is the only target —
-                        // the switch just mirrors state.
-                        ExcludeSemantics(
-                          child: IgnorePointer(
-                            child: Switch(
-                              value: _share,
-                              activeTrackColor: context.palette.primary,
-                              onChanged: (_) {},
+                child: InkWell(
+                  key: const Key('endRideShareToggle'),
+                  borderRadius: BorderRadius.circular(context.shape.radiusMd),
+                  onTap: () => setState(() => _share = !_share),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 56),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(
+                        children: [
+                          Icon(Icons.ios_share,
+                              color: context.palette.textPrimary),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(context.l10n.shareRideAfterSaving,
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    color: context.palette.textPrimary)),
+                          ),
+                          // Excluded so the row's InkWell is the only target —
+                          // the switch just mirrors state.
+                          ExcludeSemantics(
+                            child: IgnorePointer(
+                              child: Switch(
+                                value: _share,
+                                activeTrackColor: context.palette.primary,
+                                onChanged: (_) {},
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
+              const SizedBox(height: 12),
+            ],
             HoldToEndButton(
               onConfirmed: () =>
                   Navigator.of(context).pop(EndRideChoice(share: _share)),
@@ -109,7 +119,8 @@ class _EndRideSheetState extends State<EndRideSheet> {
               height: 56,
               child: OutlinedButton(
                 onPressed: () => Navigator.of(context).pop(),
-                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(56)),
                 child: Text(context.l10n.keepRiding),
               ),
             ),
@@ -259,7 +270,9 @@ class _HoldToEndButtonState extends State<HoldToEndButton>
                   Flexible(
                     child: ExcludeSemantics(
                       child: Text(
-                        t > 0 ? context.l10n.keepHolding : context.l10n.holdEndRide,
+                        t > 0
+                            ? context.l10n.keepHolding
+                            : context.l10n.holdEndRide,
                         style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,

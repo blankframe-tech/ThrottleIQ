@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/cloud/export_service.dart';
@@ -233,7 +234,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           onPressed: () => _dismiss(context),
         ),
         actions: [
-          if (rideVal != null)
+          if (rideVal != null && ref.watch(appModulesProvider).forums)
             IconButton(
               key: const Key('ride_share_to_forum'),
               tooltip: context.l10n.shareToForum,
@@ -503,16 +504,18 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         child: Text(l10n.saveAndDoneAction),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: !_polylineLoaded
-                            ? null
-                            : () => context.push('/ride/share/${ride.id}'),
-                        icon: const Icon(Icons.public, size: 18),
-                        label: Text(l10n.shareAction),
+                    if (ref.watch(appModulesProvider).social) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: !_polylineLoaded
+                              ? null
+                              : () => context.push('/ride/share/${ride.id}'),
+                          icon: const Icon(Icons.public, size: 18),
+                          label: Text(l10n.shareAction),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -680,7 +683,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           // the rider's own ride, so they get the full "My Routes" flow that
           // already exists at /routes/save/:rideId instead of a one-tap
           // stand-in for it.
-          onSaveRoute: (ctx) => ctx.push('/routes/save/${ride.id}'),
+          onSaveRoute: ref.read(appModulesProvider).places
+              ? (ctx) => ctx.push('/routes/save/${ride.id}')
+              : null,
         ),
       ),
     );
@@ -891,15 +896,19 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       onPressed: () => _openFullScreenMap(ride),
                       child: const Icon(Icons.fullscreen, size: 20),
                     ),
-                    const SizedBox(height: 6),
-                    FloatingActionButton.small(
-                      heroTag: 'ride_summary_save_route',
-                      backgroundColor: context.palette.primary,
-                      foregroundColor: Colors.white,
-                      tooltip: l10n.saveAsRouteAction,
-                      onPressed: () => context.push('/routes/save/${ride.id}'),
-                      child: const Icon(Icons.bookmark_add_outlined, size: 18),
-                    ),
+                    if (ref.watch(appModulesProvider).places) ...[
+                      const SizedBox(height: 6),
+                      FloatingActionButton.small(
+                        heroTag: 'ride_summary_save_route',
+                        backgroundColor: context.palette.primary,
+                        foregroundColor: Colors.white,
+                        tooltip: l10n.saveAsRouteAction,
+                        onPressed: () =>
+                            context.push('/routes/save/${ride.id}'),
+                        child:
+                            const Icon(Icons.bookmark_add_outlined, size: 18),
+                      ),
+                    ],
                   ],
                 ),
               ),

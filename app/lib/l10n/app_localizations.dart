@@ -11064,6 +11064,162 @@ abstract class AppLocalizations {
   /// **'Log two full-tank fill-ups to measure this.'**
   String get insightFuelNeedFullFills;
 
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Your ThrottleIQ'**
+  String get yourThrottleIqSection;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.'**
+  String get yourThrottleIqDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get communityFieldLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get communityFullLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Rides, riders & forums'**
+  String get communityFullDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Forums only'**
+  String get communityForumsLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'No feed or people'**
+  String get communityForumsDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get communityOffLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'No community'**
+  String get communityOffDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Places & routes'**
+  String get placesModuleTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel, mechanics, checkposts and saved routes'**
+  String get placesModuleSubtitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride tracking'**
+  String get rideTrackingModuleTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Recording, ride analytics, automatic odometer and crash detection. Uses your location.'**
+  String get rideTrackingModuleSubtitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it on'**
+  String get moduleKeepOnAction;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get moduleTurnOffAction;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Hide rides and riders?'**
+  String get communityForumsOnlyWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t see rides others share, and you can\'t follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.'**
+  String get communityForumsOnlyWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off the community?'**
+  String get communityOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.'**
+  String get communityOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off Places?'**
+  String get placesOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.'**
+  String get placesOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off ride tracking?'**
+  String get rideTrackingOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.'**
+  String get rideTrackingOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Finish your ride before turning ride tracking off.'**
+  String get rideTrackingOffDuringRide;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Done. Your tabs now show only what you use.'**
+  String get modulesUpdatedSnack;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.'**
+  String get manualOdometerHint;
+
   /// Ride-start label before the phone placement chips.
   ///
   /// In en, this message translates to:

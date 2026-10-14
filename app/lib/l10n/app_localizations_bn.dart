@@ -6427,6 +6427,94 @@ class AppLocalizationsBn extends AppLocalizations {
       'এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।';
 
   @override
+  String get yourThrottleIqSection => 'আপনার ThrottleIQ';
+
+  @override
+  String get yourThrottleIqDescription =>
+      'শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।';
+
+  @override
+  String get communityFieldLabel => 'কমিউনিটি';
+
+  @override
+  String get communityFullLabel => 'সবকিছু';
+
+  @override
+  String get communityFullDescription => 'রাইড, রাইডার ও ফোরাম';
+
+  @override
+  String get communityForumsLabel => 'শুধু ফোরাম';
+
+  @override
+  String get communityForumsDescription => 'ফিড বা মানুষ নেই';
+
+  @override
+  String get communityOffLabel => 'বন্ধ';
+
+  @override
+  String get communityOffDescription => 'কমিউনিটি নেই';
+
+  @override
+  String get placesModuleTitle => 'প্লেস ও রুট';
+
+  @override
+  String get placesModuleSubtitle =>
+      'পেট্রোল পাম্প, মেকানিক, চেকপোস্ট ও সেভ করা রুট';
+
+  @override
+  String get rideTrackingModuleTitle => 'রাইড ট্র্যাকিং';
+
+  @override
+  String get rideTrackingModuleSubtitle =>
+      'রেকর্ডিং, রাইড অ্যানালিটিক্স, স্বয়ংক্রিয় ওডোমিটার ও ক্র্যাশ শনাক্তকরণ। আপনার লোকেশন ব্যবহার করে।';
+
+  @override
+  String get moduleKeepOnAction => 'চালু রাখুন';
+
+  @override
+  String get moduleTurnOffAction => 'বন্ধ করুন';
+
+  @override
+  String get communityForumsOnlyWarningTitle => 'রাইড ও রাইডার লুকাবেন?';
+
+  @override
+  String get communityForumsOnlyWarningBody =>
+      'অন্যদের শেয়ার করা রাইড দেখবেন না, আর কাউকে ফলো, মেসেজ বা গ্রুপ রাইড করতে পারবেন না। একই রাস্তার রাইডাররাই প্রায়ই প্রথম বন্ধ রাস্তার খবর দেন।';
+
+  @override
+  String get communityOffWarningTitle => 'কমিউনিটি বন্ধ করবেন?';
+
+  @override
+  String get communityOffWarningBody =>
+      'ফোরামও হারাবেন, যেখানে আপনার একই বাইকের মালিকরা প্রশ্নের উত্তর দেন ও সমাধান শেয়ার করেন। আগে পোস্ট করা সবকিছু থেকে যাবে।';
+
+  @override
+  String get placesOffWarningTitle => 'প্লেস বন্ধ করবেন?';
+
+  @override
+  String get placesOffWarningBody =>
+      'পেট্রোল পাম্প, মেকানিক, পুলিশ চেকপোস্ট, স্পিড ক্যামেরা বা আপনার সেভ করা রুট দেখবেন না, যা আশেপাশের রাইডাররা যাচাই করেছেন।';
+
+  @override
+  String get rideTrackingOffWarningTitle => 'রাইড ট্র্যাকিং বন্ধ করবেন?';
+
+  @override
+  String get rideTrackingOffWarningBody =>
+      'ThrottleIQ আপনার লোকেশন ব্যবহার বন্ধ করবে। রাইড রেকর্ডিং, অ্যানালিটিক্স, ট্রিপ শনাক্তকরণ ও ক্র্যাশ শনাক্তকরণ বন্ধ হবে, আর সার্ভিস রিমাইন্ডার শুধু আপনার দেওয়া ওডোমিটার রিডিং ব্যবহার করবে। আগের রাইডগুলো থেকে যাবে।';
+
+  @override
+  String get rideTrackingOffDuringRide =>
+      'রাইড ট্র্যাকিং বন্ধ করার আগে রাইড শেষ করুন।';
+
+  @override
+  String get modulesUpdatedSnack =>
+      'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
+
+  @override
+  String get manualOdometerHint =>
+      'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
+
+  @override
   String get phonePlacementLabel => 'ফোন';
 
   @override

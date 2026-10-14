@@ -2,17 +2,25 @@
 
 _Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (latest): shadow-mode crash detection — branch `feat/crash-shadow-mode`, pushed, not merged
+## 2026-10-15 (latest): shadow-mode crash detection — merged to `main`; rules and indexes deployed
 
 - Built phases 1–3 of the crash-detection plan that followed the founder's 14 Oct crash: a tiered `ImpactDetector`,
   50 Hz sensors, `impact_events` (schema v28) with sensor windows, phone-placement chips, the after-ride
   "Did you fall?" card and "Report a crash", private `impactEvents` sync, and opt-in `crashEvents`. Live alarm
   still **off**. Details in features.md ("Shadow-mode crash detection"); open items in issues_open.md §78.1.
-- **Needed before release:** deploy `firestore.rules` and `firestore.indexes.json` (Spark is fine), update the
-  privacy policy and store data-safety forms for the opt-in, and measure the battery cost of 50 Hz on a device.
-- Branched from `origin/main` (cc6bb1a) in its own worktree, because a parallel session's `oct14` batch was
-  mid-flight in the main checkout. Expect merge conflicts in `ride_recording_provider.dart`, `firestore.rules`
-  and the ARB files when the two meet.
+- **Needed before release:** update the privacy policy and store data-safety forms for the opt-in, and measure
+  the battery cost of 50 Hz on a device. `firestore.rules` and `firestore.indexes.json` are deployed.
+- Built in its own worktree (`feat/crash-shadow-mode`), then merged with the modular-ThrottleIQ commits below.
+  The parallel `oct14` fix branches (`fix/oct14-tiq-*`) were not merged yet; expect conflicts in
+  `ride_recording_provider.dart`, `firestore.rules` and the ARB files when they land.
+- Crash report: `DOCS/CRASH TESTING/` (full analysis, exports, phone DB, iOS log extract) and a public write-up
+  at blankframe.tech/throttleiq/crash/1 (landing-page repo, `throttle-iq/crash/1/`).
+
+## 2026-10-15: modular ThrottleIQ — on `main` (`c90b2cd`), pushed; branch deleted
+
+- Merged to `main` by fast-forward; `modular-throttleiq` deleted locally and on origin. Gate green (2149 tests). With nothing turned off the app behaves as before.
+- Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
+- Not done: the feature tour still offers Social/Places/Record steps when those are off (Show me just lands on the home tab); forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
 
 ## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 

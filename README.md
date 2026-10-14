@@ -28,6 +28,7 @@
 - **Social**: ride feed with privacy zones, forums, direct messages, group rides with live positions, challenges, QR follow.
 - **Safety (shipped parts)**: revocable 24 h live-share link, emergency contacts and a SafeQR medical card.
 - **Data**: JSON, CSV and GPX export; Firestore sync on resume and every 5 min; in-app account deletion.
+- **Your ThrottleIQ**: riders can turn off the community (or keep forums only), Places, or ride tracking itself, down to a maintenance-only app that never uses location.
 - **Bilingual**: full English and Bangla.
 
 ## 📹 Indriyo — the hardware side
@@ -66,7 +67,7 @@ It runs once per commit, and git runs it before every push. CI calls the same sc
 
 ## 🔒 Privacy
 
-Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad or behavioural-analytics SDK; Crashlytics collects crash diagnostics only. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
+Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad or behavioural-analytics SDK; Crashlytics collects crash diagnostics only. Riders can turn off social features, Places, or ride tracking (no location use at all) in Settings → Your ThrottleIQ. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
 
 ## 📚 Documentation
 

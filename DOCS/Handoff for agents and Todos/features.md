@@ -19,6 +19,17 @@ hook in `.claude/settings.json`).
 
 ---
 
+## Your ThrottleIQ — app modules (Settings → Your ThrottleIQ)
+
+Settings → "Your ThrottleIQ" lets privacy-minded or minimalist riders turn parts of the app off. Model and rules: `app/lib/core/services/app_modules.dart` (`AppModules`, `appModulesProvider`, SharedPreferences `module_*`, device-local). Nothing is deleted; turning a module back on restores it.
+
+- **Community:** Everything / Forums only / Off. Forums only: the first tab is labelled **Forums** and shows just the Forums page; ride feed, people, chat, follows, follow QR and links, notifications bell, group rides, ride sharing and other riders' profiles are hidden and their routes redirect. Off: the tab and every "share to forum" / "Ask owners" entry go too.
+- **Places & routes:** hides the Places tab, My places, routes, "save as route".
+- **Ride tracking:** off = maintenance-only app. Record and Rides tabs are replaced by a **Maintenance** tab; auto-tracking is switched off (refused mid-ride); maintenance shows a manual "Sync odometer" card first; bike detail hides ride history; route navigation is hidden.
+- Turning anything off asks first with a "Keep it on" default (mild discouragement). Nav updates live, no restart.
+- One gate for routes: `AppModules.redirectFor` inside `routerProvider`'s redirect (also re-run on module change), so deep links, widgets and notifications land on the home tab. Bottom nav: `AppModules.tabs` + `shellTabIndexForLocation(location, modules)`.
+- Tests: `test/core/services/app_modules_test.dart`, `end_ride_sheet_test.dart`.
+
 ## UI hierarchy
 
 ```
