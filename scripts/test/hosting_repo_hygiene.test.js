@@ -49,6 +49,20 @@ test('install page has no links to files public/ does not have', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'public', 'icon-dark.svg')));
 });
 
+test('install page claims only what is true (CrtiQue_Oct15 N4)', () => {
+  const html = read('public/install/index.html');
+  // The old iOS "waitlist" kept emails in the visitor's own browser and said
+  // "You're on the list"; nothing reached the owner.
+  assert.doesNotMatch(html, /localStorage|sessionStorage/);
+  assert.doesNotMatch(html, /on the list/i);
+  // "Download tracking" that was only console.log.
+  assert.doesNotMatch(html, /console\.log|trackDownload/);
+  // The personal Apple team cannot use TestFlight; crash alerts are off.
+  assert.doesNotMatch(html, /TestFlight/i);
+  assert.doesNotMatch(html, /crash alert/i);
+  assert.match(html, /mailto:hello@blankframe\.tech\?subject=ThrottleIQ%20for%20iPhone/);
+});
+
 function stagingBlock() {
   const sh = read('scripts/deploy.sh');
   assert.doesNotMatch(sh, /git add -A\b/, 'deploy.sh must not stage untracked files');

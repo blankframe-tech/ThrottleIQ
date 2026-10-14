@@ -346,19 +346,6 @@
     margin-bottom: 8px;
   }
 
-  /* Success toast */
-  .toast {
-    display: none;
-    background: rgba(34, 197, 94, 0.15);
-    border: 1px solid var(--green);
-    color: #86EFAC;
-    padding: 12px 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    margin-top: 12px;
-    text-align: center;
-  }
-
   /* Footer */
   footer {
     margin-top: auto;
@@ -430,7 +417,7 @@
         </div>
       </div>
 
-      <a id="btn-apk" href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest/download/app-release.apk" class="btn btn-primary" onclick="trackDownload('apk')">
+      <a id="btn-apk" href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest/download/app-release.apk" class="btn btn-primary">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
         Download Latest APK (Beta)
       </a>
@@ -507,30 +494,23 @@
       </div>
 
       <div class="card-desc">
-        ThrottleIQ for iOS is currently in development and closed TestFlight testing. Enter your email below to get early access the day it drops on the App Store:
+        ThrottleIQ for iPhone is still in development. There is no public iPhone build yet, on the App Store or anywhere else. To hear when there is, email us and we will reply when it is out:
       </div>
 
       <div class="notice-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4m0-4h.01"/></svg>
         <div>
-          iOS riders get the exact same offline-first ride recorder, crash alert signatures, and machine memory garage logs.
+          The iPhone app will have the same offline-first ride recorder and garage logs as Android.
         </div>
       </div>
 
-      <div class="input-group">
-        <input type="email" id="ios-email" class="input-field" placeholder="Enter your email address">
-        <button class="btn btn-primary" onclick="submitIOSEarlyAccess()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
-          Notify Me for Early Access
-        </button>
-      </div>
-
-      <div id="ios-toast" class="toast">
-        ✔ You're on the list! We'll email you the TestFlight / App Store invite.
-      </div>
+      <a class="btn btn-primary" href="mailto:hello@blankframe.tech?subject=ThrottleIQ%20for%20iPhone&amp;body=Please%20tell%20me%20when%20ThrottleIQ%20is%20out%20for%20iPhone.">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+        Email hello@blankframe.tech
+      </a>
 
       <div class="sublink" style="margin-top:14px;">
-        <a href="https://wa.me/8801327045005?text=Hi%20Abrar!%20I'm%20an%20iPhone%20rider%20and%20I'd%20love%20to%20test%20the%20ThrottleIQ%20iOS%20TestFlight%20build." target="_blank" rel="noopener">Have TestFlight? Request direct beta access on WhatsApp →</a>
+        <a href="https://wa.me/8801327045005?text=Hi%20Abrar!%20I'm%20an%20iPhone%20rider.%20Please%20tell%20me%20when%20ThrottleIQ%20is%20out%20for%20iPhone." target="_blank" rel="noopener">Or message us on WhatsApp →</a>
       </div>
     </div>
   </div>
@@ -646,29 +626,6 @@
     window.location.href = 'mailto:hello@blankframe.tech?subject=' + subject + '&body=' + body;
   }
 
-  function submitIOSEarlyAccess() {
-    const emailInput = document.getElementById('ios-email');
-    const email = emailInput.value.trim();
-    if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address.');
-      emailInput.focus();
-      return;
-    }
-    // Save locally
-    try {
-      const saved = JSON.parse(localStorage.getItem('tiq_ios_early_access') || '[]');
-      saved.push({ email, date: new Date().toISOString(), campaign });
-      localStorage.setItem('tiq_ios_early_access', JSON.stringify(saved));
-    } catch(e){}
-
-    const toast = document.getElementById('ios-toast');
-    toast.style.display = 'block';
-    emailInput.value = '';
-  }
-
-  function trackDownload(type) {
-    console.log('Download initiated: ' + type + ' (campaign: ' + campaign + ')');
-  }
 </script>
 
 </body>
