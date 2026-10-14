@@ -1370,10 +1370,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     );
     state = state.copyWith(crashDetected: false, crashCountdown: 60);
 
+    // Status only: the ride is still recording (B12).
     if (state.ride != null) {
-      await _rideDao.finalizeRide(state.ride!.id, {
-        'status': 'active',
-      });
+      await _rideDao.setStatus(state.ride!.id, RideStatus.active.name);
     }
 
     await _liveCoordinator.updateLiveSessionStatus(LiveSessionStatus.riding);
