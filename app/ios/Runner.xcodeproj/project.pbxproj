@@ -24,6 +24,7 @@
 		CA1BE8A0D62C7C6D0F5AFE29 /* ThrottleIQWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 761E78289325448891DE559B /* ThrottleIQWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F6A2BBA2CCF4B935B708FF3C /* ThrottleIQWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB7C7C5F290DF2993F09C636 /* ThrottleIQWidget.swift */; };
 		F798E8E9E6ED481864CA861D /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 15FA8DA9894D7C07A4EAEA70 /* GoogleService-Info.plist */; };
+		FD9CB1560ADB1D90B2D38A9D /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 7568C2F935816BC70470BEA9 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,6 +75,7 @@
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		15FA8DA9894D7C07A4EAEA70 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		7568C2F935816BC70470BEA9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		179BC80ABC056696E02B0E54 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
 		1D9220F28A08C78239A0A240 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		304528A4AD23AC8407C816DE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				15FA8DA9894D7C07A4EAEA70 /* GoogleService-Info.plist */,
+				7568C2F935816BC70470BEA9 /* PrivacyInfo.xcprivacy */,
 				66B074E0FE2B35040800D820 /* Runner.entitlements */,
 			);
 			path = Runner;
@@ -376,6 +379,7 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				F798E8E9E6ED481864CA861D /* GoogleService-Info.plist in Resources */,
+				FD9CB1560ADB1D90B2D38A9D /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
