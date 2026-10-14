@@ -206,10 +206,17 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 
 ### Server side (`functions/`)
 Cloud Functions only backstop what the client can't be trusted with or can't do after the fact. See `functions/README.md`:
-- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data.
+- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data (profile and subcollections, shared rides, chats, email lookup, Cloudinary media; forum bylines anonymized).
+- `purgeOldGpsTracks`: daily deletion of `track` chunks older than 12 months; ride summaries stay.
 - `reconcileRideIdentity`: overwrites a shared ride's display name/photo from the profile doc (anti-impersonation).
 - `onMessageCreate`: keyword chat moderation (placeholder).
 - `onCrashNotification` / `escalateCrashAlert`: crash-alert fan-out and escalation. **Delivery is still a mock**; nothing is actually sent.
+- **Nothing here is deployed** (Spark plan). Deploy order and secrets: `SECURITY.md`.
+
+### Profiles and email
+- `users/{uid}` is readable by signed-in riders, so it holds no email. The address lives in owner-only `users/{uid}/private/account`; find-by-email is a keyed `get` on `emailLookup/{sha256(lowercased email)}` → `{uid}` (no `list`). A `users` list query is capped at 20 docs.
+- `config/app` (world-readable, console-written) carries `minBuild` for the forced-update gate.
+- Realtime Database is retired: `database.rules.json` denies everything.
 
 ---
 
@@ -272,4 +279,4 @@ Read these before adding a screen; each replaced something that used to be a glo
 - **Design tokens ride on the theme, not on statics.** `AppColorPalette` and `AppShapeProfile` are `ThemeExtension`s registered by `AppTheme.build`; widgets read `context.palette` / `context.shape` (`core/theme/app_theme_context.dart`) **in `build`** (never `initState`, never cached in a field). `AppColors` and the `apply()` facades no longer exist, and `MaterialApp` is not keyed on the appearance — changing theme re-themes screens in place and keeps their state. In a dialog/sheet `builder:` use the builder's own context.
 - **Localization.** `context.l10n.key` (`core/i18n/l10n_context.dart`); ARBs in `app/lib/l10n/` (EN template + BN, Western digits, checked-in generated code, parity test). Code with no `BuildContext` uses `resolveL10n(locale)` / `savedL10n()` (`core/i18n/l10n_lookup.dart`) — a snapshot, not reactive. **Never localize data** (anything stored, sent to another rider, or compared against); domain enums keep English + persisted ids and are localized by id/kind in `presentation/` (`badge_l10n.dart`, `service_type_l10n.dart`, `turn_instruction_l10n.dart`, …). New Bangla keys go in `bn_pending_review.txt`.
 - **Analytics** (`core/analytics/analytics_service.dart`): screen views (route patterns) + a closed list of seven funnel events, one coarse parameter each, off in debug, rider opt-out in Settings. No code path can send an id, name, location or ride figure. `public/privacy.html` and the Data Safety notes must change with it.
-- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run.
+- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run. Runbook: `SECURITY.md`.
