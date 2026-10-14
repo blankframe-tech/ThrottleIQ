@@ -1,5 +1,14 @@
 # Realtime Database (live movement channel)
 
+> **2026-10-14:** the group-ride RTDB client (`GroupRideLiveChannel`, the group
+> map's realtime dots and its Live/Delayed badge) was removed from the app
+> (critique `CrtiQue_Oct14.md` B9/§14: any signed-in user who knows a ride id
+> could read its positions). Group rides now use Firestore `memberLocations`
+> only. The code is kept on branch `park/rtdb-group-ride`. The
+> `/group_rides` rules in `database.rules.json` and their emulator suites are
+> unchanged and now have no app client. Live share and chat typing still use
+> RTDB as described below.
+
 Firestore stays the source of truth for everything structural: the live
 session (`liveSessions/{token}`: status, battery, `shareable`, `expiresAt`),
 the group ride (`groupRides/{id}`, its roster and membership arrays) and chat
@@ -9,7 +18,7 @@ throwaway movement data, over one WebSocket per client:
 | Feature | RTDB path | Writer cadence | Firestore it replaces |
 |---|---|---|---|
 | Partner live viewer | `/live_shares/{token}` | 1 Hz while sharing and riding | position fields of `liveSessions/{token}` (still written every 10 s as the fallback) |
-| Group rides | `/group_rides/{rideId}/locations/{uid}` | every 2 s when moved ≥ 5 m, 30 s heartbeat | `groupRides/{id}/memberLocations/{uid}` (demoted to a 2 min heartbeat while RTDB is healthy) |
+| Group rides (**client removed 2026-10-14**, see below) | `/group_rides/{rideId}/locations/{uid}` | every 2 s when moved ≥ 5 m, 30 s heartbeat | `groupRides/{id}/memberLocations/{uid}` (demoted to a 2 min heartbeat while RTDB is healthy) |
 | Chat typing | `/chat_presence/{chatId}/{uid}` | on keystroke, throttled to 1 per 3 s; `false` after 4 s idle | nothing (new) |
 
 Rules: `database.rules.json` (repo root). Emulator: port 9000

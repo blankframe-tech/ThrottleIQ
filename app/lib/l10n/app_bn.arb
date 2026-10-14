@@ -1643,8 +1643,6 @@
   "forumAddPhotos": "ছবি যোগ করুন ({count}/{max})",
   "paddockPosts": "{count}টি পোস্ট",
   "forumPhotoUploadFailed": "ছবি আপলোড করা যায়নি: {e}",
-  "groupRideRealtimeLive": "লাইভ",
-  "groupRideRealtimeDelayed": "বিলম্বিত",
   "chatTyping": "টাইপ করছে…",
   "signOutFailed": "সাইন আউট করা যায়নি। আবার চেষ্টা করুন।",
   "deleteAccountFailed": "আপনার অ্যাকাউন্ট মুছে ফেলা যায়নি। আবার চেষ্টা করুন।",

@@ -33,7 +33,7 @@ the app was built with `RTDB_URL`.
       - The badge should read "Live · 1s".
       - With the phone in airplane mode, the badge should drop to "Updates every 10s".
       - "Stop sharing now" should kill the page.
-- [ ] **Group ride:** two phones on one ride.
+- [x] ~~**Group ride:** two phones on one ride.~~ Group-ride RTDB client removed 2026-10-14 (branch `park/rtdb-group-ride`); group rides are Firestore-only.
       - Dots should move every ~2 s and the title badge should read "Live".
       - Leave the ride: the dot should disappear for the other rider.
       - Kick a rider: they should lose the map.
@@ -53,7 +53,7 @@ the app was built with `RTDB_URL`.
 
 ## 4. Hardening (not blocking)
 
-- [ ] **Group-ride read access (§99.2, MEDIUM).** RTDB rules can't read Firestore `memberIds`, so
+- [ ] **Group-ride read access (§99.2, MEDIUM; client parked 2026-10-14, so latent).** RTDB rules can't read Firestore `memberIds`, so
       anyone holding the ride id or join code can read positions without joining. Fix: a Cloud
       Function that mirrors `groupRides/{id}.memberIds` into `/group_rides/{id}/access/{uid}`.
       Tighten `locations/.read` to require it. Needs a plan that can deploy functions.
@@ -67,15 +67,13 @@ the app was built with `RTDB_URL`.
       on the 10 s Firestore tick if very long shares matter.
 - [ ] **App Check.** `firebase_app_check` already covers RTDB. When App Check enforcement is
       switched on, enable it for Realtime Database too.
-- [ ] **Bangla review (§99.6).** Get a native speaker to review `groupRideRealtimeLive`,
-      `groupRideRealtimeDelayed` and `chatTyping` (in `bn_pending_review.txt`).
+- [ ] **Bangla review (§99.6).** Get a native speaker to review `chatTyping` (in
+      `bn_pending_review.txt`). The group-ride Live/Delayed strings were removed with the channel.
 
 ## 5. Tuning, once there's real data
 
-- [ ] Look at the delivery stats the group map logs on close (`[GroupRideMap] realtime delivery:`).
-      Only `missed` is a smoothness measure; any `outOfOrder` is a bug.
+- [x] ~~Group map delivery stats~~: removed with the group-ride channel (2026-10-14).
 - [ ] Revisit the cadences in light of real battery use and the RTDB download quota:
-      - group dots: 2 s / 5 m / 30 s heartbeat (`group_ride_live_channel.dart`);
       - live share: 1 Hz (`kLiveRelayInterval`);
       - Firestore thinning: `kFirestoreTickDivisorWhenRealtime = 2`.
 - [ ] Consider dropping the Firestore live-share tick further (e.g. 30 s) once the viewer's RTDB path

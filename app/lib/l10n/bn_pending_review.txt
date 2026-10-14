@@ -1366,8 +1366,6 @@ forumAddPhotos
 paddockPosts
 
 # batch: realtime
-groupRideRealtimeLive
-groupRideRealtimeDelayed
 chatTyping
 
 # batch: audit101-g5

@@ -6,7 +6,6 @@ import '../../domain/utilities/group_ride_join_code.dart';
 import '../../domain/utilities/group_ride_liveness.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
-import 'group_ride_live_channel.dart';
 
 /// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
 /// rider verbatim — "wrong/expired code" and "ride is full" are both real,
@@ -66,23 +65,13 @@ class GroupRideInvitee {
 }
 
 class GroupRideRepository {
-  static final GroupRideRepository _instance =
-      GroupRideRepository._internal();
+  static final GroupRideRepository _instance = GroupRideRepository._internal();
 
   factory GroupRideRepository() => _instance;
 
   GroupRideRepository._internal();
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  /// The RTDB movement channel, attached by `groupRideRepositoryProvider`.
-  /// Null (and every call below a no-op) until then — the repository is a
-  /// singleton constructed long before providers exist. Every lifecycle
-  /// write here (create, leave, kick, end, delete) keeps the RTDB node in
-  /// step, best-effort, after the Firestore write that matters.
-  GroupRideLiveChannel? _live;
-
-  void attachLiveChannel(GroupRideLiveChannel channel) => _live = channel;
 
   DocumentReference<Map<String, dynamic>> _rideRef(String groupRideId) =>
       _firestore.collection('groupRides').doc(groupRideId);
@@ -173,13 +162,7 @@ class GroupRideRepository {
       'groupRideId': groupRideRef.id,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    // The RTDB `meta` claim goes out alongside, not after: its rules are
-    // create-once with no way to check Firestore, so it has to land while
-    // nobody but the creator knows this ride id.
-    await Future.wait([
-      batch.commit(),
-      if (_live != null) _live!.claimRide(groupRideRef.id, creatorId),
-    ]);
+    await batch.commit();
 
     return groupRideRef.id;
   }
@@ -276,10 +259,8 @@ class GroupRideRepository {
   /// both cheap `get`s on a specific document id, never a `list` query.
   Future<GroupRideEntity?> findRideByJoinCode(String code) async {
     final normalized = normalizeGroupRideJoinCode(code);
-    final lookup = await _firestore
-        .collection('groupRideJoinCodes')
-        .doc(normalized)
-        .get();
+    final lookup =
+        await _firestore.collection('groupRideJoinCodes').doc(normalized).get();
     final groupRideId = lookup.data()?['groupRideId'] as String?;
     if (groupRideId == null) return null;
     return getGroupRidePreview(groupRideId);
@@ -311,7 +292,8 @@ class GroupRideRepository {
           GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
     }
     if (ride.memberIds.contains(userId)) {
-      return GroupRideJoinResult(groupRideId: ride.id, creatorId: ride.creatorId);
+      return GroupRideJoinResult(
+          groupRideId: ride.id, creatorId: ride.creatorId);
     }
     if (ride.memberIds.length >= ride.maxParticipants) {
       throw const GroupRideJoinException(
@@ -326,7 +308,7 @@ class GroupRideRepository {
       final data = rideSnap.data();
       if (!rideSnap.exists || data == null || data['status'] != 'active') {
         throw const GroupRideJoinException(
-          GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
+            GroupRideJoinFailure.alreadyEnded, 'This ride has already ended.');
       }
       final memberIds = (data['memberIds'] as List<dynamic>?) ?? const [];
       if (memberIds.contains(userId)) return;
@@ -340,7 +322,7 @@ class GroupRideRepository {
       final cap = (data['maxParticipants'] as num?)?.toInt() ?? 20;
       if (memberIds.length >= cap) {
         throw const GroupRideJoinException(
-          GroupRideJoinFailure.full, 'This ride is full.');
+            GroupRideJoinFailure.full, 'This ride is full.');
       }
 
       txn.update(rideRef, {
@@ -438,8 +420,7 @@ class GroupRideRepository {
     }
 
     batch.update(rideRef, {
-      'invitedIds':
-          FieldValue.arrayUnion([for (final i in invitees) i.userId]),
+      'invitedIds': FieldValue.arrayUnion([for (final i in invitees) i.userId]),
     });
 
     await batch.commit();
@@ -733,7 +714,6 @@ class GroupRideRepository {
         .collection('groupRides')
         .doc(groupRideId)
         .update(_endedFields());
-    await _live?.removeRide(groupRideId);
   }
 
   /// What ending a ride writes. `endedAt` is informational (nothing reads it
@@ -758,7 +738,6 @@ class GroupRideRepository {
     required String userId,
   }) async {
     final rideRef = _rideRef(groupRideId);
-    var endedRide = false;
 
     await _firestore.runTransaction((txn) async {
       final snap = await txn.get(rideRef);
@@ -767,7 +746,6 @@ class GroupRideRepository {
 
       if (data['creatorId'] == userId) {
         txn.update(rideRef, _endedFields());
-        endedRide = true;
         return;
       }
 
@@ -782,9 +760,6 @@ class GroupRideRepository {
     try {
       await rideRef.collection('memberLocations').doc(userId).delete();
     } catch (_) {/* nothing published yet, or already gone */}
-    await (endedRide
-        ? _live?.removeRide(groupRideId)
-        : _live?.removeLocation(groupRideId, userId));
   }
 
   /// The creator removing somebody else from a ride ("kick"). See
@@ -828,8 +803,6 @@ class GroupRideRepository {
     try {
       await rideRef.collection('memberLocations').doc(userId).delete();
     } catch (_) {/* nothing published yet, or already gone */}
-    // RTDB can't see `bannedIds`, so the kick is mirrored there too.
-    await _live?.ban(groupRideId, userId);
   }
 
   /// Deletes a group ride and everything hanging off it.
@@ -855,6 +828,5 @@ class GroupRideRepository {
 
     // Delete the group ride
     await docRef.delete();
-    await _live?.removeRide(groupRideId);
   }
 }

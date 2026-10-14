@@ -5772,12 +5772,6 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'লাইভ';
-
-  @override
-  String get groupRideRealtimeDelayed => 'বিলম্বিত';
-
-  @override
   String get chatTyping => 'টাইপ করছে…';
 
   @override

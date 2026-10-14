@@ -15,6 +15,7 @@ The following files are present in this directory:
 - `group_ride_liveness_test.dart`: Unit/Widget test file.
 - `group_ride_members_test.dart`: Unit/Widget test file.
 - `group_ride_model_test.dart`: Unit/Widget test file.
+- `group_ride_positions_test.dart`: Member marker position from Firestore or the roster.
 - `group_ride_selection_test.dart`: Unit/Widget test file.
 - `privacy_zone_clipper_test.dart`: Unit/Widget test file.
 - `ride_feed_pagination_test.dart`: Unit/Widget test file.

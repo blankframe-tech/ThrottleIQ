@@ -5806,12 +5806,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'Live';
-
-  @override
-  String get groupRideRealtimeDelayed => 'Delayed';
-
-  @override
   String get chatTyping => 'typing…';
 
   @override
