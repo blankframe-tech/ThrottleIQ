@@ -1408,16 +1408,21 @@ service cloud.firestore {
     // can `get` its account; nobody can `list`, so the addresses can't be
     // harvested the way the public profiles' `email` field could.
     //
-    // A write must hash the caller's OWN token email (§90.D6): nobody can
-    // point a victim's address at themselves. That proof is stronger than
-    // the stored uid, so update doesn't require it: a lookup left behind by a
-    // deleted account is taken over by whoever holds that email now.
+    // A write must hash the caller's OWN token email (§90.D6), and that
+    // email must be verified (CrtiQue_Oct15 N3): otherwise anyone could sign
+    // up with an address they don't own and be the rider it finds. Google
+    // accounts arrive verified; email/password riders verify through the link
+    // the app sends (AuthNotifier.completeEmailVerification). That proof is
+    // stronger than the stored uid, so update doesn't require it: a lookup
+    // left behind by a deleted account is taken over by whoever holds that
+    // email now.
     match /emailLookup/{emailHash} {
       allow get: if request.auth != null;
       allow create, update: if request.auth != null &&
         request.resource.data.keys().hasOnly(['uid']) &&
         request.resource.data.uid == request.auth.uid &&
         request.auth.token.get('email', '') != '' &&
+        request.auth.token.get('email_verified', false) == true &&
         emailHash == hashing.sha256(request.auth.token.email.lower()).toHexString().lower();
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }

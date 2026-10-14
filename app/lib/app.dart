@@ -214,6 +214,11 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           // from before the client-side counters (BadgeStatsCounter). A
           // no-op once done; never throws.
           unawaited(ref.read(badgeStatsCounterProvider).selfCount(uid));
+          // Email/password riders: the verification link, then the email
+          // lookup once verified. A no-op for verified riders; never throws.
+          unawaited(
+            ref.read(authNotifierProvider.notifier).completeEmailVerification(),
+          );
           // Archived bikes older than three months are deleted for good. No
           // scheduled functions on Spark, so this is where it happens.
           unawaited(

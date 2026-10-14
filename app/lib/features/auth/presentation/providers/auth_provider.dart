@@ -3,13 +3,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
 
-final firebaseAuthProvider = Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+final firebaseAuthProvider =
+    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
 
 final authStateProvider = StreamProvider<User?>((ref) {
   // userChanges() (not authStateChanges()) is required here: it also fires after
@@ -68,7 +70,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     final uid = user.uid;
     final existing = await _profiles.getProfile(uid);
     if (existing?.username != null) return;
-    await _profiles.claimUsernameWithFallback(uid, _profiles.suggestUsernameBase(email));
+    await _profiles.claimUsernameWithFallback(
+        uid, _profiles.suggestUsernameBase(email));
   }
 
   Future<void> signIn(String email, String password) async {
@@ -76,16 +79,21 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     state = await AsyncValue.guard(() async {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       await _seedProfile();
-      unawaited(AnalyticsService.instance.log(AnalyticsEvent.logIn, param: AnalyticsParam.method, value: 'email'));
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.logIn,
+          param: AnalyticsParam.method, value: 'email'));
     });
   }
 
+  /// The verification link is sent by [completeEmailVerification], which
+  /// app.dart runs on every sign-in, this one included.
   Future<void> register(String email, String password) async {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
-      await _auth.createUserWithEmailAndPassword(email: email, password: password);
+      await _auth.createUserWithEmailAndPassword(
+          email: email, password: password);
       await _seedProfile();
-      unawaited(AnalyticsService.instance.log(AnalyticsEvent.signUp, param: AnalyticsParam.method, value: 'email'));
+      unawaited(AnalyticsService.instance.log(AnalyticsEvent.signUp,
+          param: AnalyticsParam.method, value: 'email'));
     });
   }
 
@@ -109,6 +117,36 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
           param: AnalyticsParam.method,
           value: 'google'));
     });
+  }
+
+  /// Find-by-email needs a verified address (firestore.rules, CrtiQue_Oct15
+  /// N3). Runs on app start and sign-in for a rider whose email is not
+  /// verified yet (email/password; Google arrives verified): sends the link
+  /// once per account, and once they have clicked it (in a browser) refreshes
+  /// the token the rules read and writes the lookup. Never throws.
+  Future<void> completeEmailVerification() async {
+    final user = _auth.currentUser;
+    if (user == null || user.emailVerified || (user.email ?? '').isEmpty) {
+      return;
+    }
+    try {
+      await user.reload();
+      final fresh = _auth.currentUser;
+      if (fresh == null) return;
+      if (!fresh.emailVerified) return await _sendVerificationOnce(fresh);
+      await fresh.getIdToken(true);
+      await _profiles.ensureProfile(fresh);
+    } catch (e) {
+      debugPrint('[auth] email verification step failed: $e');
+    }
+  }
+
+  Future<void> _sendVerificationOnce(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'email_verification_sent_${user.uid}';
+    if (prefs.getBool(key) ?? false) return;
+    await user.sendEmailVerification();
+    await prefs.setBool(key, true);
   }
 
   /// Claims @[username] for the signed-in rider. Lets [UsernameTakenException]/
@@ -258,9 +296,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   }
 }
 
-final authNotifierProvider = StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
+final authNotifierProvider =
+    StateNotifierProvider<AuthNotifier, AsyncValue<void>>((ref) {
   return AuthNotifier(
     ref.watch(firebaseAuthProvider),
-    beforeSignOut: () => ref.read(rideRecordingProvider.notifier).stopLiveSharing(),
+    beforeSignOut: () =>
+        ref.read(rideRecordingProvider.notifier).stopLiveSharing(),
   );
 });

@@ -104,6 +104,31 @@ test('B2: a NEW email on the public profile is denied, even the caller\'s own', 
   await assertFails(setDoc(doc(db, 'users', ALICE), { emailLower: 'alice@example.com' }, { merge: true }));
 });
 
+// N2 (Oct15), decided: the rules do NOT accept the beta 4.5 shape. That build
+// writes email/emailLower onto the public profile, and any rule that let it
+// through would publish the address again. Old builds have no minBuild gate,
+// so SECURITY.md's deploy order (testers on the new build first) is the fix.
+// These pin the break that runbook describes.
+test('N2 (Oct15): a beta 4.5 sign-up (email on the new profile) is refused', async () => {
+  const db = dbFor('new-uid', { email: 'new@example.com', email_verified: true });
+  const legacy = {
+    displayName: 'new', email: 'new@example.com', emailLower: 'new@example.com',
+    visibility: 'public', followerCount: 0, followingCount: 0,
+    createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+  };
+  await assertFails(setDoc(doc(db, 'users', 'new-uid'), legacy, { merge: true }));
+  const { email, emailLower, ...current } = legacy;
+  await assertSucceeds(setDoc(doc(db, 'users', 'new-uid'), current, { merge: true }));
+});
+
+test('N2 (Oct15): after the migration, a beta 4.5 ensureProfile (rename path) is refused', async () => {
+  const db = dbFor(ALICE, { email: ALICE_EMAIL, email_verified: true });
+  await assertFails(setDoc(doc(db, 'users', ALICE), {
+    displayName: 'alice2', email: ALICE_EMAIL, emailLower: ALICE_EMAIL.toLowerCase(),
+    updatedAt: serverTimestamp(),
+  }, { merge: true }));
+});
+
 test('B2: ensureProfile strips a legacy email and writes the owner-only account doc', async () => {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await updateDoc(doc(ctx.firestore(), 'users', ALICE), {
@@ -123,7 +148,7 @@ test('B2: ensureProfile strips a legacy email and writes the owner-only account 
 });
 
 test('B2: the owner creates, updates and deletes their own email lookup', async () => {
-  const db = dbFor(ALICE, { email: ALICE_EMAIL });
+  const db = dbFor(ALICE, { email: ALICE_EMAIL, email_verified: true });
   const ref = doc(db, 'emailLookup', lookupId(ALICE_EMAIL));
   await assertSucceeds(setDoc(ref, { uid: ALICE }));
   await assertSucceeds(setDoc(ref, { uid: ALICE }));
@@ -131,7 +156,7 @@ test('B2: the owner creates, updates and deletes their own email lookup', async 
 });
 
 test('B2: nobody can point someone else\'s email at themselves', async () => {
-  const db = dbFor(MALLORY, { email: 'mallory@example.com' });
+  const db = dbFor(MALLORY, { email: 'mallory@example.com', email_verified: true });
   await assertFails(setDoc(doc(db, 'emailLookup', lookupId(ALICE_EMAIL)), { uid: MALLORY }));
   // Their own hash, but naming another uid, or carrying extra keys.
   await assertFails(setDoc(doc(db, 'emailLookup', lookupId('mallory@example.com')), { uid: ALICE }));
@@ -146,8 +171,22 @@ test('B2: a lookup left by a deleted account passes to the email\'s new holder',
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), 'emailLookup', lookupId(ALICE_EMAIL)), { uid: 'old-alice-uid' });
   });
-  const ref = doc(dbFor(ALICE, { email: ALICE_EMAIL }), 'emailLookup', lookupId(ALICE_EMAIL));
+  const ref = doc(dbFor(ALICE, { email: ALICE_EMAIL, email_verified: true }), 'emailLookup', lookupId(ALICE_EMAIL));
   await assertSucceeds(setDoc(ref, { uid: ALICE }));
+});
+
+test('N3 (Oct15): an unverified email cannot claim or take over its lookup', async () => {
+  // Signing up with an address you don't own gives a token with that email
+  // but email_verified false (or absent).
+  for (const token of [{ email: ALICE_EMAIL }, { email: ALICE_EMAIL, email_verified: false }]) {
+    const ref = doc(dbFor(MALLORY, token), 'emailLookup', lookupId(ALICE_EMAIL));
+    await assertFails(setDoc(ref, { uid: MALLORY }));
+  }
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'emailLookup', lookupId(ALICE_EMAIL)), { uid: 'old-alice-uid' });
+  });
+  await assertFails(setDoc(doc(dbFor(MALLORY, { email: ALICE_EMAIL }), 'emailLookup', lookupId(ALICE_EMAIL)),
+    { uid: MALLORY }));
 });
 
 test('B2: any signed-in rider may get a lookup; nobody may list them', async () => {
