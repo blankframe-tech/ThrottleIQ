@@ -888,12 +888,6 @@ badgeRungSaddle1h
 badgeRungSaddle2h
 badgeRungSaddle4h
 badgeRungSaddle8h
-badgeFamSpeedName
-badgeFamSpeedAbout
-badgeFamSpeedReq
-badgeRungTonUp
-badgeRungSpeed140
-badgeRungSpeedDemon
 badgeFamNightName
 badgeFamNightAbout
 badgeFamNightReq
@@ -924,7 +918,6 @@ badgeRungSmooth98
 badgeUnitRides
 badgeUnitKm
 badgeUnitHours
-badgeUnitKmh
 badgeUnitDays
 badgeUnitPts
 badgeTierBronze

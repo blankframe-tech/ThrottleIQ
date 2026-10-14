@@ -6,13 +6,12 @@ import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 RiderStatsSummary _stats({
   int totalRides = 0,
   double totalDistanceKm = 0,
-  double topSpeedKmh = 0,
   double avgRidingScore = 0,
   List<RideEntity> rides = const [],
 }) =>
     RiderStatsSummary(
       allTimeAvgSpeedKmh: 0,
-      allTimeTopSpeedKmh: topSpeedKmh,
+      allTimeTopSpeedKmh: 0,
       avgRidingScore: avgRidingScore,
       mostUsedBike: null,
       totalRides: totalRides,
@@ -57,8 +56,6 @@ BadgeStats _statsWith(String familyId, num value) {
       return BadgeStats(longestRideKm: value.toDouble());
     case 'saddle_time':
       return BadgeStats(longestRideHours: value.toDouble());
-    case 'speed':
-      return BadgeStats(topSpeedKmh: value.toDouble());
     case 'night':
       return BadgeStats(nightRides: value.round());
     case 'early':
@@ -84,14 +81,28 @@ void main() {
       // record and re-awards the badge.
       const persisted = [
         'first_ride',
-        'km_100', 'km_500', 'km_1000', 'km_2500', 'km_5000',
-        'rides_10', 'rides_25', 'rides_50', 'rides_100',
-        'ton_up', 'speed_demon', 'smooth_operator',
+        'km_100',
+        'km_500',
+        'km_1000',
+        'km_2500',
+        'km_5000',
+        'rides_10',
+        'rides_25',
+        'rides_50',
+        'rides_100',
+        'smooth_operator',
       ];
       final ids = badgeDefs.map((b) => b.id).toSet();
       for (final id in persisted) {
         expect(ids, contains(id), reason: '$id is a persisted badge id');
       }
+    });
+
+    test('the top-speed badges are cut and stay cut', () {
+      // Rewarding top speed contradicts the safety story (CrtiQue_Oct14 §14).
+      final ids = badgeDefs.map((b) => b.id).toSet();
+      expect(ids.intersection({'ton_up', 'speed_140', 'speed_demon'}), isEmpty);
+      expect(badgeFamilies.map((f) => f.id), isNot(contains('speed')));
     });
 
     test('thresholds and tiers both ascend within every family', () {
@@ -134,7 +145,8 @@ void main() {
     });
 
     test('nothing is earned from an empty ride list', () {
-      final badges = computeBadgesFrom(BadgeStats.from(_stats(rides: const [])));
+      final badges =
+          computeBadgesFrom(BadgeStats.from(_stats(rides: const [])));
       expect(badges.every((b) => !b.earned), isTrue);
     });
 
@@ -144,12 +156,10 @@ void main() {
 
         expect(def.isEarned(_statsWith(def.family.id, def.threshold)), isTrue,
             reason: '${def.id} must be earned at exactly ${def.threshold}');
-        expect(
-            def.isEarned(_statsWith(def.family.id, def.threshold - delta)),
+        expect(def.isEarned(_statsWith(def.family.id, def.threshold - delta)),
             isFalse,
             reason: '${def.id} must NOT be earned just under its threshold');
-        expect(
-            def.isEarned(_statsWith(def.family.id, def.threshold + delta)),
+        expect(def.isEarned(_statsWith(def.family.id, def.threshold + delta)),
             isTrue,
             reason: '${def.id} must stay earned just over its threshold');
       }
@@ -158,9 +168,9 @@ void main() {
     test('earning a rung implies every lower rung on the same ladder', () {
       for (final family in badgeFamilies) {
         for (final spec in family.tiers) {
-          final progress = computeBadgeProgressFrom(
-                  _statsWith(family.id, spec.threshold))
-              .firstWhere((p) => p.family.id == family.id);
+          final progress =
+              computeBadgeProgressFrom(_statsWith(family.id, spec.threshold))
+                  .firstWhere((p) => p.family.id == family.id);
 
           var seenUnearned = false;
           for (final badge in progress.badges) {
@@ -185,15 +195,6 @@ void main() {
       expect(earned('km_1000'), isFalse);
     });
 
-    test('ton-up needs 100 km/h top speed, speed demon needs 160', () {
-      final badges = computeBadges(_stats(topSpeedKmh: 120));
-      bool earned(String id) => badges.firstWhere((b) => b.def.id == id).earned;
-
-      expect(earned('ton_up'), isTrue);
-      expect(earned('speed_140'), isFalse);
-      expect(earned('speed_demon'), isFalse);
-    });
-
     test('smooth operator needs both a ride-count floor and a high average',
         () {
       bool earned(RiderStatsSummary s) => computeBadges(s)
@@ -214,7 +215,8 @@ void main() {
       final stats = BadgeStats.from(_stats(
         totalRides: 3,
         rides: [
-          _ride(id: 'a', startTime: DateTime(2026, 6, 1, 22), distanceM: 120000),
+          _ride(
+              id: 'a', startTime: DateTime(2026, 6, 1, 22), distanceM: 120000),
           _ride(
               id: 'b',
               startTime: DateTime(2026, 6, 2, 5),
@@ -408,8 +410,7 @@ void main() {
   group('computeBadgeProgress', () {
     test('groups every badge into exactly one family', () {
       final progress = computeBadgeProgress(_stats());
-      final grouped =
-          progress.fold<int>(0, (sum, p) => sum + p.badges.length);
+      final grouped = progress.fold<int>(0, (sum, p) => sum + p.badges.length);
       expect(grouped, badgeDefs.length);
       expect(progress, hasLength(badgeFamilies.length));
     });
@@ -425,10 +426,11 @@ void main() {
     });
 
     test('a topped-out ladder has no next rung', () {
-      final speed = computeBadgeProgress(_stats(topSpeedKmh: 200))
-          .firstWhere((p) => p.family.id == 'speed');
-      expect(speed.nextUp, isNull);
-      expect(speed.highestTier, BadgeTier.gold);
+      final saddle = computeBadgeProgressFrom(
+        const BadgeStats(longestRideHours: 10),
+      ).firstWhere((p) => p.family.id == 'saddle_time');
+      expect(saddle.nextUp, isNull);
+      expect(saddle.highestTier, BadgeTier.platinum);
     });
 
     test('an untouched ladder has no tier and points at its first rung', () {

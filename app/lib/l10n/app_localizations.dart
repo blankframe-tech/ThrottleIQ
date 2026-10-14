@@ -7488,42 +7488,6 @@ abstract class AppLocalizations {
   /// **'Eight hours'**
   String get badgeRungSaddle8h;
 
-  /// Badge family name (speed).
-  ///
-  /// In en, this message translates to:
-  /// **'Top speed'**
-  String get badgeFamSpeedName;
-
-  /// What the speed badge family measures.
-  ///
-  /// In en, this message translates to:
-  /// **'The highest speed recorded on any of your rides.'**
-  String get badgeFamSpeedAbout;
-
-  /// How to earn a speed badge rung; {n} is the threshold.
-  ///
-  /// In en, this message translates to:
-  /// **'Record a top speed of {n} km/h.'**
-  String badgeFamSpeedReq(String n);
-
-  /// Badge rung name (ton_up).
-  ///
-  /// In en, this message translates to:
-  /// **'Ton-up'**
-  String get badgeRungTonUp;
-
-  /// Badge rung name (speed_140).
-  ///
-  /// In en, this message translates to:
-  /// **'Quick'**
-  String get badgeRungSpeed140;
-
-  /// Badge rung name (speed_demon).
-  ///
-  /// In en, this message translates to:
-  /// **'Speed demon'**
-  String get badgeRungSpeedDemon;
-
   /// Badge family name (night).
   ///
   /// In en, this message translates to:
@@ -7703,12 +7667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'h'**
   String get badgeUnitHours;
-
-  /// Unit word after a badge figure (km/h).
-  ///
-  /// In en, this message translates to:
-  /// **'km/h'**
-  String get badgeUnitKmh;
 
   /// Unit word after a badge figure (days).
   ///

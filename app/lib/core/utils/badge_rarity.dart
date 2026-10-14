@@ -131,7 +131,6 @@ Map<String, DateTime> computeBadgeEarnedDates(List<RideEntity> rides) {
 
   var totalRides = 0;
   var totalKm = 0.0;
-  var topSpeed = 0.0;
   var scoreSum = 0;
   var longestKm = 0.0;
   var longestSeconds = 0;
@@ -144,7 +143,6 @@ Map<String, DateTime> computeBadgeEarnedDates(List<RideEntity> rides) {
   for (final r in ordered) {
     totalRides++;
     totalKm += r.distanceKm;
-    if (r.maxSpeedKmh > topSpeed) topSpeed = r.maxSpeedKmh;
     scoreSum += computeRidingScore(
       hardBrakes: r.hardBrakeCount,
       rapidAccel: r.rapidAccelCount,
@@ -170,7 +168,6 @@ Map<String, DateTime> computeBadgeEarnedDates(List<RideEntity> rides) {
     final stats = BadgeStats(
       totalRides: totalRides,
       totalDistanceKm: totalKm,
-      topSpeedKmh: topSpeed,
       smoothnessScore: totalRides >= BadgeStats.smoothnessRideFloor
           ? scoreSum / totalRides
           : 0,

@@ -4229,26 +4229,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get badgeRungSaddle8h => 'আট ঘণ্টা';
 
   @override
-  String get badgeFamSpeedName => 'সর্বোচ্চ গতি';
-
-  @override
-  String get badgeFamSpeedAbout => 'আপনার সব রাইডে রেকর্ড করা সর্বোচ্চ গতি।';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return '$n কিমি/ঘণ্টা সর্বোচ্চ গতি রেকর্ড করুন।';
-  }
-
-  @override
-  String get badgeRungTonUp => 'টন-আপ';
-
-  @override
-  String get badgeRungSpeed140 => 'কুইক';
-
-  @override
-  String get badgeRungSpeedDemon => 'স্পিড ডেমন';
-
-  @override
   String get badgeFamNightName => 'নাইট রাইডার';
 
   @override
@@ -4349,9 +4329,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'ঘণ্টা';
-
-  @override
-  String get badgeUnitKmh => 'কিমি/ঘণ্টা';
 
   @override
   String get badgeUnitDays => 'দিন';

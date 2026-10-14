@@ -4249,27 +4249,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get badgeRungSaddle8h => 'Eight hours';
 
   @override
-  String get badgeFamSpeedName => 'Top speed';
-
-  @override
-  String get badgeFamSpeedAbout =>
-      'The highest speed recorded on any of your rides.';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return 'Record a top speed of $n km/h.';
-  }
-
-  @override
-  String get badgeRungTonUp => 'Ton-up';
-
-  @override
-  String get badgeRungSpeed140 => 'Quick';
-
-  @override
-  String get badgeRungSpeedDemon => 'Speed demon';
-
-  @override
   String get badgeFamNightName => 'Night rider';
 
   @override
@@ -4369,9 +4348,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'h';
-
-  @override
-  String get badgeUnitKmh => 'km/h';
 
   @override
   String get badgeUnitDays => 'days';

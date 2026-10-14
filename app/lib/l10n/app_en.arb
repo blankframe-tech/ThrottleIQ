@@ -5890,35 +5890,6 @@
   "@badgeRungSaddle8h": {
     "description": "Badge rung name (saddle_8h)."
   },
-  "badgeFamSpeedName": "Top speed",
-  "@badgeFamSpeedName": {
-    "description": "Badge family name (speed)."
-  },
-  "badgeFamSpeedAbout": "The highest speed recorded on any of your rides.",
-  "@badgeFamSpeedAbout": {
-    "description": "What the speed badge family measures."
-  },
-  "badgeFamSpeedReq": "Record a top speed of {n} km/h.",
-  "@badgeFamSpeedReq": {
-    "description": "How to earn a speed badge rung; {n} is the threshold.",
-    "placeholders": {
-      "n": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeRungTonUp": "Ton-up",
-  "@badgeRungTonUp": {
-    "description": "Badge rung name (ton_up)."
-  },
-  "badgeRungSpeed140": "Quick",
-  "@badgeRungSpeed140": {
-    "description": "Badge rung name (speed_140)."
-  },
-  "badgeRungSpeedDemon": "Speed demon",
-  "@badgeRungSpeedDemon": {
-    "description": "Badge rung name (speed_demon)."
-  },
   "badgeFamNightName": "Night rider",
   "@badgeFamNightName": {
     "description": "Badge family name (night)."
@@ -6058,10 +6029,6 @@
   "badgeUnitHours": "h",
   "@badgeUnitHours": {
     "description": "Unit word after a badge figure (h)."
-  },
-  "badgeUnitKmh": "km/h",
-  "@badgeUnitKmh": {
-    "description": "Unit word after a badge figure (km/h)."
   },
   "badgeUnitDays": "days",
   "@badgeUnitDays": {
