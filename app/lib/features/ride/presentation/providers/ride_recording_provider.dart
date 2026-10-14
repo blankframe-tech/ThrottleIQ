@@ -24,6 +24,7 @@ import '../../../../core/realtime/realtime_location_publisher.dart';
 import '../../../../core/realtime/realtime_providers.dart';
 import '../../../../core/services/auto_tracking_service.dart';
 import '../../../../core/services/gps_drop_log.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/services/battery_service.dart';
 import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/haptic_service.dart';
@@ -450,6 +451,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     String? routeName,
   }) async {
     if (state.status != RecordingStatus.idle) return;
+    // Ride tracking off (Settings → Your ThrottleIQ): nothing may read
+    // location, so no ride, permission ask or foreground service.
+    if (!_ref.read(appModulesProvider).rideTracking) return;
     if (!_latch.tryEnter()) return;
     state = state.copyWith(status: RecordingStatus.starting);
     _userInitiated = userInitiated;
