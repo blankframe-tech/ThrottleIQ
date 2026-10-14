@@ -6,7 +6,6 @@ Contains data repository implementations for fetching, syncing, and persisting d
 
 The following files are present in this directory:
 
-- `challenge_repository.dart`: Repository implementation.
 - `follow_repository.dart`: Repository implementation.
 - `group_ride_repository.dart`: Repository implementation.
 - `notification_repository.dart`: Repository implementation.

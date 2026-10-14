@@ -6,7 +6,6 @@ Social feature handling followers, feeds, and notifications.
 
 The following files are present in this directory:
 
-- `challenge_entity_test.dart`: Unit/Widget test file.
 - `feed_page_merge_test.dart`: Unit/Widget test file.
 - `feed_sort_l10n_test.dart`: Unit/Widget test file.
 - `feed_sort_test.dart`: Unit/Widget test file.
