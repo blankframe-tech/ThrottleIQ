@@ -1801,7 +1801,8 @@ IDs are `101.<area><n>`. "AUTO" = an agent can fix and verify it with analyze/te
   **Resolution:** FIXED (2026-10-08): connectivity check moved inside the try so `finally` always clears `_isSyncing`. Test: `test/core/cloud/sync_manager_guard_test.dart`.
 - **101.C3 MED — failed ride or bike inserts are lost for good:** the pull watermark advances past them; only maintenance has the `firstFailed` rewind. AUTO.  
   **Resolution:** FIXED (2026-10-08): `markShortOfFailures`/`earlierFailure` hold the pull watermark back for failed ride/bike inserts (rides of tombstoned bikes excepted). Tests: `incremental_pull_test.dart`.
-- **101.C4 MED (design) — remote edits never reach a second device.** Downloads insert missing rows only. Needs a conflict policy. Founder.
+- **101.C4 MED (design) — remote edits never reach a second device.** Downloads insert missing rows only. Needs a conflict policy. Founder.  
+  **Resolution:** FIXED (2026-10-14, branch `fix/oct14-tiq-sync`): founder decided last-writer-wins. Schema v28 `updated_at` on rides, bikes and maintenance logs (fuel logs already had it); a newer cloud copy replaces a synced local row on download, and uploads are read-then-write transactions that never overwrite a newer copy. Docs from pre-v28 builds count as oldest. Deletions stay with the tombstones. See `arch.md` §5. Tests: `last_writer_wins_test.dart`, `sync_stamps_migration_v28_test.dart`.
 - **101.C5 MED — `app.dart:146-175` runs on every auth emission,** re-calling `restoreInterruptedRide()` and `AutoTrackingService.start()` (re-prompts, §90.C11) with no catch. Gate on uid change. AUTO.  
   **Resolution:** FIXED (2026-10-08): `authSideEffect(prevUid, nextUid, isError)` gates the auth listener, so only real sign-in/out acts; restore/auto-tracking calls are caught. Test: `test/app_test.dart`.
 - **101.C6 MED — `auto_tracking_service.dart:414 allowWakeLock: true`** holds a CPU wakelock all day. Needs battery test on a budget phone. Device.

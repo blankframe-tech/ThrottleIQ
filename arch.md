@@ -177,6 +177,7 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 - Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
 - Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
 - `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed_ms`, `acceleration`, `jerk`, `heading_deg`, `confidence`, `imu_quality`, `is_cornering`).
+- **Times.** Ride `start_time`/`end_time`/`created_at` are stored as UTC ISO-8601 (`…Z`) since schema v28; older rows were device-local with no offset and were rewritten by the v28 step, and a ride doc from an older build is read in this phone's zone on download. `RideModel` hands the app local `DateTime`s; day-range queries (`RideDao.getCompletedBetween`) bind the local day's bounds as UTC. GPS point timestamps were already UTC. Bike, maintenance and fuel dates keep their old format.
 - **Adding a column to a synced table is a cross-version concern.** `CloudRepository.downloadRides` inserts cloud documents verbatim, so a field written by a newer build is an `INSERT` into a column an older one doesn't have — which throws and silently drops that ride. Two guards: the upload side omits a field when it is null (`ridePayload`, `bikePayload`), and since v17 the download side filters to the columns the local schema actually has (`knownRideColumnsOnly`). Maintenance logs have no such filter: a row a build can't store is skipped, and since v20 `downloadMaintenance` stops its pull watermark before that row so it is fetched again after the app updates. Deleted maintenance logs are tombstoned (`deleted_maintenance_logs`) like rides and bikes.
 
 ### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
@@ -193,9 +194,17 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
   4. Scheduled 5-minute background interval.
 - **Sync Sequence**:
   1. Drain Outbox queue (`_outbox.drain()`).
-  2. Download remote updates (Bikes, Maintenance, Maintenance settings, Rides) for multi-device parity.
+  2. Download remote updates (Bikes, Maintenance, Fuel, Maintenance settings, Rides): missing rows and newer edits (last writer wins, below).
   3. Push local deletions first.
-  4. Upload unsynced local rows (`synced = 0`).
+  4. Upload unsynced local rows (`synced = 0`), one transaction per row.
+
+### Multi-device conflicts: last writer wins (founder decision C4, 2026-10-14)
+- Rides, bikes, maintenance logs and fuel logs carry `updated_at`, the UTC time of the row's last local edit. The models stamp it on every full write, and the v28 `*_touch_updated_at` SQLite triggers stamp every other `UPDATE` that leaves a row `synced = 0` (finalize, bike reattribution, odometer, archive, stats), so a new DAO method needs no extra code. Fuel logs set it in `FuelLogModel` (since v27). The v28 step backfilled it from the best existing time (ride end or start, the latest bike time, the log's `created_at`).
+- **Download:** a cloud copy with a newer `updated_at` replaces the local row only if that row has no unsynced changes, and only if it was not edited while the download ran (`LastWriterWins.adopt`). The active bike, local photo, receipt and map-snapshot files and the trail flag stay this device's own.
+- **Upload:** each row is a Firestore transaction that reads the cloud copy first (`LastWriterWins.setUnlessRemoteNewer`, also used by the outbox for maintenance and fuel). A newer cloud copy is never overwritten; it replaces the older local row instead. A row is marked synced only if it was not edited again during the upload. This costs one read per uploaded row, and uploads are no longer one batch.
+- **Older builds:** a document without `updated_at` counts as the oldest copy, so it never replaces anything, and a new build's upload replaces it. Older builds still overwrite the cloud copy blindly and never take in remote edits. Beta 4.4/4.5 drop the unknown `updated_at` column for rides and bikes, but `downloadMaintenance` there has no column filter, so they skip maintenance logs written by v28 builds until they update (the pull watermark stops short, so the logs arrive after the update). Older builds also show v28 rides' times in UTC. Set `config/app.minBuild` once the v28 build is out.
+- After the v28 upgrade each rider gets one full pull (`SyncManager.resetPullMarksOnceForV28`), so edits the old download skipped arrive once.
+- **Not covered:** deletions (tombstones decide them, as before); a phone with a wrong clock wins or loses conflicts by that error; bike totals (`total_distance_m`, `ride_count`) are whole-row LWW, so rides recorded on the same bike on two phones between syncs keep only one phone's increment in the totals (the rides themselves are kept).
 
 ### Firestore Track Chunking ([`RideTrackCodec`](app/lib/core/cloud/ride_track_codec.dart))
 - Long rides generate thousands of telemetry points. Writing one document per point exhausts read/write quotas; writing all points to one document breaches Firestore's 1 MiB limit.
@@ -255,7 +264,7 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
   - [`navigation_progress.dart`](app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
   - [`navigation_session_provider.dart`](app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
   - **The dependency runs one way**: `routes` knows about the recorder; `RideRecordingNotifier` knows nothing about routes. Navigation stays out of the core loop, which is the part with no end-to-end test.
-  - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v20). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
+  - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v28). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
   - Guidance is drawn over the cockpit by `NavigationBanner`; there is no separate navigation screen to get out of sync with the recorder.
 
 ---

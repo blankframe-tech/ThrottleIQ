@@ -754,6 +754,13 @@ Nothing below is visible until an RTDB instance exists and the app is built with
 - **Widgets:** themed button and DUE chip keep their 2dp rounded corners again.
 - **Follow QR:** links now use `www.blankframe.tech` (served by the landing-page repo's 404 router).
 
+## Multi-device sync (2026-10-14, branch `fix/oct14-tiq-sync`, not checked on a device)
+
+- **Schema v28 — edits move between devices:** a ride, bike, maintenance or fuel edit made on one phone now
+  reaches the rider's other phones; when both changed the same record, the later edit wins (`updated_at`,
+  founder decision C4). Deletions still go through tombstones. Ride times are stored in UTC, so "today" and
+  day ranges follow the zone the phone is in now. Details: `arch.md` §5.
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
