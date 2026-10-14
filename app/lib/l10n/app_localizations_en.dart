@@ -873,7 +873,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backgroundLocationRationale =>
-      'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.';
+      'With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.';
 
   @override
   String get notNow => 'Not now';
@@ -4408,6 +4408,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get notifRecordingStoppedTitle => 'Recording stopped';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.';
+
+  @override
   String get notifConfirm => 'Confirm';
 
   @override
@@ -6347,4 +6354,45 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'Log two full-tank fill-ups to measure this.';
+
+  @override
+  String get oemGuideTitle => 'Keep rides recording';
+
+  @override
+  String oemGuideIntro(String brand) {
+    return '$brand phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.';
+  }
+
+  @override
+  String get oemGuideStepAutostart =>
+      'Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.';
+
+  @override
+  String get oemGuideOpenAutostart => 'Open Autostart settings';
+
+  @override
+  String get oemGuideStepBattery =>
+      'In ThrottleIQ\'s app info, set Battery to \"No restrictions\" or \"Allow background activity\".';
+
+  @override
+  String get oemGuideStepLock =>
+      'In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn\'t close it.';
+
+  @override
+  String oemGuideMoreHelp(String brand) {
+    return 'Step-by-step guide for $brand phones';
+  }
+
+  @override
+  String oemGuideOfferTitle(String brand) {
+    return 'Rides cut short on $brand?';
+  }
+
+  @override
+  String oemGuideOfferBody(String brand) {
+    return '$brand phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.';
+  }
+
+  @override
+  String get oemGuideShowMe => 'Show me';
 }

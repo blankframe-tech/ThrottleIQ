@@ -231,8 +231,10 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
 
 ## 6. Background Processing & Auto-Tracking
 
-1. **Foreground Service**:
-   - Background tracking uses `flutter_foreground_task` and `geolocator`'s native foreground service notification to prevent Android OEM OS battery killers from terminating the recording isolate.
+1. **Foreground Service** (one `flutter_foreground_task` service, two jobs):
+   - **Manual rides** (Android): `RideRecordingNotifier` hosts each active ride in the service (`AutoTrackingService.beginManualRide`, ended on pause/stop/discard/restore). The UI isolate still records; it sends a heartbeat every second. With no heartbeat for 20 s (UI engine destroyed), the task handler stores the ride's fixes in `ride_points` itself and advances the restore clock, so `restoreInterruptedRide` rebuilds the whole ride. A system-restarted service without "Allow all the time", or a service that dies under a live UI, posts "Recording stopped, tap to resume". `geolocator`'s own foreground notification is only the fallback when the service can't start (and iOS uses background location updates instead).
+   - **Permissions**: a manual ride needs while-in-use location only. "Allow all the time" is requested only when the rider turns auto-tracking on, after the Play disclosure (`ensureBackgroundLocationDisclosure`, shown until accepted once).
+   - **OEM battery killers**: after the first finished ride, Xiaomi/OPPO/vivo/realme phones get a one-time settings guide (`oem_guide_screen.dart`; vendor autostart screens through the `throttleiq/oem` channel in `MainActivity.kt`).
 2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](app/lib/core/services/auto_tracking_service.dart))**:
    - Operates an isolated background entry point (`autoTrackingTaskCallback`).
    - Listens for Activity Recognition transitions (e.g., `IN_VEHICLE` / `ON_BICYCLE`).

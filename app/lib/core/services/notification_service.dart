@@ -42,6 +42,7 @@ class NotificationService {
   static const crashNotificationId = 9001;
   static const confirmPromptId = 9002;
   static const weeklyDigestId = 9003;
+  static const recordingStoppedId = 9004;
 
   /// Maintenance and paperwork alerts take ids in
   /// [maintenanceIdBase, maintenanceIdBase + maintenanceIdSpan) — see
@@ -228,6 +229,29 @@ class NotificationService {
 
   Future<void> cancelCrashAlert() async {
     await _plugin.cancel(crashNotificationId);
+  }
+
+  /// "Recording stopped, tap to resume": the ride's foreground service died
+  /// mid-ride (critique B5). The tap just opens the app, which restores the
+  /// ride paused for the rider to resume. Callable from the foreground-task
+  /// isolate as well as the UI one.
+  Future<void> showRecordingStopped() async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.show(
+      recordingStoppedId,
+      l10n.notifRecordingStoppedTitle,
+      l10n.notifRecordingStoppedBody,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ridesChannelId,
+          l10n.notifChannelRides,
+          importance: Importance.defaultImportance,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
   }
 
   /// Asks which bike an auto-detected ride was on, immediately after it ends.

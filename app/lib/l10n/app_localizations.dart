@@ -1676,10 +1676,10 @@ abstract class AppLocalizations {
   /// **'Background location'**
   String get backgroundLocation;
 
-  /// Text in record_screen.
+  /// Play prominent disclosure, shown before the background-location request when the rider turns on automatic ride detection.
   ///
   /// In en, this message translates to:
-  /// **'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.'**
+  /// **'With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.'**
   String get backgroundLocationRationale;
 
   /// Text in record_screen.
@@ -7764,6 +7764,18 @@ abstract class AppLocalizations {
   /// **'We logged this to {bike}. Tap to confirm or change.'**
   String notifRideDetectedBody(String bike);
 
+  /// Notification when the phone stopped the ride's foreground service mid-ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording stopped'**
+  String get notifRecordingStoppedTitle;
+
+  /// Body of the recording-stopped notification; tapping opens the app on the paused ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.'**
+  String get notifRecordingStoppedBody;
+
   /// Action button on the ride-detected notification.
   ///
   /// In en, this message translates to:
@@ -10847,6 +10859,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log two full-tank fill-ups to measure this.'**
   String get insightFuelNeedFullFills;
+
+  /// Title of the OEM battery-settings guide screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep rides recording'**
+  String get oemGuideTitle;
+
+  /// Intro on the OEM guide; brand is the phone maker, e.g. Xiaomi.
+  ///
+  /// In en, this message translates to:
+  /// **'{brand} phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.'**
+  String oemGuideIntro(String brand);
+
+  /// OEM guide step 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.'**
+  String get oemGuideStepAutostart;
+
+  /// Button opening the phone maker's autostart screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Autostart settings'**
+  String get oemGuideOpenAutostart;
+
+  /// OEM guide step 2.
+  ///
+  /// In en, this message translates to:
+  /// **'In ThrottleIQ\'s app info, set Battery to \"No restrictions\" or \"Allow background activity\".'**
+  String get oemGuideStepBattery;
+
+  /// OEM guide step 3.
+  ///
+  /// In en, this message translates to:
+  /// **'In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn\'t close it.'**
+  String get oemGuideStepLock;
+
+  /// Link to dontkillmyapp.com for the phone maker.
+  ///
+  /// In en, this message translates to:
+  /// **'Step-by-step guide for {brand} phones'**
+  String oemGuideMoreHelp(String brand);
+
+  /// Title of the one-time offer of the OEM guide after the first ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides cut short on {brand}?'**
+  String oemGuideOfferTitle(String brand);
+
+  /// Body of the one-time OEM guide offer.
+  ///
+  /// In en, this message translates to:
+  /// **'{brand} phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.'**
+  String oemGuideOfferBody(String brand);
+
+  /// Button that opens the OEM guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Show me'**
+  String get oemGuideShowMe;
 }
 
 class _AppLocalizationsDelegate

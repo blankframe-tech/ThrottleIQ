@@ -41,7 +41,7 @@ class RidePersistenceCoordinator {
 
   static const String _prefsRideId = RidePrefsKeys.activeRideId;
   static const String _prefsStartTime = 'ride_start_time';
-  static const String _prefsElapsedS = 'ride_elapsed_s';
+  static const String _prefsElapsedS = RidePrefsKeys.elapsedSeconds;
 
   static const int _bufferFlushSize = 5;
   static const Duration _bufferFlushInterval = Duration(seconds: 3);
@@ -92,7 +92,8 @@ class RidePersistenceCoordinator {
       await _pointDao.insertBatch(batch);
       _persistedPointCount += batch.length;
     } catch (e) {
-      debugPrint('[RidePersistence] Point flush failed (${batch.length} fixes): $e');
+      debugPrint(
+          '[RidePersistence] Point flush failed (${batch.length} fixes): $e');
       _pointBuffer.insertAll(0, batch);
     }
   }
@@ -139,7 +140,8 @@ class RidePersistenceCoordinator {
   }
 
   /// Contributes per-segment speeds to anonymous shared pool.
-  Future<void> publishSegmentBaselines(String rideId, DateTime startTime) async {
+  Future<void> publishSegmentBaselines(
+      String rideId, DateTime startTime) async {
     final rows = await _pointDao.getForRide(rideId);
     if (rows.length < 2) return;
 
@@ -186,8 +188,10 @@ class RidePersistenceCoordinator {
         rides: rideRows.map(RideModel.fromMap).toList(),
         bikes: bikeRows.map(BikeModel.fromMap).toList(),
       );
-      final earnedIds =
-          computeBadges(stats).where((b) => b.earned).map((b) => b.def.id).toList();
+      final earnedIds = computeBadges(stats)
+          .where((b) => b.earned)
+          .map((b) => b.def.id)
+          .toList();
       await ProfileRepository().updatePublicStats(
         uid: uid,
         totalDistanceKm: stats.totalDistanceKm,
@@ -197,7 +201,8 @@ class RidePersistenceCoordinator {
     } catch (_) {/* non-fatal */}
   }
 
-  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
+  Future<void> _bestEffortWrite(
+      String label, Future<void> Function() write) async {
     try {
       await write().timeout(kOutboxAttemptTimeout);
     } on TimeoutException {

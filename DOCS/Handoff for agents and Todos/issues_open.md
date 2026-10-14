@@ -1663,6 +1663,12 @@ Tecno or Redmi would check all three.
   per-brand guidance. Onboarding should detect the manufacturer and send the
   rider to the right autostart / background-activity / battery settings for
   that brand (see dontkillmyapp.com for each brand's steps).
+  - **Partly done 2026-10-15 (critique B5, not on a device):** Xiaomi/Redmi/POCO,
+    OPPO, realme and vivo/iQOO get a one-time guide after the first finished
+    ride (`oem_guide_screen.dart`: vendor autostart screen, app info, lock in
+    recents, dontkillmyapp link). Manual rides now run in the foreground-task
+    service and keep recording when the UI goes away. Still open: Tecno,
+    Infinix, itel, Samsung; a settings entry to reopen the guide.
 - **96.2 Phones with no gyroscope / weak accelerometer — MEDIUM.** Many budget
   phones have no gyroscope. The manifest already marks the accelerometer and
   gyroscope `required="false"`, so the app installs. Still to check: crash

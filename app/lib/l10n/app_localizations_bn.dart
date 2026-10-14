@@ -875,7 +875,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get backgroundLocationRationale =>
-      'ThrottleIQ রাইড চলাকালীন আপনার লোকেশন ব্যবহার করে রুট, গতি ও দূরত্ব রেকর্ড করে — ফোন লক থাকলে বা পকেটে থাকলেও, যাতে রাইড মাঝপথে কেটে না যায়। পরের স্ক্রিনে \"সব সময় অনুমতি দিন\" লোকেশন অ্যাক্সেস চাওয়া হবে। লোকেশন শুধু আপনার রাইড রেকর্ড করতে ব্যবহার হয় এবং রাইড শেষ করার সাথে সাথেই ট্র্যাকিং বন্ধ হয়ে যায়।';
+      '\"স্বয়ংক্রিয়ভাবে রাইড শনাক্ত করুন\" চালু থাকলে ThrottleIQ আপনার রাইড শনাক্ত ও রেকর্ড করতে আপনার লোকেশন সংগ্রহ করে, অ্যাপ বন্ধ থাকলে বা ব্যবহার না করলেও। আগে চলাচল লক্ষ্য করে, আর আপনি কোনো যানবাহনে চলতে শুরু করলে তবেই GPS চালু করে। পরের স্ক্রিনে \"সব সময় অনুমতি দিন\" লোকেশন অ্যাক্সেস চাওয়া হবে। সেটিংস থেকে যেকোনো সময় এটি বন্ধ করতে পারবেন।';
 
   @override
   String get notNow => 'এখন নয়';
@@ -4389,6 +4389,13 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get notifRecordingStoppedTitle => 'রেকর্ডিং বন্ধ হয়ে গেছে';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।';
+
+  @override
   String get notifConfirm => 'নিশ্চিত করুন';
 
   @override
@@ -6311,4 +6318,45 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।';
+
+  @override
+  String get oemGuideTitle => 'রাইড রেকর্ডিং চালু রাখুন';
+
+  @override
+  String oemGuideIntro(String brand) {
+    return '$brand ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। এই তিনটি সেটিং একবার বদলে নিন।';
+  }
+
+  @override
+  String get oemGuideStepAutostart =>
+      'ThrottleIQ-এর জন্য অটোস্টার্ট (অটো-লঞ্চ বা ব্যাকগ্রাউন্ড স্টার্ট নামেও থাকে) চালু করুন।';
+
+  @override
+  String get oemGuideOpenAutostart => 'অটোস্টার্ট সেটিংস খুলুন';
+
+  @override
+  String get oemGuideStepBattery =>
+      'ThrottleIQ-এর অ্যাপ ইনফোতে ব্যাটারি \"কোনো সীমা নেই\" বা \"ব্যাকগ্রাউন্ডে চলতে দিন\" করে দিন।';
+
+  @override
+  String get oemGuideStepLock =>
+      'সাম্প্রতিক অ্যাপে ThrottleIQ লক করুন (কার্ডটি চেপে ধরুন বা নিচে টানুন), যাতে সব মুছে দিলেও এটি বন্ধ না হয়।';
+
+  @override
+  String oemGuideMoreHelp(String brand) {
+    return '$brand ফোনের জন্য ধাপে ধাপে গাইড';
+  }
+
+  @override
+  String oemGuideOfferTitle(String brand) {
+    return '$brand-এ রাইড মাঝপথে কেটে যায়?';
+  }
+
+  @override
+  String oemGuideOfferBody(String brand) {
+    return 'ব্যাটারি বাঁচাতে $brand ফোন রাইডের মাঝপথে ThrottleIQ বন্ধ করে দিতে পারে। তিনটি সেটিং বদলালে আর হবে না, এক মিনিট লাগে।';
+  }
+
+  @override
+  String get oemGuideShowMe => 'দেখান';
 }

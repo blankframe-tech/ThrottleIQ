@@ -190,6 +190,15 @@ class RideDao {
     );
   }
 
+  /// Changes a ride's `status` and nothing else: no end time, stats or sync
+  /// flags. A dismissed crash alert puts a still-recording ride back to
+  /// `active` with this; [finalizeRide] is the end-of-ride write (B12).
+  Future<void> setStatus(String id, String status) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('rides', {'status': status},
+        where: 'id = ?', whereArgs: [id]);
+  }
+
   /// issues §33.1: scoped to [userId] — this feeds directly into
   /// SyncManager's upload pass, and an unscoped query would happily hand
   /// another rider's still-unsynced rides to whichever account is currently

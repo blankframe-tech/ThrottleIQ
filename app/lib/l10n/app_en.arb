@@ -1133,9 +1133,9 @@
   "@backgroundLocation": {
     "description": "Text in record_screen."
   },
-  "backgroundLocationRationale": "ThrottleIQ records your route, speed, and distance using your location while a ride is active \u2014 including while your phone is locked or in a pocket, so the ride isn't cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.",
+  "backgroundLocationRationale": "With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.",
   "@backgroundLocationRationale": {
-    "description": "Text in record_screen."
+    "description": "Play prominent disclosure, shown before the background-location request when the rider turns on automatic ride detection."
   },
   "notNow": "Not now",
   "@notNow": {
@@ -6114,6 +6114,14 @@
       }
     }
   },
+  "notifRecordingStoppedTitle": "Recording stopped",
+  "@notifRecordingStoppedTitle": {
+    "description": "Notification when the phone stopped the ride's foreground service mid-ride."
+  },
+  "notifRecordingStoppedBody": "Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.",
+  "@notifRecordingStoppedBody": {
+    "description": "Body of the recording-stopped notification; tapping opens the app on the paused ride."
+  },
   "notifConfirm": "Confirm",
   "@notifConfirm": {
     "description": "Action button on the ride-detected notification."
@@ -8714,5 +8722,65 @@
   "insightFuelNeedFullFills": "Log two full-tank fill-ups to measure this.",
   "@insightFuelNeedFullFills": {
     "description": "Insight on efficiency charts when fewer than two full-tank fills exist."
+  },
+  "oemGuideTitle": "Keep rides recording",
+  "@oemGuideTitle": {
+    "description": "Title of the OEM battery-settings guide screen."
+  },
+  "oemGuideIntro": "{brand} phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.",
+  "@oemGuideIntro": {
+    "description": "Intro on the OEM guide; brand is the phone maker, e.g. Xiaomi.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideStepAutostart": "Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.",
+  "@oemGuideStepAutostart": {
+    "description": "OEM guide step 1."
+  },
+  "oemGuideOpenAutostart": "Open Autostart settings",
+  "@oemGuideOpenAutostart": {
+    "description": "Button opening the phone maker's autostart screen."
+  },
+  "oemGuideStepBattery": "In ThrottleIQ's app info, set Battery to \"No restrictions\" or \"Allow background activity\".",
+  "@oemGuideStepBattery": {
+    "description": "OEM guide step 2."
+  },
+  "oemGuideStepLock": "In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn't close it.",
+  "@oemGuideStepLock": {
+    "description": "OEM guide step 3."
+  },
+  "oemGuideMoreHelp": "Step-by-step guide for {brand} phones",
+  "@oemGuideMoreHelp": {
+    "description": "Link to dontkillmyapp.com for the phone maker.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideOfferTitle": "Rides cut short on {brand}?",
+  "@oemGuideOfferTitle": {
+    "description": "Title of the one-time offer of the OEM guide after the first ride.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideOfferBody": "{brand} phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.",
+  "@oemGuideOfferBody": {
+    "description": "Body of the one-time OEM guide offer.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideShowMe": "Show me",
+  "@oemGuideShowMe": {
+    "description": "Button that opens the OEM guide."
   }
 }
