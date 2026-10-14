@@ -84,7 +84,7 @@ const String kWidgetKeyLeanSymmetry = 'ti_lean_symmetry';
 const String kWidgetKeyApexUpdatedAt = 'ti_apex_updated_at';
 
 /// Theme keys: the active palette as `#AARRGGBB` hex strings, plus whether it
-/// is a dark palette and which color mode it came from. Native widgets read
+/// is a dark palette. Native widgets read
 /// these at render time and fall back to their built-in Carbon Mono colors
 /// when a key is missing (widget placed before the app ever ran).
 const String kWidgetKeyThemeBackground = 'ti_theme_background';
