@@ -60,7 +60,7 @@ dependencies:
   # Image
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
-  image: ^4.1.0
+  image: ^4.12.0
 
   # Haptics / Feedback
   vibration: ^2.0.0
