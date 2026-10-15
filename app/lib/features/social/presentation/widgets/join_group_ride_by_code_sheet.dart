@@ -117,8 +117,7 @@ class _JoinGroupRideByCodeSheetState
         left: AppDimensions.paddingMd,
         right: AppDimensions.paddingMd,
         top: AppDimensions.paddingMd,
-        bottom:
-            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -135,8 +134,7 @@ class _JoinGroupRideByCodeSheetState
           const SizedBox(height: 4),
           Text(
             l10n.joinRideByCodeSubtitle,
-            style:
-                TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           TextField(

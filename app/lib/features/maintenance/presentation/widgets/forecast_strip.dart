@@ -21,8 +21,7 @@ class ForecastStrip extends StatelessWidget {
   static const horizonDays = 60;
   static const _maxItems = 6;
 
-  const ForecastStrip(
-      {super.key, required this.bikeId, required this.forecasts});
+  const ForecastStrip({super.key, required this.bikeId, required this.forecasts});
 
   /// The items the strip shows: datable, not low-stakes, within the horizon.
   static List<CheckForecast> visible(List<CheckForecast> all, DateTime now) {

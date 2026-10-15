@@ -85,10 +85,9 @@ class VehicleStateEstimator {
     if (!valid) return;
 
     if (headingDeg != null && headingDeg.isFinite) {
-      final gpsWeight =
-          accuracyM <= SensorConstants.headingGoodAccuracyThresholdM
-              ? SensorConstants.headingGpsWeightGoodAccuracy
-              : SensorConstants.headingGpsWeightPoorAccuracy;
+      final gpsWeight = accuracyM <= SensorConstants.headingGoodAccuracyThresholdM
+          ? SensorConstants.headingGpsWeightGoodAccuracy
+          : SensorConstants.headingGpsWeightPoorAccuracy;
       _fusedHeadingDeg = _blendHeading(
         _fusedHeadingDeg ?? headingDeg,
         headingDeg,
@@ -228,15 +227,13 @@ class VehicleStateEstimator {
 
     const freshSeconds = 2.0;
     const staleSeconds = 10.0;
-    final ageSeconds = now.difference(_lastGpsTimestamp!).inMilliseconds / 1000;
+    final ageSeconds =
+        now.difference(_lastGpsTimestamp!).inMilliseconds / 1000;
     final recencyScore = ageSeconds <= freshSeconds
         ? 20.0
         : ageSeconds >= staleSeconds
             ? 0.0
-            : 20 *
-                (1 -
-                    (ageSeconds - freshSeconds) /
-                        (staleSeconds - freshSeconds));
+            : 20 * (1 - (ageSeconds - freshSeconds) / (staleSeconds - freshSeconds));
 
     final imuScore = imuQuality / 100 * 30;
 
@@ -260,9 +257,10 @@ class VehicleStateEstimator {
     if (_accelWindow.length >= 5) {
       final values = _accelWindow.map((s) => s.value).toList();
       final mean = values.reduce((a, b) => a + b) / values.length;
-      final variance =
-          values.map((v) => (v - mean) * (v - mean)).reduce((a, b) => a + b) /
-              values.length;
+      final variance = values
+              .map((v) => (v - mean) * (v - mean))
+              .reduce((a, b) => a + b) /
+          values.length;
       if (variance < 0.0001) quality -= 20;
     }
 
@@ -270,8 +268,7 @@ class VehicleStateEstimator {
   }
 
   void _pruneAccelWindow(DateTime now) {
-    _accelWindow
-        .removeWhere((s) => now.difference(s.timestamp) > _rejectionWindow);
+    _accelWindow.removeWhere((s) => now.difference(s.timestamp) > _rejectionWindow);
   }
 
   void _pruneWindow(List<DateTime> timestamps, DateTime now) {

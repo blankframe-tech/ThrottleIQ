@@ -72,8 +72,7 @@ class AutoDetectionHistorySheet extends ConsumerWidget {
                       const SizedBox(height: 2),
                       Text(
                         l10n.dailySummariesSubtitle,
-                        style: TextStyle(
-                            fontSize: 12, color: context.palette.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                     ],
                   ),
@@ -108,8 +107,8 @@ class AutoDetectionHistorySheet extends ConsumerWidget {
                   itemBuilder: (context, index) {
                     final day = list[index];
                     return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 4),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                       leading: CircleAvatar(
                         radius: 18,
                         backgroundColor:
@@ -147,8 +146,7 @@ class AutoDetectionHistorySheet extends ConsumerWidget {
             const SizedBox(height: 12),
             Text(
               l10n.dailySummariesEmpty,
-              style:
-                  TextStyle(color: context.palette.textSecondary, fontSize: 13),
+              style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
               textAlign: TextAlign.center,
             ),
           ],

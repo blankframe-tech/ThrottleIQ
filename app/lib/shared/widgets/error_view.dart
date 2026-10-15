@@ -44,13 +44,11 @@ class ErrorView extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: context.palette.textSecondary, fontSize: 14),
+              style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
-              OutlinedButton(
-                  onPressed: onRetry, child: Text(context.l10n.tryAgain)),
+              OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
             ],
             if (showBugReport) ...[
               const SizedBox(height: 8),

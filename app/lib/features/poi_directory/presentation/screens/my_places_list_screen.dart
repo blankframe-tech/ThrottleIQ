@@ -25,8 +25,7 @@ class MyPlacesListScreen extends ConsumerWidget {
       backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(context.l10n.myPlaces)),
       body: placesAsync.when(
-        loading: () => Center(
-            child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(myPlacesProvider),
@@ -39,13 +38,10 @@ class MyPlacesListScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.place_outlined,
-                        size: 64, color: context.palette.textTertiary),
+                    Icon(Icons.place_outlined, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
                     Text(context.l10n.haventAddedAnyPlaces,
-                        style: TextStyle(
-                            color: context.palette.textSecondary,
-                            fontSize: 16)),
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -72,8 +68,7 @@ class MyPlacesListScreen extends ConsumerWidget {
                           color: context.palette.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Text(place.category.icon,
-                            style: const TextStyle(fontSize: 20)),
+                        child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -90,18 +85,14 @@ class MyPlacesListScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               place.verified
-                                  ? context.l10n.verified(place.category
-                                      .localizedName(context.l10n))
+                                  ? context.l10n.verified(place.category.localizedName(context.l10n))
                                   : place.category.localizedName(context.l10n),
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  color: context.palette.textSecondary),
+                              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                             ),
                           ],
                         ),
                       ),
-                      Icon(Icons.chevron_right,
-                          color: context.palette.textTertiary),
+                      Icon(Icons.chevron_right, color: context.palette.textTertiary),
                     ],
                   ),
                 );

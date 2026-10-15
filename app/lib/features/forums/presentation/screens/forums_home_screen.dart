@@ -41,16 +41,15 @@ class _ForumsHomeScreenState extends State<ForumsHomeScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
-              AppDimensions.paddingMd, AppDimensions.paddingMd, 4),
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 4),
           child: SizedBox(
             width: double.infinity,
             child: SegmentedButton<ForumsLens>(
               key: const Key('forums_lens_toggle'),
               showSelectedIcon: false,
               style: SegmentedButton.styleFrom(
-                selectedBackgroundColor:
-                    context.palette.primary.withValues(alpha: 0.16),
+                selectedBackgroundColor: context.palette.primary.withValues(alpha: 0.16),
                 selectedForegroundColor: context.palette.primary,
                 foregroundColor: context.palette.textSecondary,
               ),

@@ -118,8 +118,7 @@ class _DualLeanArcPainter extends CustomPainter {
   final Color dangerColor;
 
   static const double _maxDegrees = 60.0;
-  static const double _arcSweepMaxRad =
-      math.pi * 0.42; // ~75 deg sweep each side
+  static const double _arcSweepMaxRad = math.pi * 0.42; // ~75 deg sweep each side
 
   _DualLeanArcPainter({
     required this.leftAngle,
@@ -226,8 +225,7 @@ class _DualLeanArcPainter extends CustomPainter {
     }
 
     if (peakRightAngle != null && peakRightAngle! > 1.0) {
-      ghostPaint.color =
-          _colorForAngle(peakRightAngle!).withValues(alpha: 0.75);
+      ghostPaint.color = _colorForAngle(peakRightAngle!).withValues(alpha: 0.75);
       final rad = topCenter + (peakRightAngle! / _maxDegrees) * _arcSweepMaxRad;
       _drawPeakMarker(canvas, center, radius, rad, ghostPaint);
     }

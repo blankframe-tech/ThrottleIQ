@@ -92,10 +92,7 @@ class PlaceModel {
       googleRating: entity.googleRating,
       googleRatingCount: entity.googleRatingCount,
       osmId: entity.osmId,
-      tags: [
-        for (final t in PlaceTag.values)
-          if (entity.tags.contains(t)) t.name
-      ],
+      tags: [for (final t in PlaceTag.values) if (entity.tags.contains(t)) t.name],
     );
   }
 

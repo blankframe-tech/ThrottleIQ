@@ -21,10 +21,9 @@ import 'dart:ui';
 /// centred — i.e. `BoxFit.contain` as a rect.
 Rect fitInside(Size content, Size viewport) {
   if (content.width <= 0 || content.height <= 0) return Rect.zero;
-  final scale =
-      (viewport.width / content.width) < (viewport.height / content.height)
-          ? viewport.width / content.width
-          : viewport.height / content.height;
+  final scale = (viewport.width / content.width) < (viewport.height / content.height)
+      ? viewport.width / content.width
+      : viewport.height / content.height;
   final w = content.width * scale;
   final h = content.height * scale;
   return Rect.fromLTWH(
@@ -117,10 +116,8 @@ Rect applyHandleDrag({
   double minSize = 48,
 }) {
   if (handle == CropHandle.move) {
-    final dx =
-        delta.dx.clamp(bounds.left - crop.left, bounds.right - crop.right);
-    final dy =
-        delta.dy.clamp(bounds.top - crop.top, bounds.bottom - crop.bottom);
+    final dx = delta.dx.clamp(bounds.left - crop.left, bounds.right - crop.right);
+    final dy = delta.dy.clamp(bounds.top - crop.top, bounds.bottom - crop.bottom);
     return crop.shift(Offset(dx, dy));
   }
 
@@ -143,11 +140,9 @@ Rect applyHandleDrag({
       handle == CropHandle.bottomRight;
 
   if (movesLeft) left = (left + delta.dx).clamp(bounds.left, right - minSize);
-  if (movesRight)
-    right = (right + delta.dx).clamp(left + minSize, bounds.right);
+  if (movesRight) right = (right + delta.dx).clamp(left + minSize, bounds.right);
   if (movesTop) top = (top + delta.dy).clamp(bounds.top, bottom - minSize);
-  if (movesBottom)
-    bottom = (bottom + delta.dy).clamp(top + minSize, bounds.bottom);
+  if (movesBottom) bottom = (bottom + delta.dy).clamp(top + minSize, bounds.bottom);
 
   var result = Rect.fromLTRB(left, top, right, bottom);
   if (aspectRatio != null && aspectRatio > 0) {
@@ -255,13 +250,10 @@ Rect toSourceRect(Rect crop, Rect display, Size sourceSize) {
   final scaleX = sourceSize.width / display.width;
   final scaleY = sourceSize.height / display.height;
 
-  final left =
-      ((crop.left - display.left) * scaleX).clamp(0.0, sourceSize.width);
+  final left = ((crop.left - display.left) * scaleX).clamp(0.0, sourceSize.width);
   final top = ((crop.top - display.top) * scaleY).clamp(0.0, sourceSize.height);
-  final right =
-      ((crop.right - display.left) * scaleX).clamp(0.0, sourceSize.width);
-  final bottom =
-      ((crop.bottom - display.top) * scaleY).clamp(0.0, sourceSize.height);
+  final right = ((crop.right - display.left) * scaleX).clamp(0.0, sourceSize.width);
+  final bottom = ((crop.bottom - display.top) * scaleY).clamp(0.0, sourceSize.height);
 
   return Rect.fromLTRB(
     left,
@@ -274,5 +266,7 @@ Rect toSourceRect(Rect crop, Rect display, Size sourceSize) {
 /// [size] with its axes swapped for odd quarter-turns — the dimensions a
 /// photo takes on after [quarterTurns] × 90° of rotation.
 Size rotatedSize(Size size, int quarterTurns) {
-  return quarterTurns.isEven ? size : Size(size.height, size.width);
+  return quarterTurns.isEven
+      ? size
+      : Size(size.height, size.width);
 }

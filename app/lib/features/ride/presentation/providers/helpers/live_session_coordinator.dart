@@ -72,7 +72,8 @@ class LiveSessionCoordinator {
 
   /// Whether the 1 Hz RTDB relay is currently the thing carrying position.
   bool get _relayCarriesPosition =>
-      _relay != null && _realtime?.transportNow() == RealtimeTransport.realtime;
+      _relay != null &&
+      _realtime?.transportNow() == RealtimeTransport.realtime;
 
   /// Hands one GPS fix to the RTDB relay. Called for every fix while the
   /// ride is active; the relay throttles to [kLiveRelayInterval]. A no-op
@@ -95,8 +96,7 @@ class LiveSessionCoordinator {
   /// Uses `Random.secure()` so the ~190 bits of entropy cannot be guessed from
   /// the system clock (issues §24.2).
   String createLiveSessionToken() {
-    const chars =
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     final rnd = Random.secure();
     return String.fromCharCodes(
       Iterable.generate(32, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
@@ -223,9 +223,9 @@ class LiveSessionCoordinator {
               // writes a client Timestamp; a rider whose clock is off would
               // otherwise look stale (or impossibly fresh) to the viewer.
               .set({
-            ...session.toFirestore(),
-            'updatedAt': FieldValue.serverTimestamp(),
-          }),
+                ...session.toFirestore(),
+                'updatedAt': FieldValue.serverTimestamp(),
+              }),
         ),
         if (existingToken == null) _maybePublishLivePointer(uid, token),
       ]);
@@ -377,8 +377,7 @@ class LiveSessionCoordinator {
     );
   }
 
-  Future<void> _bestEffortWrite(
-      String label, Future<void> Function() write) async {
+  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
     try {
       await write().timeout(kOutboxAttemptTimeout);
     } on TimeoutException {

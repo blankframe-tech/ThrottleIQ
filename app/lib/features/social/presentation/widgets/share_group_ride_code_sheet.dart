@@ -55,8 +55,7 @@ class ShareGroupRideCodeSheet extends StatelessWidget {
         left: AppDimensions.paddingMd,
         right: AppDimensions.paddingMd,
         top: AppDimensions.paddingMd,
-        bottom:
-            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -73,8 +72,7 @@ class ShareGroupRideCodeSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             l10n.shareRideCodeSubtitle,
-            style:
-                TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           Container(
@@ -102,10 +100,8 @@ class ShareGroupRideCodeSheet extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: () => _copy(context),
                   icon: const Icon(Icons.copy_outlined, size: 18),
-                  label: Text(l10n.shareRideCodeCopyAction,
-                      overflow: TextOverflow.ellipsis),
-                  style:
-                      OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+                  label: Text(l10n.shareRideCodeCopyAction, overflow: TextOverflow.ellipsis),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
                 ),
               ),
               const SizedBox(width: 8),
@@ -113,8 +109,7 @@ class ShareGroupRideCodeSheet extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: () => _share(context),
                   icon: const Icon(Icons.ios_share, size: 18),
-                  label: Text(l10n.shareRideCodeShareAction,
-                      overflow: TextOverflow.ellipsis),
+                  label: Text(l10n.shareRideCodeShareAction, overflow: TextOverflow.ellipsis),
                   style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
                 ),
               ),

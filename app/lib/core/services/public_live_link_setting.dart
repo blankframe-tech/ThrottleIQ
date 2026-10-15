@@ -35,10 +35,7 @@ class PublicLiveLinkSetting {
     await prefs.setBool(prefsKey, value);
     if (!value && uid != null) {
       try {
-        await FirebaseFirestore.instance
-            .collection('livePointers')
-            .doc(uid)
-            .set({
+        await FirebaseFirestore.instance.collection('livePointers').doc(uid).set({
           'uid': uid,
           'token': null,
           'active': false,

@@ -35,8 +35,8 @@ class MedicalInfoNotifier extends StateNotifier<MedicalInfoEntity> {
     final raw = prefs.getString(_prefsKey);
     if (raw == null) return;
     try {
-      state =
-          MedicalInfoEntity.fromJson(json.decode(raw) as Map<String, dynamic>);
+      state = MedicalInfoEntity.fromJson(
+          json.decode(raw) as Map<String, dynamic>);
     } catch (_) {
       // Corrupt/foreign value under this key — treat as never set rather
       // than crashing the settings screen that reads this provider.

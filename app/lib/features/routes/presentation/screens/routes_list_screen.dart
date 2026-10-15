@@ -93,8 +93,8 @@ class _RoutesTab extends ConsumerWidget {
     final routesAsync = ref.watch(provider);
 
     return routesAsync.when(
-      loading: () => Center(
-          child: CircularProgressIndicator(color: context.palette.primary)),
+      loading: () =>
+          Center(child: CircularProgressIndicator(color: context.palette.primary)),
       error: (e, _) => ErrorView(
         error: e,
         onRetry: () => ref.invalidate(provider),
@@ -107,15 +107,11 @@ class _RoutesTab extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.route_outlined,
-                      size: 64, color: context.palette.textTertiary),
+                  Icon(Icons.route_outlined, size: 64, color: context.palette.textTertiary),
                   const SizedBox(height: 16),
                   Text(
-                    mine
-                        ? context.l10n.noSavedRoutesYet
-                        : context.l10n.noPublicRoutesYet,
-                    style: TextStyle(
-                        color: context.palette.textSecondary, fontSize: 16),
+                    mine ? context.l10n.noSavedRoutesYet : context.l10n.noPublicRoutesYet,
+                    style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -123,8 +119,7 @@ class _RoutesTab extends ConsumerWidget {
                         ? context.l10n.finishRideThenTap
                         : context.l10n.publicRoutesOtherRiders,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: context.palette.textTertiary, fontSize: 14),
+                    style: TextStyle(color: context.palette.textTertiary, fontSize: 14),
                   ),
                 ],
               ),
@@ -193,10 +188,8 @@ class _RouteCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            context.l10n.routeRiddenSummary(
-                route.distanceKm.toStringAsFixed(1), route.timesRidden),
-            style:
-                TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            context.l10n.routeRiddenSummary(route.distanceKm.toStringAsFixed(1), route.timesRidden),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           if (route.description != null && route.description!.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -204,8 +197,7 @@ class _RouteCard extends StatelessWidget {
               route.description!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style:
-                  TextStyle(fontSize: 13, color: context.palette.textSecondary),
+              style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
             ),
           ],
         ],

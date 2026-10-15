@@ -48,8 +48,7 @@ class SavedPlacesTab extends ConsumerWidget {
                 const SizedBox(height: 2),
                 Text(
                   context.l10n.savedPlacesContributedBody,
-                  style: TextStyle(
-                      fontSize: 12, color: context.palette.textSecondary),
+                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -60,15 +59,12 @@ class SavedPlacesTab extends ConsumerWidget {
     );
 
     return savedAsync.when(
-      loading: () => Center(
-          child: CircularProgressIndicator(color: context.palette.primary)),
-      error: (e, _) => ErrorView(
-          error: e, onRetry: () => ref.invalidate(savedPlacesProvider)),
+      loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+      error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(savedPlacesProvider)),
       data: (saved) {
         final hits = [
           for (final place in saved)
-            toHit(place,
-                originLat: position?.latitude, originLng: position?.longitude),
+            toHit(place, originLat: position?.latitude, originLng: position?.longitude),
         ];
         // §97.5: Moved SavedPlacesTab to ListView.builder for lazy loading of the list items,
         // which improves scrolling performance compared to the default eager ListView.
@@ -97,8 +93,7 @@ class SavedPlacesTab extends ConsumerWidget {
             final hit = hits[i - 1];
             return Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child:
-                  PlaceCard(key: ValueKey('saved-${hit.place.id}'), hit: hit),
+              child: PlaceCard(key: ValueKey('saved-${hit.place.id}'), hit: hit),
             );
           },
         );

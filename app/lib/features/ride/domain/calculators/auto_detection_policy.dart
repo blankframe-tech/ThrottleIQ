@@ -75,11 +75,11 @@ List<List<T>> runsClearOfRides<T>(
   if (fixes.isEmpty) return <List<T>>[];
   if (windows.isEmpty) return [fixes];
 
-  bool inside(DateTime t) => windows.any(
-      (w) => !t.isBefore(w.start) && (w.end == null || !t.isAfter(w.end!)));
+  bool inside(DateTime t) => windows.any((w) =>
+      !t.isBefore(w.start) && (w.end == null || !t.isAfter(w.end!)));
 
-  bool windowBetween(DateTime a, DateTime b) => windows
-      .any((w) => w.start.isBefore(b) && (w.end == null || w.end!.isAfter(a)));
+  bool windowBetween(DateTime a, DateTime b) => windows.any((w) =>
+      w.start.isBefore(b) && (w.end == null || w.end!.isAfter(a)));
 
   final runs = <List<T>>[];
   int? runStart;

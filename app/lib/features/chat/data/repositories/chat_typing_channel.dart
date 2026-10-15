@@ -61,8 +61,7 @@ class ChatTypingChannel {
 
   RealtimeServices get services => _realtime;
 
-  static String _path(String chatId, String uid) =>
-      'chat_presence/$chatId/$uid';
+  static String _path(String chatId, String uid) => 'chat_presence/$chatId/$uid';
 
   /// Publishes this rider's typing state. The first `true` also arms an
   /// `onDisconnect` remove, so a killed app or lost signal clears it

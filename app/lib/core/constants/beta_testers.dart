@@ -10,20 +10,12 @@ class BetaTesters {
 
   /// Riders who see the "In a jam" / "Jam released" labelling buttons on the
   /// active ride screen (see jam_label_provider.dart).
-  static const Set<String> jamLabelling = {
-    'abraaraidev',
-    'the-abraar',
-    'theabraar'
-  };
+  static const Set<String> jamLabelling = {'abraaraidev', 'the-abraar', 'theabraar'};
 
   /// Riders who see the demo "Order" (cash-on-delivery) button on due parts
   /// in Maintenance. It places no real order — there is no parts partner
   /// yet — so everyone else doesn't see it at all.
-  static const Set<String> partOrdering = {
-    'abraaraidev',
-    'the-abraar',
-    'theabraar'
-  };
+  static const Set<String> partOrdering = {'abraaraidev', 'the-abraar', 'theabraar'};
 
   static bool canLabelJams(String? username) {
     final handle = _handle(username);

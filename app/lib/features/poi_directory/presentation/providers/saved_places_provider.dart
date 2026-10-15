@@ -31,10 +31,7 @@ class SavedPlacesNotifier extends AsyncNotifier<List<PlaceEntity>> {
     final wasSaved = current.any((p) => p.id == place.id);
 
     state = AsyncData(wasSaved
-        ? [
-            for (final p in current)
-              if (p.id != place.id) p
-          ]
+        ? [for (final p in current) if (p.id != place.id) p]
         : [place, ...current]);
     try {
       if (wasSaved) {
@@ -51,8 +48,7 @@ class SavedPlacesNotifier extends AsyncNotifier<List<PlaceEntity>> {
 }
 
 final savedPlacesProvider =
-    AsyncNotifierProvider<SavedPlacesNotifier, List<PlaceEntity>>(
-        SavedPlacesNotifier.new);
+    AsyncNotifierProvider<SavedPlacesNotifier, List<PlaceEntity>>(SavedPlacesNotifier.new);
 
 /// Ids of saved places, for the bookmark toggle on every card.
 final savedPlaceIdsProvider = Provider<Set<String>>((ref) {

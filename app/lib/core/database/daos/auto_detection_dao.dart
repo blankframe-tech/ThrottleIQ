@@ -176,10 +176,9 @@ class AutoDetectionDao {
       // newest of the fix and the start is taken after parsing.
       final started = DateTime.tryParse(r['started_at'] as String? ?? '');
       final lastFix = DateTime.tryParse(r['last_fix'] as String? ?? '');
-      final last =
-          (lastFix != null && (started == null || lastFix.isAfter(started)))
-              ? lastFix
-              : started;
+      final last = (lastFix != null && (started == null || lastFix.isAfter(started)))
+          ? lastFix
+          : started;
       if (last == null) continue;
       out.add((id: r['id'] as String, lastActivity: last));
     }
@@ -348,12 +347,11 @@ class AutoDetectionDao {
   }
 
   /// Drops raw fixes for old summarized detections to free up disk space.
-  ///
+  /// 
   /// Once purged, these detections no longer contribute to the recomputed
   /// daily summary's distance/duration totals. By default this keeps
   /// fixes for 14 days, matching the summary's UI lookback window.
-  Future<int> purgeOldSummarizedFixes(DateTime now,
-      {Duration retention = const Duration(days: 14)}) async {
+  Future<int> purgeOldSummarizedFixes(DateTime now, {Duration retention = const Duration(days: 14)}) async {
     final db = await DatabaseHelper.instance.database;
     final cutoff = now.subtract(retention).toIso8601String();
     return db.transaction((txn) async {

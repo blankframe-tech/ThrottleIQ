@@ -47,8 +47,7 @@ class GForceFrictionCircle extends StatelessWidget {
             : primaryColor;
 
     return Semantics(
-      label:
-          'G-Force friction circle. Total ${combinedG.toStringAsFixed(2)} g. '
+      label: 'G-Force friction circle. Total ${combinedG.toStringAsFixed(2)} g. '
           'Lateral ${lateralG.toStringAsFixed(2)} g, Longitudinal ${longitudinalG.toStringAsFixed(2)} g',
       child: Container(
         width: size,

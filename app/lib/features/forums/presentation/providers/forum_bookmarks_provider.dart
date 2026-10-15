@@ -45,8 +45,7 @@ class ForumBookmark extends Equatable {
       };
 
   @override
-  List<Object?> get props =>
-      [forumId, postId, title, forumName, postType, savedAt];
+  List<Object?> get props => [forumId, postId, title, forumName, postType, savedAt];
 }
 
 String encodeForumBookmarks(List<ForumBookmark> bookmarks) =>
@@ -62,9 +61,7 @@ List<ForumBookmark> decodeForumBookmarks(String? raw) {
     if (decoded is! List) return const [];
     return [
       for (final e in decoded)
-        if (e is Map<String, dynamic> &&
-            e['forumId'] is String &&
-            e['postId'] is String)
+        if (e is Map<String, dynamic> && e['forumId'] is String && e['postId'] is String)
           ForumBookmark(
             forumId: e['forumId'] as String,
             postId: e['postId'] as String,
@@ -88,10 +85,7 @@ List<ForumBookmark> toggleForumBookmark(
   ForumBookmark bookmark,
 ) {
   if (bookmarks.any((b) => b.key == bookmark.key)) {
-    return [
-      for (final b in bookmarks)
-        if (b.key != bookmark.key) b
-    ];
+    return [for (final b in bookmarks) if (b.key != bookmark.key) b];
   }
   return [bookmark, ...bookmarks].take(kMaxForumBookmarks).toList();
 }
@@ -126,10 +120,7 @@ class ForumBookmarksNotifier extends StateNotifier<List<ForumBookmark>> {
 
   /// Removes the bookmark with [ForumBookmark.key] == [key].
   Future<void> removeKey(String key) async {
-    state = [
-      for (final b in state)
-        if (b.key != key) b
-    ];
+    state = [for (final b in state) if (b.key != key) b];
     await _persist();
   }
 

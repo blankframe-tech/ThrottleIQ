@@ -33,10 +33,8 @@ class HighwayRadarBanner extends ConsumerWidget {
     final nearest = radar.nearest;
 
     final summary = [
-      if (radar.cameras.isNotEmpty)
-        context.l10n.radarCameras(radar.cameras.length),
-      if (radar.police.isNotEmpty)
-        context.l10n.radarPolice(radar.police.length),
+      if (radar.cameras.isNotEmpty) context.l10n.radarCameras(radar.cameras.length),
+      if (radar.police.isNotEmpty) context.l10n.radarPolice(radar.police.length),
     ].join(' · ');
 
     return Semantics(
@@ -54,8 +52,7 @@ class HighwayRadarBanner extends ConsumerWidget {
             final next = !highlighted;
             ref.read(radarHighlightProvider.notifier).state = next;
             if (next) {
-              ref.read(placesViewModeProvider.notifier).state =
-                  PlacesViewMode.map;
+              ref.read(placesViewModeProvider.notifier).state = PlacesViewMode.map;
             }
           },
           child: Padding(
@@ -82,14 +79,11 @@ class HighwayRadarBanner extends ConsumerWidget {
                         [
                           context.l10n.radarWithin(formatRadiusKm(radius)),
                           if (nearest?.distanceKm != null)
-                            context.l10n.radarNearest(SpeedFormatter.distanceKm(
-                                nearest!.distanceKm! * 1000)),
-                          highlighted
-                              ? context.l10n.radarHideOnMap
-                              : context.l10n.radarShowOnMap,
+                            context.l10n.radarNearest(
+                                SpeedFormatter.distanceKm(nearest!.distanceKm! * 1000)),
+                          highlighted ? context.l10n.radarHideOnMap : context.l10n.radarShowOnMap,
                         ].join(' · '),
-                        style: TextStyle(
-                            fontSize: 12, color: context.palette.textSecondary),
+                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                       ),
                     ],
                   ),
@@ -98,8 +92,7 @@ class HighwayRadarBanner extends ConsumerWidget {
                   tooltip: context.l10n.radarListTitle,
                   visualDensity: VisualDensity.compact,
                   onPressed: () => _showList(context, radar),
-                  icon:
-                      Icon(Icons.format_list_bulleted, color: danger, size: 20),
+                  icon: Icon(Icons.format_list_bulleted, color: danger, size: 20),
                 ),
                 IconButton(
                   tooltip: context.l10n.radarDismiss,
@@ -108,8 +101,7 @@ class HighwayRadarBanner extends ConsumerWidget {
                     ref.read(radarDismissedProvider.notifier).state = true;
                     ref.read(radarHighlightProvider.notifier).state = false;
                   },
-                  icon: Icon(Icons.close,
-                      color: context.palette.textSecondary, size: 18),
+                  icon: Icon(Icons.close, color: context.palette.textSecondary, size: 18),
                 ),
               ],
             ),
@@ -139,8 +131,7 @@ class _RadarListSheet extends ConsumerWidget {
     return SafeArea(
       top: false,
       child: ConstrainedBox(
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.7),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -164,8 +155,7 @@ class _RadarListSheet extends ConsumerWidget {
                   final hit = points[i];
                   final place = hit.place;
                   return ListTile(
-                    leading: Icon(place.category.markerIcon,
-                        color: place.category.accent(context)),
+                    leading: Icon(place.category.markerIcon, color: place.category.accent(context)),
                     title: Text(place.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -181,16 +171,13 @@ class _RadarListSheet extends ConsumerWidget {
                     trailing: IconButton(
                       tooltip: context.l10n.directions,
                       icon: const Icon(Icons.directions),
-                      onPressed: () => PlaceLaunchActions.openDirections(
-                          context, ref, place),
+                      onPressed: () => PlaceLaunchActions.openDirections(context, ref, place),
                     ),
                     onTap: () {
                       Navigator.of(context).pop();
                       ref.read(radarHighlightProvider.notifier).state = true;
-                      ref.read(placesViewModeProvider.notifier).state =
-                          PlacesViewMode.map;
-                      ref.read(selectedPlaceIdProvider.notifier).state =
-                          place.id;
+                      ref.read(placesViewModeProvider.notifier).state = PlacesViewMode.map;
+                      ref.read(selectedPlaceIdProvider.notifier).state = place.id;
                     },
                   );
                 },

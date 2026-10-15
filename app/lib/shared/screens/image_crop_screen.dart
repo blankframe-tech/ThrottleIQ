@@ -38,7 +38,6 @@ class ImageCropScreen extends StatefulWidget {
   });
 
   final String sourcePath;
-
   /// Null means the default, "Crop photo", in the rider's language.
   final String? title;
 
@@ -119,8 +118,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     try {
       final bytes = await File(widget.sourcePath).readAsBytes();
       final decoded = ImageCropScreen.adoptOrDispose(
-          await decodeImageFromList(bytes),
-          mounted: mounted);
+          await decodeImageFromList(bytes), mounted: mounted);
       if (decoded == null) return;
       setState(() => _preview = decoded);
     } catch (e) {
@@ -157,8 +155,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
       final display = _display;
       final crop = _crop;
       if (display != null && crop != null) {
-        _crop =
-            ratio == null ? crop : retargetAspectRatio(crop, display, ratio);
+        _crop = ratio == null ? crop : retargetAspectRatio(crop, display, ratio);
       }
     });
   }
@@ -229,8 +226,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
           Expanded(child: _buildCanvas()),
           if (_error != null)
             Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMd),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
               child: Text(_error!,
                   style: TextStyle(color: context.palette.danger, fontSize: 13),
                   textAlign: TextAlign.center),
@@ -245,8 +241,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
     if (_preview == null) {
       return Center(
         child: _error != null
-            ? Icon(Icons.broken_image_outlined,
-                size: 48, color: context.palette.textTertiary)
+            ? Icon(Icons.broken_image_outlined, size: 48, color: context.palette.textTertiary)
             : CircularProgressIndicator(color: context.palette.primary),
       );
     }
@@ -315,8 +310,7 @@ class _ImageCropScreenState extends State<ImageCropScreen> {
                 _RatioChip(
                   label: preset.label ?? context.l10n.free,
                   selected: _ratio == preset.ratio,
-                  onTap:
-                      _preview == null ? null : () => _setRatio(preset.ratio),
+                  onTap: _preview == null ? null : () => _setRatio(preset.ratio),
                 ),
             ],
           ),
@@ -355,9 +349,7 @@ class _RatioChip extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: display(
-            context,
-            13,
+          style: display(context, 13,
             letterSpacing: 0,
             color: selected
                 ? (Theme.of(context).brightness == Brightness.dark

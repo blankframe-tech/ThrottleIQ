@@ -32,8 +32,7 @@ enum GroupSelectionProblem { tooFew, tooMany }
 ///
 /// Deliberately total: it answers for every integer including negatives
 /// (treated the same as zero — nothing picked yet).
-({GroupSelectionProblem problem, int shortBy})? validateGroupSelection(
-    int count) {
+({GroupSelectionProblem problem, int shortBy})? validateGroupSelection(int count) {
   if (count > kMaxGroupRideFriends) {
     return (problem: GroupSelectionProblem.tooMany, shortBy: 0);
   }

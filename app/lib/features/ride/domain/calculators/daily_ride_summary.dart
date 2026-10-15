@@ -73,8 +73,9 @@ class RideCluster {
   const RideCluster(this.segments);
 
   DateTime get start => segments.first.start;
-  DateTime get end =>
-      segments.map((s) => s.end).reduce((a, b) => a.isAfter(b) ? a : b);
+  DateTime get end => segments
+      .map((s) => s.end)
+      .reduce((a, b) => a.isAfter(b) ? a : b);
 
   bool get hasRecorded => segments.any((s) => s.isRecorded);
 
@@ -98,7 +99,8 @@ class RideCluster {
     return total;
   }
 
-  int get movingSeconds => segments.fold(0, (sum, s) => sum + s.movingSeconds);
+  int get movingSeconds =>
+      segments.fold(0, (sum, s) => sum + s.movingSeconds);
 
   /// Each segment's ride clock plus the gaps bridged between them — the
   /// stationary time in a jam is ride time, which is the whole point.
@@ -163,8 +165,8 @@ class DailyRideSummary {
   bool get isEmpty => rideCount == 0;
 
   /// Stopped-while-riding time, via the same rule as a single ride's.
-  int get jamSeconds => jam.jamSeconds(
-      durationSeconds: rideSeconds, movingSeconds: movingSeconds);
+  int get jamSeconds =>
+      jam.jamSeconds(durationSeconds: rideSeconds, movingSeconds: movingSeconds);
 }
 
 /// Groups [segments] into rides.

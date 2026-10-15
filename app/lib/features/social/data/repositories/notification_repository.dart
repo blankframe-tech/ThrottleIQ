@@ -9,8 +9,7 @@ import '../../domain/entities/app_notification_entity.dart';
 String followNotificationId(String fromUid) => 'follow_$fromUid';
 
 class NotificationRepository {
-  static final NotificationRepository _instance =
-      NotificationRepository._internal();
+  static final NotificationRepository _instance = NotificationRepository._internal();
   factory NotificationRepository() => _instance;
   NotificationRepository._internal();
 
@@ -115,8 +114,7 @@ class NotificationRepository {
         .map((snap) => snap.docs.map(_fromDoc).toList());
   }
 
-  AppNotificationEntity _fromDoc(
-      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  AppNotificationEntity _fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return AppNotificationEntity(
       id: doc.id,

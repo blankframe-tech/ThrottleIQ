@@ -84,11 +84,9 @@ class ChatRepository {
   /// the same moment each created their own room. Chats now live at
   /// [dmId] and are created inside a transaction, so concurrent opens
   /// converge on one document.
-  Future<String> getOrCreateChat(
-      String currentUserId, String otherUserId) async {
+  Future<String> getOrCreateChat(String currentUserId, String otherUserId) async {
     if (currentUserId == otherUserId) {
-      throw ArgumentError.value(
-          otherUserId, 'otherUserId', 'cannot chat with yourself');
+      throw ArgumentError.value(otherUserId, 'otherUserId', 'cannot chat with yourself');
     }
     final id = dmId(currentUserId, otherUserId);
     final ref = _firestore.collection('chats').doc(id);
@@ -115,8 +113,7 @@ class ChatRepository {
     return id;
   }
 
-  Future<String?> _findLegacyChat(
-      String currentUserId, String otherUserId) async {
+  Future<String?> _findLegacyChat(String currentUserId, String otherUserId) async {
     final snap = await _firestore
         .collection('chats')
         .where('participants', arrayContains: currentUserId)
@@ -136,10 +133,13 @@ class ChatRepository {
     required String text,
   }) async {
     final batch = _firestore.batch();
-
-    final messageRef =
-        _firestore.collection('chats').doc(chatId).collection('messages').doc();
-
+    
+    final messageRef = _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc();
+        
     final chatRef = _firestore.collection('chats').doc(chatId);
 
     batch.set(messageRef, {

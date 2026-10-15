@@ -49,11 +49,11 @@ void main() {
     ));
 
     await tester.pumpAndSettle();
-
+    
     // Check if place name is rendered, meaning the loading finished
     expect(find.text('Test Place'), findsWidgets);
-
-    // We check for the ClipRRect that wraps the banner, because Image.network
+    
+    // We check for the ClipRRect that wraps the banner, because Image.network 
     // might fail in tests and trigger the errorBuilder, but ClipRRect is always there.
     expect(find.byType(ClipRRect), findsWidgets);
 

@@ -65,16 +65,13 @@ class _PeopleTabState extends ConsumerState<_PeopleTab> {
               fillColor: context.palette.surface,
               contentPadding: const EdgeInsets.symmetric(vertical: 10),
               hintText: context.l10n.searchRidersHint,
-              hintStyle:
-                  TextStyle(color: context.palette.textTertiary, fontSize: 14),
-              prefixIcon: Icon(Icons.search,
-                  color: context.palette.textSecondary, size: 20),
+              hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 14),
+              prefixIcon: Icon(Icons.search, color: context.palette.textSecondary, size: 20),
               suffixIcon: _controller.text.isEmpty
                   ? null
                   : IconButton(
                       tooltip: context.l10n.close,
-                      icon: Icon(Icons.close,
-                          color: context.palette.textSecondary, size: 18),
+                      icon: Icon(Icons.close, color: context.palette.textSecondary, size: 18),
                       onPressed: _clear,
                     ),
               border: OutlineInputBorder(
@@ -115,15 +112,13 @@ class _RiderSearchList extends ConsumerWidget {
         .toList();
 
     if (ridersAsync.isLoading) {
-      return Center(
-          child: CircularProgressIndicator(color: context.palette.primary));
+      return Center(child: CircularProgressIndicator(color: context.palette.primary));
     }
     if (ridersAsync.hasError) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(AppDimensions.paddingLg),
-          child: _SectionMessage(
-              context.l10n.couldntSearchRiders(ridersAsync.error ?? '')),
+          child: _SectionMessage(context.l10n.couldntSearchRiders(ridersAsync.error ?? '')),
         ),
       );
     }
@@ -134,8 +129,7 @@ class _RiderSearchList extends ConsumerWidget {
           child: Text(
             context.l10n.nothingFoundTryUsername(query),
             textAlign: TextAlign.center,
-            style:
-                TextStyle(color: context.palette.textSecondary, fontSize: 14),
+            style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
           ),
         ),
       );
@@ -170,8 +164,7 @@ class _FollowingList extends ConsumerWidget {
         if (suggestions.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
-                  AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
+              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
               child: EditorialLabel(context.l10n.suggestedForYou),
             ),
           ),
@@ -180,8 +173,7 @@ class _FollowingList extends ConsumerWidget {
               height: 140,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingMd),
+                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
                 // Suggestions are capped (kSuggestionCap), so the trailing
                 // card is the way to everyone else.
                 itemCount: suggestions.length + 1,
@@ -199,8 +191,7 @@ class _FollowingList extends ConsumerWidget {
         ],
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
-                AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
+            padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
             child: EditorialLabel(context.l10n.following),
           ),
         ),
@@ -208,9 +199,7 @@ class _FollowingList extends ConsumerWidget {
           loading: () => SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Center(
-                  child: CircularProgressIndicator(
-                      color: context.palette.primary)),
+              child: Center(child: CircularProgressIndicator(color: context.palette.primary)),
             ),
           ),
           error: (e, _) => SliverToBoxAdapter(
@@ -228,15 +217,12 @@ class _FollowingList extends ConsumerWidget {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.people_outline,
-                            size: 64, color: context.palette.textTertiary),
+                        Icon(Icons.people_outline, size: 64, color: context.palette.textTertiary),
                         const SizedBox(height: 16),
                         Text(
                           context.l10n.notFollowingAnyoneYet,
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                              color: context.palette.textSecondary,
-                              fontSize: 16),
+                          style: TextStyle(color: context.palette.textSecondary, fontSize: 16),
                         ),
                       ],
                     ),
@@ -245,8 +231,7 @@ class _FollowingList extends ConsumerWidget {
               );
             }
             return SliverPadding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMd),
+              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, i) {
@@ -284,8 +269,7 @@ class _SuggestedRiderCard extends ConsumerWidget {
         ),
         child: Column(
           children: [
-            UserAvatar(
-                photoUrl: rider.photoUrl, name: rider.bestName, radius: 24),
+            UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 24),
             const SizedBox(height: 8),
             Text(
               rider.bestName,

@@ -128,8 +128,7 @@ class LiveSessionEntity extends Equatable {
   /// a garbled timestamp should read as long-expired, not blow up the viewer.
   static DateTime _dateFrom(Object? raw) {
     if (raw is Timestamp) return raw.toDate();
-    if (raw is String)
-      return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
+    if (raw is String) return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
     if (raw is DateTime) return raw;
     return DateTime.fromMillisecondsSinceEpoch(0);
   }

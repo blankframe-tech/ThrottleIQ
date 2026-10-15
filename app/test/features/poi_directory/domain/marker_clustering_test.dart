@@ -3,8 +3,7 @@ import 'package:throttleiq/features/poi_directory/domain/marker_clustering.dart'
 
 typedef _Pt = ({String id, double lat, double lng});
 
-List<MapCluster<_Pt>> _cluster(List<_Pt> pts, double zoom) =>
-    clusterByGrid<_Pt>(
+List<MapCluster<_Pt>> _cluster(List<_Pt> pts, double zoom) => clusterByGrid<_Pt>(
       pts,
       latitudeOf: (p) => p.lat,
       longitudeOf: (p) => p.lng,
@@ -34,9 +33,7 @@ void main() {
     expect(clusters.every((c) => c.isSingle), isTrue);
   });
 
-  test(
-      'fractional zoom clusters like its floor, so pinching does not reshuffle',
-      () {
+  test('fractional zoom clusters like its floor, so pinching does not reshuffle', () {
     expect(_cluster(pts, 11.9).length, _cluster(pts, 11).length);
   });
 

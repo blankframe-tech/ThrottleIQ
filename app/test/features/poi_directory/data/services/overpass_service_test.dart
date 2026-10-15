@@ -131,7 +131,8 @@ void main() {
   });
 
   group('OverpassService.parseElement ways (issues §101.P5)', () {
-    test('reads coords from center for a way and keeps its type in osmId', () {
+    test('reads coords from center for a way and keeps its type in osmId',
+        () {
       final candidate = service.parseElement({
         'type': 'way',
         'id': 1,

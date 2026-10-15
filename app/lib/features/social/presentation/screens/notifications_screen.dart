@@ -16,8 +16,7 @@ class NotificationsScreen extends ConsumerStatefulWidget {
   const NotificationsScreen({super.key});
 
   @override
-  ConsumerState<NotificationsScreen> createState() =>
-      _NotificationsScreenState();
+  ConsumerState<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
@@ -31,8 +30,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
     if (_markedRead) return;
     final uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
-    final unreadIds =
-        notifications.where((n) => !n.read).map((n) => n.id).toList();
+    final unreadIds = notifications.where((n) => !n.read).map((n) => n.id).toList();
     if (unreadIds.isEmpty) return;
     _markedRead = true;
     ref.read(notificationRepositoryProvider).markAllRead(uid, unreadIds);
@@ -46,15 +44,13 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(context.l10n.notifications)),
       body: notificationsAsync.when(
-        loading: () => Center(
-            child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(notificationsProvider),
         ),
         data: (notifications) {
-          WidgetsBinding.instance
-              .addPostFrameCallback((_) => _markAllReadOnce(notifications));
+          WidgetsBinding.instance.addPostFrameCallback((_) => _markAllReadOnce(notifications));
 
           if (notifications.isEmpty) {
             return Center(
@@ -63,13 +59,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.notifications_none,
-                        size: 64, color: context.palette.textTertiary),
+                    Icon(Icons.notifications_none, size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
                     Text(context.l10n.noNotificationsYet,
-                        style: TextStyle(
-                            color: context.palette.textSecondary,
-                            fontSize: 16)),
+                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
                   ],
                 ),
               ),
@@ -80,8 +73,7 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
             padding: const EdgeInsets.all(AppDimensions.paddingMd),
             itemCount: notifications.length,
             separatorBuilder: (_, __) => const SizedBox(height: 8),
-            itemBuilder: (_, i) =>
-                _NotificationTile(notification: notifications[i]),
+            itemBuilder: (_, i) => _NotificationTile(notification: notifications[i]),
           );
         },
       ),
@@ -145,8 +137,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
       setState(() => _accepting = false);
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
-        ..showSnackBar(
-            SnackBar(content: Text(context.l10n.couldntJoinRide(e))));
+        ..showSnackBar(SnackBar(content: Text(context.l10n.couldntJoinRide(e))));
       return;
     }
     if (!mounted) return;
@@ -188,9 +179,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: notification.read
-          ? context.palette.surface
-          : context.palette.primary.withValues(alpha: 0.06),
+      color: notification.read ? context.palette.surface : context.palette.primary.withValues(alpha: 0.06),
       borderRadius: BorderRadius.circular(context.shape.radiusMd),
       child: InkWell(
         borderRadius: BorderRadius.circular(context.shape.radiusMd),
@@ -203,10 +192,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
           ),
           child: Row(
             children: [
-              UserAvatar(
-                  photoUrl: notification.fromPhotoUrl,
-                  name: notification.fromName,
-                  radius: 20),
+              UserAvatar(photoUrl: notification.fromPhotoUrl, name: notification.fromName, radius: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -214,9 +200,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                   children: [
                     Text(_label(),
                         style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: context.palette.textPrimary)),
+                            fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
                     const SizedBox(height: 2),
                     Text(
                         notification.isActionableGroupRideInvite
@@ -224,8 +208,7 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                             : notification.isViewableGroupRideJoined
                                 ? context.l10n.tapView(_relativeTime())
                                 : _relativeTime(),
-                        style: TextStyle(
-                            fontSize: 12, color: context.palette.textTertiary)),
+                        style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                   ],
                 ),
               ),
@@ -238,14 +221,12 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
                 )
               else if (notification.isActionableGroupRideInvite ||
                   notification.isViewableGroupRideJoined)
-                Icon(Icons.groups_outlined,
-                    size: 20, color: context.palette.primary),
+                Icon(Icons.groups_outlined, size: 20, color: context.palette.primary),
               if (!notification.read)
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(
-                      color: context.palette.primary, shape: BoxShape.circle),
+                  decoration: BoxDecoration(color: context.palette.primary, shape: BoxShape.circle),
                 ),
             ],
           ),

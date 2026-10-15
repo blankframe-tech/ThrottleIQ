@@ -5,8 +5,7 @@ import 'package:throttleiq/features/poi_directory/domain/highway_radar.dart';
 const _lat = 23.7580;
 const _lng = 90.3900;
 
-PlaceEntity _place(String id, PlaceCategory category, double kmNorth) =>
-    PlaceEntity(
+PlaceEntity _place(String id, PlaceCategory category, double kmNorth) => PlaceEntity(
       id: id,
       name: id,
       category: category,
@@ -28,22 +27,18 @@ void main() {
   ];
 
   test('keeps only safety points within the radius, nearest first', () {
-    final radar = computeHighwayRadar(places,
-        originLat: _lat, originLng: _lng, radiusKm: 15);
-    expect(
-        [for (final h in radar.cameras) h.place.id], ['cam-near', 'cam-mid']);
+    final radar = computeHighwayRadar(places, originLat: _lat, originLng: _lng, radiusKm: 15);
+    expect([for (final h in radar.cameras) h.place.id], ['cam-near', 'cam-mid']);
     expect([for (final h in radar.police) h.place.id], ['cop']);
     expect(radar.total, 3);
     expect(radar.isEmpty, isFalse);
-    expect([for (final h in radar.all) h.place.id],
-        ['cop', 'cam-near', 'cam-mid']);
+    expect([for (final h in radar.all) h.place.id], ['cop', 'cam-near', 'cam-mid']);
     expect(radar.nearest!.place.id, 'cop');
     expect(radar.nearest!.distanceKm, closeTo(1, 0.05));
   });
 
   test('a wider radius picks up the far camera', () {
-    final radar = computeHighwayRadar(places,
-        originLat: _lat, originLng: _lng, radiusKm: 50);
+    final radar = computeHighwayRadar(places, originLat: _lat, originLng: _lng, radiusKm: 50);
     expect(radar.cameras.length, 3);
   });
 
@@ -59,9 +54,7 @@ void main() {
     expect(radar, HighwayRadar.empty);
   });
 
-  test(
-      'without a fix every safety point in the batch is reported, with no distance',
-      () {
+  test('without a fix every safety point in the batch is reported, with no distance', () {
     final radar = computeHighwayRadar(places, radiusKm: 5);
     expect(radar.total, 4);
     expect(radar.nearest, isNull);

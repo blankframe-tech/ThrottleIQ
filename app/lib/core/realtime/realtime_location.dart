@@ -67,8 +67,7 @@ class RealtimeLocation {
   Duration? ageAt(DateTime localNow, {int serverTimeOffsetMs = 0}) {
     final ts = serverTime;
     if (ts == null) return null;
-    final serverNow =
-        localNow.toUtc().add(Duration(milliseconds: serverTimeOffsetMs));
+    final serverNow = localNow.toUtc().add(Duration(milliseconds: serverTimeOffsetMs));
     final age = serverNow.difference(ts);
     return age.isNegative ? Duration.zero : age;
   }

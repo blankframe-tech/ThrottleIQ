@@ -137,8 +137,7 @@ class _ConsumableGauge extends StatelessWidget {
                   CircularProgressIndicator(
                     value: isOverdue ? 1.0 : lifeFraction,
                     strokeWidth: 4.5,
-                    backgroundColor:
-                        context.palette.border.withValues(alpha: 0.5),
+                    backgroundColor: context.palette.border.withValues(alpha: 0.5),
                     valueColor: AlwaysStoppedAnimation<Color>(ringColor),
                   ),
                   Column(
@@ -147,9 +146,7 @@ class _ConsumableGauge extends StatelessWidget {
                       Icon(
                         _iconFor(type),
                         size: 16,
-                        color: isOverdue
-                            ? ringColor
-                            : context.palette.textSecondary,
+                        color: isOverdue ? ringColor : context.palette.textSecondary,
                       ),
                       const SizedBox(height: 1),
                       Text(
@@ -197,8 +194,9 @@ class _ConsumableGauge extends StatelessWidget {
       final km = f.kmLeft!;
       final interval = f.kmLimit > 0 ? f.kmLimit : 3000.0;
       final fraction = (km / interval).clamp(0.0, 1.0);
-      final label =
-          isOverdue ? '${km.abs().round()} km past' : '${km.round()} km left';
+      final label = isOverdue
+          ? '${km.abs().round()} km past'
+          : '${km.round()} km left';
       return (fraction, isOverdue, label);
     }
 

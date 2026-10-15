@@ -42,36 +42,24 @@ class BlockedUsersScreen extends ConsumerWidget {
 
               return profileAsync.when(
                 loading: () => ListTile(title: Text(context.l10n.loading)),
-                error: (e, _) =>
-                    ListTile(title: Text(context.l10n.errorLoadingUser)),
+                error: (e, _) => ListTile(title: Text(context.l10n.errorLoadingUser)),
                 data: (profile) {
                   if (profile == null) {
                     return ListTile(title: Text(context.l10n.unknownUser));
                   }
 
                   return ListTile(
-                    leading: UserAvatar(
-                        photoUrl: profile.photoUrl,
-                        name: profile.bestName,
-                        radius: 20),
-                    title: Text(profile.bestName,
-                        style: TextStyle(color: context.palette.textPrimary)),
-                    subtitle: profile.username != null
-                        ? Text('@${profile.username}',
-                            style:
-                                TextStyle(color: context.palette.textSecondary))
-                        : null,
+                    leading: UserAvatar(photoUrl: profile.photoUrl, name: profile.bestName, radius: 20),
+                    title: Text(profile.bestName, style: TextStyle(color: context.palette.textPrimary)),
+                    subtitle: profile.username != null ? Text('@${profile.username}', style: TextStyle(color: context.palette.textSecondary)) : null,
                     trailing: TextButton(
                       onPressed: () async {
                         if (myUid == null) return;
-                        await ref
-                            .read(profileRepositoryProvider)
-                            .unblockUser(myUid, uid);
+                        await ref.read(profileRepositoryProvider).unblockUser(myUid, uid);
                         ref.invalidate(blockedUsersProvider);
                         ref.invalidate(profileProvider(uid));
                       },
-                      child: Text(context.l10n.unblock,
-                          style: TextStyle(color: context.palette.primary)),
+                      child: Text(context.l10n.unblock, style: TextStyle(color: context.palette.primary)),
                     ),
                   );
                 },

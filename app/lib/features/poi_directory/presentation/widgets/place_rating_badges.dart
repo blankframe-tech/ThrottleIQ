@@ -45,34 +45,34 @@ class PlaceRatingBadges extends StatelessWidget {
       );
     }
     final badges = <Widget>[
-      if (place.isRiderApproved)
-        Tooltip(
-          message: context.l10n.placeRiderApprovedHint,
-          child: _Pill(
-            icon: Icons.verified,
-            label: context.l10n.placeRiderApproved,
-            color: context.palette.success,
-            filled: true,
+        if (place.isRiderApproved)
+          Tooltip(
+            message: context.l10n.placeRiderApprovedHint,
+            child: _Pill(
+              icon: Icons.verified,
+              label: context.l10n.placeRiderApproved,
+              color: context.palette.success,
+              filled: true,
+            ),
           ),
-        ),
-      if (place.hasThrottleIqRating)
-        _Pill(
-          icon: Icons.two_wheeler,
-          label: context.l10n.placeRiderRatingBadge(
-            place.averageRating.toStringAsFixed(1),
-            place.ratingCount,
+        if (place.hasThrottleIqRating)
+          _Pill(
+            icon: Icons.two_wheeler,
+            label: context.l10n.placeRiderRatingBadge(
+              place.averageRating.toStringAsFixed(1),
+              place.ratingCount,
+            ),
+            color: context.palette.primary,
           ),
-          color: context.palette.primary,
-        ),
-      if (place.hasGoogleRating)
-        _Pill(
-          leading: 'G',
-          label: context.l10n.placeGoogleRatingBadge(
-            place.googleRating.toStringAsFixed(1),
-            place.googleRatingCount,
+        if (place.hasGoogleRating)
+          _Pill(
+            leading: 'G',
+            label: context.l10n.placeGoogleRatingBadge(
+              place.googleRating.toStringAsFixed(1),
+              place.googleRatingCount,
+            ),
+            color: context.palette.textSecondary,
           ),
-          color: context.palette.textSecondary,
-        ),
     ];
     if (singleLine) {
       return SingleChildScrollView(
@@ -126,8 +126,7 @@ class _Pill extends StatelessWidget {
           if (icon != null) Icon(icon, size: 12, color: color),
           if (leading != null)
             Text(leading!,
-                style: TextStyle(
-                    fontSize: 11, fontWeight: FontWeight.w800, color: color)),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: color)),
           const SizedBox(width: 4),
           Text(
             label,

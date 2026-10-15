@@ -15,29 +15,12 @@
 /// version-specific name that has to be normalized later.
 const Map<String, List<String>> bikeCatalog = {
   'Yamaha': ['FZS', 'MT-15', 'R15', 'YZF-R3', 'Saluto 125', 'Fazer', 'Ray ZR'],
-  'Honda': [
-    'CB Shine 125',
-    'CB150R Streetfire',
-    'X-Blade 160',
-    'CBR250RR',
-    'Livo'
-  ],
+  'Honda': ['CB Shine 125', 'CB150R Streetfire', 'X-Blade 160', 'CBR250RR', 'Livo'],
   'Bajaj': ['Pulsar 150', 'Pulsar NS160', 'Discover 125', 'CT 100', 'Platina'],
-  'TVS': [
-    'Apache RTR 160 4V',
-    'Apache RTR 165RP',
-    'Metro Plus 100',
-    'Raider 125'
-  ],
+  'TVS': ['Apache RTR 160 4V', 'Apache RTR 165RP', 'Metro Plus 100', 'Raider 125'],
   'Suzuki': ['Gixxer 155', 'Gixxer SF 155', 'GSX-R150', 'Hayate EP'],
   'Hero': ['Splendor Plus', 'Hunk 150R', 'Glamour'],
-  'Royal Enfield': [
-    'Classic 350',
-    'Bullet 350',
-    'Meteor 350',
-    'Hunter 350',
-    'Himalayan 411'
-  ],
+  'Royal Enfield': ['Classic 350', 'Bullet 350', 'Meteor 350', 'Hunter 350', 'Himalayan 411'],
   'CF Moto': ['SR 250', 'SR 300', 'CF Light 230 Dual'],
   'KTM': ['Duke 200', 'Duke 250', 'RC 390'],
   'Kawasaki': ['Ninja 300', 'Z400'],

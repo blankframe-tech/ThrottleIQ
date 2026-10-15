@@ -106,8 +106,7 @@ class SharedRideEntity extends Equatable {
     final accel = rapidAccelCount;
     final jerk = highJerkCount;
     if (brakes == null || accel == null || jerk == null) return null;
-    return computeRidingScore(
-        hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
+    return computeRidingScore(hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
   }
 
   const SharedRideEntity({

@@ -60,8 +60,8 @@ class NavigationBanner extends ConsumerWidget {
                     ),
                     if (!progress.arrived && progress.metresToTurn != null)
                       Text(
-                        context.l10n.navInDistance(
-                            routeDistanceLabel(progress.metresToTurn!)),
+                        context.l10n
+                            .navInDistance(routeDistanceLabel(progress.metresToTurn!)),
                         style: TextStyle(
                           fontSize: 13,
                           color: context.palette.textSecondary,
@@ -98,12 +98,10 @@ class NavigationBanner extends ConsumerWidget {
                   ref.read(navigationSessionProvider.notifier).stop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                        content: Text(
-                            context.l10n.navGuidanceStoppedStillRecording)),
+                        content: Text(context.l10n.navGuidanceStoppedStillRecording)),
                   );
                 },
-                icon: Icon(Icons.close,
-                    size: 20, color: context.palette.textSecondary),
+                icon: Icon(Icons.close, size: 20, color: context.palette.textSecondary),
                 tooltip: context.l10n.navStopGuidance,
               ),
             ],

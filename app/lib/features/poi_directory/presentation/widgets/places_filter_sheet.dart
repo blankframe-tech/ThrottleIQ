@@ -52,8 +52,7 @@ class PlacesFilterSheet extends ConsumerWidget {
     return SafeArea(
       top: false,
       child: ConstrainedBox(
-        constraints:
-            BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
+        constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.85),
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: Column(
@@ -90,8 +89,7 @@ class PlacesFilterSheet extends ConsumerWidget {
                 children: [
                   for (final km in placesRadiusOptionsKm)
                     ChoiceChip(
-                      label:
-                          Text(context.l10n.placesRadiusKm(formatRadiusKm(km))),
+                      label: Text(context.l10n.placesRadiusKm(formatRadiusKm(km))),
                       selected: query.radiusKm == km,
                       onSelected: (_) => notifier.setRadius(km),
                     ),
@@ -122,8 +120,7 @@ class PlacesFilterSheet extends ConsumerWidget {
                 title: Text(context.l10n.placesVerifiedOnly,
                     style: TextStyle(color: context.palette.textPrimary)),
                 subtitle: Text(context.l10n.placesVerifiedOnlyHint,
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
+                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
               ),
               heading(context.l10n.placesFeaturesLabel),
               Wrap(
@@ -132,8 +129,7 @@ class PlacesFilterSheet extends ConsumerWidget {
                 children: [
                   for (final tag in tags)
                     FilterChip(
-                      label: Text(
-                          '${tag.icon} ${tag.localizedName(context.l10n)}'),
+                      label: Text('${tag.icon} ${tag.localizedName(context.l10n)}'),
                       selected: query.tags.contains(tag),
                       onSelected: (_) => notifier.toggleTag(tag),
                     ),

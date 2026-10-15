@@ -129,10 +129,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
     try {
       await ref.read(chatRepositoryProvider).sendMessage(
-            chatId: widget.chatId,
-            senderId: myUid,
-            text: text,
-          );
+        chatId: widget.chatId,
+        senderId: myUid,
+        text: text,
+      );
     } catch (e) {
       if (!mounted) return;
       // Offline sends are queued by Firestore and never land here; a
@@ -171,12 +171,8 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
       (id) => id != myUid,
       orElse: () => '',
     );
-    final profileLookupUid = widget.otherUser?.uid ??
-        (fallbackOtherUid?.isNotEmpty == true ? fallbackOtherUid : null);
-    final resolvedOtherUser = widget.otherUser ??
-        (profileLookupUid != null
-            ? ref.watch(profileProvider(profileLookupUid)).valueOrNull
-            : null);
+    final profileLookupUid = widget.otherUser?.uid ?? (fallbackOtherUid?.isNotEmpty == true ? fallbackOtherUid : null);
+    final resolvedOtherUser = widget.otherUser ?? (profileLookupUid != null ? ref.watch(profileProvider(profileLookupUid)).valueOrNull : null);
     _otherUid = profileLookupUid;
     final blocked = profileLookupUid != null &&
         (ref.watch(chatBlockedProvider(profileLookupUid)).valueOrNull ?? false);
@@ -196,8 +192,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
           children: [
             UserAvatar(
               photoUrl: resolvedOtherUser?.photoUrl,
-              name:
-                  resolvedOtherUser?.bestName ?? context.l10n.riderFallbackName,
+              name: resolvedOtherUser?.bestName ?? context.l10n.riderFallbackName,
               radius: 16,
             ),
             const SizedBox(width: 12),
@@ -234,16 +229,12 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               error: (e, _) => ErrorView(
                 error: e,
                 showBugReport: true,
-                onRetry: () =>
-                    ref.invalidate(chatMessagesProvider(widget.chatId)),
+                onRetry: () => ref.invalidate(chatMessagesProvider(widget.chatId)),
               ),
               data: (live) {
                 final messages = _displayed(live);
                 if (messages.isEmpty) {
-                  return Center(
-                      child: Text(context.l10n.sayHi,
-                          style:
-                              TextStyle(color: context.palette.textSecondary)));
+                  return Center(child: Text(context.l10n.sayHi, style: TextStyle(color: context.palette.textSecondary)));
                 }
                 final showLoadOlder = _pagingStarted
                     ? _hasOlder
@@ -251,8 +242,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
                 return ListView.builder(
                   reverse: true, // Show bottom to top
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingMd, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: 8),
                   itemCount: messages.length + (showLoadOlder ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index == messages.length) {
@@ -265,8 +255,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                                   width: 22,
                                   height: 22,
                                   child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: context.palette.primary),
+                                      strokeWidth: 2, color: context.palette.primary),
                                 )
                               : TextButton(
                                   onPressed: () => _loadOlder(messages),
@@ -280,51 +269,37 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
 
                     // issues §101.A4: own bubbles sit on palette.primary, where
                     // white text was 1.18:1 on sport/dark lime.
-                    final ownFg =
-                        AppTheme.primaryButtonForeground(context.palette);
+                    final ownFg = AppTheme.primaryButtonForeground(context.palette);
 
                     return Align(
-                      alignment:
-                          isMe ? Alignment.centerRight : Alignment.centerLeft,
+                      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
                       // Tells a screen reader the long press reports the message.
                       child: Semantics(
                         onLongPressHint: isMe ? null : context.l10n.report,
                         child: GestureDetector(
                           behavior: HitTestBehavior.opaque,
-                          onLongPress: isMe
-                              ? null
-                              : () {
-                                  ReportBottomSheet.show(
-                                    context,
-                                    reportedId: msg.senderId,
-                                    contentType: 'chat',
-                                    contentId: msg.id,
-                                  );
-                                },
+                          onLongPress: isMe ? null : () {
+                            ReportBottomSheet.show(
+                              context,
+                              reportedId: msg.senderId,
+                              contentType: 'chat',
+                              contentId: msg.id,
+                            );
+                          },
                           child: Container(
                             margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 10),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                             decoration: BoxDecoration(
-                              color: isMe
-                                  ? context.palette.primary
-                                  : context.palette.surface,
+                              color: isMe ? context.palette.primary : context.palette.surface,
                               borderRadius: BorderRadius.circular(16).copyWith(
-                                bottomRight: isMe
-                                    ? const Radius.circular(0)
-                                    : const Radius.circular(16),
-                                bottomLeft: isMe
-                                    ? const Radius.circular(16)
-                                    : const Radius.circular(0),
+                                bottomRight: isMe ? const Radius.circular(0) : const Radius.circular(16),
+                                bottomLeft: isMe ? const Radius.circular(16) : const Radius.circular(0),
                               ),
-                              border: isMe
-                                  ? null
-                                  : Border.all(color: context.palette.border),
+                              border: isMe ? null : Border.all(color: context.palette.border),
                             ),
                             constraints: BoxConstraints(
                               minHeight: 48,
-                              maxWidth:
-                                  MediaQuery.of(context).size.width * 0.75,
+                              maxWidth: MediaQuery.of(context).size.width * 0.75,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -332,20 +307,15 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                                 Text(
                                   msg.text,
                                   style: TextStyle(
-                                    color: isMe
-                                        ? ownFg
-                                        : context.palette.textPrimary,
+                                    color: isMe ? ownFg : context.palette.textPrimary,
                                     fontSize: 14,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  DateFormat.jm(kNumericLocale)
-                                      .format(msg.createdAt),
+                                  DateFormat.jm(kNumericLocale).format(msg.createdAt),
                                   style: TextStyle(
-                                    color: isMe
-                                        ? ownFg
-                                        : context.palette.textTertiary,
+                                    color: isMe ? ownFg : context.palette.textTertiary,
                                     fontSize: 10,
                                   ),
                                 ),
@@ -368,9 +338,7 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                 left: AppDimensions.paddingMd,
                 right: AppDimensions.paddingMd,
                 top: 14,
-                bottom: MediaQuery.of(context).padding.bottom > 0
-                    ? MediaQuery.of(context).padding.bottom
-                    : 14,
+                bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 14,
               ),
               decoration: BoxDecoration(
                 color: context.palette.surface,
@@ -378,74 +346,67 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.block,
-                      size: 18, color: context.palette.textSecondary),
+                  Icon(Icons.block, size: 18, color: context.palette.textSecondary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       context.l10n.cantMessageThisRider,
-                      style: TextStyle(
-                          color: context.palette.textSecondary, fontSize: 14),
+                      style: TextStyle(color: context.palette.textSecondary, fontSize: 14),
                     ),
                   ),
                 ],
               ),
             )
           else
-            Container(
-              padding: EdgeInsets.only(
-                left: AppDimensions.paddingMd,
-                right: AppDimensions.paddingMd,
-                top: 12,
-                bottom: MediaQuery.of(context).padding.bottom > 0
-                    ? MediaQuery.of(context).padding.bottom
-                    : 12,
-              ),
-              decoration: BoxDecoration(
-                color: context.palette.surface,
-                border: Border(top: BorderSide(color: context.palette.border)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _textController,
-                      style: TextStyle(color: context.palette.textPrimary),
-                      textCapitalization: TextCapitalization.sentences,
-                      maxLines: null,
-                      decoration: InputDecoration(
-                        hintText: context.l10n.messageHint,
-                        hintStyle:
-                            TextStyle(color: context.palette.textTertiary),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
-                        ),
-                        filled: true,
-                        fillColor: context.palette.background,
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                      ),
-                      onChanged: _typing?.onTextChanged,
-                      onSubmitted: (_) => _sendMessage(),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: context.palette.primary,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      tooltip: context.l10n.send,
-                      icon:
-                          const Icon(Icons.send, color: Colors.white, size: 20),
-                      onPressed: _sendMessage,
-                    ),
-                  ),
-                ],
-              ),
+          Container(
+            padding: EdgeInsets.only(
+              left: AppDimensions.paddingMd,
+              right: AppDimensions.paddingMd,
+              top: 12,
+              bottom: MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 12,
             ),
+            decoration: BoxDecoration(
+              color: context.palette.surface,
+              border: Border(top: BorderSide(color: context.palette.border)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _textController,
+                    style: TextStyle(color: context.palette.textPrimary),
+                    textCapitalization: TextCapitalization.sentences,
+                    maxLines: null,
+                    decoration: InputDecoration(
+                      hintText: context.l10n.messageHint,
+                      hintStyle: TextStyle(color: context.palette.textTertiary),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: context.palette.background,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    ),
+                    onChanged: _typing?.onTextChanged,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: context.palette.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    tooltip: context.l10n.send,
+                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                    onPressed: _sendMessage,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

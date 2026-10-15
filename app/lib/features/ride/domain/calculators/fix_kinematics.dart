@@ -20,8 +20,7 @@ typedef FixKinematics = ({
 typedef PrevFix = ({double speedMs, double? acceleration, bool clamped});
 
 /// Builds a [PrevFix] from a stored point's values.
-PrevFix prevFixOf(double speedMs,
-        {double? acceleration, bool clamped = false}) =>
+PrevFix prevFixOf(double speedMs, {double? acceleration, bool clamped = false}) =>
     (speedMs: speedMs, acceleration: acceleration, clamped: clamped);
 
 /// Most distance a fix with a usable Doppler speed may add (§90.C12).
@@ -79,7 +78,7 @@ FixKinematics evaluateFix({
   // A NaN/Infinity Doppler speed is treated as "none" (derived-speed branch).
   final hasRawSpeed = rawSpeedMs.isFinite &&
       rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
-      rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
+          rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
 
   double speedMs;
   if (hasRawSpeed) {

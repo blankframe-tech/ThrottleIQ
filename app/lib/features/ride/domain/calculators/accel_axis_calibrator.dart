@@ -102,11 +102,7 @@ class AccelAxisCalibrator {
   /// interval (`MotionCalculator.acceleration`, one value per GPS fix — see
   /// `RideRecordingNotifier._onPosition`, which averages the raw samples
   /// received since the previous fix before calling this).
-  void addSample(
-      {required double ax,
-      required double ay,
-      required double az,
-      required double gpsAccelMs2}) {
+  void addSample({required double ax, required double ay, required double az, required double gpsAccelMs2}) {
     final raw = [ax, ay, az];
     for (var i = 0; i < 3; i++) {
       for (var j = 0; j < 3; j++) {
@@ -174,8 +170,7 @@ class AccelAxisCalibrator {
     return _cachedAxis;
   }
 
-  static List<double> _withColumn(
-      List<double> m, int col, List<double> replacement) {
+  static List<double> _withColumn(List<double> m, int col, List<double> replacement) {
     final out = List<double>.from(m);
     for (var row = 0; row < 3; row++) {
       out[row * 3 + col] = replacement[row];

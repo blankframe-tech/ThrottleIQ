@@ -80,8 +80,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xfile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
     if (xfile != null) setState(() => _localImagePath = xfile.path);
   }
 
@@ -115,8 +114,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         photoUrl: photoUrl,
       );
       await repo.setVisibility(uid: uid, visibility: _visibility);
-      await repo.setBikesVisibility(
-          uid: uid, bikesVisibility: _bikesVisibility);
+      await repo.setBikesVisibility(uid: uid, bikesVisibility: _bikesVisibility);
 
       if (!mounted) return;
       context.pop();
@@ -157,8 +155,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       _localImagePath != null
                           ? CircleAvatar(
                               radius: 44,
-                              backgroundImage:
-                                  FileImage(File(_localImagePath!)),
+                              backgroundImage: FileImage(File(_localImagePath!)),
                             )
                           : UserAvatar(
                               photoUrl: _photoUrl,
@@ -174,8 +171,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             color: context.palette.primary,
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.edit,
-                              size: 14, color: Colors.white),
+                          child: const Icon(Icons.edit, size: 14, color: Colors.white),
                         ),
                       ),
                     ],
@@ -188,11 +184,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 // firestore.rules caps names at 100 characters (§90.D10).
                 maxLength: 100,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration:
-                    InputDecoration(labelText: context.l10n.displayName),
-                validator: (v) => v == null || v.trim().isEmpty
-                    ? context.l10n.requiredField
-                    : null,
+                decoration: InputDecoration(labelText: context.l10n.displayName),
+                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -200,8 +193,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 maxLength: 100,
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
-                    labelText: context.l10n.nickname,
-                    hintText: context.l10n.shownCardsFeed),
+                    labelText: context.l10n.nickname, hintText: context.l10n.shownCardsFeed),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -233,39 +225,25 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
               const SizedBox(height: 20),
               Text(context.l10n.whoCanSeeProfile,
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.palette.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 8),
               SegmentedButton<String>(
                 segments: [
+                  ButtonSegment(value: 'public', label: Text(context.l10n.everyone), icon: const Icon(Icons.public, size: 16)),
                   ButtonSegment(
-                      value: 'public',
-                      label: Text(context.l10n.everyone),
-                      icon: const Icon(Icons.public, size: 16)),
-                  ButtonSegment(
-                      value: 'mutual',
-                      label: Text(context.l10n.mutuals),
-                      icon: const Icon(Icons.people, size: 16)),
-                  ButtonSegment(
-                      value: 'private',
-                      label: Text(context.l10n.onlyMe),
-                      icon: const Icon(Icons.lock, size: 16)),
+                      value: 'mutual', label: Text(context.l10n.mutuals), icon: const Icon(Icons.people, size: 16)),
+                  ButtonSegment(value: 'private', label: Text(context.l10n.onlyMe), icon: const Icon(Icons.lock, size: 16)),
                 ],
                 selected: {_visibility},
-                onSelectionChanged: (s) =>
-                    setState(() => _visibility = s.first),
+                onSelectionChanged: (s) => setState(() => _visibility = s.first),
               ),
               const SizedBox(height: 20),
               Text(context.l10n.whoCanSeeBikes,
                   style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: context.palette.textPrimary)),
+                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
               const SizedBox(height: 4),
               Text(context.l10n.garageProfileSeparateFrom,
-                  style: TextStyle(
-                      fontSize: 11, color: context.palette.textTertiary)),
+                  style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               const SizedBox(height: 8),
               // 'followers' here, not 'mutual' as above: hiding bikes is about
               // who follows YOU, so a one-way follower qualifies.
@@ -285,8 +263,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       icon: const Icon(Icons.lock, size: 16)),
                 ],
                 selected: {_bikesVisibility},
-                onSelectionChanged: (s) =>
-                    setState(() => _bikesVisibility = s.first),
+                onSelectionChanged: (s) => setState(() => _bikesVisibility = s.first),
               ),
               const SizedBox(height: 32),
               ElevatedButton(
@@ -295,8 +272,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : Text(context.l10n.saveChanges),
               ),
@@ -384,8 +360,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                   color: const Color(0xFFE91E63).withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.person,
-                    color: Color(0xFFE91E63), size: 22),
+                child: const Icon(Icons.person, color: Color(0xFFE91E63), size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -403,8 +378,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                     const SizedBox(height: 2),
                     Text(
                       context.l10n.goodBioGetsMore,
-                      style: TextStyle(
-                          fontSize: 12, color: context.palette.textSecondary),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -423,8 +397,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
             style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               hintText: context.l10n.eGFzS,
-              hintStyle:
-                  TextStyle(color: context.palette.textTertiary, fontSize: 13),
+              hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: context.palette.border),
@@ -435,8 +408,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide:
-                    const BorderSide(color: Color(0xFFE91E63), width: 2),
+                borderSide: const BorderSide(color: Color(0xFFE91E63), width: 2),
               ),
             ),
           ),
@@ -449,8 +421,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
               Expanded(
                 child: TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(context.l10n.skip,
-                      style: TextStyle(color: context.palette.textTertiary)),
+                  child: Text(context.l10n.skip, style: TextStyle(color: context.palette.textTertiary)),
                 ),
               ),
               const SizedBox(width: 12),
@@ -465,8 +436,7 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
                       ? const SizedBox(
                           height: 18,
                           width: 18,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                         )
                       : Text(context.l10n.saveBio),
                 ),

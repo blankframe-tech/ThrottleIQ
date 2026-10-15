@@ -167,9 +167,10 @@ class AutoRideReconciler {
 
   /// Same gate, same constant, same position in the pipeline as the live
   /// path: a bad fix must not reach the derivative chain.
-  List<StagedFix> _usable(List<StagedFix> staged) =>
-      staged.where((f) => (f.accuracyM ?? 0) <= _accuracyGateM).toList()
-        ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+  List<StagedFix> _usable(List<StagedFix> staged) => staged
+      .where((f) => (f.accuracyM ?? 0) <= _accuracyGateM)
+      .toList()
+    ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
   ReconciledRide _replay(List<StagedFix> fixes) {
     final calculator = MotionCalculator();
@@ -193,8 +194,7 @@ class AutoRideReconciler {
       var deltaT = 0.0;
 
       if (lastPoint != null) {
-        deltaT = fix.timestamp.difference(lastPoint.timestamp).inMilliseconds /
-            1000.0;
+        deltaT = fix.timestamp.difference(lastPoint.timestamp).inMilliseconds / 1000.0;
         final result = calculator.calculate(
           prev: lastPoint,
           currentSpeedMs: rawSpeedMs,
@@ -213,7 +213,8 @@ class AutoRideReconciler {
         prev: lastPoint == null
             ? null
             : prevFixOf(lastPoint.speedMs,
-                acceleration: lastPoint.acceleration, clamped: lastFixClamped),
+                acceleration: lastPoint.acceleration,
+                clamped: lastFixClamped),
         rawDistanceM: rawDist,
         deltaTSeconds: deltaT,
         accuracyM: fix.accuracyM ?? _accuracyGateM,
@@ -224,8 +225,7 @@ class AutoRideReconciler {
       final accel = k.acceleration;
       final jerk = k.jerk;
 
-      if (speedMs <= SensorConstants.maxPlausibleSpeedMs &&
-          speedMs > maxSpeedMs) {
+      if (speedMs <= SensorConstants.maxPlausibleSpeedMs && speedMs > maxSpeedMs) {
         maxSpeedMs = speedMs;
       }
 
@@ -276,15 +276,15 @@ class AutoRideReconciler {
           'acceleration': point.acceleration,
           'jerk': point.jerk,
           'altitude_m': point.altitudeM,
-          'period_type': speedMs < SensorConstants.movingSpeedThresholdMs
-              ? 'idle'
-              : 'moving',
+          'period_type':
+              speedMs < SensorConstants.movingSpeedThresholdMs ? 'idle' : 'moving',
           'accuracy_m': fix.accuracyM,
           'heading_deg': point.headingDeg,
           'confidence': point.confidence,
           'imu_quality': point.imuQuality,
-          'is_cornering':
-              point.isCornering == null ? null : (point.isCornering! ? 1 : 0),
+          'is_cornering': point.isCornering == null
+              ? null
+              : (point.isCornering! ? 1 : 0),
         });
       }
 
@@ -314,8 +314,7 @@ class AutoRideReconciler {
       maxSpeedMs: maxSpeedMs > 0 ? maxSpeedMs : null,
     );
 
-    if (maxSpeedMs < avgSpeedMs &&
-        avgSpeedMs <= SensorConstants.maxPlausibleSpeedMs) {
+    if (maxSpeedMs < avgSpeedMs && avgSpeedMs <= SensorConstants.maxPlausibleSpeedMs) {
       maxSpeedMs = avgSpeedMs;
     }
 

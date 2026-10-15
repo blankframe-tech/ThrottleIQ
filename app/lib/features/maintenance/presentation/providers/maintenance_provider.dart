@@ -43,13 +43,12 @@ void _afterMaintenanceChange() {
 
 // ── Service logs & visits ────────────────────────────────────────────────
 
-final maintenanceProvider = AsyncNotifierProvider.family<MaintenanceNotifier,
-    List<MaintenanceEntity>, String>(
+final maintenanceProvider =
+    AsyncNotifierProvider.family<MaintenanceNotifier, List<MaintenanceEntity>, String>(
   MaintenanceNotifier.new,
 );
 
-class MaintenanceNotifier
-    extends FamilyAsyncNotifier<List<MaintenanceEntity>, String> {
+class MaintenanceNotifier extends FamilyAsyncNotifier<List<MaintenanceEntity>, String> {
   @override
   Future<List<MaintenanceEntity>> build(String bikeId) async {
     final rows = await _dao.getForBike(bikeId);
@@ -104,10 +103,8 @@ class MaintenanceNotifier
       existing: existing,
     );
     final keptIds = rows.map((r) => r.id).toSet();
-    final removed = existing
-        .where((e) => !keptIds.contains(e.id))
-        .map((e) => e.id)
-        .toList();
+    final removed =
+        existing.where((e) => !keptIds.contains(e.id)).map((e) => e.id).toList();
     await _dao.deleteWithTombstone(removed,
         userId: ref.read(currentUserProvider)?.uid);
     await _persist(rows);
@@ -117,8 +114,10 @@ class MaintenanceNotifier
   /// removed too and never come back (§94.2).
   Future<void> deleteVisit(String visitKey) async {
     final current = await future;
-    final ids =
-        current.where((l) => l.visitKey == visitKey).map((l) => l.id).toList();
+    final ids = current
+        .where((l) => l.visitKey == visitKey)
+        .map((l) => l.id)
+        .toList();
     await _dao.deleteWithTombstone(ids,
         userId: ref.read(currentUserProvider)?.uid);
     ref.invalidateSelf();
@@ -126,8 +125,8 @@ class MaintenanceNotifier
   }
 
   Future<void> deleteLog(String id) async {
-    await _dao
-        .deleteWithTombstone([id], userId: ref.read(currentUserProvider)?.uid);
+    await _dao.deleteWithTombstone([id],
+        userId: ref.read(currentUserProvider)?.uid);
     ref.invalidateSelf();
     _afterMaintenanceChange();
   }
@@ -439,10 +438,8 @@ class MaintenanceProfileNotifier
     if (oil != null &&
         oil.source != IntervalSource.user &&
         (oil.intervalKm != s.km || oil.intervalDays != s.days)) {
-      await ref
-          .read(maintenanceConfigProvider(arg).notifier)
-          .updateSingleConfig(
-              oil.copyWith(intervalKm: s.km, intervalDays: s.days));
+      await ref.read(maintenanceConfigProvider(arg).notifier).updateSingleConfig(
+          oil.copyWith(intervalKm: s.km, intervalDays: s.days));
     }
     if (p.oilGrade != grade) await _save(p.copyWith(oilGrade: grade));
   }
@@ -520,10 +517,7 @@ class PaperworkNotifier
   @override
   Future<List<PaperworkEntity>> build(String bikeId) async {
     final rows = await _profileDao.getPaperwork(bikeId);
-    return rows
-        .map(PaperworkEntity.fromMap)
-        .whereType<PaperworkEntity>()
-        .toList();
+    return rows.map(PaperworkEntity.fromMap).whereType<PaperworkEntity>().toList();
   }
 
   Future<void> upsert(PaperworkEntity p) async {
@@ -612,9 +606,8 @@ class BikeRunningCostNotifier
 /// Running-cost breakdown for [distanceKm] on a bike, combining its tracked
 /// checks, logged service costs and fuel settings. Null until all three
 /// sources have loaded, so a card never flashes a partial total.
-final rideCostProvider =
-    Provider.family<RideCostBreakdown?, ({String bikeId, double distanceKm})>(
-        (ref, key) {
+final rideCostProvider = Provider.family<RideCostBreakdown?,
+    ({String bikeId, double distanceKm})>((ref, key) {
   final configs = ref.watch(maintenanceConfigProvider(key.bikeId)).valueOrNull;
   final logs = ref.watch(maintenanceProvider(key.bikeId)).valueOrNull;
   final running = ref.watch(bikeRunningCostProvider(key.bikeId)).valueOrNull;

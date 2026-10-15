@@ -175,13 +175,16 @@ class _SharedRideDetailScreenState
         // Toggle off
         _localVote = null;
         if (value == 1) _localUpvotes = (_localUpvotes - 1).clamp(0, 999999);
-        if (value == -1)
+        if (value == -1) {
           _localDownvotes = (_localDownvotes - 1).clamp(0, 999999);
+        }
       } else {
-        if (_localVote == 1)
+        if (_localVote == 1) {
           _localUpvotes = (_localUpvotes - 1).clamp(0, 999999);
-        if (_localVote == -1)
+        }
+        if (_localVote == -1) {
           _localDownvotes = (_localDownvotes - 1).clamp(0, 999999);
+        }
         _localVote = value;
         if (value == 1) _localUpvotes++;
         if (value == -1) _localDownvotes++;
@@ -243,8 +246,9 @@ class _SharedRideDetailScreenState
       case 'more':
         context.push('/ride/summary/${ride.id}');
       case 'edit':
-        if (await EditSharedRideSheet.show(context, ride) == true)
+        if (await EditSharedRideSheet.show(context, ride) == true) {
           _refreshFeeds();
+        }
       case 'delete':
         await _deletePost(ride);
     }

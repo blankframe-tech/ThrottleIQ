@@ -122,9 +122,7 @@ class _OrderPartSheetState extends State<OrderPartSheet> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    _placed
-                        ? l10n.partOrderPlacedTitle
-                        : l10n.partOrderTitle(part),
+                    _placed ? l10n.partOrderPlacedTitle : l10n.partOrderTitle(part),
                     style: const TextStyle(
                         fontSize: 17, fontWeight: FontWeight.w700),
                   ),
@@ -154,8 +152,7 @@ class _OrderPartSheetState extends State<OrderPartSheet> {
                     TextFormField(
                       controller: _nameCtrl,
                       textCapitalization: TextCapitalization.words,
-                      decoration:
-                          InputDecoration(labelText: l10n.partOrderName),
+                      decoration: InputDecoration(labelText: l10n.partOrderName),
                       validator: _required,
                     ),
                     const SizedBox(height: 10),
@@ -181,16 +178,14 @@ class _OrderPartSheetState extends State<OrderPartSheet> {
                             style: TextStyle(color: palette.textSecondary)),
                         const Spacer(),
                         IconButton(
-                          onPressed:
-                              _qty > 1 ? () => setState(() => _qty--) : null,
+                          onPressed: _qty > 1 ? () => setState(() => _qty--) : null,
                           icon: const Icon(Icons.remove_circle_outline),
                         ),
                         Text('$_qty',
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.w700)),
                         IconButton(
-                          onPressed:
-                              _qty < 10 ? () => setState(() => _qty++) : null,
+                          onPressed: _qty < 10 ? () => setState(() => _qty++) : null,
                           icon: const Icon(Icons.add_circle_outline),
                         ),
                       ],
@@ -244,8 +239,8 @@ class _TestingNotice extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
             child: Text(text,
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                style: const TextStyle(
+                    fontSize: 13, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

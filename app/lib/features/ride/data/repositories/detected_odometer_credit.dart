@@ -78,16 +78,13 @@ class DetectedOdometerCredit {
       if (bikeId == null) return 0;
 
       await db.transaction((txn) async {
-        await txn.insert(
-            'detection_odometer_credits',
-            {
-              'detection_id': detectionId,
-              'bike_id': bikeId,
-              'distance_m': measured.distanceM,
-              'credited_at': DateTime.now().toIso8601String(),
-              'trip_end': staged.last.timestamp.toIso8601String(),
-            },
-            conflictAlgorithm: ConflictAlgorithm.abort);
+        await txn.insert('detection_odometer_credits', {
+          'detection_id': detectionId,
+          'bike_id': bikeId,
+          'distance_m': measured.distanceM,
+          'credited_at': DateTime.now().toIso8601String(),
+          'trip_end': staged.last.timestamp.toIso8601String(),
+        }, conflictAlgorithm: ConflictAlgorithm.abort);
         await txn.rawUpdate('''
           UPDATE bikes SET
             odometer_km = COALESCE(odometer_km, 0) + ?,

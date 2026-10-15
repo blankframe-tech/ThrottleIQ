@@ -19,9 +19,7 @@ String formatOdometerKm(double km) {
 /// [kAuthorBikeMaxLength] like the stored field.
 String authorBikeLabel(BikeEntity bike) {
   final km = bike.currentOdometerKm;
-  final label = km > 0
-      ? '${bike.displayName} · ${formatOdometerKm(km)}'
-      : bike.displayName;
+  final label = km > 0 ? '${bike.displayName} · ${formatOdometerKm(km)}' : bike.displayName;
   return label.length <= kAuthorBikeMaxLength
       ? label
       : label.substring(0, kAuthorBikeMaxLength);

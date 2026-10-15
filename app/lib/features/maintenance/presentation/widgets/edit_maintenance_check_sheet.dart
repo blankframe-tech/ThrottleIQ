@@ -381,8 +381,7 @@ class _EditMaintenanceCheckSheetState
               const SizedBox(height: 4),
               Text(
                 context.l10n.intervalWhicheverFirst,
-                style: TextStyle(
-                    fontSize: 11, color: context.palette.textTertiary),
+                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 8),
               TextFormField(
@@ -404,9 +403,7 @@ class _EditMaintenanceCheckSheetState
                   if ((v == null || v.trim().isEmpty) && !hasDays) {
                     return context.l10n.intervalNeedKmOrDays;
                   }
-                  if (v != null &&
-                      v.trim().isNotEmpty &&
-                      (n == null || n < 0)) {
+                  if (v != null && v.trim().isNotEmpty && (n == null || n < 0)) {
                     return context.l10n.enterPositiveNumber;
                   }
                   if ((n ?? 0) <= 0 && !hasDays) {
@@ -422,7 +419,8 @@ class _EditMaintenanceCheckSheetState
                 spacing: 6,
                 runSpacing: 6,
                 children: presets.map((km) {
-                  final matches = _intervalCtrl.text.trim() == km.toString();
+                  final matches =
+                      _intervalCtrl.text.trim() == km.toString();
                   return ActionChip(
                     label: Text(
                       '$km km',
@@ -444,9 +442,7 @@ class _EditMaintenanceCheckSheetState
                         ? context.palette.primary.withValues(alpha: 0.15)
                         : context.palette.surfaceVariant,
                     side: BorderSide(
-                      color: matches
-                          ? context.palette.primary
-                          : context.palette.border,
+                      color: matches ? context.palette.primary : context.palette.border,
                     ),
                   );
                 }).toList(),
@@ -468,8 +464,7 @@ class _EditMaintenanceCheckSheetState
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
                   final n = parseLocalizedInt(v.trim());
-                  if (n == null || n < 0)
-                    return context.l10n.enterPositiveNumber;
+                  if (n == null || n < 0) return context.l10n.enterPositiveNumber;
                   return null;
                 },
               ),
@@ -509,8 +504,10 @@ class _EditMaintenanceCheckSheetState
                 onTap: () => setState(() => _showAdvance = !_showAdvance),
                 child: Row(
                   children: [
-                    Icon(_showAdvance ? Icons.expand_less : Icons.expand_more,
-                        size: 18, color: context.palette.textSecondary),
+                    Icon(
+                        _showAdvance ? Icons.expand_less : Icons.expand_more,
+                        size: 18,
+                        color: context.palette.textSecondary),
                     const SizedBox(width: 4),
                     Text(context.l10n.advanceWarning,
                         style: TextStyle(
@@ -579,8 +576,7 @@ class _EditMaintenanceCheckSheetState
                 controller: _notesCtrl,
                 maxLines: 2,
                 textCapitalization: TextCapitalization.sentences,
-                style:
-                    TextStyle(color: context.palette.textPrimary, fontSize: 13),
+                style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   labelText: context.l10n.specsOilGradeTyre,
                   hintText: hint,
@@ -696,8 +692,7 @@ class _EditMaintenanceCheckSheetState
                             )
                           : Text(
                               context.l10n.safeQrSaveAction,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.w700),
+                              style: const TextStyle(fontWeight: FontWeight.w700),
                             ),
                     ),
                   ),

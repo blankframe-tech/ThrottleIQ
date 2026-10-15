@@ -57,8 +57,7 @@ class _ResetMaintenanceLogSheetState
         title: Text(ctx.l10n.resetSelectedItems),
         content: Text(
           _selected.length == 1
-              ? ctx.l10n
-                  .thisLogsAsServiced(_selected.first.localizedLabel(ctx.l10n))
+              ? ctx.l10n.thisLogsAsServiced(_selected.first.localizedLabel(ctx.l10n))
               : ctx.l10n.thisLogsItemsAs(_selected.length),
         ),
         actions: [
@@ -159,21 +158,17 @@ class _ResetMaintenanceLogSheetState
                   color: context.palette.primary.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.restart_alt,
-                    color: context.palette.primary, size: 20),
+                child: Icon(Icons.restart_alt, color: context.palette.primary, size: 20),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(context.l10n.resetServiceLogTitle,
-                        style: display(context, 18)),
+                    Text(context.l10n.resetServiceLogTitle, style: display(context, 18)),
                     Text(
-                      context.l10n
-                          .tickWhatJustServiced(widget.bike.displayName),
-                      style: TextStyle(
-                          fontSize: 12, color: context.palette.textSecondary),
+                      context.l10n.tickWhatJustServiced(widget.bike.displayName),
+                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -183,8 +178,7 @@ class _ResetMaintenanceLogSheetState
           const SizedBox(height: 8),
           Text(
             context.l10n.selectedItemsLoggedAs,
-            style: TextStyle(
-                fontSize: 12, color: context.palette.textTertiary, height: 1.4),
+            style: TextStyle(fontSize: 12, color: context.palette.textTertiary, height: 1.4),
           ),
           const SizedBox(height: 12),
           if (reminders.isEmpty) ...[
@@ -194,8 +188,7 @@ class _ResetMaintenanceLogSheetState
                 child: Text(
                   context.l10n.noTrackedChecksYet,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: context.palette.textSecondary, fontSize: 13),
+                  style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
                 ),
               ),
             ),
@@ -203,25 +196,18 @@ class _ResetMaintenanceLogSheetState
             Row(
               children: [
                 TextButton(
-                  onPressed: () => setState(() =>
-                      _selected.addAll(reminders.map((r) => r.serviceType))),
-                  child: Text(context.l10n.selectAll,
-                      style: const TextStyle(fontSize: 12)),
+                  onPressed: () =>
+                      setState(() => _selected.addAll(reminders.map((r) => r.serviceType))),
+                  child: Text(context.l10n.selectAll, style: const TextStyle(fontSize: 12)),
                 ),
                 TextButton(
-                  onPressed: _selected.isEmpty
-                      ? null
-                      : () => setState(_selected.clear),
+                  onPressed: _selected.isEmpty ? null : () => setState(_selected.clear),
                   child: Text(context.l10n.clear,
-                      style: TextStyle(
-                          fontSize: 12, color: context.palette.textTertiary)),
+                      style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
                 ),
                 const Spacer(),
-                Text(
-                    context.l10n
-                        .selectedOfTotal(_selected.length, reminders.length),
-                    style: TextStyle(
-                        fontSize: 11, color: context.palette.textTertiary)),
+                Text(context.l10n.selectedOfTotal(_selected.length, reminders.length),
+                    style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
               ],
             ),
             const SizedBox(height: 4),
@@ -255,8 +241,7 @@ class _ResetMaintenanceLogSheetState
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                       )
                     : Text(
                         _selected.isEmpty
@@ -287,38 +272,18 @@ class _ResetItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (tone, statusColor, label) = switch (reminder.status) {
-      ReminderStatus.overdue => (
-          PillTone.overdue,
-          context.palette.danger,
-          context.l10n.statusOverdue
-        ),
-      ReminderStatus.dueSoon => (
-          PillTone.dueSoon,
-          context.palette.attention,
-          context.l10n.dueSoon
-        ),
-      ReminderStatus.ok => (
-          PillTone.ok,
-          context.palette.success,
-          context.l10n.statusOk
-        ),
-      ReminderStatus.unknown => (
-          PillTone.neutral,
-          context.palette.textTertiary,
-          context.l10n.statusUnknown
-        ),
+      ReminderStatus.overdue => (PillTone.overdue, context.palette.danger, context.l10n.statusOverdue),
+      ReminderStatus.dueSoon => (PillTone.dueSoon, context.palette.attention, context.l10n.dueSoon),
+      ReminderStatus.ok => (PillTone.ok, context.palette.success, context.l10n.statusOk),
+      ReminderStatus.unknown => (PillTone.neutral, context.palette.textTertiary, context.l10n.statusUnknown),
     };
 
     return Container(
       decoration: BoxDecoration(
-        color: selected
-            ? context.palette.surfaceVariant
-            : context.palette.surface.withValues(alpha: 0.5),
+        color: selected ? context.palette.surfaceVariant : context.palette.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(context.shape.radiusMd),
         border: Border.all(
-          color: selected
-              ? context.palette.primary.withValues(alpha: 0.4)
-              : context.palette.border,
+          color: selected ? context.palette.primary.withValues(alpha: 0.4) : context.palette.border,
         ),
       ),
       child: InkWell(
@@ -349,27 +314,22 @@ class _ResetItemTile extends StatelessWidget {
                       reminder.serviceType.localizedLabel(context.l10n),
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                         color: context.palette.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       reminder.kmSince != null
-                          ? context.l10n.lastDoneKmAgo(
-                              reminder.kmSince!.toStringAsFixed(0))
+                          ? context.l10n.lastDoneKmAgo(reminder.kmSince!.toStringAsFixed(0))
                           : context.l10n.noPreviousServiceRecorded,
-                      style: TextStyle(
-                          fontSize: 11, color: context.palette.textTertiary),
+                      style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              EditorialPill(label,
-                  tone: tone,
-                  filled: reminder.status == ReminderStatus.overdue),
+              EditorialPill(label, tone: tone, filled: reminder.status == ReminderStatus.overdue),
             ],
           ),
         ),

@@ -3,8 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/emergency_contact_entity.dart';
 
-final emergencyContactsProvider =
-    StreamProvider.family<List<EmergencyContactEntity>, String>(
+final emergencyContactsProvider = StreamProvider.family<List<EmergencyContactEntity>, String>(
   (ref, uid) {
     final firestore = FirebaseFirestore.instance;
     return firestore
@@ -28,8 +27,8 @@ final emergencyContactsProvider =
   },
 );
 
-final emergencyContactsNotifierProvider = StateNotifierProvider<
-    EmergencyContactsNotifier, AsyncValue<List<EmergencyContactEntity>>>(
+final emergencyContactsNotifierProvider =
+    StateNotifierProvider<EmergencyContactsNotifier, AsyncValue<List<EmergencyContactEntity>>>(
   (ref) {
     final uid = ref.watch(currentUserProvider)?.uid;
     if (uid == null) {
@@ -44,7 +43,8 @@ class EmergencyContactsNotifier
   final String? _uid;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  EmergencyContactsNotifier(this._uid) : super(const AsyncValue.loading()) {
+  EmergencyContactsNotifier(this._uid)
+      : super(const AsyncValue.loading()) {
     if (_uid != null) {
       _loadContacts();
     }

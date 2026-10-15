@@ -2029,3 +2029,11 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 - **102.7 Bangla review — deferred to November 2026 (founder, 2026-10-09):** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;
   listed in `app/lib/l10n/bn_pending_review.txt`.
 - **102.8 Diff noise:** a `dart format` run may have reflowed `all_rides_screen.dart` and `badge_grid.dart` beyond their real edits.
+
+## §103 Shared-ride card / owner actions follow-ups (2026-10-15)
+
+- **103.1 Push blocked:** the shared-ride work is committed (`8bdb803`), unpushed. A parallel process committed a repo-wide `dart format` (`686bc73`) after which `flutter analyze` reports ~20 `curly_braces_in_flow_control_structures` infos in files outside this work (e.g. `login_screen.dart`, `crop_geometry.dart`), failing `scripts/check.sh`. Needs a decision: fix the lints, revert the format commits, or find the writer.
+- **103.2 Delete ride:** bike odometer / bike stats are not rolled back when a ride is deleted from history (not checked). Shared-post delete there is best-effort (silent offline).
+- **103.3 Detail screen:** rider card still shows `bikeName · bikeType` ("Motorcycle" fallback) — only the feed card was changed.
+- **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator).
+

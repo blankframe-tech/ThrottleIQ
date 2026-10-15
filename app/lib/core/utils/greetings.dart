@@ -128,9 +128,8 @@ List<String> greetingVariants(GreetingBucket bucket) {
 /// placeholder, a dangling comma, or a doubled space.
 String applyGreetingName(String template, String? name) {
   final trimmed = name?.trim() ?? '';
-  final safe = (trimmed.isEmpty || trimmed.toLowerCase() == 'null')
-      ? greetingNameFallback
-      : trimmed;
+  final safe =
+      (trimmed.isEmpty || trimmed.toLowerCase() == 'null') ? greetingNameFallback : trimmed;
   return template.replaceAll(greetingNamePlaceholder, safe);
 }
 

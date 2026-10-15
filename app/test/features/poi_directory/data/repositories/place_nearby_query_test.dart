@@ -40,8 +40,7 @@ void main() {
   }) fakeFirestore(List<PlaceEntity> all) {
     final fetchedIds = <String>{};
     final prefixes = <String>[];
-    Future<List<PlaceEntity>> fetch(
-        String prefix, PlaceCategory? category) async {
+    Future<List<PlaceEntity>> fetch(String prefix, PlaceCategory? category) async {
       prefixes.add(prefix);
       final hits = all
           .where((p) =>

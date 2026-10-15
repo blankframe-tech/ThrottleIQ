@@ -73,8 +73,7 @@ class _MaintenanceSetupScreenState
     final template = _template;
     if (template == null) return;
     setState(() => _saving = true);
-    final km =
-        _oilUnknown ? null : parseLocalizedNumber(_oilKmCtrl.text.trim());
+    final km = _oilUnknown ? null : parseLocalizedNumber(_oilKmCtrl.text.trim());
     final date = _oilUnknown ? null : _oilDate;
     await ref
         .read(maintenanceProfileProvider(widget.bikeId).notifier)
@@ -92,8 +91,7 @@ class _MaintenanceSetupScreenState
     try {
       await NotificationService.instance.requestPermissions();
     } catch (e, st) {
-      reportNonFatal(e, st,
-          reason: 'Maintenance setup: notification permission');
+      reportNonFatal(e, st, reason: 'Maintenance setup: notification permission');
     }
     if (!mounted) return;
     context.go('/home/maintenance?bikeId=${widget.bikeId}');
@@ -162,8 +160,7 @@ class _MaintenanceSetupScreenState
                       if (template.freeServices.isNotEmpty) ...[
                         const SizedBox(height: 8),
                         Text(
-                          l10n.freeServicesSummary(
-                              template.freeServices.length),
+                          l10n.freeServicesSummary(template.freeServices.length),
                           style: const TextStyle(
                               fontSize: 12, fontWeight: FontWeight.w600),
                         ),
@@ -244,7 +241,8 @@ class _MaintenanceSetupScreenState
                 if (_grade != null) ...[
                   const SizedBox(height: 6),
                   Text(
-                    l10n.oilGradeInterval(groupThousands(_grade!.schedule.km),
+                    l10n.oilGradeInterval(
+                        groupThousands(_grade!.schedule.km),
                         _grade!.schedule.days ?? 0),
                     style: TextStyle(
                         fontSize: 11.5, color: context.palette.textSecondary),

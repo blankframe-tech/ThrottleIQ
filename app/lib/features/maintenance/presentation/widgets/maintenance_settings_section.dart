@@ -93,9 +93,8 @@ class MaintenanceSettingsSection extends ConsumerWidget {
                 subtitle: l10n.maintRemindersSubtitle,
                 trailing: Switch.adaptive(
                   value: alertsOn,
-                  onChanged: (v) => ref
-                      .read(maintenanceAlertsEnabledProvider.notifier)
-                      .set(v),
+                  onChanged: (v) =>
+                      ref.read(maintenanceAlertsEnabledProvider.notifier).set(v),
                 ),
               ),
               const _TileDivider(),
@@ -149,9 +148,7 @@ class _TileDivider extends StatelessWidget {
   const _TileDivider();
   @override
   Widget build(BuildContext context) => Divider(
-      height: 1,
-      indent: 48,
-      color: context.palette.border.withValues(alpha: 0.6));
+      height: 1, indent: 48, color: context.palette.border.withValues(alpha: 0.6));
 }
 
 class _SettingsTile extends StatelessWidget {
@@ -214,8 +211,7 @@ class _SettingsTile extends StatelessWidget {
 class MaintenanceUnitToggle extends StatelessWidget {
   final bool imperial;
   final ValueChanged<bool> onChanged;
-  const MaintenanceUnitToggle(
-      {super.key, required this.imperial, required this.onChanged});
+  const MaintenanceUnitToggle({super.key, required this.imperial, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -228,12 +224,8 @@ class MaintenanceUnitToggle extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _UnitSegment(
-              label: context.l10n.distanceStatLabel,
-              active: !imperial,
-              onTap: () => onChanged(false)),
-          _UnitSegment(
-              label: 'mi', active: imperial, onTap: () => onChanged(true)),
+          _UnitSegment(label: context.l10n.distanceStatLabel, active: !imperial, onTap: () => onChanged(false)),
+          _UnitSegment(label: 'mi', active: imperial, onTap: () => onChanged(true)),
         ],
       ),
     );
@@ -244,8 +236,7 @@ class _UnitSegment extends StatelessWidget {
   final String label;
   final bool active;
   final VoidCallback onTap;
-  const _UnitSegment(
-      {required this.label, required this.active, required this.onTap});
+  const _UnitSegment({required this.label, required this.active, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -273,8 +264,7 @@ class _UnitSegment extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-              color:
-                  active ? context.palette.onInk : context.palette.textTertiary,
+              color: active ? context.palette.onInk : context.palette.textTertiary,
             ),
           ),
         ),
@@ -282,6 +272,7 @@ class _UnitSegment extends StatelessWidget {
     );
   }
 }
+
 
 /// The "Maintenance reminders" switch, mirrored from MaintenanceAlerts'
 /// stored preference.
@@ -345,14 +336,12 @@ Future<void> exportServiceRecord(
         colWork: l10n.serviceRecordColWork,
         colShop: l10n.serviceRecordColShop,
         colCost: l10n.serviceRecordColCost,
-        totalLine:
-            l10n.serviceRecordTotal(visits.length, groupThousands(total)),
+        totalLine: l10n.serviceRecordTotal(visits.length, groupThousands(total)),
         footer: l10n.serviceRecordFooter,
         formatDate: fmtDate,
         formatKm: (km) => distLabelLong(km, imperial),
         workOf: (v) => [
-          if (v.freeServiceNumber != null)
-            l10n.freeServiceN(v.freeServiceNumber!),
+          if (v.freeServiceNumber != null) l10n.freeServiceN(v.freeServiceNumber!),
           ...v.items.map((i) => [
                 i.localizedDisplayLabel(l10n),
                 if ((i.partBrand ?? '').isNotEmpty) i.partBrand,

@@ -77,16 +77,14 @@ class MaintenanceCheckRow extends ConsumerWidget {
                     color: emphasise ? color : context.palette.textSecondary,
                   ),
                 ),
-                if (f.reasons.isNotEmpty ||
-                    (f.notes ?? '').trim().isNotEmpty) ...[
+                if (f.reasons.isNotEmpty || (f.notes ?? '').trim().isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
                     children: [
                       for (final r in f.reasons)
-                        _Chip(adaptReasonLabel(r, l10n),
-                            icon: Icons.trending_down),
+                        _Chip(adaptReasonLabel(r, l10n), icon: Icons.trending_down),
                       if ((f.notes ?? '').trim().isNotEmpty)
                         _Chip(f.notes!.trim(), icon: Icons.notes),
                     ],
@@ -105,12 +103,9 @@ class MaintenanceCheckRow extends ConsumerWidget {
           if (unknown)
             TextButton(
               onPressed: () => SetLastDoneSheet.show(context,
-                  bikeId: bikeId,
-                  checkKey: f.key,
-                  label: forecastLabel(f, l10n)),
+                  bikeId: bikeId, checkKey: f.key, label: forecastLabel(f, l10n)),
               child: Text(l10n.setLastDone,
-                  style: const TextStyle(
-                      fontSize: 12, fontWeight: FontWeight.w700)),
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
             )
           else ...[
             if (canOrder)
@@ -123,8 +118,7 @@ class MaintenanceCheckRow extends ConsumerWidget {
             IconButton(
               tooltip: l10n.log,
               visualDensity: VisualDensity.compact,
-              icon: Icon(Icons.add_task,
-                  size: 20, color: context.palette.primary),
+              icon: Icon(Icons.add_task, size: 20, color: context.palette.primary),
               onPressed: () => context.push(
                   '/home/maintenance/add?bikeId=$bikeId&serviceType=${Uri.encodeComponent(f.key)}'),
             ),
@@ -147,8 +141,7 @@ class _Chip extends StatelessWidget {
       decoration: BoxDecoration(
         color: context.palette.surfaceVariant.withValues(alpha: 0.7),
         borderRadius: BorderRadius.circular(context.shape.radiusSm),
-        border:
-            Border.all(color: context.palette.border.withValues(alpha: 0.6)),
+        border: Border.all(color: context.palette.border.withValues(alpha: 0.6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -159,8 +152,7 @@ class _Chip extends StatelessWidget {
             child: Text(text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: 10.5, color: context.palette.textSecondary)),
+                style: TextStyle(fontSize: 10.5, color: context.palette.textSecondary)),
           ),
         ],
       ),
@@ -192,11 +184,8 @@ class PrecheckIssueRow extends ConsumerWidget {
                 Text(precheckLabel(issue.item, l10n),
                     style: display(context, 15, letterSpacing: 0)),
                 const SizedBox(height: 2),
-                Text(
-                    l10n.precheckIssueFlagged(
-                        shortDate(context, issue.createdAt)),
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.attention)),
+                Text(l10n.precheckIssueFlagged(shortDate(context, issue.createdAt)),
+                    style: TextStyle(fontSize: 12, color: context.palette.attention)),
               ],
             ),
           ),
@@ -205,8 +194,7 @@ class PrecheckIssueRow extends ConsumerWidget {
                 .read(precheckIssuesProvider(issue.bikeId).notifier)
                 .resolve(issue.id),
             child: Text(l10n.markFixed,
-                style:
-                    const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -221,15 +209,10 @@ class SetLastDoneSheet extends ConsumerStatefulWidget {
   final String checkKey;
   final String label;
   const SetLastDoneSheet(
-      {super.key,
-      required this.bikeId,
-      required this.checkKey,
-      required this.label});
+      {super.key, required this.bikeId, required this.checkKey, required this.label});
 
   static Future<void> show(BuildContext context,
-      {required String bikeId,
-      required String checkKey,
-      required String label}) {
+      {required String bikeId, required String checkKey, required String label}) {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -263,12 +246,10 @@ class _SetLastDoneSheetState extends ConsumerState<SetLastDoneSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(l10n.setLastDoneTitle(widget.label),
-              style: display(context, 18)),
+          Text(l10n.setLastDoneTitle(widget.label), style: display(context, 18)),
           const SizedBox(height: 4),
           Text(l10n.setLastDoneHelper,
-              style: TextStyle(
-                  fontSize: 12, color: context.palette.textSecondary)),
+              style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
           const SizedBox(height: 14),
           TextField(
             controller: _kmCtrl,
@@ -281,9 +262,7 @@ class _SetLastDoneSheetState extends ConsumerState<SetLastDoneSheet> {
           const SizedBox(height: 10),
           OutlinedButton.icon(
             icon: const Icon(Icons.event, size: 18),
-            label: Text(_date == null
-                ? l10n.pickDateOptional
-                : longDate(context, _date!)),
+            label: Text(_date == null ? l10n.pickDateOptional : longDate(context, _date!)),
             onPressed: () async {
               final picked = await showDatePicker(
                 context: context,
@@ -299,8 +278,7 @@ class _SetLastDoneSheetState extends ConsumerState<SetLastDoneSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () async {
-                final km = parseLocalizedNumber(_kmCtrl.text.trim(),
-                    min: 0, max: 2000000);
+                final km = parseLocalizedNumber(_kmCtrl.text.trim(), min: 0, max: 2000000);
                 if (km == null && _date == null) {
                   Navigator.of(context).pop();
                   return;

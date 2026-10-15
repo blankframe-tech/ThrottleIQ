@@ -42,8 +42,8 @@ double? parseLocalizedNumber(String value, {double? min, double? max}) {
 
 /// Whole numbers only: '12.5' is null, '12.0' is 12.
 int? parseLocalizedInt(String value, {int? min, int? max}) {
-  final n =
-      parseLocalizedNumber(value, min: min?.toDouble(), max: max?.toDouble());
+  final n = parseLocalizedNumber(value,
+      min: min?.toDouble(), max: max?.toDouble());
   if (n == null || n != n.truncateToDouble() || n.abs() > 9e15) return null;
   return n.toInt();
 }

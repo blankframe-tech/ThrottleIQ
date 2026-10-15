@@ -29,8 +29,7 @@ class SavedPlaceDao {
       whereArgs: [row['user_id'], row['place_id']],
     );
     if (updated == 0) {
-      await db.insert(_table, row,
-          conflictAlgorithm: ConflictAlgorithm.replace);
+      await db.insert(_table, row, conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
 

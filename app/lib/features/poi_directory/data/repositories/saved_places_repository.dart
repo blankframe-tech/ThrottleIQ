@@ -20,8 +20,7 @@ class SavedPlacesRepository {
   Future<void> save(String userId, PlaceEntity place, {DateTime? now}) =>
       _dao.upsert(toRow(userId, place, savedAt: now ?? DateTime.now()));
 
-  Future<void> remove(String userId, String placeId) =>
-      _dao.remove(userId, placeId);
+  Future<void> remove(String userId, String placeId) => _dao.remove(userId, placeId);
 
   static Map<String, dynamic> toRow(
     String userId,
@@ -38,10 +37,7 @@ class SavedPlacesRepository {
       'address': place.address,
       'phone': place.phone,
       'hours': place.hours,
-      'tags': [
-        for (final t in PlaceTag.values)
-          if (place.tags.contains(t)) t.name
-      ].join(','),
+      'tags': [for (final t in PlaceTag.values) if (place.tags.contains(t)) t.name].join(','),
       'verified': place.verified ? 1 : 0,
       'saved_at': savedAt.toUtc().toIso8601String(),
     };

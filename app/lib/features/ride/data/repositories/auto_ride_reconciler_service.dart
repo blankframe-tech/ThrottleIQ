@@ -10,8 +10,8 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../presentation/providers/daily_ride_summary_provider.dart';
 import 'detected_odometer_credit.dart';
 
-final autoRideReconcilerServiceProvider = Provider<AutoRideReconcilerService>(
-    (ref) => AutoRideReconcilerService(ref));
+final autoRideReconcilerServiceProvider =
+    Provider<AutoRideReconcilerService>((ref) => AutoRideReconcilerService(ref));
 
 /// Hands detections captured by the background isolate to the rider's daily
 /// summary (it used to turn each into a ride row — see [_summarizeOne]).
@@ -74,8 +74,9 @@ class AutoRideReconcilerService {
       // The UI-isolate path to the end-of-day notification (the task handler
       // has its own, see AutoTrackingService). Covers a rider who opens the
       // app after 9pm, and iOS, where the handler may not be alive then.
-      unawaited(
-          _ref.read(dailyRideSummaryRepositoryProvider).showEndOfDayIfDue(uid));
+      unawaited(_ref
+          .read(dailyRideSummaryRepositoryProvider)
+          .showEndOfDayIfDue(uid));
 
       if (pending.isEmpty) return const [];
 

@@ -150,8 +150,7 @@ class EditorialPill extends StatelessWidget {
   final String text;
   final PillTone tone;
   final bool filled;
-  const EditorialPill(this.text,
-      {super.key, this.tone = PillTone.accent, this.filled = true});
+  const EditorialPill(this.text, {super.key, this.tone = PillTone.accent, this.filled = true});
 
   @override
   Widget build(BuildContext context) {
@@ -238,28 +237,23 @@ class StatCell extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         RichText(
-          textAlign: align == CrossAxisAlignment.center
-              ? TextAlign.center
-              : TextAlign.start,
+          textAlign: align == CrossAxisAlignment.center ? TextAlign.center : TextAlign.start,
           text: TextSpan(
             text: value,
-            style: display(context, valueSize,
-                color: valueColor ?? context.palette.textPrimary),
+            style: display(context, valueSize, color: valueColor ?? context.palette.textPrimary),
             children: [
               if (unit != null)
                 TextSpan(
                   text: ' $unit',
                   style: display(context, valueSize * 0.5,
-                      weight: FontWeight.w500,
-                      color: context.palette.textSecondary),
+                      weight: FontWeight.w500, color: context.palette.textSecondary),
                 ),
             ],
           ),
         ),
         const SizedBox(height: 2),
         Text(label,
-            style:
-                TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+            style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
       ],
     );
   }
@@ -280,8 +274,7 @@ class DashedAddButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(context.shape.radiusLg),
-          border:
-              Border.all(color: context.palette.primary.withValues(alpha: 0.6)),
+          border: Border.all(color: context.palette.primary.withValues(alpha: 0.6)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -289,8 +282,7 @@ class DashedAddButton extends StatelessWidget {
             Icon(Icons.add, size: 18, color: context.palette.primary),
             const SizedBox(width: 8),
             Text(label,
-                style: display(context, 14,
-                    letterSpacing: 0, color: context.palette.primary)),
+                style: display(context, 14, letterSpacing: 0, color: context.palette.primary)),
           ],
         ),
       ),

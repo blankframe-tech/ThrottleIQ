@@ -6335,3 +6335,12 @@ deliberately left alone, so do not redo them. Nothing was deployed.
   most of R10, each with tests. R3 and the `deltaT`/`Stopwatch` changes stay skipped.
 - **Still open from §101:** S2 index deploy and S6 `group_rides` location membership (needs a Cloud
   Function); every founder-only item listed in `todo_now_antigravity.md` §10.
+
+## 2026-10-15 — Cockpit overlap and phone placement
+
+- **"I'm in a jam" (beta) covered the speed panel** on the ride screen: the button sat in the bottom
+  controls, which outgrew the speed panel's fixed `bottom: 160`. It now renders above the panel
+  (`active_ride_screen.dart`). Button added in `238d12b`; overlap surfaced with the beta jam labelling.
+- **Phone placement moved into the ride:** it was clipped on the Record screen, so it is now a pill at
+  the top-left of the cockpit (`phone_placement_selector.dart`), switchable mid-ride. Read at impact
+  time only; ride analytics do not yet record placement changes.

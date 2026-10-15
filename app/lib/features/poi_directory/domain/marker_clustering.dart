@@ -19,8 +19,7 @@ class MapCluster<T> {
   final scale = 256 * math.pow(2, zoom).toDouble();
   final lat = latitude.clamp(-85.05112878, 85.05112878) * math.pi / 180;
   final x = (longitude + 180) / 360 * scale;
-  final y =
-      (1 - math.log(math.tan(lat) + 1 / math.cos(lat)) / math.pi) / 2 * scale;
+  final y = (1 - math.log(math.tan(lat) + 1 / math.cos(lat)) / math.pi) / 2 * scale;
   return (x, y);
 }
 

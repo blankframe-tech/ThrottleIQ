@@ -35,8 +35,7 @@ class ForumReplyModel {
     );
   }
 
-  factory ForumReplyModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ForumReplyModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return ForumReplyModel(
       id: doc.id,

@@ -110,8 +110,9 @@ class MaintenanceAlerts {
 
       final at = now ?? DateTime.now();
       final l10n = await savedL10n();
-      final bikes =
-          (await BikeDao().getAllForUser(uid)).map(BikeModel.fromMap).toList();
+      final bikes = (await BikeDao().getAllForUser(uid))
+          .map(BikeModel.fromMap)
+          .toList();
       final repo = MaintenanceForecastRepository();
       final profileDao = MaintenanceProfileDao();
 
@@ -122,7 +123,8 @@ class MaintenanceAlerts {
       for (final bike in bikes) {
         final forecasts = await repo.forecastFor(bike, now: at);
         for (final f in forecasts) {
-          if (f.serviceType.isLowStakes || f.status == ReminderStatus.unknown) {
+          if (f.serviceType.isLowStakes ||
+              f.status == ReminderStatus.unknown) {
             continue;
           }
           final label = forecastLabel(f, l10n);
@@ -137,8 +139,7 @@ class MaintenanceAlerts {
                 title: f.status == ReminderStatus.overdue
                     ? l10n.maintAlertOverdue(label)
                     : l10n.maintAlertDueSoon(label),
-                body:
-                    '${remainingText(f, l10n, at, imperial: imperial)} · ${bike.displayName}',
+                body: '${remainingText(f, l10n, at, imperial: imperial)} · ${bike.displayName}',
                 bikeId: bike.id,
               ));
             }
@@ -185,8 +186,7 @@ class MaintenanceAlerts {
               at: _morningOf(p.expiresOn
                   .subtract(const Duration(days: PaperworkEntity.warnDays))),
               id: pid,
-              title:
-                  l10n.paperworkAlertExpiring(name, PaperworkEntity.warnDays),
+              title: l10n.paperworkAlertExpiring(name, PaperworkEntity.warnDays),
               body: bike.displayName,
               bikeId: bike.id,
             ));
@@ -277,8 +277,7 @@ class MaintenanceAlerts {
     return _morningOf(timeDue.subtract(Duration(days: warn)));
   }
 
-  static DateTime _morningOf(DateTime d) =>
-      DateTime(d.year, d.month, d.day, 10);
+  static DateTime _morningOf(DateTime d) => DateTime(d.year, d.month, d.day, 10);
 }
 
 /// One notification id per item, kept for good. Hashing alone put ~40 keys
@@ -286,8 +285,7 @@ class MaintenanceAlerts {
 /// id — one item's alert then replaced or cancelled the other's.
 @visibleForTesting
 class IdAllocatorForTesting {
-  static Map<String, int> allocate(
-      Map<String, int> existing, List<String> keys) {
+  static Map<String, int> allocate(Map<String, int> existing, List<String> keys) {
     final a = _IdAllocator(Map.of(existing));
     for (final k in keys) {
       a.idFor(k);
@@ -351,8 +349,7 @@ String remainingText(CheckForecast f, AppLocalizations l10n, DateTime now,
     {bool imperial = false}) {
   String km(double v) => distLabelLong(v.abs(), imperial);
   if (f.status == ReminderStatus.overdue) {
-    if (f.kmLeft != null && f.kmLeft! <= 0)
-      return l10n.maintOverKm(km(f.kmLeft!));
+    if (f.kmLeft != null && f.kmLeft! <= 0) return l10n.maintOverKm(km(f.kmLeft!));
     if (f.daysLeft != null && f.daysLeft! < 0) {
       return l10n.maintOverDays(-f.daysLeft!);
     }

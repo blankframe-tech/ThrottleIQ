@@ -115,8 +115,7 @@ class AnalyticsService {
 
   /// Records a funnel step. [param] is the one coarse parameter that event
   /// allows, or null.
-  Future<void> log(AnalyticsEvent event,
-      {AnalyticsParam? param, String? value}) async {
+  Future<void> log(AnalyticsEvent event, {AnalyticsParam? param, String? value}) async {
     if (!_enabled || _debugMode) return;
     try {
       await _sink.logEvent(

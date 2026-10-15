@@ -77,50 +77,28 @@ extension MaintenanceCategoryExt on MaintenanceCategory {
 extension ServiceTypeExt on ServiceType {
   String get label {
     switch (this) {
-      case ServiceType.oilChange:
-        return 'Oil Change';
-      case ServiceType.airFilter:
-        return 'Air Filter';
-      case ServiceType.chain:
-        return 'Chain Lube';
-      case ServiceType.tire:
-        return 'Tire Check';
-      case ServiceType.radiatorCoolant:
-        return 'Radiator / Coolant';
-      case ServiceType.frontDiscPads:
-        return 'Front Disc Pads';
-      case ServiceType.rearDrumPads:
-        return 'Rear Drum Pads';
-      case ServiceType.brakeFluid:
-        return 'Brake Fluid';
-      case ServiceType.sparkPlug:
-        return 'Spark Plug';
-      case ServiceType.battery:
-        return 'Battery';
-      case ServiceType.valveClearance:
-        return 'Valve Clearance';
-      case ServiceType.clutchCable:
-        return 'Clutch Cable';
-      case ServiceType.suspension:
-        return 'Suspension';
-      case ServiceType.oilFilter:
-        return 'Oil Filter';
-      case ServiceType.chainTension:
-        return 'Chain Slack & Tension';
-      case ServiceType.brakeRotors:
-        return 'Brake Rotors / Discs';
-      case ServiceType.forkSeals:
-        return 'Fork Oil & Seals';
-      case ServiceType.wheelBearings:
-        return 'Wheel Bearings';
-      case ServiceType.driveBelt:
-        return 'Drive Belt';
-      case ServiceType.throttleCables:
-        return 'Throttle & Cables';
-      case ServiceType.fuel:
-        return 'Fuel';
-      case ServiceType.custom:
-        return 'Custom';
+      case ServiceType.oilChange: return 'Oil Change';
+      case ServiceType.airFilter: return 'Air Filter';
+      case ServiceType.chain: return 'Chain Lube';
+      case ServiceType.tire: return 'Tire Check';
+      case ServiceType.radiatorCoolant: return 'Radiator / Coolant';
+      case ServiceType.frontDiscPads: return 'Front Disc Pads';
+      case ServiceType.rearDrumPads: return 'Rear Drum Pads';
+      case ServiceType.brakeFluid: return 'Brake Fluid';
+      case ServiceType.sparkPlug: return 'Spark Plug';
+      case ServiceType.battery: return 'Battery';
+      case ServiceType.valveClearance: return 'Valve Clearance';
+      case ServiceType.clutchCable: return 'Clutch Cable';
+      case ServiceType.suspension: return 'Suspension';
+      case ServiceType.oilFilter: return 'Oil Filter';
+      case ServiceType.chainTension: return 'Chain Slack & Tension';
+      case ServiceType.brakeRotors: return 'Brake Rotors / Discs';
+      case ServiceType.forkSeals: return 'Fork Oil & Seals';
+      case ServiceType.wheelBearings: return 'Wheel Bearings';
+      case ServiceType.driveBelt: return 'Drive Belt';
+      case ServiceType.throttleCables: return 'Throttle & Cables';
+      case ServiceType.fuel: return 'Fuel';
+      case ServiceType.custom: return 'Custom';
     }
   }
 
@@ -206,50 +184,28 @@ extension ServiceTypeExt on ServiceType {
 
   double get defaultIntervalKm {
     switch (this) {
-      case ServiceType.fuel:
-        return 300;
-      case ServiceType.oilChange:
-        return 1500;
-      case ServiceType.oilFilter:
-        return 3000;
-      case ServiceType.chain:
-        return 600;
-      case ServiceType.chainTension:
-        return 1000;
-      case ServiceType.tire:
-        return 3000;
-      case ServiceType.clutchCable:
-        return 3000;
-      case ServiceType.throttleCables:
-        return 5000;
-      case ServiceType.battery:
-        return 6000;
-      case ServiceType.airFilter:
-        return 8000;
-      case ServiceType.sparkPlug:
-        return 10000;
-      case ServiceType.frontDiscPads:
-        return 12000;
-      case ServiceType.rearDrumPads:
-        return 12000;
-      case ServiceType.forkSeals:
-        return 15000;
-      case ServiceType.radiatorCoolant:
-        return 15000;
-      case ServiceType.brakeFluid:
-        return 18000;
-      case ServiceType.suspension:
-        return 18000;
-      case ServiceType.wheelBearings:
-        return 20000;
-      case ServiceType.driveBelt:
-        return 20000;
-      case ServiceType.valveClearance:
-        return 20000;
-      case ServiceType.brakeRotors:
-        return 25000;
-      case ServiceType.custom:
-        return 5000;
+      case ServiceType.fuel: return 300;
+      case ServiceType.oilChange: return 1500;
+      case ServiceType.oilFilter: return 3000;
+      case ServiceType.chain: return 600;
+      case ServiceType.chainTension: return 1000;
+      case ServiceType.tire: return 3000;
+      case ServiceType.clutchCable: return 3000;
+      case ServiceType.throttleCables: return 5000;
+      case ServiceType.battery: return 6000;
+      case ServiceType.airFilter: return 8000;
+      case ServiceType.sparkPlug: return 10000;
+      case ServiceType.frontDiscPads: return 12000;
+      case ServiceType.rearDrumPads: return 12000;
+      case ServiceType.forkSeals: return 15000;
+      case ServiceType.radiatorCoolant: return 15000;
+      case ServiceType.brakeFluid: return 18000;
+      case ServiceType.suspension: return 18000;
+      case ServiceType.wheelBearings: return 20000;
+      case ServiceType.driveBelt: return 20000;
+      case ServiceType.valveClearance: return 20000;
+      case ServiceType.brakeRotors: return 25000;
+      case ServiceType.custom: return 5000;
     }
   }
 
@@ -259,32 +215,19 @@ extension ServiceTypeExt on ServiceType {
   /// even on a bike that is never ridden.
   int? get defaultIntervalDays {
     switch (this) {
-      case ServiceType.oilChange:
-        return 180;
-      case ServiceType.oilFilter:
-        return 365;
-      case ServiceType.chain:
-        return 30;
-      case ServiceType.chainTension:
-        return 60;
-      case ServiceType.tire:
-        return 30;
-      case ServiceType.clutchCable:
-        return 180;
-      case ServiceType.throttleCables:
-        return 365;
-      case ServiceType.battery:
-        return 365;
-      case ServiceType.airFilter:
-        return 365;
-      case ServiceType.sparkPlug:
-        return 730;
-      case ServiceType.forkSeals:
-        return 730;
-      case ServiceType.radiatorCoolant:
-        return 730;
-      case ServiceType.brakeFluid:
-        return 730;
+      case ServiceType.oilChange: return 180;
+      case ServiceType.oilFilter: return 365;
+      case ServiceType.chain: return 30;
+      case ServiceType.chainTension: return 60;
+      case ServiceType.tire: return 30;
+      case ServiceType.clutchCable: return 180;
+      case ServiceType.throttleCables: return 365;
+      case ServiceType.battery: return 365;
+      case ServiceType.airFilter: return 365;
+      case ServiceType.sparkPlug: return 730;
+      case ServiceType.forkSeals: return 730;
+      case ServiceType.radiatorCoolant: return 730;
+      case ServiceType.brakeFluid: return 730;
       case ServiceType.fuel:
       case ServiceType.frontDiscPads:
       case ServiceType.rearDrumPads:
@@ -324,8 +267,7 @@ extension ServiceTypeExt on ServiceType {
   String get value => name;
 
   static ServiceType fromString(String s) {
-    return ServiceType.values
-        .firstWhere((e) => e.name == s, orElse: () => ServiceType.custom);
+    return ServiceType.values.firstWhere((e) => e.name == s, orElse: () => ServiceType.custom);
   }
 }
 
@@ -516,11 +458,13 @@ class MaintenanceConfigEntity extends Equatable {
           clearIntervalDays ? null : (intervalDays ?? this.intervalDays),
       isEnabled: isEnabled ?? this.isEnabled,
       notes: notes ?? this.notes,
-      typicalCost: clearTypicalCost ? null : (typicalCost ?? this.typicalCost),
+      typicalCost:
+          clearTypicalCost ? null : (typicalCost ?? this.typicalCost),
       warnKm: clearWarnKm ? null : (warnKm ?? this.warnKm),
       warnDays: clearWarnDays ? null : (warnDays ?? this.warnDays),
       baselineKm: clearBaseline ? null : (baselineKm ?? this.baselineKm),
-      baselineDate: clearBaseline ? null : (baselineDate ?? this.baselineDate),
+      baselineDate:
+          clearBaseline ? null : (baselineDate ?? this.baselineDate),
       source: source ?? this.source,
       customId: customId,
       customLabel: customLabel ?? this.customLabel,
@@ -564,8 +508,10 @@ class BikeRunningCostEntity extends Equatable {
     this.kmPerLitre,
   });
 
-  bool get hasFuelData => (fuelPricePerLitre ?? 0) > 0 && (kmPerLitre ?? 0) > 0;
+  bool get hasFuelData =>
+      (fuelPricePerLitre ?? 0) > 0 && (kmPerLitre ?? 0) > 0;
 
   @override
   List<Object?> get props => [bikeId, fuelPricePerLitre, kmPerLitre];
 }
+

@@ -194,7 +194,10 @@ class MaintenanceSettingsSync {
 
     await db.transaction((txn) async {
       final bikeExists = (await txn.query('bikes',
-              columns: ['id'], where: 'id = ?', whereArgs: [bikeId], limit: 1))
+              columns: ['id'],
+              where: 'id = ?',
+              whereArgs: [bikeId],
+              limit: 1))
           .isNotEmpty;
       if (!bikeExists) return;
 
@@ -279,8 +282,8 @@ class MaintenanceSettingsSync {
             'bike_running_costs',
             {
               'bike_id': bikeId,
-              'fuel_price_per_litre':
-                  _positiveOrNull(running['fuel_price_per_litre']),
+              'fuel_price_per_litre': _positiveOrNull(
+                  running['fuel_price_per_litre']),
               'km_per_litre': _positiveOrNull(running['km_per_litre']),
             },
             conflictAlgorithm: ConflictAlgorithm.replace,
@@ -303,9 +306,7 @@ class MaintenanceSettingsSync {
     final notes = raw['notes'];
     num? optNum(String k) => raw[k] is num ? raw[k] as num : null;
     String? optStr(String k) =>
-        raw[k] is String && (raw[k] as String).isNotEmpty
-            ? raw[k] as String
-            : null;
+        raw[k] is String && (raw[k] as String).isNotEmpty ? raw[k] as String : null;
     return {
       'bike_id': bikeId,
       'service_type': serviceType,

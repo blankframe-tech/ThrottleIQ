@@ -104,9 +104,7 @@ RideResumeAggregates rebuildRideAggregates(
 
   for (var i = 0; i < fixes.length; i++) {
     final speed = fixes[i].speedMs;
-    if (speed.isFinite &&
-        speed >= 0 &&
-        speed <= SensorConstants.maxPlausibleSpeedMs) {
+    if (speed.isFinite && speed >= 0 && speed <= SensorConstants.maxPlausibleSpeedMs) {
       speedSum += speed;
       validSpeedCount++;
       if (speed > maxSpeedMs) maxSpeedMs = speed;
@@ -122,8 +120,7 @@ RideResumeAggregates rebuildRideAggregates(
     var derivedCount = 0;
     for (var i = 1; i < fixes.length; i++) {
       if (segmentStartIndices.contains(i)) continue;
-      final dt =
-          fixes[i].time.difference(fixes[i - 1].time).inMilliseconds / 1000.0;
+      final dt = fixes[i].time.difference(fixes[i - 1].time).inMilliseconds / 1000.0;
       if (dt >= 0.1) {
         final d = haversineMeters(
           fixes[i - 1].lat,

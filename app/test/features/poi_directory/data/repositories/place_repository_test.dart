@@ -4,24 +4,26 @@ import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.d
 
 void main() {
   final testPlace = PlaceEntity(
-    id: 'place1',
-    name: 'Test Fuel Station',
-    category: PlaceCategory.fuel,
-    latitude: 23.8103,
-    longitude: 90.4125,
-    geohash: 'twyv',
-    address: 'Test Address',
-    phone: '+880123456789',
-    hours: '24/7',
-    photoUrls: const [],
-    verified: false,
-    createdBy: 'user1',
-    createdAt: DateTime.now(),
-    ratingSum: 0,
-    ratingCount: 0,
-  );
+      id: 'place1',
+      name: 'Test Fuel Station',
+      category: PlaceCategory.fuel,
+      latitude: 23.8103,
+      longitude: 90.4125,
+      geohash: 'twyv',
+      address: 'Test Address',
+      phone: '+880123456789',
+      hours: '24/7',
+      photoUrls: const [],
+      verified: false,
+      createdBy: 'user1',
+      createdAt: DateTime.now(),
+      ratingSum: 0,
+      ratingCount: 0,
+    );
 
   group('PlaceRepository', () {
+
+
     test('addPlace should add a new place to Firestore', () async {
       // This test demonstrates the expected behavior
       // In practice, you would use Firebase test environment

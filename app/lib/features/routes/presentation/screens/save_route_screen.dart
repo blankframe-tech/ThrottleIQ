@@ -92,8 +92,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
       final routeId = await repo.saveRoute(
         userId: uid,
         name: _nameCtrl.text.trim(),
-        description:
-            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
         distanceKm: _distanceKm,
         polyline: _polyline,
       );
@@ -140,8 +139,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 SizedBox(
                   height: 180,
                   child: Center(
-                    child: CircularProgressIndicator(
-                        color: context.palette.primary),
+                    child: CircularProgressIndicator(color: context.palette.primary),
                   ),
                 )
               else
@@ -150,10 +148,8 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               Text(
                 _loadingTrail
                     ? context.l10n.loadingTrack
-                    : context.l10n.kmPoints(
-                        _distanceKm.toStringAsFixed(1), _polyline.length),
-                style: TextStyle(
-                    fontSize: 12, color: context.palette.textTertiary),
+                    : context.l10n.kmPoints(_distanceKm.toStringAsFixed(1), _polyline.length),
+                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
               ),
               const SizedBox(height: 24),
               EditorialLabel(context.l10n.routeName),
@@ -165,9 +161,8 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                 decoration: InputDecoration(
                   hintText: context.l10n.eGDhakaMawa,
                 ),
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? context.l10n.giveRouteName
-                    : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? context.l10n.giveRouteName : null,
               ),
               const SizedBox(height: 20),
               EditorialLabel(context.l10n.descriptionOptional),
@@ -183,8 +178,7 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
               ),
               const SizedBox(height: 20),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: context.palette.surface,
                   borderRadius: BorderRadius.circular(context.shape.radiusMd),
@@ -194,23 +188,19 @@ class _SaveRouteScreenState extends ConsumerState<SaveRouteScreen> {
                   color: Colors.transparent,
                   child: SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    value: _isPublic,
-                    activeThumbColor: context.palette.primary,
-                    onChanged: (v) => setState(() => _isPublic = v),
-                    title: Text(
-                      _isPublic
-                          ? context.l10n.audiencePublic
-                          : context.l10n.privateLabel,
-                      style: TextStyle(
-                          fontSize: 14, color: context.palette.textPrimary),
-                    ),
-                    subtitle: Text(
-                      _isPublic
-                          ? context.l10n.anyRiderCanFind
-                          : context.l10n.onlyCanSeeThis,
-                      style: TextStyle(
-                          fontSize: 12, color: context.palette.textSecondary),
-                    ),
+                  value: _isPublic,
+                  activeThumbColor: context.palette.primary,
+                  onChanged: (v) => setState(() => _isPublic = v),
+                  title: Text(
+                    _isPublic ? context.l10n.audiencePublic : context.l10n.privateLabel,
+                    style: TextStyle(fontSize: 14, color: context.palette.textPrimary),
+                  ),
+                  subtitle: Text(
+                    _isPublic
+                        ? context.l10n.anyRiderCanFind
+                        : context.l10n.onlyCanSeeThis,
+                    style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  ),
                   ),
                 ),
               ),

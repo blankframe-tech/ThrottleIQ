@@ -27,8 +27,7 @@ bool canMarkSolution(ForumPostEntity post, String? uid) =>
 /// The solved state after the author taps "Mark solved" / "Reopen" on the
 /// post itself. Reopening also drops any accepted reply — a reopened post
 /// with a highlighted "solution" would contradict itself.
-({bool isSolved, String? solutionReplyId}) toggleSolvedFlag(
-    ForumPostEntity post) {
+({bool isSolved, String? solutionReplyId}) toggleSolvedFlag(ForumPostEntity post) {
   if (post.isSolved) return (isSolved: false, solutionReplyId: null);
   return (isSolved: true, solutionReplyId: post.solutionReplyId);
 }
@@ -42,9 +41,5 @@ List<ForumReplyEntity> orderRepliesWithSolutionFirst(
   if (solutionReplyId == null) return replies;
   final solution = replies.where((r) => r.id == solutionReplyId).firstOrNull;
   if (solution == null) return replies;
-  return [
-    solution,
-    for (final r in replies)
-      if (r.id != solutionReplyId) r
-  ];
+  return [solution, for (final r in replies) if (r.id != solutionReplyId) r];
 }

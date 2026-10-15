@@ -9,8 +9,7 @@ class HapticService {
   static Future<void> alertPattern() async {
     final hasVibrator = await Vibration.hasVibrator();
     if (hasVibrator) {
-      await Vibration.vibrate(
-          pattern: [0, 200, 100, 200], intensities: [0, 255, 0, 255]);
+      await Vibration.vibrate(pattern: [0, 200, 100, 200], intensities: [0, 255, 0, 255]);
     } else {
       await HapticFeedback.heavyImpact();
     }

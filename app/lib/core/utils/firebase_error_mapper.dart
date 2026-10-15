@@ -13,16 +13,20 @@ import '../../l10n/app_localizations.dart';
 String mapFirestoreError(Object error, AppLocalizations l10n) {
   if (error is FirebaseException) {
     return switch (error.code) {
-      'unavailable' => l10n.errOffline,
-      'deadline-exceeded' => l10n.errTimeout,
+      'unavailable' =>
+        l10n.errOffline,
+      'deadline-exceeded' =>
+        l10n.errTimeout,
       'permission-denied' => l10n.errNoPermission,
       'not-found' => l10n.errNotFound,
-      'resource-exhausted' => l10n.errTooManyRequests,
+      'resource-exhausted' =>
+        l10n.errTooManyRequests,
       // A required Firestore composite index is missing or still building —
       // see issues §82. Distinct
       // from the generic message so this failure mode is recognizable in
       // logs/screenshots instead of looking identical to every other error.
-      'failed-precondition' => l10n.errNotReady,
+      'failed-precondition' =>
+        l10n.errNotReady,
       _ => l10n.errLoadGeneric,
     };
   }
@@ -44,7 +48,8 @@ String mapFirebaseAuthError(dynamic error, AppLocalizations l10n) {
 
   if (error is FirebaseAuthException) {
     return switch (error.code) {
-      'user-not-found' => l10n.authUserNotFound,
+      'user-not-found' =>
+        l10n.authUserNotFound,
       'wrong-password' => l10n.authWrongPassword,
       'invalid-email' => l10n.authInvalidEmail,
       'user-disabled' => l10n.authUserDisabled,
@@ -53,7 +58,8 @@ String mapFirebaseAuthError(dynamic error, AppLocalizations l10n) {
       'invalid-credential' => l10n.authInvalidCredential,
       'email-already-in-use' => l10n.authEmailInUse,
       'weak-password' => l10n.authWeakPassword,
-      'network-request-failed' => l10n.authNetworkFailed,
+      'network-request-failed' =>
+        l10n.authNetworkFailed,
       'account-exists-with-different-credential' =>
         l10n.authAccountExistsDifferent,
       _ => l10n.authGeneric(error.message ?? 'Unknown error'),

@@ -38,16 +38,14 @@ class BikeConfirmationCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border:
-            Border.all(color: context.palette.primary.withValues(alpha: 0.4)),
+        border: Border.all(color: context.palette.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.help_outline,
-                  size: 18, color: context.palette.primary),
+              Icon(Icons.help_outline, size: 18, color: context.palette.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -60,8 +58,7 @@ class BikeConfirmationCard extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             l10n.bikeConfirmationBody,
-            style:
-                TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -89,9 +86,7 @@ class BikeConfirmationCard extends ConsumerWidget {
     await ref.read(rideAttributionProvider).confirm(ride: ride, bikeId: bikeId);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(
-              AppLocalizations.of(context).bikeConfirmationUpdatedMessage)),
+      SnackBar(content: Text(AppLocalizations.of(context).bikeConfirmationUpdatedMessage)),
     );
   }
 }

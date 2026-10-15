@@ -29,13 +29,13 @@ String dueWhenText(CheckForecast f, AppLocalizations l10n, DateTime now) {
 
 /// What's left, in the rider's units: "1,240 km or 34 days left",
 /// "120 km over", "Set last done".
-String rowRemainingText(CheckForecast f, AppLocalizations l10n, bool imperial) {
+String rowRemainingText(
+    CheckForecast f, AppLocalizations l10n, bool imperial) {
   if (f.status == ReminderStatus.unknown) return l10n.maintUnknownStatus;
   final km = f.kmLeft;
   final days = f.daysLeft;
   if (f.status == ReminderStatus.overdue) {
-    if (km != null && km <= 0)
-      return l10n.rowOverBy(distLabelLong(-km, imperial));
+    if (km != null && km <= 0) return l10n.rowOverBy(distLabelLong(-km, imperial));
     if (days != null && days < 0) return l10n.rowOverDays(-days);
   }
   if (days == 0) return l10n.maintDueToday;

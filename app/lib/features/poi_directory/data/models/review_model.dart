@@ -48,8 +48,7 @@ class ReviewModel {
     );
   }
 
-  factory ReviewModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ReviewModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return ReviewModel(
       id: doc.id,
