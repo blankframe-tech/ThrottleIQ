@@ -27,7 +27,8 @@ int pickQuoteIndex({math.Random? random}) =>
 
 /// Resolves [pick] in [l10n]'s language, weaving in [name] where the variant has
 /// a slot for it (a blank or literal "null" name falls back to a generic word).
-Greeting resolveGreeting(GreetingPick pick, AppLocalizations l10n, {String? name}) {
+Greeting resolveGreeting(GreetingPick pick, AppLocalizations l10n,
+    {String? name}) {
   final trimmed = name?.trim() ?? '';
   final safe = (trimmed.isEmpty || trimmed.toLowerCase() == 'null')
       ? l10n.greetingNameFallback
@@ -38,9 +39,12 @@ Greeting resolveGreeting(GreetingPick pick, AppLocalizations l10n, {String? name
 }
 
 /// The two halves of tagline [index], to be joined with a space.
-(String, String) resolveQuote(int index, AppLocalizations l10n) => _quotes(l10n)[index];
+(String, String) resolveQuote(int index, AppLocalizations l10n) =>
+    _quotes(l10n)[index];
 
-List<(String, bool)> _variants(GreetingBucket b, AppLocalizations l, String n) => switch (b) {
+List<(String, bool)> _variants(
+        GreetingBucket b, AppLocalizations l, String n) =>
+    switch (b) {
       GreetingBucket.lateNight => [
           (l.greetLateNight1, false),
           (l.greetLateNight2, false),

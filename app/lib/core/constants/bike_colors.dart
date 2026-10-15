@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import '../../features/garage/domain/entities/bike_entity.dart';
 import '../utils/bike_image_resolver.dart';
@@ -29,7 +28,6 @@ Color bikeAccentColor(BikeEntity bike) {
   if (explicit != null) return explicit;
   return bikeColorPalette[bike.id.hashCode.abs() % bikeColorPalette.length];
 }
-
 
 /// Whether [bike] has an actual photo to show — not just a non-null path,
 /// since `imagePath` can point at a file the OS has since cleaned up (see

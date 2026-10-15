@@ -37,7 +37,8 @@ class PaperworkCard extends ConsumerWidget {
         ),
         if (papers.isEmpty)
           Text(l10n.paperworkEmpty,
-              style: TextStyle(fontSize: 12, color: context.palette.textTertiary))
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary))
         else
           EditorialCard(
             radius: context.shape.radiusLg,
@@ -53,14 +54,16 @@ class PaperworkCard extends ConsumerWidget {
                         style: const TextStyle(fontWeight: FontWeight.w600)),
                     subtitle: Text(
                       p.daysLeft(now) < 0
-                          ? l10n.paperworkExpiredOn(longDate(context, p.expiresOn))
+                          ? l10n.paperworkExpiredOn(
+                              longDate(context, p.expiresOn))
                           : l10n.paperworkExpiresOn(
                               longDate(context, p.expiresOn), p.daysLeft(now)),
                       style: TextStyle(
-                          fontSize: 12, color: _color(context, p.daysLeft(now))),
+                          fontSize: 12,
+                          color: _color(context, p.daysLeft(now))),
                     ),
-                    onTap: () =>
-                        PaperworkSheet.show(context, bikeId: bikeId, existing: p),
+                    onTap: () => PaperworkSheet.show(context,
+                        bikeId: bikeId, existing: p),
                   ),
               ],
             ),
@@ -142,7 +145,8 @@ class _PaperworkSheetState extends ConsumerState<PaperworkSheet> {
                 final now = DateTime.now();
                 final picked = await showDatePicker(
                   context: context,
-                  initialDate: _expires ?? DateTime(now.year + 1, now.month, now.day),
+                  initialDate:
+                      _expires ?? DateTime(now.year + 1, now.month, now.day),
                   firstDate: _expires != null && _expires!.year < now.year - 5
                       ? _expires!
                       : DateTime(now.year - 5),

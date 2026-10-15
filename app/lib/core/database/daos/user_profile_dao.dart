@@ -3,7 +3,8 @@ import 'package:sqflite/sqflite.dart';
 import '../database_helper.dart';
 
 class UserProfileDao {
-  Future<void> saveProfile(String uid, String displayName, {String? photoUrl}) async {
+  Future<void> saveProfile(String uid, String displayName,
+      {String? photoUrl}) async {
     final db = await DatabaseHelper.instance.database;
     final now = DateTime.now().toIso8601String();
 

@@ -93,6 +93,7 @@ Map<String, BrandPaddockStats> aggregateBrandPaddockStats(
   }
   return {
     for (final slug in {...riders.keys, ...posts.keys})
-      slug: BrandPaddockStats(riders: riders[slug] ?? 0, posts: posts[slug] ?? 0),
+      slug:
+          BrandPaddockStats(riders: riders[slug] ?? 0, posts: posts[slug] ?? 0),
   };
 }

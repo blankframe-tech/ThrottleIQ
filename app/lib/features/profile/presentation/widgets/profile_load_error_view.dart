@@ -43,9 +43,15 @@ class ProfileLoadErrorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (icon, message) = switch (failure) {
-      ProfileLoadFailure.private => (Icons.lock_outline, context.l10n.thisProfilePrivate),
+      ProfileLoadFailure.private => (
+          Icons.lock_outline,
+          context.l10n.thisProfilePrivate
+        ),
       ProfileLoadFailure.offline => (Icons.wifi_off, context.l10n.youreOffline),
-      ProfileLoadFailure.other => (Icons.error_outline, context.l10n.couldntLoadProfile),
+      ProfileLoadFailure.other => (
+          Icons.error_outline,
+          context.l10n.couldntLoadProfile
+        ),
     };
     return Center(
       child: Padding(
@@ -56,7 +62,8 @@ class ProfileLoadErrorView extends StatelessWidget {
             Icon(icon, size: 48, color: context.palette.textTertiary),
             const SizedBox(height: 12),
             Text(message,
-                style: TextStyle(fontSize: 16, color: context.palette.textSecondary)),
+                style: TextStyle(
+                    fontSize: 16, color: context.palette.textSecondary)),
             if (failure != ProfileLoadFailure.private) ...[
               const SizedBox(height: 16),
               OutlinedButton.icon(

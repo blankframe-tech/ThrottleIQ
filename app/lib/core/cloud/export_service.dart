@@ -30,7 +30,8 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
@@ -60,7 +61,8 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
       final file = File('${directory.path}/$fileName');
 
       final points = await RideTrackLoader.load(rideId);
@@ -101,7 +103,8 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
@@ -117,7 +120,8 @@ class ExportService {
   }
 
   /// Generate GPX XML string from ride data
-  String _generateGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
+  String _generateGPX(
+      Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
     final startTime = ride['startTime'] as String;
     final distanceKm = (ride['distanceM'] as num) / 1000;
 
@@ -138,13 +142,15 @@ class ExportService {
       final minLng = lngs.reduce((a, b) => a < b ? a : b);
       final maxLng = lngs.reduce((a, b) => a > b ? a : b);
 
-      buffer.writeln('    <bounds minlat="$minLat" minlon="$minLng" maxlat="$maxLat" maxlon="$maxLng" />');
+      buffer.writeln(
+          '    <bounds minlat="$minLat" minlon="$minLng" maxlat="$maxLat" maxlon="$maxLng" />');
     }
 
     buffer.writeln('  </metadata>');
     buffer.writeln('  <trk>');
     buffer.writeln('    <name>Motorcycle Ride</name>');
-    buffer.writeln('    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
+    buffer.writeln(
+        '    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
     buffer.writeln('    <trkseg>');
 
     for (final point in ridePoints) {

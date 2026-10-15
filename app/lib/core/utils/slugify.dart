@@ -20,7 +20,8 @@
 String bikeForumSlug(String brand, {String? model}) {
   final parts = [
     brand,
-    if (model != null && model.trim().isNotEmpty) normalizeModelFamily(brand, model),
+    if (model != null && model.trim().isNotEmpty)
+      normalizeModelFamily(brand, model),
   ];
   return parts.map(_slugifyPart).join('__');
 }

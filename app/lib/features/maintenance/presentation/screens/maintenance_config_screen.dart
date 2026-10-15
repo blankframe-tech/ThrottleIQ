@@ -74,12 +74,14 @@ class _MaintenanceConfigScreenState
         .valueOrNull
         ?.where((b) => b.id == widget.bikeId)
         .firstOrNull;
-    final template =
-        ref.read(maintenanceProfileProvider(widget.bikeId)).valueOrNull?.template ??
-            (bike == null
-                ? templateById(null)
-                : suggestTemplate(
-                    brand: bike.brand, model: bike.model, cc: bike.cc));
+    final template = ref
+            .read(maintenanceProfileProvider(widget.bikeId))
+            .valueOrNull
+            ?.template ??
+        (bike == null
+            ? templateById(null)
+            : suggestTemplate(
+                brand: bike.brand, model: bike.model, cc: bike.cc));
     setState(() {
       _items = _items!.map((item) {
         if (item.isCustom) return item;
@@ -221,17 +223,21 @@ class _MaintenanceConfigScreenState
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Text(widget.isFirstTime ? context.l10n.setupMaintenance : context.l10n.editTrackedChecks),
+        title: Text(widget.isFirstTime
+            ? context.l10n.setupMaintenance
+            : context.l10n.editTrackedChecks),
         actions: [
           if (widget.isFirstTime)
             TextButton(
               onPressed: _saving ? null : _saveAndContinue,
-              child: Text(context.l10n.skip, style: TextStyle(color: context.palette.textSecondary)),
+              child: Text(context.l10n.skip,
+                  style: TextStyle(color: context.palette.textSecondary)),
             ),
         ],
       ),
       body: items == null
-          ? Center(child: CircularProgressIndicator(color: context.palette.primary))
+          ? Center(
+              child: CircularProgressIndicator(color: context.palette.primary))
           : Column(
               children: [
                 Expanded(
@@ -244,7 +250,8 @@ class _MaintenanceConfigScreenState
                         EditorialCard(
                           radius: context.shape.radiusLg,
                           padding: const EdgeInsets.all(16),
-                          borderColor: context.palette.primary.withValues(alpha: 0.3),
+                          borderColor:
+                              context.palette.primary.withValues(alpha: 0.3),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -253,11 +260,13 @@ class _MaintenanceConfigScreenState
                                   Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(
-                                      color: context.palette.primary.withValues(alpha: 0.15),
+                                      color: context.palette.primary
+                                          .withValues(alpha: 0.15),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(Icons.two_wheeler,
-                                        color: context.palette.primary, size: 20),
+                                        color: context.palette.primary,
+                                        size: 20),
                                   ),
                                   const SizedBox(width: 10),
                                   Expanded(
@@ -333,7 +342,8 @@ class _MaintenanceConfigScreenState
                   padding: const EdgeInsets.all(AppDimensions.paddingMd),
                   decoration: BoxDecoration(
                     color: context.palette.surface,
-                    border: Border(top: BorderSide(color: context.palette.border)),
+                    border:
+                        Border(top: BorderSide(color: context.palette.border)),
                   ),
                   child: SafeArea(
                     child: SizedBox(
@@ -351,7 +361,8 @@ class _MaintenanceConfigScreenState
                                 enabledCount > 0
                                     ? context.l10n.trackChecks(enabledCount)
                                     : context.l10n.savePreferences,
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700),
                               ),
                       ),
                     ),
@@ -379,8 +390,10 @@ class _MaintenanceConfigScreenState
           children: [
             EditorialLabel(category.localizedLabel(context.l10n)),
             Text(
-              context.l10n.activeInCategory(activeInCategory, categoryItems.length),
-              style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+              context.l10n
+                  .activeInCategory(activeInCategory, categoryItems.length),
+              style:
+                  TextStyle(fontSize: 11, color: context.palette.textTertiary),
             ),
           ],
         ),
@@ -478,7 +491,9 @@ class _MaintenanceConfigScreenState
               Icon(
                 _iconForService(item.serviceType),
                 size: 20,
-                color: isEnabled ? context.palette.primary : context.palette.textTertiary,
+                color: isEnabled
+                    ? context.palette.primary
+                    : context.palette.textTertiary,
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -489,7 +504,8 @@ class _MaintenanceConfigScreenState
                       configLabel(item, context.l10n),
                       style: TextStyle(
                         fontSize: 14,
-                        fontWeight: isEnabled ? FontWeight.w600 : FontWeight.w500,
+                        fontWeight:
+                            isEnabled ? FontWeight.w600 : FontWeight.w500,
                         color: isEnabled
                             ? context.palette.textPrimary
                             : context.palette.textTertiary,
@@ -581,7 +597,8 @@ class _CustomCheckDialogState extends State<_CustomCheckDialog> {
             autofocus: true,
             textCapitalization: TextCapitalization.sentences,
             decoration: InputDecoration(
-                labelText: l10n.customCheckName, hintText: l10n.eGRadiatorFlush),
+                labelText: l10n.customCheckName,
+                hintText: l10n.eGRadiatorFlush),
           ),
           TextField(
             controller: _kmCtrl,

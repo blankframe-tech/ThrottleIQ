@@ -163,12 +163,14 @@ class ForumAttachmentCard extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.palette.surface,
-        title: Text(attachment.title, style: TextStyle(color: ctx.palette.textPrimary)),
+        title: Text(attachment.title,
+            style: TextStyle(color: ctx.palette.textPrimary)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(attachment.subtitle, style: TextStyle(color: ctx.palette.textSecondary)),
+            Text(attachment.subtitle,
+                style: TextStyle(color: ctx.palette.textSecondary)),
             const SizedBox(height: 12),
             Text(
               ctx.l10n.attachmentSharedFrom(authorName),
@@ -204,7 +206,8 @@ class ForumAttachmentCard extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Icon(isRide ? Icons.route : Icons.build_outlined, color: accent, size: 22),
+              Icon(isRide ? Icons.route : Icons.build_outlined,
+                  color: accent, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -236,7 +239,8 @@ class ForumAttachmentCard extends StatelessWidget {
                         attachment.subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                        style: TextStyle(
+                            fontSize: 12, color: context.palette.textSecondary),
                       ),
                   ],
                 ),
@@ -245,10 +249,12 @@ class ForumAttachmentCard extends StatelessWidget {
                 IconButton(
                   tooltip: context.l10n.forumRemoveAttachment,
                   onPressed: onRemove,
-                  icon: Icon(Icons.close, size: 18, color: context.palette.textTertiary),
+                  icon: Icon(Icons.close,
+                      size: 18, color: context.palette.textTertiary),
                 )
               else
-                Icon(Icons.chevron_right, color: context.palette.textTertiary, size: 20),
+                Icon(Icons.chevron_right,
+                    color: context.palette.textTertiary, size: 20),
             ],
           ),
         ),

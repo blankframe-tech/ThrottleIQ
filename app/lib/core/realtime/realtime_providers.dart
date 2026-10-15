@@ -66,7 +66,8 @@ final realtimeServicesProvider = Provider<RealtimeServices>((ref) {
 });
 
 /// Live [RealtimeHealth], for "Live" / "Delayed" badges.
-final realtimeHealthProvider = StreamProvider.autoDispose<RealtimeHealth>((ref) {
+final realtimeHealthProvider =
+    StreamProvider.autoDispose<RealtimeHealth>((ref) {
   final health = ref.watch(realtimeServicesProvider).health;
   return health.changes.startWithValue(health.current);
 });

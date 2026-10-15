@@ -184,7 +184,8 @@ const double kForwardWindowM = 500;
       bestIndex = i;
     }
   }
-  if (bestDistance > kOffRouteM) return nearestPointOnPolyline(polyline, position);
+  if (bestDistance > kOffRouteM)
+    return nearestPointOnPolyline(polyline, position);
   return (index: bestIndex, distanceM: bestDistance);
 }
 
@@ -227,8 +228,8 @@ NavigationProgress computeNavigationProgress({
         : initial;
   }
 
-  final nearest = forwardNearestPoint(polyline, position,
-      fromIndex: previousNearestIndex);
+  final nearest =
+      forwardNearestPoint(polyline, position, fromIndex: previousNearestIndex);
   final turnIndex = advanceTurnIndex(
     polyline: polyline,
     turns: turns,

@@ -71,7 +71,8 @@ class TurnInstruction extends Equatable {
   });
 
   @override
-  List<Object?> get props => [pointIndex, kind, bearingDeg, distanceFromStartM, text];
+  List<Object?> get props =>
+      [pointIndex, kind, bearingDeg, distanceFromStartM, text];
 
   @override
   String toString() =>
@@ -124,7 +125,8 @@ TurnKind classifyBearingDelta(double delta) {
   if (magnitude > 160.0) return TurnKind.uTurn;
 
   final right = delta > 0;
-  if (magnitude < 45.0) return right ? TurnKind.slightRight : TurnKind.slightLeft;
+  if (magnitude < 45.0)
+    return right ? TurnKind.slightRight : TurnKind.slightLeft;
   if (magnitude < 120.0) return right ? TurnKind.right : TurnKind.left;
   return right ? TurnKind.sharpRight : TurnKind.sharpLeft;
 }
@@ -197,13 +199,15 @@ List<TurnInstruction> buildTurnInstructions(
   // rather than against the simplified working copy.
   final cumulative = List<double>.filled(polyline.length, 0);
   for (var i = 1; i < polyline.length; i++) {
-    cumulative[i] = cumulative[i - 1] + haversineMetersLatLng(polyline[i - 1], polyline[i]);
+    cumulative[i] =
+        cumulative[i - 1] + haversineMetersLatLng(polyline[i - 1], polyline[i]);
   }
 
   // Simplify: indices into the original polyline.
   final kept = <int>[0];
   for (var i = 1; i < polyline.length; i++) {
-    if (haversineMetersLatLng(polyline[kept.last], polyline[i]) >= minSegmentM) {
+    if (haversineMetersLatLng(polyline[kept.last], polyline[i]) >=
+        minSegmentM) {
       kept.add(i);
     }
   }
@@ -227,9 +231,10 @@ List<TurnInstruction> buildTurnInstructions(
   // point): no usable heading anywhere. Fall back to the straight line from
   // first to last so the rider still gets a start + arrive pair.
   if (bearings.isEmpty) {
-    final fallbackBearing = haversineMetersLatLng(polyline.first, polyline[lastIndex]) < 1e-6
-        ? 0.0
-        : bearingDegrees(polyline.first, polyline[lastIndex]);
+    final fallbackBearing =
+        haversineMetersLatLng(polyline.first, polyline[lastIndex]) < 1e-6
+            ? 0.0
+            : bearingDegrees(polyline.first, polyline[lastIndex]);
     return [
       TurnInstruction(
         pointIndex: 0,

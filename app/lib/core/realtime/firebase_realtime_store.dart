@@ -42,8 +42,7 @@ class FirebaseRealtimeStore implements RealtimeStore {
   bool get isEnabled => _config.isEnabled;
 
   @override
-  Future<void> set(String path, Object value) =>
-      _database.ref(path).set(value);
+  Future<void> set(String path, Object value) => _database.ref(path).set(value);
 
   @override
   Future<void> remove(String path) => _database.ref(path).remove();

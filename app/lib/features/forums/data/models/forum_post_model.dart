@@ -22,9 +22,12 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
     downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
     postType: ForumPostType.fromString(data['postType'] as String?),
     isSolved: data['isSolved'] == true,
-    solutionReplyId:
-        solutionReplyId is String && solutionReplyId.isNotEmpty ? solutionReplyId : null,
-    authorBike: authorBike is String && authorBike.trim().isNotEmpty ? authorBike : null,
+    solutionReplyId: solutionReplyId is String && solutionReplyId.isNotEmpty
+        ? solutionReplyId
+        : null,
+    authorBike: authorBike is String && authorBike.trim().isNotEmpty
+        ? authorBike
+        : null,
     attachment: ForumAttachment.fromMap(data['attachment']),
     imageUrls: forumImageUrlsFromRaw(data['imageUrls']),
   );
@@ -73,7 +76,8 @@ Map<String, dynamic> newForumPostFields({
           ? bike
           : bike.substring(0, kAuthorBikeMaxLength),
     if (attachment != null) 'attachment': attachment.toMap(),
-    if (imageUrls.isNotEmpty) 'imageUrls': imageUrls.take(kForumPostMaxImages).toList(),
+    if (imageUrls.isNotEmpty)
+      'imageUrls': imageUrls.take(kForumPostMaxImages).toList(),
   };
 }
 
@@ -84,7 +88,8 @@ class ForumPostModel {
 
   ForumPostEntity toEntity() => _entity;
 
-  factory ForumPostModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ForumPostModel.fromFirestore(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     return ForumPostModel._(forumPostFromMap(doc.id, doc.data()!));
   }
 }

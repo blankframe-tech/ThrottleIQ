@@ -70,7 +70,8 @@ class ForumPickedPhotos extends StatelessWidget {
   final List<String> paths;
   final void Function(int index) onRemove;
 
-  const ForumPickedPhotos({super.key, required this.paths, required this.onRemove});
+  const ForumPickedPhotos(
+      {super.key, required this.paths, required this.onRemove});
 
   @override
   Widget build(BuildContext context) {
@@ -94,7 +95,8 @@ class ForumPickedPhotos extends StatelessWidget {
                   width: 80,
                   height: 80,
                   color: context.palette.background,
-                  child: Icon(Icons.broken_image_outlined, color: context.palette.textTertiary),
+                  child: Icon(Icons.broken_image_outlined,
+                      color: context.palette.textTertiary),
                 ),
               ),
             ),

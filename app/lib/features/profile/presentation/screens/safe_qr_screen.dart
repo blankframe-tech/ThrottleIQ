@@ -191,7 +191,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
         children: [
           Text(
             l10n.safeQrIntro,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 20),
           Center(
@@ -244,8 +245,9 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           const SizedBox(height: 8),
           Center(
             child: OutlinedButton.icon(
-              onPressed:
-                  hasContent && !_exporting ? () => _printSticker(payload) : null,
+              onPressed: hasContent && !_exporting
+                  ? () => _printSticker(payload)
+                  : null,
               style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
               icon: const Icon(Icons.print_outlined, size: 18),
               label: Text(l10n.safeQrPrintAction),

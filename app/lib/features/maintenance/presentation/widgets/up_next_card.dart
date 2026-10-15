@@ -108,7 +108,8 @@ class UpNextCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.verified_outlined, color: context.palette.success, size: 26),
+            Icon(Icons.verified_outlined,
+                color: context.palette.success, size: 26),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -137,7 +138,8 @@ class UpNextCard extends ConsumerWidget {
     final lastLine = last == null
         ? null
         : [
-            if ((last.partBrand ?? '').isNotEmpty || (last.partGrade ?? '').isNotEmpty)
+            if ((last.partBrand ?? '').isNotEmpty ||
+                (last.partGrade ?? '').isNotEmpty)
               [last.partBrand, last.partGrade]
                   .whereType<String>()
                   .where((s) => s.isNotEmpty)

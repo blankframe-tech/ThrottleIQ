@@ -67,8 +67,7 @@ class RideCostCard extends ConsumerWidget {
             children: [
               Expanded(child: EditorialLabel(l10n.rideCostTitle)),
               Text('৳${formatTaka(breakdown.total)}',
-                  key: const Key('rideCostTotal'),
-                  style: display(context, 22)),
+                  key: const Key('rideCostTotal'), style: display(context, 22)),
             ],
           ),
           const SizedBox(height: 2),

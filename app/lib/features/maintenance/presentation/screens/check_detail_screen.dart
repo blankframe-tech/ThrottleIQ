@@ -35,7 +35,8 @@ class CheckDetailScreen extends ConsumerWidget {
         .watch(maintenanceForecastProvider(bikeId))
         .where((f) => f.key == checkKey)
         .firstOrNull;
-    final logs = (ref.watch(maintenanceProvider(bikeId)).valueOrNull ?? const [])
+    final logs = (ref.watch(maintenanceProvider(bikeId)).valueOrNull ??
+            const [])
         .where((l) => l.key == checkKey)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
@@ -61,7 +62,8 @@ class CheckDetailScreen extends ConsumerWidget {
         children: [
           Row(
             children: [
-              Icon(iconForServiceType(config.serviceType), size: 28, color: color),
+              Icon(iconForServiceType(config.serviceType),
+                  size: 28, color: color),
               const SizedBox(width: 10),
               Expanded(child: Text(label, style: display(context, 22))),
               if (forecast != null)
@@ -132,7 +134,6 @@ class CheckDetailScreen extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: 18),
-
           EditorialLabel(l10n.intervalSection),
           const SizedBox(height: 8),
           EditorialCard(
@@ -144,18 +145,21 @@ class CheckDetailScreen extends ConsumerWidget {
                 Text(
                   [
                     if (config.intervalKm > 0)
-                      l10n.intervalEvery(distLabelLong(config.intervalKm, imperial)),
+                      l10n.intervalEvery(
+                          distLabelLong(config.intervalKm, imperial)),
                     if (config.intervalDays != null)
                       l10n.everyNDays(config.intervalDays!),
                   ].join(l10n.orJoiner),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   config.source == IntervalSource.user
                       ? l10n.intervalSourceUser
                       : l10n.intervalSourceTemplate,
-                  style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textTertiary),
                 ),
                 if (forecast != null && forecast.isAdapted) ...[
                   const SizedBox(height: 8),
@@ -169,7 +173,8 @@ class CheckDetailScreen extends ConsumerWidget {
                   for (final r in forecast.reasons)
                     Text('· ${adaptReasonLabel(r, l10n)}',
                         style: TextStyle(
-                            fontSize: 12, color: context.palette.textSecondary)),
+                            fontSize: 12,
+                            color: context.palette.textSecondary)),
                 ],
                 if ((config.notes ?? '').isNotEmpty) ...[
                   const SizedBox(height: 8),
@@ -228,7 +233,6 @@ class CheckDetailScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 22),
-
           EditorialLabel(l10n.itemHistory),
           const SizedBox(height: 8),
           if (logs.isEmpty)
@@ -251,7 +255,8 @@ class CheckDetailScreen extends ConsumerWidget {
                       ].join(' · ')),
                       trailing: l.cost != null
                           ? Text('৳${formatTaka(l.cost!)}',
-                              style: const TextStyle(fontWeight: FontWeight.w700))
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700))
                           : null,
                       onTap: () => context.push(
                           '/home/maintenance/add?bikeId=$bikeId&visitId=${Uri.encodeComponent(l.visitKey)}'),
@@ -267,7 +272,8 @@ class CheckDetailScreen extends ConsumerWidget {
                 '৳${formatTaka(priced.first.cost!)}',
                 '৳${formatTaka(priced.map((l) => l.cost!).reduce((a, b) => a + b) / priced.length)}',
               ),
-              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
           ],
           const SizedBox(height: 24),

@@ -85,7 +85,8 @@ Future<Uint8List> buildServiceRecordPdf({
     ),
     build: (ctx) => [
       pw.Text(s.title,
-          style: const pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
+          style:
+              const pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold)),
       pw.SizedBox(height: 4),
       pw.Text(s.bikeLine, style: const pw.TextStyle(fontSize: 12)),
       pw.Text(s.generatedOn,
@@ -103,7 +104,8 @@ Future<Uint8List> buildServiceRecordPdf({
               v.totalCost == null ? '' : '৳${v.totalCost!.toStringAsFixed(0)}',
             ],
         ],
-        headerStyle: const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+        headerStyle:
+            const pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
         cellStyle: const pw.TextStyle(fontSize: 9),
         headerDecoration: const pw.BoxDecoration(color: PdfColors.grey200),
         columnWidths: {
@@ -117,11 +119,13 @@ Future<Uint8List> buildServiceRecordPdf({
       ),
       pw.SizedBox(height: 10),
       pw.Text(s.totalLine,
-          style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+          style:
+              const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
       for (final (v, img) in receipts) ...[
         pw.NewPage(),
         pw.Text('${s.formatDate(v.date)} · ${s.formatKm(v.odometerKm)}',
-            style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold)),
+            style: const pw.TextStyle(
+                fontSize: 11, fontWeight: pw.FontWeight.bold)),
         pw.SizedBox(height: 8),
         pw.Image(img, fit: pw.BoxFit.contain, height: 640),
       ],

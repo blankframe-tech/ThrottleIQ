@@ -116,7 +116,8 @@ RiderStatsSummary computeRiderStats({
     recentRides: sortedByRecency.take(recentLimit).toList(),
     allRides: sortedByRecency,
     chartRides: sortedChronologically.length > chartLimit
-        ? sortedChronologically.sublist(sortedChronologically.length - chartLimit)
+        ? sortedChronologically
+            .sublist(sortedChronologically.length - chartLimit)
         : sortedChronologically,
   );
 }

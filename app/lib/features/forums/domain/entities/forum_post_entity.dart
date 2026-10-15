@@ -88,7 +88,8 @@ class ForumAttachment extends Equatable {
     );
   }
 
-  static String _cap(String s, int max) => s.length <= max ? s : s.substring(0, max);
+  static String _cap(String s, int max) =>
+      s.length <= max ? s : s.substring(0, max);
 
   @override
   List<Object?> get props => [kind, refId, title, subtitle, bikeId];

@@ -48,7 +48,8 @@ Future<Uint8List> buildSafeQrStickerPdf({
                     color: PdfColors.red800)),
             pw.SizedBox(height: 3 * PdfPageFormat.mm),
             pw.BarcodeWidget(
-              barcode: pw.Barcode.qrCode(errorCorrectLevel: pw.BarcodeQRCorrectionLevel.medium),
+              barcode: pw.Barcode.qrCode(
+                  errorCorrectLevel: pw.BarcodeQRCorrectionLevel.medium),
               data: payload,
               width: side,
               height: side,
@@ -57,7 +58,8 @@ Future<Uint8List> buildSafeQrStickerPdf({
             pw.SizedBox(height: 3 * PdfPageFormat.mm),
             pw.Text(caption,
                 textAlign: pw.TextAlign.center,
-                style: const pw.TextStyle(fontSize: 7.5, color: PdfColors.grey800)),
+                style: const pw.TextStyle(
+                    fontSize: 7.5, color: PdfColors.grey800)),
           ],
         ),
       );

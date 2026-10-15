@@ -77,7 +77,8 @@ class ScheduleTemplate {
 
   /// The interval for [type] under this template.
   ItemSchedule scheduleFor(ServiceType type) =>
-      overrides[type] ?? ItemSchedule(type.defaultIntervalKm, type.defaultIntervalDays);
+      overrides[type] ??
+      ItemSchedule(type.defaultIntervalKm, type.defaultIntervalDays);
 
   bool get isGeneric => matchAny.isEmpty;
 }

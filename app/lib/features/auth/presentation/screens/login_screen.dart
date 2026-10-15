@@ -74,7 +74,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: 'rider@example.com',
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.isEmpty) return context.l10n.emailRequired;
+                    if (v == null || v.isEmpty)
+                      return context.l10n.emailRequired;
                     if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
@@ -87,12 +88,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   obscure: _obscure,
                   suffix: IconButton(
                     tooltip: context.l10n.showPassword,
-                    icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                        color: context.palette.textSecondary, size: 20),
+                    icon: Icon(
+                        _obscure ? Icons.visibility_off : Icons.visibility,
+                        color: context.palette.textSecondary,
+                        size: 20),
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) return context.l10n.passwordTooShort;
+                    if (v == null || v.length < 6)
+                      return context.l10n.passwordTooShort;
                     return null;
                   },
                 ),
@@ -101,20 +105,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onPressed: loading ? null : _submit,
                   child: loading
                       ? const SizedBox(
-                          height: 20, width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
                       : Text(context.l10n.signIn),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: context.palette.textSecondary)),
+                    Expanded(
+                        child: Divider(color: context.palette.textSecondary)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(context.l10n.orDivider,
-                          style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                          style: TextStyle(
+                              color: context.palette.textSecondary,
+                              fontSize: 13)),
                     ),
-                    Expanded(child: Divider(color: context.palette.textSecondary)),
+                    Expanded(
+                        child: Divider(color: context.palette.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -124,7 +134,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: Text(context.l10n.continueWithGoogle),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: context.palette.textPrimary,
-                    side: BorderSide(color: context.palette.textPrimary, width: 1.5),
+                    side: BorderSide(
+                        color: context.palette.textPrimary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -133,7 +144,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(context.l10n.noAccountPrompt,
-                        style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
+                        style: TextStyle(
+                            color: context.palette.textSecondary,
+                            fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/register'),
                       child: Text(context.l10n.signUp),
@@ -182,10 +195,13 @@ class _ThrottleHeader extends StatelessWidget {
       children: [
         Text(context.l10n.welcomeBack,
             style: TextStyle(
-                fontSize: 26, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary)),
         const SizedBox(height: 6),
         Text(context.l10n.signInSubtitle,
-            style: TextStyle(fontSize: 15, color: context.palette.textSecondary)),
+            style:
+                TextStyle(fontSize: 15, color: context.palette.textSecondary)),
       ],
     );
   }

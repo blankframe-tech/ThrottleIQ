@@ -21,9 +21,21 @@ class RidingScoreBadge extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final tier = ridingScoreTier(score);
     final (color, label, icon) = switch (tier) {
-      RidingScoreTier.smooth => (context.palette.success, l10n.scoreSmoothLabel, Icons.emoji_events),
-      RidingScoreTier.steady => (context.palette.attention, l10n.scoreSteadyLabel, Icons.thumb_up_alt_rounded),
-      RidingScoreTier.aggressive => (context.palette.danger, l10n.scoreAggressiveLabel, Icons.warning_amber_rounded),
+      RidingScoreTier.smooth => (
+          context.palette.success,
+          l10n.scoreSmoothLabel,
+          Icons.emoji_events
+        ),
+      RidingScoreTier.steady => (
+          context.palette.attention,
+          l10n.scoreSteadyLabel,
+          Icons.thumb_up_alt_rounded
+        ),
+      RidingScoreTier.aggressive => (
+          context.palette.danger,
+          l10n.scoreAggressiveLabel,
+          Icons.warning_amber_rounded
+        ),
     };
 
     return Container(
@@ -37,7 +49,11 @@ class RidingScoreBadge extends StatelessWidget {
         children: [
           Text(
             '$score',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: color, height: 1),
+            style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.bold,
+                color: color,
+                height: 1),
           ),
           const SizedBox(width: 4),
           Padding(
@@ -50,11 +66,14 @@ class RidingScoreBadge extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(l10n.ridingScoreLabel,
-                    style: TextStyle(fontSize: 11, color: context.palette.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 11, color: context.palette.textSecondary)),
                 const SizedBox(height: 2),
                 Text(label,
                     style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary)),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.textPrimary)),
               ],
             ),
           ),

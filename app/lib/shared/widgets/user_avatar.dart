@@ -12,12 +12,13 @@ class UserAvatar extends StatelessWidget {
   final String name;
   final double radius;
 
-  const UserAvatar({super.key, this.photoUrl, required this.name, this.radius = 16});
+  const UserAvatar(
+      {super.key, this.photoUrl, required this.name, this.radius = 16});
 
   @override
   Widget build(BuildContext context) {
     final hasPhoto = photoUrl != null && photoUrl!.isNotEmpty;
-    
+
     final fallback = CircleAvatar(
       radius: radius,
       backgroundColor: context.palette.primary.withValues(alpha: 0.15),

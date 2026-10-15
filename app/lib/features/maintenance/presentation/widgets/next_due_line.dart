@@ -22,7 +22,8 @@ class NextDueLine extends ConsumerWidget {
     final f = ref.watch(maintenanceUpNextProvider(bikeId));
     if (f == null) {
       return Text(l10n.usingDefaultServiceIntervals,
-          style: TextStyle(fontSize: fontSize, color: context.palette.textTertiary));
+          style: TextStyle(
+              fontSize: fontSize, color: context.palette.textTertiary));
     }
     final imperial = ref.watch(maintenanceImperialProvider);
     final when = dueWhenText(f, l10n, DateTime.now());

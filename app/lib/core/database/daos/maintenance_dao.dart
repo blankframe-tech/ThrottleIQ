@@ -4,7 +4,8 @@ import '../database_helper.dart';
 class MaintenanceDao {
   Future<void> insert(Map<String, dynamic> log) async {
     final db = await DatabaseHelper.instance.database;
-    await db.insert('maintenance_logs', log, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('maintenance_logs', log,
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Inserts every row of one visit atomically, so a visit is never left
@@ -45,8 +46,8 @@ class MaintenanceDao {
     await db.transaction((txn) async {
       for (final id in ids) {
         await txn.delete('maintenance_logs', where: 'id = ?', whereArgs: [id]);
-        await txn.delete('outbox',
-            where: 'id = ?', whereArgs: ['maintenance:$id']);
+        await txn
+            .delete('outbox', where: 'id = ?', whereArgs: ['maintenance:$id']);
         await txn.insert(
           'deleted_maintenance_logs',
           {'id': id, 'user_id': userId, 'deleted_at': now, 'synced': 0},
@@ -90,11 +91,13 @@ class MaintenanceDao {
 
   Future<void> markSynced(String id) async {
     final db = await DatabaseHelper.instance.database;
-    await db.update('maintenance_logs', {'synced': 1}, where: 'id = ?', whereArgs: [id]);
+    await db.update('maintenance_logs', {'synced': 1},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   Future<void> deleteForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
-    await db.delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [bikeId]);
+    await db
+        .delete('maintenance_logs', where: 'bike_id = ?', whereArgs: [bikeId]);
   }
 }

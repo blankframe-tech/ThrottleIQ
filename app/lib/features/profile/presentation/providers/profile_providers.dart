@@ -42,6 +42,7 @@ final riderBikesProvider =
 final blockedUsersProvider = FutureProvider<Set<String>>((ref) async {
   final user = ref.watch(currentUserProvider);
   if (user == null) return const {};
-  final ids = await ref.watch(profileRepositoryProvider).getBlockedUserIds(user.uid);
+  final ids =
+      await ref.watch(profileRepositoryProvider).getBlockedUserIds(user.uid);
   return ids.toSet();
 });

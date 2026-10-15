@@ -13,7 +13,8 @@ class UserEntity extends Equatable {
     this.photoUrl,
   });
 
-  bool get hasCompletedOnboarding => displayName != null && displayName!.isNotEmpty;
+  bool get hasCompletedOnboarding =>
+      displayName != null && displayName!.isNotEmpty;
 
   @override
   List<Object?> get props => [id, email, displayName, photoUrl];

@@ -30,19 +30,17 @@ class WeatherService {
     required DateTime at,
   }) async {
     try {
-      final response = await _dio
-          .get<Map<String, dynamic>>(
-            _endpoint,
-            queryParameters: {
-              'latitude': lat,
-              'longitude': lng,
-              'hourly': 'temperature_2m,weathercode',
-              'past_days': 2,
-              'forecast_days': 1,
-              'timezone': 'auto',
-            },
-          )
-          .timeout(const Duration(seconds: 6));
+      final response = await _dio.get<Map<String, dynamic>>(
+        _endpoint,
+        queryParameters: {
+          'latitude': lat,
+          'longitude': lng,
+          'hourly': 'temperature_2m,weathercode',
+          'past_days': 2,
+          'forecast_days': 1,
+          'timezone': 'auto',
+        },
+      ).timeout(const Duration(seconds: 6));
 
       final hourly = response.data?['hourly'] as Map<String, dynamic>?;
       final times = (hourly?['time'] as List?)?.cast<String>();

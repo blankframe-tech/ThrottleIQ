@@ -119,7 +119,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final currentOdo = widget.bike.currentOdometerKm;
-    final parsedEntered = parseLocalizedNumber(_odometerCtrl.text.trim()) ?? currentOdo;
+    final parsedEntered =
+        parseLocalizedNumber(_odometerCtrl.text.trim()) ?? currentOdo;
     final delta = parsedEntered - currentOdo;
 
     return Container(
@@ -163,18 +164,22 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       color: context.palette.primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(Icons.speed, color: context.palette.primary, size: 20),
+                    child: Icon(Icons.speed,
+                        color: context.palette.primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(context.l10n.syncOdometer, style: display(context, 18)),
+                        Text(context.l10n.syncOdometer,
+                            style: display(context, 18)),
                         Text(
-                          context.l10n.alignThrottleiqWith(widget.bike.displayName),
+                          context.l10n
+                              .alignThrottleiqWith(widget.bike.displayName),
                           style: TextStyle(
-                              fontSize: 12, color: context.palette.textSecondary),
+                              fontSize: 12,
+                              color: context.palette.textSecondary),
                         ),
                       ],
                     ),
@@ -186,7 +191,9 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
               Text(
                 context.l10n.rodeOfflineWithoutPhone,
                 style: TextStyle(
-                    fontSize: 12, color: context.palette.textTertiary, height: 1.4),
+                    fontSize: 12,
+                    color: context.palette.textTertiary,
+                    height: 1.4),
               ),
               const SizedBox(height: 16),
 
@@ -249,7 +256,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _pickImage(ImageSource.gallery),
-                        icon: const Icon(Icons.photo_library_outlined, size: 18),
+                        icon:
+                            const Icon(Icons.photo_library_outlined, size: 18),
                         label: Text(context.l10n.fromPhotos,
                             style: const TextStyle(fontSize: 13)),
                         style: OutlinedButton.styleFrom(
@@ -278,7 +286,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       children: [
                         Text(context.l10n.currentAppOdometer,
                             style: TextStyle(
-                                fontSize: 12, color: context.palette.textSecondary)),
+                                fontSize: 12,
+                                color: context.palette.textSecondary)),
                         Text('${currentOdo.toStringAsFixed(0)} km',
                             style: display(context, 13, letterSpacing: 0)),
                       ],
@@ -289,7 +298,8 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       keyboardType: TextInputType.number,
                       style: display(context, 18, letterSpacing: 1),
                       decoration: InputDecoration(
-                        labelText: context.l10n.physicalInstrumentClusterReading,
+                        labelText:
+                            context.l10n.physicalInstrumentClusterReading,
                         suffixText: context.l10n.distanceStatLabel,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 14, vertical: 10),
@@ -300,9 +310,10 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                       ),
                       onChanged: (_) => setState(() {}),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return context.l10n.requiredField;
-                        final numVal =
-                            parseLocalizedNumber(v.trim(), min: 0, max: 2000000);
+                        if (v == null || v.trim().isEmpty)
+                          return context.l10n.requiredField;
+                        final numVal = parseLocalizedNumber(v.trim(),
+                            min: 0, max: 2000000);
                         // Can't be below the km GPS has already tracked: the
                         // baseline would go negative (issues §101.R7).
                         if (numVal == null ||
@@ -316,15 +327,21 @@ class _OdometerSyncSheetState extends ConsumerState<OdometerSyncSheet> {
                     Row(
                       children: [
                         Icon(
-                          delta >= 0 ? Icons.add_circle_outline : Icons.info_outline,
+                          delta >= 0
+                              ? Icons.add_circle_outline
+                              : Icons.info_outline,
                           size: 14,
-                          color: delta >= 0 ? context.palette.success : context.palette.attention,
+                          color: delta >= 0
+                              ? context.palette.success
+                              : context.palette.attention,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           delta >= 0
-                              ? context.l10n.kmAddedOfflineRiding(delta.toStringAsFixed(0))
-                              : context.l10n.kmReductionCalibratingBaseline(delta.abs().toStringAsFixed(0)),
+                              ? context.l10n.kmAddedOfflineRiding(
+                                  delta.toStringAsFixed(0))
+                              : context.l10n.kmReductionCalibratingBaseline(
+                                  delta.abs().toStringAsFixed(0)),
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

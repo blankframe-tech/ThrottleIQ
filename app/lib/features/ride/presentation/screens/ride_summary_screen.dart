@@ -618,7 +618,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     // leaves the post to be removed from My Shared Rides later.
     try {
       await RideShareRepository().deleteSharedRide(ride.id);
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('shared post delete skipped: $e');
+    }
     ref.invalidate(rideHistoryProvider(ride.bikeId));
     ref.invalidate(riderStatsProvider);
     ref.invalidate(garageProvider);

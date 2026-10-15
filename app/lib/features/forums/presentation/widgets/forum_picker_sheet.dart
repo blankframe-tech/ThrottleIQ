@@ -13,7 +13,8 @@ import 'forum_topic_style.dart';
 
 /// Opens a forum's thread with the new-post sheet already up, optionally
 /// carrying an [attachment] (a shared ride or maintenance visit).
-void openForumComposer(BuildContext context, String forumId, {ForumAttachment? attachment}) {
+void openForumComposer(BuildContext context, String forumId,
+    {ForumAttachment? attachment}) {
   context.push('/forums/$forumId?compose=1', extra: attachment);
 }
 
@@ -33,7 +34,8 @@ Future<void> showForumPickerSheet(
     isScrollControlled: true,
     backgroundColor: context.palette.surface,
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
+      borderRadius:
+          BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
     ),
     builder: (_) => _ForumPickerSheet(attachment: attachment, title: title),
   );
@@ -63,7 +65,8 @@ class _ForumPickerSheetState extends ConsumerState<_ForumPickerSheet> {
     if (_resolving != null) return;
     setState(() => _resolving = board.slug);
     try {
-      final forum = await ForumRepository().getOrCreateGeneralForum(topic: board.topic);
+      final forum =
+          await ForumRepository().getOrCreateGeneralForum(topic: board.topic);
       if (!mounted) return;
       _pick(forum.id);
     } catch (e) {
@@ -103,22 +106,29 @@ class _ForumPickerSheetState extends ConsumerState<_ForumPickerSheet> {
           Text(
             widget.title ?? context.l10n.startDiscussionPickForum,
             style: TextStyle(
-                fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 12),
           if (sourcesAsync.isLoading)
-            Center(child: CircularProgressIndicator(color: context.palette.primary))
+            Center(
+                child:
+                    CircularProgressIndicator(color: context.palette.primary))
           else if (sources.forumIds.isNotEmpty) ...[
             for (final id in sources.forumIds)
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 leading: Icon(
-                  sources.garageForumIds.contains(id) ? Icons.two_wheeler : Icons.forum_outlined,
+                  sources.garageForumIds.contains(id)
+                      ? Icons.two_wheeler
+                      : Icons.forum_outlined,
                   color: context.palette.primary,
                 ),
                 title: Text(sources.names[id] ?? id,
                     style: TextStyle(color: context.palette.textPrimary)),
-                trailing: Icon(Icons.chevron_right, color: context.palette.textTertiary),
+                trailing: Icon(Icons.chevron_right,
+                    color: context.palette.textTertiary),
                 onTap: _resolving == null ? () => _pick(id) : null,
               ),
             Divider(color: context.palette.border),
@@ -136,7 +146,8 @@ class _ForumPickerSheetState extends ConsumerState<_ForumPickerSheet> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: context.palette.primary),
                     )
-                  : Icon(Icons.chevron_right, color: context.palette.textTertiary),
+                  : Icon(Icons.chevron_right,
+                      color: context.palette.textTertiary),
               onTap: _resolving == null ? () => _pickTopic(board) : null,
             ),
         ],

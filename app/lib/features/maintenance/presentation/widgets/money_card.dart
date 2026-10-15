@@ -73,7 +73,8 @@ class MoneyCard extends ConsumerWidget {
                         ? '—'
                         : '৳${formatTakaRate(rate(money.fuelPerKm!))}',
                   ),
-                  style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+                  style: TextStyle(
+                      fontSize: 11, color: context.palette.textTertiary),
                 ),
               ],
               if (maxMonth > 0) ...[
@@ -90,17 +91,18 @@ class MoneyCard extends ConsumerWidget {
                           getTooltipColor: (_) => context.palette.ink,
                           getTooltipItem: (group, _, rod, __) => BarTooltipItem(
                             '৳${groupThousands(rod.toY)}',
-                            TextStyle(color: context.palette.onInk, fontSize: 11),
+                            TextStyle(
+                                color: context.palette.onInk, fontSize: 11),
                           ),
                         ),
                       ),
                       titlesData: FlTitlesData(
-                        leftTitles:
-                            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        rightTitles:
-                            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                        topTitles:
-                            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                        leftTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
+                        topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false)),
                         bottomTitles: AxisTitles(
                           sideTitles: SideTitles(
                             showTitles: true,
@@ -112,9 +114,11 @@ class MoneyCard extends ConsumerWidget {
                               }
                               final m = money.monthly[i];
                               return Text(
-                                DateFormat.MMM(kNumericLocale).format(DateTime(m.year, m.month)),
+                                DateFormat.MMM(kNumericLocale)
+                                    .format(DateTime(m.year, m.month)),
                                 style: TextStyle(
-                                    fontSize: 10, color: context.palette.textTertiary),
+                                    fontSize: 10,
+                                    color: context.palette.textTertiary),
                               );
                             },
                           ),
@@ -151,7 +155,8 @@ class MoneyCard extends ConsumerWidget {
                                 SpendBucket.visit => l10n.spendVisits,
                               },
                               style: TextStyle(
-                                  fontSize: 12, color: context.palette.textSecondary),
+                                  fontSize: 12,
+                                  color: context.palette.textSecondary),
                             ),
                           ),
                           Text('৳${groupThousands(money.split[b]!)}',

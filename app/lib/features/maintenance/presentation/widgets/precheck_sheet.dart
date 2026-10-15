@@ -28,8 +28,10 @@ class PrecheckCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final last =
-        ref.watch(maintenanceProfileProvider(bikeId)).valueOrNull?.lastPrecheckAt;
+    final last = ref
+        .watch(maintenanceProfileProvider(bikeId))
+        .valueOrNull
+        ?.lastPrecheckAt;
     final days = last == null ? null : DateTime.now().difference(last).inDays;
     final due = days == null || days >= nudgeAfterDays;
 
@@ -41,19 +43,23 @@ class PrecheckCard extends ConsumerWidget {
       child: Row(
         children: [
           Icon(Icons.fact_check_outlined,
-              color: due ? context.palette.primary : context.palette.textSecondary),
+              color: due
+                  ? context.palette.primary
+                  : context.palette.textSecondary),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.precheckTitle, style: display(context, 15, letterSpacing: 0)),
+                Text(l10n.precheckTitle,
+                    style: display(context, 15, letterSpacing: 0)),
                 const SizedBox(height: 2),
                 Text(
                   days == null
                       ? l10n.precheckNever
                       : l10n.precheckLastDone(days),
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -100,7 +106,8 @@ class _PrecheckSheetState extends ConsumerState<PrecheckSheet> {
             Text(l10n.precheckTitle, style: display(context, 20)),
             const SizedBox(height: 4),
             Text(l10n.precheckInstructions,
-                style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textSecondary)),
             const SizedBox(height: 14),
             GridView.count(
               shrinkWrap: true,
@@ -130,7 +137,8 @@ class _PrecheckSheetState extends ConsumerState<PrecheckSheet> {
                     : () async {
                         setState(() => _saving = true);
                         await ref
-                            .read(precheckIssuesProvider(widget.bikeId).notifier)
+                            .read(
+                                precheckIssuesProvider(widget.bikeId).notifier)
                             .record(_failed.toList());
                         if (context.mounted) Navigator.of(context).pop();
                       },
@@ -176,12 +184,14 @@ class _Tile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(precheckLabel(item, l10n),
-                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w700)),
                   Text(
                     failed ? l10n.precheckNeedsWork : precheckHint(item, l10n),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 10.5, color: context.palette.textSecondary),
+                    style: TextStyle(
+                        fontSize: 10.5, color: context.palette.textSecondary),
                   ),
                 ],
               ),

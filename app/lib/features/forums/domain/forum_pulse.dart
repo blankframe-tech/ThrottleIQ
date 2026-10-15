@@ -46,13 +46,25 @@ List<ForumPostEntity> filterPulsePosts(
     case PulseFilter.all:
       return posts;
     case PulseFilter.myBikes:
-      return [for (final p in posts) if (garageForumIds.contains(p.forumId)) p];
+      return [
+        for (final p in posts)
+          if (garageForumIds.contains(p.forumId)) p
+      ];
     case PulseFilter.help:
-      return [for (final p in posts) if (p.postType == ForumPostType.troubleshoot) p];
+      return [
+        for (final p in posts)
+          if (p.postType == ForumPostType.troubleshoot) p
+      ];
     case PulseFilter.diy:
-      return [for (final p in posts) if (p.postType == ForumPostType.diyGuide) p];
+      return [
+        for (final p in posts)
+          if (p.postType == ForumPostType.diyGuide) p
+      ];
     case PulseFilter.mostVoted:
-      final voted = [for (final p in posts) if (p.netScore > 0) p];
+      final voted = [
+        for (final p in posts)
+          if (p.netScore > 0) p
+      ];
       voted.sort((a, b) {
         final byScore = b.netScore.compareTo(a.netScore);
         if (byScore != 0) return byScore;

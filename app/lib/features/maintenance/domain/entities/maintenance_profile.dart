@@ -88,7 +88,13 @@ class MaintenanceProfileEntity extends Equatable {
 }
 
 /// Bike papers a BD rider can be stopped for, each with an expiry.
-enum PaperworkKind { taxToken, insurance, fitness, registration, drivingLicence }
+enum PaperworkKind {
+  taxToken,
+  insurance,
+  fitness,
+  registration,
+  drivingLicence
+}
 
 extension PaperworkKindExt on PaperworkKind {
   static PaperworkKind? fromString(String? s) =>

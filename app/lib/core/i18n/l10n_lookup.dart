@@ -19,4 +19,5 @@ AppLocalizations resolveL10n(Locale? chosen) {
 
 /// [resolveL10n] for the rider's *saved* language setting, for services with no
 /// `ref` (notifications). Still a snapshot: it reflects the setting at call time.
-Future<AppLocalizations> savedL10n() async => resolveL10n(await readSavedLocale());
+Future<AppLocalizations> savedL10n() async =>
+    resolveL10n(await readSavedLocale());

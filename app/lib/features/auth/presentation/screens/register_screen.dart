@@ -79,21 +79,27 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Text(
                   context.l10n.joinThrottleiq,
                   style: TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: context.palette.textPrimary),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   context.l10n.trackEveryRideRemember,
-                  style: TextStyle(fontSize: 15, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 15, color: context.palette.textSecondary),
                 ),
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
                   style: TextStyle(color: context.palette.textPrimary),
-                  decoration: InputDecoration(labelText: context.l10n.email, hintText: 'rider@example.com'),
+                  decoration: InputDecoration(
+                      labelText: context.l10n.email,
+                      hintText: 'rider@example.com'),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return context.l10n.emailRequired;
+                    if (v == null || v.isEmpty)
+                      return context.l10n.emailRequired;
                     if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
@@ -108,13 +114,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     hintText: context.l10n.n6Characters,
                     suffixIcon: IconButton(
                       tooltip: context.l10n.showPassword,
-                      icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility,
-                          color: context.palette.textSecondary, size: 20),
+                      icon: Icon(
+                          _obscure ? Icons.visibility_off : Icons.visibility,
+                          color: context.palette.textSecondary,
+                          size: 20),
                       onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6) return context.l10n.min6Characters;
+                    if (v == null || v.length < 6)
+                      return context.l10n.min6Characters;
                     return null;
                   },
                 ),
@@ -123,9 +132,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   controller: _confirmCtrl,
                   obscureText: true,
                   style: TextStyle(color: context.palette.textPrimary),
-                  decoration: InputDecoration(labelText: context.l10n.confirmPassword),
+                  decoration:
+                      InputDecoration(labelText: context.l10n.confirmPassword),
                   validator: (v) {
-                    if (v != _passCtrl.text) return context.l10n.passwordsDoNotMatch;
+                    if (v != _passCtrl.text)
+                      return context.l10n.passwordsDoNotMatch;
                     return null;
                   },
                 ),
@@ -134,20 +145,26 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   onPressed: loading ? null : _submit,
                   child: loading
                       ? const SizedBox(
-                          height: 20, width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
                       : Text(context.l10n.createAccount),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    Expanded(child: Divider(color: context.palette.textSecondary)),
+                    Expanded(
+                        child: Divider(color: context.palette.textSecondary)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       child: Text(context.l10n.orDivider,
-                          style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                          style: TextStyle(
+                              color: context.palette.textSecondary,
+                              fontSize: 13)),
                     ),
-                    Expanded(child: Divider(color: context.palette.textSecondary)),
+                    Expanded(
+                        child: Divider(color: context.palette.textSecondary)),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -157,7 +174,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   label: Text(context.l10n.signUpWithGoogle),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: context.palette.textPrimary,
-                    side: BorderSide(color: context.palette.textPrimary, width: 1.5),
+                    side: BorderSide(
+                        color: context.palette.textPrimary, width: 1.5),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
@@ -166,7 +184,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(context.l10n.alreadyHaveAccount,
-                        style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),
+                        style: TextStyle(
+                            color: context.palette.textSecondary,
+                            fontSize: 14)),
                     TextButton(
                       onPressed: () => context.go('/auth/login'),
                       child: Text(context.l10n.signIn),

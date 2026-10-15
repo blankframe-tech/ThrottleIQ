@@ -114,8 +114,9 @@ class _AddMaintenanceLogScreenState
         _date = v.date;
         _odometerCtrl.text = v.odometerKm.toStringAsFixed(0);
         // The entered bill only; per-item prices stay on their items.
-        final total = items.map((i) => i.visitTotal).whereType<double>().firstOrNull ??
-            (items.length == 1 ? items.first.cost : null);
+        final total =
+            items.map((i) => i.visitTotal).whereType<double>().firstOrNull ??
+                (items.length == 1 ? items.first.cost : null);
         if (total != null) _costCtrl.text = total.toStringAsFixed(0);
         _shopCtrl.text = v.shopName ?? '';
         _shopKind = v.shopKind;
@@ -156,7 +157,8 @@ class _AddMaintenanceLogScreenState
     }
     // Most riders go back to the same mechanic and the same oil.
     final visits = groupVisits(logs);
-    final lastShop = visits.where((v) => (v.shopName ?? '').isNotEmpty).firstOrNull;
+    final lastShop =
+        visits.where((v) => (v.shopName ?? '').isNotEmpty).firstOrNull;
     if (lastShop != null) {
       _shopCtrl.text = lastShop.shopName!;
       _shopKind = lastShop.shopKind;
@@ -166,8 +168,10 @@ class _AddMaintenanceLogScreenState
       _oilBrandCtrl.text = lastOil.partBrand ?? '';
       _oilGrade = OilGradeExt.fromString(lastOil.partGrade);
     }
-    _oilGrade ??=
-        ref.read(maintenanceProfileProvider(widget.bikeId)).valueOrNull?.oilGrade;
+    _oilGrade ??= ref
+        .read(maintenanceProfileProvider(widget.bikeId))
+        .valueOrNull
+        ?.oilGrade;
   }
 
   List<_Line> _lines(List<MaintenanceConfigEntity> configs) =>
@@ -178,8 +182,8 @@ class _AddMaintenanceLogScreenState
     final l10n = context.l10n;
     final tracked = [
       for (final c in configs)
-        if (c.isEnabled) _Line(c.serviceType, c.isCustom ? c.key : null,
-            configLabel(c, l10n)),
+        if (c.isEnabled)
+          _Line(c.serviceType, c.isCustom ? c.key : null, configLabel(c, l10n)),
     ];
     final trackedKeys = tracked.map((t) => t.key).toSet();
     final others = [
@@ -196,8 +200,11 @@ class _AddMaintenanceLogScreenState
       for (final e in _existing.values)
         if (!shownKeys.contains(e.key) &&
             !(e.serviceType == ServiceType.custom && e.checkKey == null))
-          _Line(e.serviceType, e.checkKey,
-              e.checkKey != null ? (e.customLabel ?? e.serviceType.localizedLabel(l10n))
+          _Line(
+              e.serviceType,
+              e.checkKey,
+              e.checkKey != null
+                  ? (e.customLabel ?? e.serviceType.localizedLabel(l10n))
                   : e.serviceType.localizedLabel(l10n)),
     ];
   }
@@ -215,8 +222,8 @@ class _AddMaintenanceLogScreenState
 
   Future<void> _pickReceipt(ImageSource source) async {
     try {
-      final picked =
-          await ImagePicker().pickImage(source: source, imageQuality: 70, maxWidth: 1600);
+      final picked = await ImagePicker()
+          .pickImage(source: source, imageQuality: 70, maxWidth: 1600);
       if (picked == null) return;
       final dir = await getApplicationDocumentsDirectory();
       final folder = Directory(p.join(dir.path, 'receipts'));
@@ -245,7 +252,8 @@ class _AddMaintenanceLogScreenState
           VisitItemDraft(
             type: lines[key]!.type,
             checkKey: lines[key]!.checkKey,
-            customLabel: lines[key]!.checkKey != null ? lines[key]!.label : null,
+            customLabel:
+                lines[key]!.checkKey != null ? lines[key]!.label : null,
             // Editing must not erase per-item prices (the ride-cost estimate
             // averages them).
             cost: _existing[key]?.cost,
@@ -289,7 +297,8 @@ class _AddMaintenanceLogScreenState
       } else {
         newVisitId = await notifier.saveVisit(draft);
       }
-      if (_oilGrade != null && items.any((i) => i.type == ServiceType.oilChange)) {
+      if (_oilGrade != null &&
+          items.any((i) => i.type == ServiceType.oilChange)) {
         await ref
             .read(maintenanceProfileProvider(widget.bikeId).notifier)
             .applyOilGrade(_oilGrade!);
@@ -304,7 +313,8 @@ class _AddMaintenanceLogScreenState
     }
     if (!mounted) return;
     messenger.showSnackBar(SnackBar(
-      content: Text(_editing ? l10n.visitUpdated : l10n.visitSaved(items.length)),
+      content:
+          Text(_editing ? l10n.visitUpdated : l10n.visitSaved(items.length)),
       duration: const Duration(seconds: 10),
       action: newVisitId == null
           ? null
@@ -324,9 +334,11 @@ class _AddMaintenanceLogScreenState
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final logs = ref.watch(maintenanceProvider(widget.bikeId)).valueOrNull;
-    final configs = ref.watch(maintenanceConfigProvider(widget.bikeId)).valueOrNull;
+    final configs =
+        ref.watch(maintenanceConfigProvider(widget.bikeId)).valueOrNull;
     final forecasts = ref.watch(maintenanceForecastProvider(widget.bikeId));
-    final profile = ref.watch(maintenanceProfileProvider(widget.bikeId)).valueOrNull;
+    final profile =
+        ref.watch(maintenanceProfileProvider(widget.bikeId)).valueOrNull;
     if (logs != null && configs != null) _prefill(logs, forecasts);
 
     if (logs == null || configs == null || !_loaded) {
@@ -357,8 +369,7 @@ class _AddMaintenanceLogScreenState
         .where((s) => s.isNotEmpty)
         .toSet()
         .toList();
-    final resolvedReceipt =
-        BikeImageResolver.resolvePathSync(_receiptPath);
+    final resolvedReceipt = BikeImageResolver.resolvePathSync(_receiptPath);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -454,7 +465,8 @@ class _AddMaintenanceLogScreenState
                       subtitle: dueKeys.contains(line.key)
                           ? Text(l10n.dueSoon,
                               style: TextStyle(
-                                  fontSize: 11, color: context.palette.attention))
+                                  fontSize: 11,
+                                  color: context.palette.attention))
                           : null,
                     ),
                   CheckboxListTile(
@@ -475,9 +487,10 @@ class _AddMaintenanceLogScreenState
                           labelText: l10n.whatDidService,
                           hintText: l10n.eGRadiatorFlush,
                         ),
-                        validator: (v) => _oneOff && (v == null || v.trim().isEmpty)
-                            ? l10n.nameService
-                            : null,
+                        validator: (v) =>
+                            _oneOff && (v == null || v.trim().isEmpty)
+                                ? l10n.nameService
+                                : null,
                       ),
                     ),
                 ],
@@ -487,7 +500,6 @@ class _AddMaintenanceLogScreenState
               onPressed: () => setState(() => _showAll = !_showAll),
               child: Text(_showAll ? l10n.showTrackedOnly : l10n.showAllItems),
             ),
-
             if (oilTicked) ...[
               const SizedBox(height: 8),
               EditorialLabel(l10n.oilDetails),
@@ -524,7 +536,6 @@ class _AddMaintenanceLogScreenState
                 ),
             ],
             const SizedBox(height: 18),
-
             EditorialLabel(l10n.visitDetails),
             const SizedBox(height: 8),
             Row(
@@ -541,8 +552,7 @@ class _AddMaintenanceLogScreenState
                     validator: (v) {
                       if (v == null || v.isEmpty) return l10n.requiredField;
                       // Rejects negative, NaN and Infinity (issues §101.R2).
-                      final n =
-                          parseLocalizedNumber(v, min: 0, max: 2000000);
+                      final n = parseLocalizedNumber(v, min: 0, max: 2000000);
                       if (n == null) return l10n.invalidNumber;
                       return null;
                     },
@@ -574,7 +584,8 @@ class _AddMaintenanceLogScreenState
             TextFormField(
               key: const Key('visitCost'),
               controller: _costCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                 labelText: l10n.visitTotalCost,
                 prefixText: '৳ ',
@@ -602,7 +613,8 @@ class _AddMaintenanceLogScreenState
                   ChoiceChip(
                     label: Text(shopKindLabel(k, l10n)),
                     selected: _shopKind == k,
-                    onSelected: (sel) => setState(() => _shopKind = sel ? k : null),
+                    onSelected: (sel) =>
+                        setState(() => _shopKind = sel ? k : null),
                   ),
               ],
             ),
@@ -639,8 +651,8 @@ class _AddMaintenanceLogScreenState
                   Expanded(
                     child: OutlinedButton.icon(
                       icon: const Icon(Icons.photo_camera_outlined, size: 18),
-                      label: Text(l10n.takePhoto,
-                          overflow: TextOverflow.ellipsis),
+                      label:
+                          Text(l10n.takePhoto, overflow: TextOverflow.ellipsis),
                       onPressed: () => _pickReceipt(ImageSource.camera),
                     ),
                   ),
@@ -727,7 +739,9 @@ class _SuggestFieldState extends State<SuggestField> {
         ? const <String>[]
         : widget.suggestions
             .where((s) =>
-                (q.isEmpty ? widget.showAllWhenEmpty : s.toLowerCase().contains(q)) &&
+                (q.isEmpty
+                    ? widget.showAllWhenEmpty
+                    : s.toLowerCase().contains(q)) &&
                 s.toLowerCase() != q)
             .take(5)
             .toList();
@@ -738,7 +752,8 @@ class _SuggestFieldState extends State<SuggestField> {
           controller: widget.controller,
           focusNode: _focus,
           textCapitalization: TextCapitalization.words,
-          decoration: InputDecoration(labelText: widget.label, hintText: widget.hint),
+          decoration:
+              InputDecoration(labelText: widget.label, hintText: widget.hint),
         ),
         if (matches.isNotEmpty)
           Padding(

@@ -59,7 +59,8 @@ class _BrandModelAutocompleteFieldState
         final query = value.text.toLowerCase();
         return options.where((o) => o.toLowerCase().contains(query));
       },
-      fieldViewBuilder: (context, fieldController, focusNode, onFieldSubmitted) {
+      fieldViewBuilder:
+          (context, fieldController, focusNode, onFieldSubmitted) {
         return TextFormField(
           controller: fieldController,
           focusNode: focusNode,
@@ -67,7 +68,8 @@ class _BrandModelAutocompleteFieldState
           style: TextStyle(color: context.palette.textPrimary),
           decoration: InputDecoration(
               labelText: widget.labelText, hintText: widget.hintText),
-          validator: (v) => v == null || v.isEmpty ? context.l10n.requiredField : null,
+          validator: (v) =>
+              v == null || v.isEmpty ? context.l10n.requiredField : null,
         );
       },
     );

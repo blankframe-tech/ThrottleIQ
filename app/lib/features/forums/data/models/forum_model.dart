@@ -64,10 +64,9 @@ class ForumModel {
       postCount: data['postCount'] ?? 0,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       createdBy: data['createdBy'] as String?,
-      maintainerIds: (data['maintainerIds'] as List?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          const [],
+      maintainerIds:
+          (data['maintainerIds'] as List?)?.map((e) => e.toString()).toList() ??
+              const [],
       description: data['description'] as String?,
     );
   }

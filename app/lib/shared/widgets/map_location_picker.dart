@@ -53,7 +53,8 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
             // picked point, matching how a real map pin reads.
             Padding(
               padding: const EdgeInsets.only(bottom: 32),
-              child: Icon(Icons.location_pin, size: 40, color: context.palette.primary),
+              child: Icon(Icons.location_pin,
+                  size: 40, color: context.palette.primary),
             ),
             IgnorePointer(
               child: Container(
@@ -64,10 +65,12 @@ class _MapLocationPickerState extends State<MapLocationPicker> {
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.black54,
-                    borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                    borderRadius:
+                        BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: Text(context.l10n.dragMapMovePin,
-                      style: const TextStyle(color: Colors.white, fontSize: 11)),
+                      style:
+                          const TextStyle(color: Colors.white, fontSize: 11)),
                 ),
               ),
             ),

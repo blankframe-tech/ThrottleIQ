@@ -80,8 +80,9 @@ MaintenanceMoney computeMoney({
     }
     for (final i in v.items) {
       final c = i.cost ?? (v.items.length == 1 ? total : 0);
-      final bucket =
-          _oilTypes.contains(i.serviceType) ? SpendBucket.oil : SpendBucket.parts;
+      final bucket = _oilTypes.contains(i.serviceType)
+          ? SpendBucket.oil
+          : SpendBucket.parts;
       split[bucket] = split[bucket]! + c;
     }
   }
@@ -96,9 +97,10 @@ MaintenanceMoney computeMoney({
   return MaintenanceMoney(
     monthly: monthly,
     spend12m: spend12m,
-    maintenancePerKm: (distanceKm12m != null && distanceKm12m >= 50 && spend12m > 0)
-        ? spend12m / distanceKm12m
-        : null,
+    maintenancePerKm:
+        (distanceKm12m != null && distanceKm12m >= 50 && spend12m > 0)
+            ? spend12m / distanceKm12m
+            : null,
     fuelPerKm: fuelPerKm,
     split: split,
   );

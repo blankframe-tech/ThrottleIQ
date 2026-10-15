@@ -9,7 +9,8 @@ import '../database_helper.dart';
 /// payload carries the ride's full polyline, which can be large enough that
 /// encoding it inline on the calling isolate is a visible hitch right when
 /// the rider taps "Share" — see issues §65.3.
-String _encodeOutboxPayload(Map<String, dynamic> payload) => jsonEncode(payload);
+String _encodeOutboxPayload(Map<String, dynamic> payload) =>
+    jsonEncode(payload);
 
 /// `outbox.status` values. See `_createOutboxSql` in [DatabaseHelper].
 class OutboxStatus {

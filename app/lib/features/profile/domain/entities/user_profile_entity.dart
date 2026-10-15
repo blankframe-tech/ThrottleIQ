@@ -89,7 +89,8 @@ class UserProfileEntity extends Equatable {
   /// The best human label for this rider: nickname → displayName → @username
   /// → "Rider".
   String get bestName {
-    if (nickname != null && nickname!.trim().isNotEmpty) return nickname!.trim();
+    if (nickname != null && nickname!.trim().isNotEmpty)
+      return nickname!.trim();
     if (displayName.trim().isNotEmpty) return displayName.trim();
     if (username != null && username!.isNotEmpty) return '@$username';
     return 'Rider';

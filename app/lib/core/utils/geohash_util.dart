@@ -112,10 +112,22 @@ class GeohashUtil {
   // riders are ever at (Bangladesh sits at ~20–26°N), so not worth the extra
   // branch — flagged here rather than silently relied upon.
   static const Map<String, List<String>> _neighborTable = {
-    'n': ['p0r21436x8zb9dcf5h7kjnmqesgutwvy', 'bc01fg45238967deuvhjyznpkmstqrwx'],
-    's': ['14365h7k9dcfesgujnmqp0r2twvyx8zb', '238967debc01fg45kmstqrwxuvhjyznp'],
-    'e': ['bc01fg45238967deuvhjyznpkmstqrwx', 'p0r21436x8zb9dcf5h7kjnmqesgutwvy'],
-    'w': ['238967debc01fg45kmstqrwxuvhjyznp', '14365h7k9dcfesgujnmqp0r2twvyx8zb'],
+    'n': [
+      'p0r21436x8zb9dcf5h7kjnmqesgutwvy',
+      'bc01fg45238967deuvhjyznpkmstqrwx'
+    ],
+    's': [
+      '14365h7k9dcfesgujnmqp0r2twvyx8zb',
+      '238967debc01fg45kmstqrwxuvhjyznp'
+    ],
+    'e': [
+      'bc01fg45238967deuvhjyznpkmstqrwx',
+      'p0r21436x8zb9dcf5h7kjnmqesgutwvy'
+    ],
+    'w': [
+      '238967debc01fg45kmstqrwxuvhjyznp',
+      '14365h7k9dcfesgujnmqp0r2twvyx8zb'
+    ],
   };
 
   /// Which trailing digits sit on a cell's edge in each direction — when the
@@ -151,7 +163,8 @@ class GeohashUtil {
     final type = hash.length % 2;
     var parent = hash.substring(0, hash.length - 1);
 
-    if (_borderTable[direction]![type].contains(lastChar) && parent.isNotEmpty) {
+    if (_borderTable[direction]![type].contains(lastChar) &&
+        parent.isNotEmpty) {
       parent = _adjacent(parent, direction);
     }
 

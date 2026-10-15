@@ -129,7 +129,8 @@ final forumsForGarageProvider = FutureProvider<List<ForumEntity>>((ref) async {
 
   final prefs = await SharedPreferences.getInstance();
   final cachedSignature = prefs.getString(kGarageForumsSignatureKey);
-  final cached = decodeCachedGarageForums(prefs.getString(kGarageForumsCacheKey));
+  final cached =
+      decodeCachedGarageForums(prefs.getString(kGarageForumsCacheKey));
 
   if (cachedSignature == signature && (cached.isNotEmpty || bikes.isEmpty)) {
     return cached;
@@ -186,7 +187,8 @@ final customForumsProvider = FutureProvider<List<ForumEntity>>((ref) {
 
 /// A single forum's metadata by id, for screens that only have the slug
 /// (e.g. arriving via a route parameter).
-final forumByIdProvider = FutureProvider.family<ForumEntity?, String>((ref, forumId) {
+final forumByIdProvider =
+    FutureProvider.family<ForumEntity?, String>((ref, forumId) {
   return _forumRepository.getForum(forumId);
 });
 
@@ -213,8 +215,8 @@ final forumPostsProvider = FutureProvider.autoDispose
 /// without waiting on a Firestore round-trip, and appends older pages
 /// ([ForumPostsNotifier.loadMore]). Seeded from [forumPostsProvider] once it
 /// resolves — mirrors RideFeedNotifier.
-final forumPostsNotifierProvider = StateNotifierProvider.autoDispose.family<
-    ForumPostsNotifier, List<ForumPostEntity>, String>((ref, forumId) {
+final forumPostsNotifierProvider = StateNotifierProvider.autoDispose
+    .family<ForumPostsNotifier, List<ForumPostEntity>, String>((ref, forumId) {
   final first = ref.watch(forumPostsProvider(forumId)).valueOrNull;
   return ForumPostsNotifier(
     ref,
@@ -262,8 +264,8 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
     _loadingMore = true;
     state = List.of(state); // repaint the footer spinner
     try {
-      final page =
-          await _repo.getPostsPage(_sourceIds, limit: pageSize, before: _cursor);
+      final page = await _repo.getPostsPage(_sourceIds,
+          limit: pageSize, before: _cursor);
       if (!mounted) return;
       final seen = {for (final p in state) p.id};
       _cursor = page.cursor ?? _cursor;
@@ -304,7 +306,8 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
     state = [
       for (final p in state)
         if (p.id == postId)
-          p.copyWith(myVote: newVote, upvotes: newUpvotes, downvotes: newDownvotes)
+          p.copyWith(
+              myVote: newVote, upvotes: newUpvotes, downvotes: newDownvotes)
         else
           p,
     ];
@@ -373,7 +376,8 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
 
 /// Whether the current user follows the given forum. False (not an error)
 /// when signed out.
-final forumFollowingProvider = FutureProvider.family<bool, String>((ref, forumId) async {
+final forumFollowingProvider =
+    FutureProvider.family<bool, String>((ref, forumId) async {
   final uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return false;
   return _forumRepository.isFollowing(forumId, uid);
@@ -429,24 +433,30 @@ class PulseSources {
   final Map<String, String> names;
   final Set<String> garageForumIds;
 
-  static const empty = PulseSources(forumIds: [], names: {}, garageForumIds: {});
+  static const empty =
+      PulseSources(forumIds: [], names: {}, garageForumIds: {});
 }
 
 /// Garage forums (from the SharedPreferences-cached
 /// [forumsForGarageProvider] — zero reads when the garage is unchanged) plus
 /// followed forums (one follow query, and one `documentId in` query for the
 /// names of those not already known), capped by [pulseSourceForumIds].
-final pulseSourcesProvider = FutureProvider.autoDispose<PulseSources>((ref) async {
+final pulseSourcesProvider =
+    FutureProvider.autoDispose<PulseSources>((ref) async {
   final garage = await ref.watch(forumsForGarageProvider.future);
   final uid = ref.watch(currentUserProvider)?.uid;
-  final followedIds =
-      uid == null ? const <String>[] : await _forumRepository.getFollowedForumIds(uid);
+  final followedIds = uid == null
+      ? const <String>[]
+      : await _forumRepository.getFollowedForumIds(uid);
   final ids = pulseSourceForumIds(
     garageForumIds: [for (final f in garage) f.id],
     followedForumIds: followedIds,
   );
   final names = {for (final f in garage) f.id: f.displayName};
-  final unknown = [for (final id in ids) if (!names.containsKey(id)) id];
+  final unknown = [
+    for (final id in ids)
+      if (!names.containsKey(id)) id
+  ];
   for (final f in await _forumRepository.getForumsByIds(unknown)) {
     names[f.id] = f.displayName;
   }
@@ -468,7 +478,8 @@ class PulseFirstPage {
 /// The Pulse feed's first page: at most [kPulsePerSourceLimit] posts from
 /// each of at most [kPulseMaxSources] forums, merged hole-free by
 /// `mergeForumPostPages`. Older pages load via [pulseFeedNotifierProvider].
-final forumsPulseFeedProvider = FutureProvider.autoDispose<PulseFirstPage>((ref) async {
+final forumsPulseFeedProvider =
+    FutureProvider.autoDispose<PulseFirstPage>((ref) async {
   final sources = await ref.watch(pulseSourcesProvider.future);
   if (sources.forumIds.isEmpty) {
     return const PulseFirstPage(
@@ -486,8 +497,8 @@ final forumsPulseFeedProvider = FutureProvider.autoDispose<PulseFirstPage>((ref)
 
 /// Pulse's post list, held locally for optimistic votes and paging — the
 /// same [ForumPostsNotifier] a thread uses, at Pulse's page size.
-final pulseFeedNotifierProvider =
-    StateNotifierProvider.autoDispose<ForumPostsNotifier, List<ForumPostEntity>>((ref) {
+final pulseFeedNotifierProvider = StateNotifierProvider.autoDispose<
+    ForumPostsNotifier, List<ForumPostEntity>>((ref) {
   final first = ref.watch(forumsPulseFeedProvider).valueOrNull;
   return ForumPostsNotifier(
     ref,
@@ -518,7 +529,11 @@ final directoryForumStatsProvider =
 final brandPaddockStatsProvider =
     FutureProvider.autoDispose<Map<String, BrandPaddockStats>>((ref) async {
   final forums = await _forumRepository.getForumsForBrands([
-    for (final p in kBrandPaddocks) ...[p.brand, p.brand.toLowerCase(), p.brand.toUpperCase()],
+    for (final p in kBrandPaddocks) ...[
+      p.brand,
+      p.brand.toLowerCase(),
+      p.brand.toUpperCase()
+    ],
   ]);
   _keepFor(ref, kForumsHubTtl);
   return aggregateBrandPaddockStats(forums);

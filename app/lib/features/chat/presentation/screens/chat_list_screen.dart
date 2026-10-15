@@ -24,7 +24,8 @@ class ChatListScreen extends ConsumerWidget {
       isScrollControlled: true,
       backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
       ),
       builder: (ctx) => const _NewChatSheet(),
     );
@@ -50,11 +51,14 @@ class ChatListScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showNewChatModal(context, ref),
         icon: const Icon(Icons.edit, color: Colors.white, size: 20),
-        label: Text(context.l10n.newMessageTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+        label: Text(context.l10n.newMessageTitle,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w600)),
         backgroundColor: context.palette.primary,
       ),
       body: chatsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           showBugReport: true,
@@ -64,7 +68,8 @@ class ChatListScreen extends ConsumerWidget {
           final chats = visibleChats(
             allChats,
             myUid: myUid,
-            blocked: ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{},
+            blocked:
+                ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{},
           );
           if (chats.isEmpty) {
             return Center(
@@ -73,9 +78,13 @@ class ChatListScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.chat_bubble_outline, size: 64, color: context.palette.textTertiary),
+                    Icon(Icons.chat_bubble_outline,
+                        size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text(context.l10n.noMessagesYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                    Text(context.l10n.noMessagesYet,
+                        style: TextStyle(
+                            color: context.palette.textSecondary,
+                            fontSize: 16)),
                     const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: () => _showNewChatModal(context, ref),
@@ -84,8 +93,11 @@ class ChatListScreen extends ConsumerWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.palette.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(context.shape.radiusFull)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                context.shape.radiusFull)),
                       ),
                     ),
                   ],
@@ -100,7 +112,8 @@ class ChatListScreen extends ConsumerWidget {
             separatorBuilder: (_, __) => Divider(color: context.palette.border),
             itemBuilder: (context, index) {
               final chat = chats[index];
-              final otherUserId = chat.participants.firstWhere((id) => id != myUid, orElse: () => '');
+              final otherUserId = chat.participants
+                  .firstWhere((id) => id != myUid, orElse: () => '');
               if (otherUserId.isEmpty) return const SizedBox.shrink();
 
               final otherProfileAsync = ref.watch(profileProvider(otherUserId));
@@ -123,8 +136,12 @@ class ChatListScreen extends ConsumerWidget {
 
               return ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: UserAvatar(photoUrl: profile?.photoUrl, name: name, radius: 24),
-                title: Text(name, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                leading: UserAvatar(
+                    photoUrl: profile?.photoUrl, name: name, radius: 24),
+                title: Text(name,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
                 subtitle: Text(
                   subtitle,
                   maxLines: 1,
@@ -133,7 +150,8 @@ class ChatListScreen extends ConsumerWidget {
                 ),
                 trailing: Text(
                   DateFormat('d MMM', kNumericLocale).format(chat.updatedAt),
-                  style: TextStyle(color: context.palette.textTertiary, fontSize: 12),
+                  style: TextStyle(
+                      color: context.palette.textTertiary, fontSize: 12),
                 ),
                 onTap: () => context.push('/chats/${chat.id}', extra: profile),
               );
@@ -179,7 +197,8 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     try {
       final repo = ref.read(profileRepositoryProvider);
       final myUid = ref.read(currentUserProvider)?.uid;
-      final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
+      final looksLikeEmail =
+          q.contains('@') && q.contains('.') && !q.startsWith('@');
       final list = looksLikeEmail
           ? await repo.searchByEmail(q)
           : await repo.searchByUsername(q);
@@ -205,7 +224,9 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
     if (myUid == null) return;
 
     try {
-      final chatId = await ref.read(chatRepositoryProvider).getOrCreateChat(myUid, rider.uid);
+      final chatId = await ref
+          .read(chatRepositoryProvider)
+          .getOrCreateChat(myUid, rider.uid);
       if (mounted) {
         Navigator.pop(context);
         context.push('/chats/$chatId', extra: rider);
@@ -262,7 +283,8 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               decoration: InputDecoration(
                 hintText: context.l10n.searchRiderByUsername,
                 hintStyle: TextStyle(color: context.palette.textTertiary),
-                prefixIcon: Icon(Icons.search, color: context.palette.textTertiary),
+                prefixIcon:
+                    Icon(Icons.search, color: context.palette.textTertiary),
                 filled: true,
                 fillColor: context.palette.background,
                 border: OutlineInputBorder(
@@ -274,17 +296,22 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
             ),
             const SizedBox(height: 12),
             if (_searching)
-              const Center(child: Padding(padding: EdgeInsets.all(24), child: CircularProgressIndicator()))
+              const Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(24),
+                      child: CircularProgressIndicator()))
             else if (_error != null)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       _error!,
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: context.palette.danger, fontSize: 13),
+                      style: TextStyle(
+                          color: context.palette.danger, fontSize: 13),
                     ),
                   ],
                 ),
@@ -293,7 +320,8 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child: Text(context.l10n.noRidersFoundFor(_searchController.text),
+                  child: Text(
+                      context.l10n.noRidersFoundFor(_searchController.text),
                       style: TextStyle(color: context.palette.textSecondary)),
                 ),
               )
@@ -301,17 +329,28 @@ class _NewChatSheetState extends ConsumerState<_NewChatSheet> {
               Expanded(
                 child: ListView.separated(
                   itemCount: _results.length,
-                  separatorBuilder: (_, __) => Divider(color: context.palette.border, height: 1),
+                  separatorBuilder: (_, __) =>
+                      Divider(color: context.palette.border, height: 1),
                   itemBuilder: (context, index) {
                     final rider = _results[index];
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: UserAvatar(photoUrl: rider.photoUrl, name: rider.bestName, radius: 20),
-                      title: Text(rider.bestName, style: TextStyle(fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                      leading: UserAvatar(
+                          photoUrl: rider.photoUrl,
+                          name: rider.bestName,
+                          radius: 20),
+                      title: Text(rider.bestName,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: context.palette.textPrimary)),
                       subtitle: rider.username != null
-                          ? Text('@${rider.username}', style: TextStyle(color: context.palette.textSecondary, fontSize: 13))
+                          ? Text('@${rider.username}',
+                              style: TextStyle(
+                                  color: context.palette.textSecondary,
+                                  fontSize: 13))
                           : null,
-                      trailing: Icon(Icons.arrow_forward_ios, size: 14, color: context.palette.textTertiary),
+                      trailing: Icon(Icons.arrow_forward_ios,
+                          size: 14, color: context.palette.textTertiary),
                       onTap: () => _startChat(rider),
                     );
                   },

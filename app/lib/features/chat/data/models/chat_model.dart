@@ -17,11 +17,11 @@ class ChatModel extends ChatEntity {
       participants: List<String>.from(data['participants'] ?? []),
       lastMessage: data['lastMessage'],
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      participantNames: data['participantNames'] != null 
-          ? Map<String, String>.from(data['participantNames']) 
+      participantNames: data['participantNames'] != null
+          ? Map<String, String>.from(data['participantNames'])
           : null,
-      participantPhotos: data['participantPhotos'] != null 
-          ? Map<String, String>.from(data['participantPhotos']) 
+      participantPhotos: data['participantPhotos'] != null
+          ? Map<String, String>.from(data['participantPhotos'])
           : null,
     );
   }

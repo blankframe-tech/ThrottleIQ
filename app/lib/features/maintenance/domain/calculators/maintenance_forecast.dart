@@ -190,10 +190,9 @@ CheckForecast forecastOne(
   final factor =
       input.adapt ? input.conditions.factorFor(config.serviceType) : 1.0;
   final kmLimit = config.intervalKm > 0 ? config.intervalKm * factor : 0.0;
-  final daysLimit =
-      (config.intervalDays != null && config.intervalDays! > 0)
-          ? config.intervalDays
-          : null;
+  final daysLimit = (config.intervalDays != null && config.intervalDays! > 0)
+      ? config.intervalDays
+      : null;
   final warnKm = config.warnKm ?? defaultWarnKm(kmLimit);
   final warnDays = config.warnDays ?? defaultWarnDays(daysLimit);
 
@@ -319,8 +318,8 @@ int compareForecasts(CheckForecast a, CheckForecast b) {
 /// The one item to headline: the most urgent that isn't low-stakes (fuel)
 /// and isn't unknown. Null when nothing is tracked or known.
 CheckForecast? upNext(List<CheckForecast> forecasts) => forecasts
-    .where((f) =>
-        !f.serviceType.isLowStakes && f.status != ReminderStatus.unknown)
+    .where(
+        (f) => !f.serviceType.isLowStakes && f.status != ReminderStatus.unknown)
     .firstOrNull;
 
 /// A bike added with at most this much on the clock counts as new: its

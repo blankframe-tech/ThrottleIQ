@@ -97,7 +97,8 @@ class _BugReportSheetState extends State<BugReportSheet> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Icon(Icons.bug_report_outlined, color: context.palette.primary, size: 22),
+              Icon(Icons.bug_report_outlined,
+                  color: context.palette.primary, size: 22),
               const SizedBox(width: 10),
               Text(
                 context.l10n.sendBugReport,
@@ -119,7 +120,8 @@ class _BugReportSheetState extends State<BugReportSheet> {
           const SizedBox(height: 4),
           Text(
             context.l10n.describeWhatHappenedUid,
-            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 14),
           TextField(
@@ -129,7 +131,8 @@ class _BugReportSheetState extends State<BugReportSheet> {
             style: TextStyle(color: context.palette.textPrimary),
             decoration: InputDecoration(
               hintText: context.l10n.eGMessagesWouldnt,
-              hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 13),
+              hintStyle:
+                  TextStyle(color: context.palette.textTertiary, fontSize: 13),
               filled: true,
               fillColor: context.palette.background,
               border: OutlineInputBorder(
@@ -160,10 +163,12 @@ class _BugReportSheetState extends State<BugReportSheet> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.send_outlined, size: 18),
-            label: Text(_sending ? context.l10n.sending : context.l10n.sendReport),
+            label:
+                Text(_sending ? context.l10n.sending : context.l10n.sendReport),
             style: FilledButton.styleFrom(
               backgroundColor: context.palette.primary,
               minimumSize: const Size(0, 48),

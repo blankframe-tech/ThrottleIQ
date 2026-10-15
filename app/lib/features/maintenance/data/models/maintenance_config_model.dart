@@ -20,7 +20,8 @@ class MaintenanceConfigModel {
       warnDays: (m['warn_days'] as num?)?.toInt(),
       baselineKm: (m['baseline_km'] as num?)?.toDouble(),
       baselineDate: DateTime.tryParse(m['baseline_date'] as String? ?? ''),
-      source: m['source'] == 'user' ? IntervalSource.user : IntervalSource.template,
+      source:
+          m['source'] == 'user' ? IntervalSource.user : IntervalSource.template,
       customId: isCustom ? key.substring(kCustomCheckPrefix.length) : null,
       customLabel: m['custom_label'] as String?,
     );

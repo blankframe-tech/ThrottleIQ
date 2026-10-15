@@ -92,11 +92,13 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final imperial = ref.watch(maintenanceImperialProvider);
-    final running = ref.watch(bikeRunningCostProvider(widget.bikeId)).valueOrNull;
+    final running =
+        ref.watch(bikeRunningCostProvider(widget.bikeId)).valueOrNull;
     if (running != null) _seed(running, imperial);
     final configs =
         ref.watch(maintenanceConfigProvider(widget.bikeId)).valueOrNull ?? [];
-    final logs = ref.watch(maintenanceProvider(widget.bikeId)).valueOrNull ?? [];
+    final logs =
+        ref.watch(maintenanceProvider(widget.bikeId)).valueOrNull ?? [];
     final breakdown =
         ref.watch(rideCostProvider((bikeId: widget.bikeId, distanceKm: 1)));
     final tracked = configs
@@ -119,7 +121,9 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
             BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
         border: Border(top: BorderSide(color: context.palette.border)),
       ),
-      padding: EdgeInsets.fromLTRB(AppDimensions.paddingMd, 14,
+      padding: EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd,
+          14,
           AppDimensions.paddingMd,
           MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd),
       child: SingleChildScrollView(
@@ -197,7 +201,8 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: _saving ? null : () => _saveFuel(imperial),
-                icon: Icon(_saved ? Icons.check : Icons.save_outlined, size: 16),
+                icon:
+                    Icon(_saved ? Icons.check : Icons.save_outlined, size: 16),
                 label: Text(l10n.safeQrSaveAction),
               ),
             ),

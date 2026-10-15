@@ -48,7 +48,8 @@ class MetricCard extends StatelessWidget {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: context.palette.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                      color: context.palette.textSecondary, fontSize: 12),
                 ),
               ),
             ],
@@ -70,7 +71,8 @@ class MetricCard extends StatelessWidget {
                 const SizedBox(width: 4),
                 Text(
                   unit,
-                  style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textTertiary),
                 ),
               ],
             ],

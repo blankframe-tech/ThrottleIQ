@@ -80,7 +80,10 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
         children: [
           Text(
             context.l10n.contactNameField,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -95,7 +98,10 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
           const SizedBox(height: 20),
           Text(
             context.l10n.descriptionOptional,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -110,18 +116,22 @@ class _CreateForumScreenState extends ConsumerState<CreateForumScreen> {
           const SizedBox(height: 12),
           Text(
             context.l10n.youllBeAbleModerate,
-            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
+            style: ElevatedButton.styleFrom(
+                backgroundColor: context.palette.primary),
             onPressed: _submitting ? null : _submit,
             child: _submitting
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : Text(context.l10n.create, style: const TextStyle(color: Colors.white)),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2.5))
+                : Text(context.l10n.create,
+                    style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
