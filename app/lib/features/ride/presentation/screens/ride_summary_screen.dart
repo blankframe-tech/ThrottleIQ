@@ -28,6 +28,7 @@ import '../../../stats/presentation/widgets/ride_line_chart.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/calculators/elevation_profile.dart';
 import '../../domain/calculators/speed_segments.dart';
+import '../speed_band_style.dart';
 import '../../domain/calculators/segment_speed_aggregator.dart';
 import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
@@ -733,6 +734,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       MaterialPageRoute(
         builder: (_) => FullScreenRouteMapScreen(
           polyline: _polyline,
+          speedsMs: _speedsMs,
           title: _formatDate(ride.startTime),
           subtitle: '${ride.distanceKm.toStringAsFixed(1)} km · '
               '${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
@@ -835,7 +837,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                             for (final segment in speedSegments)
                               Polyline(
                                 points: segment.points,
-                                color: _speedBandColor(segment.band),
+                                color: segment.band.color(context),
                                 strokeWidth: 4,
                               ),
                           ]
@@ -980,19 +982,6 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     );
   }
 
-  Color _speedBandColor(SpeedBand band) {
-    switch (band) {
-      case SpeedBand.idle:
-        return context.palette.textTertiary;
-      case SpeedBand.normal:
-        return context.palette.success;
-      case SpeedBand.brisk:
-        return context.palette.warning;
-      case SpeedBand.hard:
-        return context.palette.danger;
-    }
-  }
-
   String _speedBandLabel(AppLocalizations l10n, SpeedBand band) {
     switch (band) {
       case SpeedBand.idle:
@@ -1023,7 +1012,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   height: 10,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _speedBandColor(band),
+                    color: band.color(context),
                   ),
                 ),
                 const SizedBox(width: 4),
