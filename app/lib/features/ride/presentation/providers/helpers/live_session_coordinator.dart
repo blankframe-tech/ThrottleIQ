@@ -10,6 +10,7 @@ import 'package:throttleiq/core/realtime/realtime_location_publisher.dart';
 import 'package:throttleiq/core/realtime/realtime_providers.dart';
 import 'package:throttleiq/core/services/battery_service.dart';
 import 'package:throttleiq/core/services/public_live_link_setting.dart';
+import 'package:throttleiq/core/utils/geo_math.dart';
 import 'package:throttleiq/features/ride/domain/entities/live_session_entity.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 
@@ -23,6 +24,37 @@ const Duration kLiveRelayInterval = Duration(milliseconds: 900);
 /// battery and expiry, and is the viewer's fallback; the viewer's 30 s
 /// "updates delayed" warning stays clear of a 20 s cadence.
 const int kFirestoreTickDivisorWhenRealtime = 2;
+
+/// Spark allows 20k Firestore writes a day and a flat 10 s tick costs 360
+/// per rider-hour, so a tick is skipped while the rider has moved less than
+/// this since the last written position (stopped, or crawling in traffic).
+const double kLiveSessionMinMoveMeters = 100;
+
+/// A skipped tick still writes once this has passed, so the viewer's 30 s
+/// "updates delayed" warning (live-viewer.html) stays quiet for a stopped
+/// rider: every 2nd 10 s tick. 15 s, not 20 s, so timer jitter can't push
+/// it to the 3rd.
+const Duration kLiveSessionMaxSilence = Duration(seconds: 15);
+
+/// Whether [next] is worth a Firestore write after [last], the session last
+/// written: always for a new token or a status change (paused, crash);
+/// otherwise once the rider moved [kLiveSessionMinMoveMeters] or
+/// [kLiveSessionMaxSilence] passed.
+@visibleForTesting
+bool shouldWriteLiveSession(LiveSessionEntity? last, LiveSessionEntity next) {
+  if (last == null || last.token != next.token || last.status != next.status) {
+    return true;
+  }
+  if (next.updatedAt.difference(last.updatedAt) >= kLiveSessionMaxSilence) {
+    return true;
+  }
+  final (lat0, lng0, lat1, lng1) =
+      (last.lastLat, last.lastLng, next.lastLat, next.lastLng);
+  if (lat0 == null || lng0 == null || lat1 == null || lng1 == null) {
+    return lat0 != lat1 || lng0 != lng1;
+  }
+  return haversineMeters(lat0, lng0, lat1, lng1) >= kLiveSessionMinMoveMeters;
+}
 
 /// Coordinates live-sharing sessions: token creation, periodic position updates,
 /// permanent user pointers, and durable offline teardown via [OutboxService].
@@ -51,6 +83,7 @@ class LiveSessionCoordinator {
   RealtimeLease? _relayLease;
   String? _relayToken;
   int _ticks = 0;
+  LiveSessionEntity? _lastWritten;
 
   /// Whether the rider opted in to the permanent `/r/{username}` link
   /// (Settings → "Public link (/r/@handle)", issues §90.D7). Read per share,
@@ -72,8 +105,7 @@ class LiveSessionCoordinator {
 
   /// Whether the 1 Hz RTDB relay is currently the thing carrying position.
   bool get _relayCarriesPosition =>
-      _relay != null &&
-      _realtime?.transportNow() == RealtimeTransport.realtime;
+      _relay != null && _realtime?.transportNow() == RealtimeTransport.realtime;
 
   /// Hands one GPS fix to the RTDB relay. Called for every fix while the
   /// ride is active; the relay throttles to [kLiveRelayInterval]. A no-op
@@ -96,7 +128,8 @@ class LiveSessionCoordinator {
   /// Uses `Random.secure()` so the ~190 bits of entropy cannot be guessed from
   /// the system clock (issues §24.2).
   String createLiveSessionToken() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     final rnd = Random.secure();
     return String.fromCharCodes(
       Iterable.generate(32, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
@@ -210,6 +243,9 @@ class LiveSessionCoordinator {
 
       _ensureRelay(uid, token, session.expiresAt);
 
+      if (!shouldWriteLiveSession(_lastWritten, session)) return token;
+      _lastWritten = session;
+
       // Independent docs — run concurrently rather than sequentially so the
       // first share tap (the only time both fire together) isn't stuck
       // waiting on two back-to-back 8s timeouts on a bad connection.
@@ -223,9 +259,9 @@ class LiveSessionCoordinator {
               // writes a client Timestamp; a rider whose clock is off would
               // otherwise look stale (or impossibly fresh) to the viewer.
               .set({
-                ...session.toFirestore(),
-                'updatedAt': FieldValue.serverTimestamp(),
-              }),
+            ...session.toFirestore(),
+            'updatedAt': FieldValue.serverTimestamp(),
+          }),
         ),
         if (existingToken == null) _maybePublishLivePointer(uid, token),
       ]);
@@ -377,7 +413,8 @@ class LiveSessionCoordinator {
     );
   }
 
-  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
+  Future<void> _bestEffortWrite(
+      String label, Future<void> Function() write) async {
     try {
       await write().timeout(kOutboxAttemptTimeout);
     } on TimeoutException {
