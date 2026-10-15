@@ -64,15 +64,17 @@ void main() {
 
   tearDown(() => realtime.dispose());
 
-  test('sharing creates /live_shares/{token} owned by the rider, expiring in 24 h',
+  test(
+      'sharing creates /live_shares/{token} owned by the rider, expiring in 24 h',
       () async {
     final c = coordinator();
     final token = await share(c);
 
     final node = store.valueAt('live_shares/$token') as Map;
     expect(node['uid'], 'alice');
-    final expiresIn = DateTime.fromMillisecondsSinceEpoch(node['expiresAt'] as int)
-        .difference(DateTime.now());
+    final expiresIn =
+        DateTime.fromMillisecondsSinceEpoch(node['expiresAt'] as int)
+            .difference(DateTime.now());
     expect(expiresIn.inHours, inInclusiveRange(23, 24));
     expect(token.length, greaterThanOrEqualTo(32),
         reason: 'database.rules.json refuses shorter tokens');
@@ -81,7 +83,8 @@ void main() {
     expect(realtime.connections.holders, ['live-share']);
   });
 
-  test('each fix offered while sharing reaches the location node with the next seq',
+  test(
+      'each fix offered while sharing reaches the location node with the next seq',
       () async {
     final c = coordinator();
     final token = await share(c);
@@ -109,7 +112,8 @@ void main() {
     expect(store.log, isEmpty);
   });
 
-  test('"Stop sharing now" removes the node, even with writes still queued offline',
+  test(
+      '"Stop sharing now" removes the node, even with writes still queued offline',
       () async {
     final c = coordinator();
     final token = await share(c);
@@ -149,6 +153,28 @@ void main() {
     expect(store.valueAt('live_shares/$token'), isNull);
   });
 
+  test('a stopped rider\'s Firestore ticks are skipped until status changes',
+      () async {
+    final c = coordinator(services: RealtimeServices.disabled());
+    final token = await share(c);
+    Future<void> tick(RecordingStatus status) => c.publishLiveSession(
+          uid: 'alice',
+          rideId: 'ride-1',
+          lastLat: 23.81,
+          lastLng: 90.41,
+          currentSpeedMs: 0,
+          crashDetected: false,
+          status: status,
+        );
+
+    await tick(RecordingStatus.active);
+    expect(firestore.ops.where((op) => op == 'set liveSessions/$token'),
+        hasLength(1));
+    await tick(RecordingStatus.paused);
+    expect(firestore.ops.where((op) => op == 'set liveSessions/$token'),
+        hasLength(2));
+  });
+
   test('with RTDB unconfigured, sharing still works on Firestore alone',
       () async {
     final disabled = RealtimeServices.disabled();
@@ -173,7 +199,8 @@ void main() {
     expect(ticks, 6 ~/ kFirestoreTickDivisorWhenRealtime);
   });
 
-  test('when the socket is down past the grace, every Firestore tick is written',
+  test(
+      'when the socket is down past the grace, every Firestore tick is written',
       () async {
     // Zero grace: the drop below counts as "down past the grace" at once.
     final services = RealtimeServices(
