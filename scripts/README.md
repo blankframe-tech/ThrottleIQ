@@ -16,6 +16,7 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 | [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
+| [`backfill_users_visibility.js`](#backfill_users_visibilityjs--stamp-visibility-public-on-legacy-profiles) | One-off: sets `visibility: 'public'` on `users` docs that lack it, so legacy riders show up in search again. Takes a required `--project=<id>` | Yes — the field can be deleted again; single-doc reads already treated a missing field as public |
 | [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
 | [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
 
@@ -100,6 +101,30 @@ node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json
 It prints counts and uids, never an address, warns if one email sits on two
 profiles, and a second run reports 0. Unit tests: `npm test`
 (`test/migrate_emails_private.test.js`).
+
+---
+
+# `backfill_users_visibility.js` — stamp `visibility: 'public'` on legacy profiles
+
+One-off, for the A4/D9 rule that only lets a `users` list query return
+`visibility == 'public'` docs. A profile written before `visibility` existed
+drops out of search, suggestions and All People until its rider signs in
+again; this covers riders who don't. Single-doc reads already treat a missing
+field as public, so no rider's privacy changes.
+
+```bash
+cd scripts && npm install
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
+```
+
+`--project` is required and must match the key's `project_id`. Missing and
+`null` both count as "no visibility". Each write carries the doc's read time
+as a precondition, so a rider who changes their own setting mid-run is skipped,
+not overwritten; re-run to pick up anything skipped. A second run reports 0.
+Tests: `npm test` (`test/backfill_users_visibility.test.js`) and
+`npm run test:rules` (`test/rules/backfill_users_visibility.test.js`, emulator).
 
 ---
 
