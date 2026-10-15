@@ -4,8 +4,8 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta `1.0.0-beta.4.5.0+26`, tagged
-> [`beta-v4.5`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.5).
+> **Status:** pre-launch beta `1.0.0-beta.4.7.1+29`, tagged
+> [`beta-v4.7.1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.7.1).
 > Real riders are testing a signed Android build from GitHub Releases and a Play
 > Console internal-testing track. There is no public Play Store or App Store
 > listing yet. App id: `com.bft.throttleiq`.
