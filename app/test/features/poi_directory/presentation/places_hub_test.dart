@@ -419,6 +419,19 @@ void main() {
       expect(find.byType(TextField), findsOneWidget);
     });
 
+    testWidgets('full-screen map controls stay below the status bar',
+        (tester) async {
+      // A Dynamic Island inset: 59 logical px at devicePixelRatio 2.
+      tester.view.padding = const FakeViewPadding(top: 118);
+      await pumpHub(tester, mode: PlacesViewMode.map);
+      await tester.tap(find.byKey(const Key('places_full_map')));
+      await tester.pump();
+      final exit = find.byKey(const Key('places_exit_full_map'));
+      expect(tester.getTopLeft(exit).dy, greaterThanOrEqualTo(59));
+      expect(tester.getTopLeft(find.byTooltip('Filters')).dy,
+          greaterThanOrEqualTo(59));
+    });
+
     for (final locale in const [Locale('en'), Locale('bn')]) {
       for (final mode in PlacesViewMode.values) {
         testWidgets(

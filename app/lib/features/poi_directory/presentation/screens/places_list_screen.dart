@@ -207,71 +207,75 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
                           color: AppTheme.primaryButtonForeground(
                               context.palette))),
                 ),
-          body: Column(
-            children: [
-              if (!fullMap)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppDimensions.paddingMd,
-                    AppDimensions.paddingSm,
-                    AppDimensions.paddingMd,
-                    0,
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: SegmentedButton<PlacesHubTab>(
-                      showSelectedIcon: false,
-                      segments: [
-                        ButtonSegment(
-                          value: PlacesHubTab.places,
-                          icon: const Icon(Icons.place_outlined, size: 18),
-                          label: Text(context.l10n.placesHubTabPlaces),
-                        ),
-                        ButtonSegment(
-                          value: PlacesHubTab.routes,
-                          icon: const Icon(Icons.route, size: 18),
-                          label: Text(context.l10n.placesHubTabRoutes),
-                        ),
-                        ButtonSegment(
-                          value: PlacesHubTab.saved,
-                          icon: const Icon(Icons.bookmark_outline, size: 18),
-                          label: Text(context.l10n.placesHubTabSaved),
-                        ),
-                      ],
-                      selected: {_tab},
-                      onSelectionChanged: (s) => _selectTab(s.first),
+          // The app bar clears the status bar; full map drops it, so pad here.
+          body: SafeArea(
+            bottom: false,
+            child: Column(
+              children: [
+                if (!fullMap)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppDimensions.paddingMd,
+                      AppDimensions.paddingSm,
+                      AppDimensions.paddingMd,
+                      0,
+                    ),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<PlacesHubTab>(
+                        showSelectedIcon: false,
+                        segments: [
+                          ButtonSegment(
+                            value: PlacesHubTab.places,
+                            icon: const Icon(Icons.place_outlined, size: 18),
+                            label: Text(context.l10n.placesHubTabPlaces),
+                          ),
+                          ButtonSegment(
+                            value: PlacesHubTab.routes,
+                            icon: const Icon(Icons.route, size: 18),
+                            label: Text(context.l10n.placesHubTabRoutes),
+                          ),
+                          ButtonSegment(
+                            value: PlacesHubTab.saved,
+                            icon: const Icon(Icons.bookmark_outline, size: 18),
+                            label: Text(context.l10n.placesHubTabSaved),
+                          ),
+                        ],
+                        selected: {_tab},
+                        onSelectionChanged: (s) => _selectTab(s.first),
+                      ),
                     ),
                   ),
+                Expanded(
+                  // IndexedStack, not a swipeable TabBarView: a horizontal swipe on
+                  // the map must pan the map, not flip to Routes. Each tab keeps
+                  // its state (scroll offset, the map camera) across switches.
+                  child: IndexedStack(
+                    index: _tab.index,
+                    children: [
+                      _PlacesExplorer(
+                        searchController: _searchCtrl,
+                        importing: _importing,
+                        onImport: () => _importNearby(confirm: false),
+                        onAddPlace: _addPlace,
+                        onOpenSaved: () => _selectTab(PlacesHubTab.saved),
+                      ),
+                      // Built on first visit only: IndexedStack builds every child,
+                      // and the routes lists are two Firestore queries a rider who
+                      // never opens the tab shouldn't pay for.
+                      if (_visited.contains(PlacesHubTab.routes))
+                        const RoutesBrowser()
+                      else
+                        const SizedBox.shrink(),
+                      if (_visited.contains(PlacesHubTab.saved))
+                        const SavedPlacesTab()
+                      else
+                        const SizedBox.shrink(),
+                    ],
+                  ),
                 ),
-              Expanded(
-                // IndexedStack, not a swipeable TabBarView: a horizontal swipe on
-                // the map must pan the map, not flip to Routes. Each tab keeps
-                // its state (scroll offset, the map camera) across switches.
-                child: IndexedStack(
-                  index: _tab.index,
-                  children: [
-                    _PlacesExplorer(
-                      searchController: _searchCtrl,
-                      importing: _importing,
-                      onImport: () => _importNearby(confirm: false),
-                      onAddPlace: _addPlace,
-                      onOpenSaved: () => _selectTab(PlacesHubTab.saved),
-                    ),
-                    // Built on first visit only: IndexedStack builds every child,
-                    // and the routes lists are two Firestore queries a rider who
-                    // never opens the tab shouldn't pay for.
-                    if (_visited.contains(PlacesHubTab.routes))
-                      const RoutesBrowser()
-                    else
-                      const SizedBox.shrink(),
-                    if (_visited.contains(PlacesHubTab.saved))
-                      const SavedPlacesTab()
-                    else
-                      const SizedBox.shrink(),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ));
   }
