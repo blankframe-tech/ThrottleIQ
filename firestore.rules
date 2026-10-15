@@ -390,7 +390,8 @@ service cloud.firestore {
     // do safely without deploy/device access. Tracked as deferred in
     // issues §62.
     function publicStatsValid(existingProfile, incomingStats) {
-      let oldStats = existingProfile != null ? existingProfile.get('publicStats', {}) : {};
+      // A new profile is passed as {} (not null) so the compiler sees a map.
+      let oldStats = existingProfile.get('publicStats', {});
       let oldKm = oldStats.get('totalDistanceKm', 0);
       let oldRides = oldStats.get('totalRides', 0);
       let oldBadges = oldStats.get('badgeIds', []);
@@ -520,7 +521,7 @@ service cloud.firestore {
           resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
          usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid)) &&
         (!('publicStats' in request.resource.data) ||
-         publicStatsValid(resource == null ? null : resource.data, request.resource.data.publicStats)) &&
+         publicStatsValid(resource == null ? {} : resource.data, request.resource.data.publicStats)) &&
         profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
         badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
       // A profile already counted in stats/badges.totalRiders can't be
