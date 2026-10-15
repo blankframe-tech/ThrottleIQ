@@ -2,7 +2,13 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (newest): local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — not pushed
+## 2026-10-15 (release): `1.0.0-beta.4.6.0+27` shipped as tag `beta-v4.6.0` — `main` pushed
+
+- `scripts/deploy.sh --skip-ios` (gate green, 2 min of tests), then `flutter run --release` to the founder's iPhone separately (the script's iOS step stays attached to the app). GitHub release has the four APKs + AAB; local APKs deleted, local AAB kept at `app/build/app/outputs/bundle/release/app-release.aab` (93 MB). APKs stay on the release because the install page links `app-release.apk`.
+- Build number 26 was already used, hence +27. The tag is `beta-v4.6.0` (regex captures `4.6.0`).
+- Not checked: the build on the iPhone beyond install + launch, the Play upload, the `firestore.rules` / functions deploy order (`SECURITY.md`) before testers update.
+
+## 2026-10-15: local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — not pushed
 
 - `oct14-int` already held every `fix/oct14-tiq-*` branch and `fix/oct15-throttleiq`, merged with origin/main; its gate stamp matched that commit. Local `main` now equals it. Not pushed; follow the rules deploy order in `SECURITY.md`.
 - Record screen: `PhonePlacementSelector` is one collapsed row ("Phone: On a mount"); tap opens the chips. Ride tests pass; not run on a device, so the reported iPhone breakage is unconfirmed. Full gate not re-run after this edit.
