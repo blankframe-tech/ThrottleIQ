@@ -2038,3 +2038,14 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 - **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator). It covers the Places full map, the Social card/owner menu, history Delete ride and the cockpit placement pill, all on `1349db5`.
 - **103.5 Cockpit:** the `_GroupRideTalkPill` comment in `active_ride_screen.dart` now sits above `PhonePlacementSelector` (cosmetic). With a large iPhone bottom safe area, the controls (~174 px) may still reach the speed panel's fixed `bottom: 160` (not checked).
 
+
+## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/load_test/load-test-2026-10-15.md`)
+
+Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.js`, `npm run loadtest:quota`). Verdict: fail. Reads run out first, at about 18 daily active riders (about 9 at the 50% target).
+
+- **104.1 HIGH — nearby places refetched every 5 km during a ride.** `live_ride_places_provider.dart:45` fetches all places within 25 km at ride start and after each 5 km moved. In Dhaka that is about 400-515 reads per fetch (estimate, not simulated), about 2,000 reads per rider-day. *Fix:* cache on the device; pull with `updatedAt > lastPull` like sync does.
+- **104.2 HIGH — group-ride reads grow with N².** Measured: N² + N reads per 20 s tick. A 20-rider ride uses the whole daily read quota in about 40 min. Supersedes the 5 s figure in §90.A2 (now 20 s + 25 m gate). *Fix:* move positions to the RTDB relay (its rules deny everything, B9) or widen the interval and move gate.
+- **104.3 MEDIUM — feed vote hydration costs 40 of 63 base reads per page.** 20 vote `get()`s, each with a rules `get()` on the ride (`ride_share_repository.dart:350`). *Fix:* one per-user votes doc or one query.
+- **104.4 LOW — the per-author restricted query costs 3 reads even when the author has no such posts** (query + 2 rules `exists()`). The `hasRestrictedPosts` flag from §90.A1 is still open.
+- **104.5 Pending:** real per-user usage from Firebase console → Usage. The local gcloud account (Play publisher SA) cannot read Cloud Monitoring.
+- **Stale note:** §90.C7 (full re-download every 5 min) no longer holds. Pulls are incremental (`cloud_repository.dart:549`), and an idle cycle costs 4 reads.

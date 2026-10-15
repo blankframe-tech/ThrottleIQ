@@ -2,6 +2,12 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-15 (load test): Spark quota simulation — fails at about 18 daily riders
+
+- Added `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota` in `scripts/`). It replays the app's Firestore shapes on the emulator and counts reads and writes. Report: `DOCS/load_test/load-test-2026-10-15.md`. Issues: `issues_open.md` §104. Not committed.
+- Biggest read costs: the nearby-places refetch every 5 km during rides, and group-ride fan-out (N² + N reads per 20 s tick).
+- Still to do: real usage numbers from Firebase console → Usage.
+
 ## 2026-10-15 (release): `1.0.0-beta.4.7.0+28` shipped as tag `beta-v4.7.0`
 
 - Release notes and Play text: `DOCS/releases/beta-v4.7.0.md` (also the GitHub release body). `deploy.sh --skip-ios` passed the gate, pushed, built 4 APKs + AAB (all versionCode 28) and published the release. The iPhone build was installed and launched separately with `flutter run --release`.
