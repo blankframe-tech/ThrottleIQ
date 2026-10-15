@@ -59,3 +59,11 @@ Done: real `SECURITY.md` (private reports to the owner's email), `AGENTS.md`, `C
 ## Update 2 (2026-10-14): Firestore rules deployed
 
 `firebase deploy --only firestore:rules` to `throttleiqfb` at the owner's request; the CLI reported the rules released ("already up to date, skipping upload": the file matched an existing ruleset, so the live rules may have been unchanged). Compile warning at line 455 remains. The `users` `visibility: 'public'` backfill was **not** run, and no old-build behaviour was checked: if beta riders on old builds report broken search, All People or forum posts, that is the cause named in the handoff.
+
+## Update 3 (2026-10-15, agent round)
+
+Pushed `f2a770e`, `0d4806d`, `2da5af1` (plus this note); `check.sh` passed, nothing deployed.
+- **F6 closed:** `scripts/ste_sentence_length.js` finds 0 PRD sentences over the ASD-STE100 limits. 7 passive sentences and 4 non-approved words fixed by hand; record in PRD §13. No full STE-dictionary pass.
+- **Rules warning gone:** the line-455 (now ~523) `publicStatsValid(… null …)` call passes `{}`; same behaviour. A new emulator test fails on any compiler issue. Rules not deployed.
+- **Backfill written, not run:** `scripts/backfill_users_visibility.js` (dry run default, `--project` required, per-doc precondition). How to run: handoff, 2026-10-15 (agent round). Old-build search and All People still wait on the owner running it.
+Score unchanged at 45%.
