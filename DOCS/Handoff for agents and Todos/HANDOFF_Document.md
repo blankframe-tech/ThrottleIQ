@@ -2,7 +2,13 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-15 (latest): `origin/main` merged into the oct14/oct15 fix round — branch `merge/oct15-origin-main`, not pushed, not deployed, not on a device
+## 2026-10-15 (newest): local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — not pushed
+
+- `oct14-int` already held every `fix/oct14-tiq-*` branch and `fix/oct15-throttleiq`, merged with origin/main; its gate stamp matched that commit. Local `main` now equals it. Not pushed; follow the rules deploy order in `SECURITY.md`.
+- Record screen: `PhonePlacementSelector` is one collapsed row ("Phone: On a mount"); tap opens the chips. Ride tests pass; not run on a device, so the reported iPhone breakage is unconfirmed. Full gate not re-run after this edit.
+- Places ideas (offline cache, closed-place reports, live confirmations, route search, finer module toggles) were given to the founder; nothing built. Home-screen widget update was requested but unspecified.
+
+## 2026-10-15: `origin/main` merged into the oct14/oct15 fix round — branch `merge/oct15-origin-main`, not pushed, not deployed, not on a device
 
 - **Schema v29.** Both sides shipped a v28: ours (`updated_at` + touch triggers, UTC ride times) and main's (`impact_events`, `rides.phone_placement`/`imu_rate_hz`). v28 stays ours; v29 adds main's table and columns and, for a phone that is on main's v28, re-runs our (re-runnable) v28 step. Paths tested in `schema_v29_merge_test.dart`: 27 → 29, our 28 → 29, main's 28 → 29.
 - **Crash gate:** main renamed `impactDetectorLiveEnabled` to `crashAlertsEnabled`; the B11 gates (notification, crash overlay, `crash_copy_test`) now read it. Shadow mode raises nothing.
