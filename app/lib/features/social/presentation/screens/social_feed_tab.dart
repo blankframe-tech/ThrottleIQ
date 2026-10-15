@@ -529,49 +529,50 @@ class _RideCardState extends ConsumerState<_RideCard> {
                     Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 36,
+                          height: 36,
                           decoration: BoxDecoration(
                             color: context.palette.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.two_wheeler,
-                              color: context.palette.primary, size: 22),
+                              color: context.palette.primary, size: 20),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                ride.bikeName,
-                                style: TextStyle(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.palette.textPrimary),
-                              ),
-                              Text(ride.bikeType,
+                          flex: 3,
+                          child: Semantics(
+                            button: true,
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              onTap: () =>
+                                  context.push('/profile/${ride.userId}'),
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 10),
+                                child: RiderHandle(
+                                  uid: ride.userId,
+                                  fallback: ride.userName,
                                   style: TextStyle(
-                                      fontSize: 12,
-                                      color: context.palette.textSecondary)),
-                            ],
-                          ),
-                        ),
-                        Semantics(
-                          button: true,
-                          child: GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            onTap: () => context.push('/profile/${ride.userId}'),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Text(
-                                ride.userName,
-                                style: TextStyle(
-                                    fontSize: 12,
-                                    color: context.palette.textSecondary,
-                                    fontWeight: FontWeight.w500),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary),
+                                ),
                               ),
                             ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: Text(
+                            ride.bikeName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: context.palette.textSecondary,
+                                fontWeight: FontWeight.w500),
                           ),
                         ),
                         PopupMenuButton<String>(
@@ -597,10 +598,6 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         ),
                       ],
                     ),
-                    if (ride.ridingScore != null) ...[
-                      const SizedBox(height: 10),
-                      _RidingScoreChip(score: ride.ridingScore!),
-                    ],
                     if ((ride.caption ?? '').trim().isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Text(
@@ -611,9 +608,9 @@ class _RideCardState extends ConsumerState<_RideCard> {
                             fontSize: 14, color: context.palette.textPrimary),
                       ),
                     ],
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     _buildMedia(ride),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
@@ -624,11 +621,15 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         _divider(),
                         _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
                             context.l10n.maxSpeed),
+                        if (ride.ridingScore != null) ...[
+                          _divider(),
+                          _scoreStat(ride.ridingScore!),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Container(height: 1, color: context.palette.border),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Row(
                       children: [
                         IconButton(
@@ -811,16 +812,16 @@ class _RideCardState extends ConsumerState<_RideCard> {
     );
   }
 
-  Widget _stat(String value, String label) {
+  Widget _stat(String value, String label, {Color? color}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(value,
             style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: context.palette.textPrimary)),
-        const SizedBox(height: 4),
+                color: color ?? context.palette.textPrimary)),
+        const SizedBox(height: 2),
         Text(label,
             style: TextStyle(
                 fontSize: 10,
@@ -831,63 +832,22 @@ class _RideCardState extends ConsumerState<_RideCard> {
     );
   }
 
+  /// Riding score as a fourth stat beside max speed, tier-colored — a number
+  /// the rider earned, not just another stat. Only built when
+  /// [SharedRideEntity.ridingScore] is non-null (see that getter's doc).
+  Widget _scoreStat(int score) {
+    final l10n = context.l10n;
+    final (color, label) = switch (ridingScoreTier(score)) {
+      RidingScoreTier.smooth => (context.palette.success, l10n.scoreSmoothLabel),
+      RidingScoreTier.steady => (context.palette.attention, l10n.scoreSteadyLabel),
+      RidingScoreTier.aggressive => (context.palette.danger, l10n.scoreAggressiveLabel),
+    };
+    return _stat('$score', label, color: color);
+  }
+
   Widget _divider() => Container(
         width: 1,
         height: 32,
         color: context.palette.border.withValues(alpha: 0.3),
       );
-}
-
-/// Small tier-colored riding-score pill for a feed card — the "gamified"
-/// half of sharing a ride's score: a number a rider earned, not just another
-/// stat. Only shown when [SharedRideEntity.ridingScore] is non-null (see
-/// that getter's doc comment).
-class _RidingScoreChip extends StatelessWidget {
-  final int score;
-
-  const _RidingScoreChip({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final tier = ridingScoreTier(score);
-    final (color, label, icon) = switch (tier) {
-      RidingScoreTier.smooth => (
-          context.palette.success,
-          l10n.scoreSmoothLabel,
-          Icons.emoji_events
-        ),
-      RidingScoreTier.steady => (
-          context.palette.attention,
-          l10n.scoreSteadyLabel,
-          Icons.thumb_up_alt_rounded
-        ),
-      RidingScoreTier.aggressive => (
-          context.palette.danger,
-          l10n.scoreAggressiveLabel,
-          Icons.warning_amber_rounded
-        ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(context.shape.radiusSm),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 14),
-          const SizedBox(width: 5),
-          Text('$score',
-              style: TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: color)),
-          const SizedBox(width: 4),
-          Text('· $label', style: TextStyle(fontSize: 12, color: color)),
-        ],
-      ),
-    );
-  }
 }

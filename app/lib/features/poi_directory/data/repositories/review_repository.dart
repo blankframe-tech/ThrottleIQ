@@ -24,8 +24,8 @@ class ReviewRepository {
     final docId = '${review.userId}_${review.placeId}';
     final model = ReviewModel.fromEntity(review).copyWith(id: docId);
     await _firestore.collection(_collection).doc(docId).set(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
     return docId;
   }
 
@@ -46,8 +46,8 @@ class ReviewRepository {
   Future<void> updateReview(String reviewId, ReviewEntity review) async {
     final model = ReviewModel.fromEntity(review);
     await _firestore.collection(_collection).doc(reviewId).update(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
   }
 
   /// Get a review by ID

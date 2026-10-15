@@ -19,7 +19,6 @@ import '../providers/ride_recording_provider.dart';
 import '../widgets/bike_picker_card.dart';
 import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
-import '../widgets/phone_placement_selector.dart';
 import '../widgets/rider_stat_strip.dart';
 import 'oem_guide_screen.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -197,10 +196,6 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       // invites, navigation.
                       const RideModeSelector(),
                       const SizedBox(height: 16),
-
-                      // 4. Where the phone rides — shadow-mode crash
-                      // detection reads a mount and a pocket differently.
-                      const PhonePlacementSelector(),
 
                       if (rideState.error != null) ...[
                         const SizedBox(height: 16),

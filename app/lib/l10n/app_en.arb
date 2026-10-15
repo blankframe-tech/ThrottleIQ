@@ -3857,6 +3857,14 @@
   "@placesMapView": {
     "description": "Places hub redesign (Places | Routes | Saved)."
   },
+  "placesFullMap": "Full-screen map",
+  "@placesFullMap": {
+    "description": "Places map: hides the search and header so the map fills the screen."
+  },
+  "placesExitFullMap": "Exit full screen",
+  "@placesExitFullMap": {
+    "description": "Places map: brings the search and header back."
+  },
   "placesListView": "List",
   "@placesListView": {
     "description": "Places hub redesign (Places | Routes | Saved)."
@@ -9063,5 +9071,38 @@
   "crashResearchDesc": "Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.",
   "@crashResearchDesc": {
     "description": "Settings switch subtitle for the research data opt-in."
+  },
+  "editRide": "Edit ride",
+  "@editRide": {
+    "description": "Menu item and sheet title for editing a shared ride's photos and caption."
+  },
+  "seeMore": "See more",
+  "@seeMore": {
+    "description": "Menu item opening the full ride view from a shared ride."
+  },
+  "deleteRide": "Delete ride",
+  "@deleteRide": {
+    "description": "Menu item / button for deleting a ride."
+  },
+  "deleteSharedPostBody": "This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.",
+  "@deleteSharedPostBody": {
+    "description": "Body of the confirm dialog for deleting a shared ride post."
+  },
+  "deleteRideConfirmTitle": "Delete this ride?",
+  "@deleteRideConfirmTitle": {
+    "description": "Title of the confirm dialog on the ride history screen."
+  },
+  "deleteRideConfirmBody": "This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can't be undone.",
+  "@deleteRideConfirmBody": {
+    "description": "Body of the confirm dialog on the ride history screen."
+  },
+  "couldNotSaveChanges": "Could not save changes: {e}",
+  "@couldNotSaveChanges": {
+    "description": "Snackbar when saving an edited shared ride fails.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
   }
 }

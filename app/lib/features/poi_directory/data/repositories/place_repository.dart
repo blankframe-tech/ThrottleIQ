@@ -36,8 +36,8 @@ class PlaceRepository {
   Future<String> addPlace(PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);
     final docRef = await _firestore.collection(_collection).add(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
     return docRef.id;
   }
 
@@ -48,8 +48,7 @@ class PlaceRepository {
   /// `osm_node_123` (a `/` in a doc id would be read as a path separator).
   /// Two imports of the same OSM feature land on the same doc instead of
   /// creating a duplicate.
-  static String osmDocId(String osmId) =>
-      'osm_${osmId.replaceAll('/', '_')}';
+  static String osmDocId(String osmId) => 'osm_${osmId.replaceAll('/', '_')}';
 
   /// Adds many places in [importBatchSize]-write batches (the OSM import
   /// used to await one `add()` per place, sequentially). Places with an
@@ -63,7 +62,9 @@ class PlaceRepository {
     for (var i = 0; i < places.length; i += importBatchSize) {
       final chunk = places.sublist(
         i,
-        i + importBatchSize > places.length ? places.length : i + importBatchSize,
+        i + importBatchSize > places.length
+            ? places.length
+            : i + importBatchSize,
       );
       final batch = _firestore.batch();
       for (final place in chunk) {
@@ -81,8 +82,8 @@ class PlaceRepository {
   Future<void> updatePlace(String placeId, PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);
     await _firestore.collection(_collection).doc(placeId).update(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
   }
 
   /// Update place verification (admin only)
@@ -180,7 +181,8 @@ class PlaceRepository {
     if (osmIds.isEmpty) return {};
     final found = <String>{};
     for (var i = 0; i < osmIds.length; i += 30) {
-      final chunk = osmIds.sublist(i, i + 30 > osmIds.length ? osmIds.length : i + 30);
+      final chunk =
+          osmIds.sublist(i, i + 30 > osmIds.length ? osmIds.length : i + 30);
       final snap = await _firestore
           .collection(_collection)
           .where('osmId', whereIn: chunk)
@@ -310,5 +312,3 @@ class PlaceRepository {
     });
   }
 }
-
-

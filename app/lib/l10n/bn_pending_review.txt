@@ -1723,3 +1723,10 @@ tourGarageSubtitleNoTracking
 tourGarageActiveBodyNoTracking
 tourGarageDetailBodyNoTracking
 tourProfileSubtitleNoSocial
+editRide
+seeMore
+deleteRide
+deleteSharedPostBody
+deleteRideConfirmTitle
+deleteRideConfirmBody
+couldNotSaveChanges

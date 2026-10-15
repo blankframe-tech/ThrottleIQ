@@ -101,13 +101,15 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
+              leading: Icon(Icons.photo_camera_outlined,
+                  color: sheetContext.palette.primary),
               title: Text(sheetContext.l10n.takeAPhoto,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
+              leading: Icon(Icons.photo_library_outlined,
+                  color: sheetContext.palette.primary),
               title: Text(sheetContext.l10n.chooseFromGallery,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
@@ -152,8 +154,7 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
       if (suggestion == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-                context.l10n.couldntLookThatSpot),
+            content: Text(context.l10n.couldntLookThatSpot),
           ),
         );
         return;
@@ -178,7 +179,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
 
     setState(() => _submitting = true);
     try {
-      final geohash = GeohashUtils.encode(location.latitude, location.longitude);
+      final geohash =
+          GeohashUtils.encode(location.latitude, location.longitude);
 
       // The photo is a nice-to-have, so a failed upload must not cost the
       // rider the whole submission — warn and save the place without it.
@@ -270,16 +272,19 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_a_photo_outlined, size: 22, color: context.palette.textSecondary),
+              Icon(Icons.add_a_photo_outlined,
+                  size: 22, color: context.palette.textSecondary),
               const SizedBox(height: 6),
               Text(
                 context.l10n.addPhotoOptional,
-                style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 13, color: context.palette.textSecondary),
               ),
               const SizedBox(height: 2),
               Text(
                 context.l10n.shopfrontPictureMakesThis,
-                style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 11, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -304,7 +309,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               color: context.palette.surface,
               alignment: Alignment.center,
               child: Text(context.l10n.couldntLoadThatPhoto,
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary)),
             ),
           ),
           Positioned(
@@ -321,7 +327,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 _photoAction(
                   icon: Icons.close,
                   tooltip: context.l10n.removePhoto,
-                  onTap: _submitting ? null : () => setState(() => _photoPath = null),
+                  onTap: _submitting
+                      ? null
+                      : () => setState(() => _photoPath = null),
                 ),
               ],
             ),
@@ -357,7 +365,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
   Widget build(BuildContext context) {
     final positionAsync = ref.watch(currentPositionProvider);
     final initialCenter = positionAsync.valueOrNull != null
-        ? LatLng(positionAsync.valueOrNull!.latitude, positionAsync.valueOrNull!.longitude)
+        ? LatLng(positionAsync.valueOrNull!.latitude,
+            positionAsync.valueOrNull!.longitude)
         : _fallbackCenter;
 
     return Scaffold(
@@ -370,7 +379,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(context.l10n.location, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+              Text(context.l10n.location,
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               MapLocationPicker(
                 // Keyed by center so the map remounts (and re-centers) once
@@ -386,7 +397,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 },
               ),
               const SizedBox(height: 20),
-              Text(context.l10n.category, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+              Text(context.l10n.category,
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -396,26 +409,39 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   return GestureDetector(
                     onTap: () => setState(() {
                       _selectedCategory = category;
-                      _tags.removeWhere((t) => !t.categories.contains(category));
+                      _tags
+                          .removeWhere((t) => !t.categories.contains(category));
                     }),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: selected ? context.palette.primary.withValues(alpha: 0.15) : context.palette.surface,
-                        borderRadius: BorderRadius.circular(context.shape.radiusFull),
-                        border: Border.all(color: selected ? context.palette.primary : context.palette.border),
+                        color: selected
+                            ? context.palette.primary.withValues(alpha: 0.15)
+                            : context.palette.surface,
+                        borderRadius:
+                            BorderRadius.circular(context.shape.radiusFull),
+                        border: Border.all(
+                            color: selected
+                                ? context.palette.primary
+                                : context.palette.border),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(category.icon, style: const TextStyle(fontSize: 13)),
+                          Text(category.icon,
+                              style: const TextStyle(fontSize: 13)),
                           const SizedBox(width: 6),
                           Text(
                             category.localizedName(context.l10n),
                             style: TextStyle(
                               fontSize: 13,
-                              color: selected ? context.palette.primary : context.palette.textSecondary,
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                              color: selected
+                                  ? context.palette.primary
+                                  : context.palette.textSecondary,
+                              fontWeight: selected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
                             ),
                           ),
                         ],
@@ -427,10 +453,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               if (PlaceTag.forCategory(_selectedCategory).isNotEmpty) ...[
                 const SizedBox(height: 20),
                 Text(context.l10n.addPlaceFeaturesLabel,
-                    style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 13, color: context.palette.textSecondary)),
                 const SizedBox(height: 2),
                 Text(context.l10n.addPlaceFeaturesHint,
-                    style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+                    style: TextStyle(
+                        fontSize: 11, color: context.palette.textTertiary)),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -438,9 +466,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   children: [
                     for (final tag in PlaceTag.forCategory(_selectedCategory))
                       FilterChip(
-                        label: Text('${tag.icon} ${tag.localizedName(context.l10n)}'),
+                        label: Text(
+                            '${tag.icon} ${tag.localizedName(context.l10n)}'),
                         selected: _tags.contains(tag),
-                        onSelected: (on) => setState(() => on ? _tags.add(tag) : _tags.remove(tag)),
+                        onSelected: (on) => setState(
+                            () => on ? _tags.add(tag) : _tags.remove(tag)),
                       ),
                   ],
                 ),
@@ -449,8 +479,12 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
               TextFormField(
                 controller: _nameCtrl,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: InputDecoration(labelText: context.l10n.nameStar, hintText: context.l10n.eGRahmanMotors),
-                validator: (v) => v == null || v.trim().isEmpty ? context.l10n.requiredField : null,
+                decoration: InputDecoration(
+                    labelText: context.l10n.nameStar,
+                    hintText: context.l10n.eGRahmanMotors),
+                validator: (v) => v == null || v.trim().isEmpty
+                    ? context.l10n.requiredField
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -466,7 +500,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                   hintText: context.l10n.eGBesideOmuk,
                   helperMaxLines: 3,
                   helperText: context.l10n.writeItWayYoud,
-                  helperStyle: TextStyle(fontSize: 11, color: context.palette.textSecondary),
+                  helperStyle: TextStyle(
+                      fontSize: 11, color: context.palette.textSecondary),
                 ),
               ),
               Align(
@@ -481,7 +516,9 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                         )
                       : const Icon(Icons.my_location, size: 16),
                   label: Text(
-                    _lookingUpAddress ? context.l10n.lookingUp : context.l10n.usePinsArea,
+                    _lookingUpAddress
+                        ? context.l10n.lookingUp
+                        : context.l10n.usePinsArea,
                     style: const TextStyle(fontSize: 12),
                   ),
                 ),
@@ -493,7 +530,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                 controller: _phoneCtrl,
                 keyboardType: TextInputType.phone,
                 style: TextStyle(color: context.palette.textPrimary),
-                decoration: InputDecoration(labelText: context.l10n.phoneOptional, hintText: '+880...'),
+                decoration: InputDecoration(
+                    labelText: context.l10n.phoneOptional, hintText: '+880...'),
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -511,7 +549,8 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
                     ? const SizedBox(
                         height: 20,
                         width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white),
                       )
                     : Text(context.l10n.addPlace),
               ),

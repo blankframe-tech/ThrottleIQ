@@ -409,7 +409,8 @@ void main() {
             placeId: 'place1',
             userId: 'user1',
             stars: 5,
-            text: 'This is a very long review text that should not affect the rating calculation',
+            text:
+                'This is a very long review text that should not affect the rating calculation',
             createdAt: DateTime.now(),
           ),
           ReviewEntity(

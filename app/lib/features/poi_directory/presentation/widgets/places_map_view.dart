@@ -59,7 +59,8 @@ class PlacesMapView extends ConsumerStatefulWidget {
 class _PlacesMapViewState extends ConsumerState<PlacesMapView>
     with TickerProviderStateMixin {
   final _mapController = MapController();
-  late final PageController _pageController = PageController(viewportFraction: 0.9);
+  late final PageController _pageController =
+      PageController(viewportFraction: 0.9);
   late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 1600),
@@ -76,9 +77,11 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
   /// onPageChanged doesn't fight the marker tap that caused it.
   bool _jumpingCarousel = false;
 
-  LatLng get _initialCenter => widget.origin ??
+  LatLng get _initialCenter =>
+      widget.origin ??
       (widget.hits.isNotEmpty
-          ? LatLng(widget.hits.first.place.latitude, widget.hits.first.place.longitude)
+          ? LatLng(widget.hits.first.place.latitude,
+              widget.hits.first.place.longitude)
           : _fallbackCenter);
 
   @override
@@ -98,7 +101,8 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
   void didUpdateWidget(covariant PlacesMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.radiusKm != widget.radiusKm && _mapReady) {
-      _animateTo(widget.origin ?? _mapController.camera.center, zoomForRadius(widget.radiusKm));
+      _animateTo(widget.origin ?? _mapController.camera.center,
+          zoomForRadius(widget.radiusKm));
     }
     if (oldWidget.hits != widget.hits && _pageController.hasClients) {
       final selected = ref.read(selectedPlaceIdProvider);
@@ -130,11 +134,13 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
       return;
     }
     _cameraAnim?.dispose();
-    final anim = AnimationController(vsync: this, duration: const Duration(milliseconds: 450));
+    final anim = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 450));
     _cameraAnim = anim;
     final curve = CurvedAnimation(parent: anim, curve: Curves.easeInOutCubic);
     final latTween = Tween(begin: start.center.latitude, end: target.latitude);
-    final lngTween = Tween(begin: start.center.longitude, end: target.longitude);
+    final lngTween =
+        Tween(begin: start.center.longitude, end: target.longitude);
     final zoomTween = Tween(begin: start.zoom, end: zoom);
     anim.addListener(() {
       _mapController.move(
@@ -151,7 +157,9 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
     if (index >= 0 && _pageController.hasClients) {
       _jumpingCarousel = true;
       _pageController
-          .animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeOut)
+          .animateToPage(index,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOut)
           .whenComplete(() => _jumpingCarousel = false);
     }
     _animateTo(
@@ -164,7 +172,8 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
     if (_jumpingCarousel || index >= widget.hits.length) return;
     final hit = widget.hits[index];
     ref.read(selectedPlaceIdProvider.notifier).state = hit.place.id;
-    _animateTo(LatLng(hit.place.latitude, hit.place.longitude), _mapController.camera.zoom);
+    _animateTo(LatLng(hit.place.latitude, hit.place.longitude),
+        _mapController.camera.zoom);
   }
 
   void _zoomIntoCluster(MapCluster<PlaceHit> cluster) {
@@ -177,7 +186,11 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
   void _locateMe() {
     final origin = widget.origin;
     if (origin == null) return;
-    _animateTo(origin, zoomForRadius(widget.radiusKm) < 14 ? 14 : zoomForRadius(widget.radiusKm));
+    _animateTo(
+        origin,
+        zoomForRadius(widget.radiusKm) < 14
+            ? 14
+            : zoomForRadius(widget.radiusKm));
   }
 
   @override
@@ -189,9 +202,11 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
     // it; hits are handled by the carousel itself.
     ref.listen<String?>(selectedPlaceIdProvider, (_, id) {
       if (id == null) return;
-      final radarHit = widget.radarPoints.where((h) => h.place.id == id).firstOrNull;
+      final radarHit =
+          widget.radarPoints.where((h) => h.place.id == id).firstOrNull;
       if (radarHit != null) {
-        _animateTo(LatLng(radarHit.place.latitude, radarHit.place.longitude), 15);
+        _animateTo(
+            LatLng(radarHit.place.latitude, radarHit.place.longitude), 15);
       }
     });
 
@@ -250,7 +265,8 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
         ),
     ];
 
-    final selectedHit = widget.hits.where((h) => h.place.id == selectedId).firstOrNull;
+    final selectedHit =
+        widget.hits.where((h) => h.place.id == selectedId).firstOrNull;
     final showCarousel = widget.hits.isNotEmpty;
 
     return Stack(
@@ -270,7 +286,8 @@ class _PlacesMapViewState extends ConsumerState<PlacesMapView>
               final z = camera.zoom.floorToDouble();
               if (z != _clusterZoom) setState(() => _clusterZoom = z);
             },
-            onTap: (_, __) => ref.read(selectedPlaceIdProvider.notifier).state = null,
+            onTap: (_, __) =>
+                ref.read(selectedPlaceIdProvider.notifier).state = null,
           ),
           children: [
             const AppTileLayer(),
@@ -350,7 +367,8 @@ class _PlacePin extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _PlacePin({required this.hit, required this.selected, required this.onTap});
+  const _PlacePin(
+      {required this.hit, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -371,7 +389,8 @@ class _PlacePin extends StatelessWidget {
               decoration: BoxDecoration(
                 color: accent,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: selected ? 3 : 2),
+                border:
+                    Border.all(color: Colors.white, width: selected ? 3 : 2),
                 boxShadow: [
                   BoxShadow(
                     color: accent.withValues(alpha: selected ? 0.55 : 0.3),
@@ -380,7 +399,8 @@ class _PlacePin extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(hit.place.category.markerIcon, size: size * 0.5, color: markerIconColor(accent)),
+              child: Icon(hit.place.category.markerIcon,
+                  size: size * 0.5, color: markerIconColor(accent)),
             ),
             if (hit.place.isRiderApproved)
               Icon(Icons.verified, size: 12, color: context.palette.success),
@@ -411,7 +431,10 @@ class _ClusterBubble extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             boxShadow: [
-              BoxShadow(color: context.palette.primary.withValues(alpha: 0.35), blurRadius: 10, spreadRadius: 4),
+              BoxShadow(
+                  color: context.palette.primary.withValues(alpha: 0.35),
+                  blurRadius: 10,
+                  spreadRadius: 4),
             ],
           ),
           child: Text(
@@ -433,7 +456,8 @@ class _RadarPin extends StatelessWidget {
   final bool selected;
   final Animation<double> pulse;
 
-  const _RadarPin({required this.hit, required this.selected, required this.pulse});
+  const _RadarPin(
+      {required this.hit, required this.selected, required this.pulse});
 
   @override
   Widget build(BuildContext context) {
@@ -464,7 +488,8 @@ class _RadarPin extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
           ),
-          child: Icon(hit.place.category.markerIcon, size: 13, color: markerIconColor(danger)),
+          child: Icon(hit.place.category.markerIcon,
+              size: 13, color: markerIconColor(danger)),
         ),
       ),
     );

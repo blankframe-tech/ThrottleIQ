@@ -36,11 +36,23 @@ enum PlaceTag {
             PlaceCategory.recreation,
           },
         PlaceTag.efiDiagnostics => const {PlaceCategory.garage},
-        PlaceTag.punctureRepair => const {PlaceCategory.garage, PlaceCategory.fuel},
+        PlaceTag.punctureRepair => const {
+            PlaceCategory.garage,
+            PlaceCategory.fuel
+          },
         PlaceTag.paddockStand => const {PlaceCategory.garage},
-        PlaceTag.genuineParts => const {PlaceCategory.parts, PlaceCategory.garage},
-        PlaceTag.bikeParking => const {PlaceCategory.recreation, PlaceCategory.fuel},
-        PlaceTag.restrooms => const {PlaceCategory.fuel, PlaceCategory.recreation},
+        PlaceTag.genuineParts => const {
+            PlaceCategory.parts,
+            PlaceCategory.garage
+          },
+        PlaceTag.bikeParking => const {
+            PlaceCategory.recreation,
+            PlaceCategory.fuel
+          },
+        PlaceTag.restrooms => const {
+            PlaceCategory.fuel,
+            PlaceCategory.recreation
+          },
       };
 
   String get icon => switch (this) {
@@ -56,8 +68,10 @@ enum PlaceTag {
       };
 
   /// Tags offered for [category], in declaration order.
-  static List<PlaceTag> forCategory(PlaceCategory category) =>
-      [for (final t in values) if (t.categories.contains(category)) t];
+  static List<PlaceTag> forCategory(PlaceCategory category) => [
+        for (final t in values)
+          if (t.categories.contains(category)) t
+      ];
 
   /// Reads a stored `tags` list, keeping known names once each and dropping
   /// anything else (a newer build's tag, a typo from a seed script).

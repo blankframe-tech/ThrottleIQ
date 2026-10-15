@@ -13,6 +13,7 @@ import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../providers/jam_label_provider.dart';
+import '../widgets/phone_placement_selector.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
@@ -529,6 +530,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   // live group ride. Before this the cockpit had no link to
                   // it at all — the Social "Riding Now" card was the only
                   // door in.
+                  const PhonePlacementSelector(),
+                  const SizedBox(width: 8),
                   const _GroupRideTalkPill(),
                   const Spacer(),
                   const _RideClock(),
@@ -591,7 +594,6 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const _JamLabelControl(),
                   Row(
                     children: [
                       Expanded(
@@ -766,65 +768,74 @@ class _SpeedPanel extends ConsumerWidget {
       bottom: 160,
       left: 0,
       right: 0,
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          decoration: BoxDecoration(
-            color: context.palette.surface.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: context.palette.border),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Above the panel, not in the bottom controls: the panel is
+          // anchored at a fixed offset, so a taller control stack ran over it.
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24),
+            child: _JamLabelControl(),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Real GPS fixes arrive in discrete steps (every few
-              // hundred ms to a couple seconds, depending on speed and
-              // signal — see _startLocationStream's tuning notes) so a
-              // plain Text here visibly jumps between values. Tweening
-              // toward each new reading instead of snapping to it
-              // makes the number feel continuous even though the
-              // underlying fixes aren't — reported as "speed updates
-              // feel slow," and tightening the GPS settings alone
-              // still leaves discrete jumps between real fixes.
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: speedKmh, end: speedKmh),
-                duration: const Duration(milliseconds: 450),
-                curve: Curves.easeOut,
-                builder: (context, value, child) => Text(
-                  value.toStringAsFixed(0),
-                  style: display(context, 64,
-                      weight: FontWeight.w700, letterSpacing: -3, height: 1),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: context.palette.surface.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: context.palette.border),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Real GPS fixes arrive in discrete steps (every few
+                // hundred ms to a couple seconds, depending on speed and
+                // signal — see _startLocationStream's tuning notes) so a
+                // plain Text here visibly jumps between values. Tweening
+                // toward each new reading instead of snapping to it
+                // makes the number feel continuous even though the
+                // underlying fixes aren't — reported as "speed updates
+                // feel slow," and tightening the GPS settings alone
+                // still leaves discrete jumps between real fixes.
+                TweenAnimationBuilder<double>(
+                  tween: Tween(begin: speedKmh, end: speedKmh),
+                  duration: const Duration(milliseconds: 450),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) => Text(
+                    value.toStringAsFixed(0),
+                    style: display(context, 64,
+                        weight: FontWeight.w700, letterSpacing: -3, height: 1),
+                  ),
                 ),
-              ),
-              Text('km/h', style: AppTypography.cockpitLabel(context)),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _RideStat(
-                      label: context.l10n.distanceLabel,
-                      value: SpeedFormatter.distanceKm(s.distanceM)),
-                  const SizedBox(width: 24),
-                  _RideStat(
-                      label: context.l10n.avgSpeed,
-                      value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
-                  if (s.confidence > 0) ...[
+                Text('km/h', style: AppTypography.cockpitLabel(context)),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _RideStat(
+                        label: context.l10n.distanceLabel,
+                        value: SpeedFormatter.distanceKm(s.distanceM)),
                     const SizedBox(width: 24),
                     _RideStat(
-                        label: context.l10n.confidence,
-                        value: '${s.confidence}%'),
+                        label: context.l10n.avgSpeed,
+                        value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
+                    if (s.confidence > 0) ...[
+                      const SizedBox(width: 24),
+                      _RideStat(
+                          label: context.l10n.confidence,
+                          value: '${s.confidence}%'),
+                    ],
                   ],
+                ),
+                // Sensor G-force indicator, only once the IMU axis is known:
+                // before that a phone in a pocket reads its own jolts as g.
+                if (s.imuAxisCalibrated) ...[
+                  const SizedBox(height: 8),
+                  _GForceBar(accelMs2: accel),
                 ],
-              ),
-              // Sensor G-force indicator, only once the IMU axis is known:
-              // before that a phone in a pocket reads its own jolts as g.
-              if (s.imuAxisCalibrated) ...[
-                const SizedBox(height: 8),
-                _GForceBar(accelMs2: accel),
               ],
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

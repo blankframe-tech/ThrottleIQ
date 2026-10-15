@@ -9,7 +9,8 @@ import 'package:throttleiq/features/poi_directory/domain/place_directions.dart';
 void main() {
   group('googleMapsDirectionsUri', () {
     test('targets coordinates, in driving mode', () {
-      final uri = googleMapsDirectionsUri(latitude: 23.7925361, longitude: 90.4078212);
+      final uri =
+          googleMapsDirectionsUri(latitude: 23.7925361, longitude: 90.4078212);
 
       expect(uri.host, 'www.google.com');
       expect(uri.path, '/maps/dir/');
@@ -27,9 +28,11 @@ void main() {
           {'api', 'destination', 'travelmode'});
     });
 
-    test('formats negative and small coordinates without exponent notation', () {
+    test('formats negative and small coordinates without exponent notation',
+        () {
       // A double like 1e-7 stringifies as "1e-7", which no maps URL accepts.
-      final uri = googleMapsDirectionsUri(latitude: -0.0000001, longitude: -73.9);
+      final uri =
+          googleMapsDirectionsUri(latitude: -0.0000001, longitude: -73.9);
       expect(uri.queryParameters['destination'], isNot(contains('e')));
       expect(uri.queryParameters['destination'], '-0.0000001,-73.9000000');
     });
@@ -54,7 +57,8 @@ void main() {
       final noLabel = appleMapsDirectionsUri(latitude: 1, longitude: 2);
       expect(noLabel.queryParameters.containsKey('q'), isFalse);
 
-      final blank = appleMapsDirectionsUri(latitude: 1, longitude: 2, label: '   ');
+      final blank =
+          appleMapsDirectionsUri(latitude: 1, longitude: 2, label: '   ');
       expect(blank.queryParameters.containsKey('q'), isFalse);
     });
   });

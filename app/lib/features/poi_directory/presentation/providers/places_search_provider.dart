@@ -35,7 +35,9 @@ class PlacesQueryNotifier extends Notifier<PlacesQuery> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final saved = prefs.getDouble(placesRadiusPrefKey);
-      if (saved != null && placesRadiusOptionsKm.contains(saved) && saved != state.radiusKm) {
+      if (saved != null &&
+          placesRadiusOptionsKm.contains(saved) &&
+          saved != state.radiusKm) {
         state = state.copyWith(radiusKm: saved);
       }
     } catch (e, st) {
@@ -72,7 +74,8 @@ class PlacesQueryNotifier extends Notifier<PlacesQuery> {
     }
   }
 
-  void setVerifiedOnly(bool value) => state = state.copyWith(verifiedOnly: value);
+  void setVerifiedOnly(bool value) =>
+      state = state.copyWith(verifiedOnly: value);
 
   void setSort(PlacesSort sort) => state = state.copyWith(sort: sort);
 
@@ -121,7 +124,13 @@ enum PlacesViewMode { map, list }
 
 /// Map or list. Not persisted: the map is the hub's front page, and a list a
 /// rider flipped to for one search shouldn't become the default forever.
-final placesViewModeProvider = StateProvider<PlacesViewMode>((_) => PlacesViewMode.map);
+final placesViewModeProvider =
+    StateProvider<PlacesViewMode>((_) => PlacesViewMode.map);
+
+/// Full-screen map: the hub hides everything above the map but the category
+/// ribbon and filters, for when a rider needs fuel or a garage now. Not
+/// persisted, same as the view mode.
+final placesFullMapProvider = StateProvider<bool>((_) => false);
 
 /// Whether the Highway Radar's points are highlighted on the map. The radar
 /// banner's tap toggles it.

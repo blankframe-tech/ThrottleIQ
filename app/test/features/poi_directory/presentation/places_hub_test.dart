@@ -404,6 +404,21 @@ void main() {
       expect(find.byTooltip('Centre on me'), findsOneWidget);
     });
 
+    testWidgets('full-screen map hides search and header, keeps filters',
+        (tester) async {
+      await pumpHub(tester, mode: PlacesViewMode.map);
+      await tester.tap(find.byKey(const Key('places_full_map')));
+      await tester.pump();
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byType(PlacesMapView), findsOneWidget);
+      expect(find.byKey(const ValueKey('places-chip-all')), findsOneWidget);
+      expect(find.byTooltip('Filters'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('places_exit_full_map')));
+      await tester.pump();
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
     for (final locale in const [Locale('en'), Locale('bn')]) {
       for (final mode in PlacesViewMode.values) {
         testWidgets(

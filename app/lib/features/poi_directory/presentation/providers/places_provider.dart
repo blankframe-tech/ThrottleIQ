@@ -20,7 +20,11 @@ final _overpassService = OverpassService();
 /// Places screen can offer the one button that actually fixes each case
 /// (ask again / open app settings / open location settings) instead of
 /// pattern-matching message text.
-enum PlaceLocationProblem { permissionDenied, permissionDeniedForever, serviceDisabled }
+enum PlaceLocationProblem {
+  permissionDenied,
+  permissionDeniedForever,
+  serviceDisabled
+}
 
 class PlaceLocationException implements Exception {
   final PlaceLocationProblem problem;
@@ -56,7 +60,8 @@ final currentPositionProvider = FutureProvider<Position>((ref) async {
     permission = await Geolocator.requestPermission();
   }
   if (permission == LocationPermission.deniedForever) {
-    throw const PlaceLocationException(PlaceLocationProblem.permissionDeniedForever);
+    throw const PlaceLocationException(
+        PlaceLocationProblem.permissionDeniedForever);
   }
   if (permission == LocationPermission.denied) {
     throw const PlaceLocationException(PlaceLocationProblem.permissionDenied);
@@ -123,8 +128,8 @@ final placeDetailProvider =
 /// screen — or by another rider — appears without an explicit refresh.
 ///
 /// autoDispose for the same reason as [placeDetailProvider].
-final reviewsForPlaceProvider =
-    StreamProvider.autoDispose.family<List<ReviewEntity>, String>((ref, placeId) {
+final reviewsForPlaceProvider = StreamProvider.autoDispose
+    .family<List<ReviewEntity>, String>((ref, placeId) {
   return _reviewRepository.streamReviewsForPlace(placeId);
 });
 
@@ -162,13 +167,15 @@ Future<int> importNearbyOsmPlaces(
     latitude: position.latitude,
     longitude: position.longitude,
     radiusMeters:
-        (radiusKm > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radiusKm) * 1000,
+        (radiusKm > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radiusKm) *
+            1000,
   );
   if (candidates.isEmpty) return 0;
 
-  final existingOsmIds =
-      await _placeRepository.getExistingOsmIds(candidates.map((c) => c.osmId).toList());
-  final newCandidates = candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
+  final existingOsmIds = await _placeRepository
+      .getExistingOsmIds(candidates.map((c) => c.osmId).toList());
+  final newCandidates =
+      candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
 
   // One batched write per 400 places (ids `osm_<type>_<id>`) instead of an
   // awaited add() per place.

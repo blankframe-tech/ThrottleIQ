@@ -104,7 +104,8 @@ class PlaceCard extends ConsumerWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                      style: TextStyle(
+                          fontSize: 12, color: context.palette.textSecondary),
                     ),
                   ],
                 ),
@@ -116,7 +117,8 @@ class PlaceCard extends ConsumerWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.verified, size: 14, color: context.palette.success),
+                      Icon(Icons.verified,
+                          size: 14, color: context.palette.success),
                       const SizedBox(width: 2),
                       Text(
                         context.l10n.placeVerifiedBadge,
@@ -138,11 +140,13 @@ class PlaceCard extends ConsumerWidget {
               place.address,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary),
             ),
           ],
           const SizedBox(height: 8),
-          PlaceRatingBadges(place: place, showEmpty: !compact, singleLine: compact),
+          PlaceRatingBadges(
+              place: place, showEmpty: !compact, singleLine: compact),
           if (!compact && place.tags.isNotEmpty) ...[
             const SizedBox(height: 6),
             Text(
@@ -152,7 +156,8 @@ class PlaceCard extends ConsumerWidget {
               ].join('  ·  '),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
           ],
           const SizedBox(height: 6),
@@ -162,7 +167,8 @@ class PlaceCard extends ConsumerWidget {
               Expanded(
                 child: TextButton.icon(
                   style: placeActionButtonStyle,
-                  onPressed: () => PlaceLaunchActions.openDirections(context, ref, place),
+                  onPressed: () =>
+                      PlaceLaunchActions.openDirections(context, ref, place),
                   icon: const Icon(Icons.directions, size: 18),
                   label: Text(context.l10n.directions),
                 ),
@@ -200,7 +206,8 @@ class PlaceSaveButton extends ConsumerWidget {
   final PlaceEntity place;
   final bool iconOnly;
 
-  const PlaceSaveButton({super.key, required this.place, this.iconOnly = false});
+  const PlaceSaveButton(
+      {super.key, required this.place, this.iconOnly = false});
 
   Future<void> _toggle(BuildContext context, WidgetRef ref) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -221,7 +228,8 @@ class PlaceSaveButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(savedPlaceIdsProvider.select((ids) => ids.contains(place.id)));
+    final saved = ref
+        .watch(savedPlaceIdsProvider.select((ids) => ids.contains(place.id)));
     final icon = Icon(saved ? Icons.bookmark : Icons.bookmark_border, size: 18);
     final label = saved ? context.l10n.placeSavedLabel : context.l10n.placeSave;
     if (iconOnly) {

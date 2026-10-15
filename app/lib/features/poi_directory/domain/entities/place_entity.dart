@@ -56,8 +56,10 @@ enum PlaceCategory {
       this == PlaceCategory.aiCamera || this == PlaceCategory.police;
 
   /// The categories a rider browses as stops, in ribbon order.
-  static List<PlaceCategory> get destinations =>
-      [for (final c in values) if (!c.isSafetyPoint) c];
+  static List<PlaceCategory> get destinations => [
+        for (final c in values)
+          if (!c.isSafetyPoint) c
+      ];
 
   static PlaceCategory fromString(String value) {
     return PlaceCategory.values.firstWhere(
@@ -178,24 +180,24 @@ class PlaceEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    category,
-    latitude,
-    longitude,
-    geohash,
-    address,
-    phone,
-    hours,
-    photoUrls,
-    verified,
-    createdBy,
-    createdAt,
-    ratingSum,
-    ratingCount,
-    googleRating,
-    googleRatingCount,
-    osmId,
-    tags,
-  ];
+        id,
+        name,
+        category,
+        latitude,
+        longitude,
+        geohash,
+        address,
+        phone,
+        hours,
+        photoUrls,
+        verified,
+        createdBy,
+        createdAt,
+        ratingSum,
+        ratingCount,
+        googleRating,
+        googleRatingCount,
+        osmId,
+        tags,
+      ];
 }

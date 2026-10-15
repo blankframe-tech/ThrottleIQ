@@ -74,7 +74,8 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
     if (_importing) return;
     final radius = ref.read(placesQueryProvider).radiusKm;
     if (confirm) {
-      final km = formatRadiusKm(radius > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radius);
+      final km = formatRadiusKm(
+          radius > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radius);
       final go = await showDialog<bool>(
         context: context,
         builder: (dialogContext) => AlertDialog(
@@ -133,135 +134,146 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
   @override
   Widget build(BuildContext context) {
     final viewMode = ref.watch(placesViewModeProvider);
-    final mapMode = _tab == PlacesHubTab.places && viewMode == PlacesViewMode.map;
+    final mapMode =
+        _tab == PlacesHubTab.places && viewMode == PlacesViewMode.map;
+    final fullMap = mapMode && ref.watch(placesFullMapProvider);
 
-    return Scaffold(
-      backgroundColor: context.palette.background,
-      appBar: AppBar(
-        title: Text(context.l10n.navPlacesLabel),
-        actions: [
-          PopupMenuButton<String>(
-            tooltip: context.l10n.placesMoreActions,
-            onSelected: (value) {
-              switch (value) {
-                case 'osm':
-                  _importNearby();
-                case 'mine':
-                  context.push('/places/mine');
-              }
-            },
-            itemBuilder: (menuContext) => [
-              PopupMenuItem(
-                value: 'osm',
-                enabled: !_importing,
-                // §97.1: Replaced ListTile with Row inside PopupMenuItem to avoid layout and accessibility issues
-                // that can occur when nesting a complex widget like ListTile inside a popup menu context.
-                child: Row(
-                  children: [
-                    const Icon(Icons.travel_explore_outlined),
-                    const SizedBox(width: 12),
-                    Text(menuContext.l10n.importNearbyPlacesFrom),
+    // Back leaves full screen first, rather than the Places tab.
+    return PopScope(
+        canPop: !fullMap,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) ref.read(placesFullMapProvider.notifier).state = false;
+        },
+        child: Scaffold(
+          backgroundColor: context.palette.background,
+          appBar: fullMap
+              ? null
+              : AppBar(
+                  title: Text(context.l10n.navPlacesLabel),
+                  actions: [
+                    PopupMenuButton<String>(
+                      tooltip: context.l10n.placesMoreActions,
+                      onSelected: (value) {
+                        switch (value) {
+                          case 'osm':
+                            _importNearby();
+                          case 'mine':
+                            context.push('/places/mine');
+                        }
+                      },
+                      itemBuilder: (menuContext) => [
+                        PopupMenuItem(
+                          value: 'osm',
+                          enabled: !_importing,
+                          // §97.1: Replaced ListTile with Row inside PopupMenuItem to avoid layout and accessibility issues
+                          // that can occur when nesting a complex widget like ListTile inside a popup menu context.
+                          child: Row(
+                            children: [
+                              const Icon(Icons.travel_explore_outlined),
+                              const SizedBox(width: 12),
+                              Text(menuContext.l10n.importNearbyPlacesFrom),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'mine',
+                          // §97.1: Replaced ListTile with Row inside PopupMenuItem for the same layout/accessibility reasons.
+                          child: Row(
+                            children: [
+                              const Icon(Icons.add_location_alt_outlined),
+                              const SizedBox(width: 12),
+                              Text(menuContext.l10n.placesAddedByMe),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
-              ),
-              PopupMenuItem(
-                value: 'mine',
-                // §97.1: Replaced ListTile with Row inside PopupMenuItem for the same layout/accessibility reasons.
-                child: Row(
+          // The map has its own add button stacked with locate-me, clear of the
+          // carousel; the Routes tab has nothing to add.
+          floatingActionButton: _tab == PlacesHubTab.routes || mapMode
+              ? null
+              : FloatingActionButton.extended(
+                  heroTag: 'add_place_fab',
+                  onPressed: _addPlace,
+                  backgroundColor: context.palette.primary,
+                  foregroundColor:
+                      AppTheme.primaryButtonForeground(context.palette),
+                  icon: Icon(Icons.add,
+                      color: AppTheme.primaryButtonForeground(context.palette)),
+                  label: Text(context.l10n.addPlaceLower,
+                      style: TextStyle(
+                          color: AppTheme.primaryButtonForeground(
+                              context.palette))),
+                ),
+          body: Column(
+            children: [
+              if (!fullMap)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppDimensions.paddingMd,
+                    AppDimensions.paddingSm,
+                    AppDimensions.paddingMd,
+                    0,
+                  ),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: SegmentedButton<PlacesHubTab>(
+                      showSelectedIcon: false,
+                      segments: [
+                        ButtonSegment(
+                          value: PlacesHubTab.places,
+                          icon: const Icon(Icons.place_outlined, size: 18),
+                          label: Text(context.l10n.placesHubTabPlaces),
+                        ),
+                        ButtonSegment(
+                          value: PlacesHubTab.routes,
+                          icon: const Icon(Icons.route, size: 18),
+                          label: Text(context.l10n.placesHubTabRoutes),
+                        ),
+                        ButtonSegment(
+                          value: PlacesHubTab.saved,
+                          icon: const Icon(Icons.bookmark_outline, size: 18),
+                          label: Text(context.l10n.placesHubTabSaved),
+                        ),
+                      ],
+                      selected: {_tab},
+                      onSelectionChanged: (s) => _selectTab(s.first),
+                    ),
+                  ),
+                ),
+              Expanded(
+                // IndexedStack, not a swipeable TabBarView: a horizontal swipe on
+                // the map must pan the map, not flip to Routes. Each tab keeps
+                // its state (scroll offset, the map camera) across switches.
+                child: IndexedStack(
+                  index: _tab.index,
                   children: [
-                    const Icon(Icons.add_location_alt_outlined),
-                    const SizedBox(width: 12),
-                    Text(menuContext.l10n.placesAddedByMe),
+                    _PlacesExplorer(
+                      searchController: _searchCtrl,
+                      importing: _importing,
+                      onImport: () => _importNearby(confirm: false),
+                      onAddPlace: _addPlace,
+                      onOpenSaved: () => _selectTab(PlacesHubTab.saved),
+                    ),
+                    // Built on first visit only: IndexedStack builds every child,
+                    // and the routes lists are two Firestore queries a rider who
+                    // never opens the tab shouldn't pay for.
+                    if (_visited.contains(PlacesHubTab.routes))
+                      const RoutesBrowser()
+                    else
+                      const SizedBox.shrink(),
+                    if (_visited.contains(PlacesHubTab.saved))
+                      const SavedPlacesTab()
+                    else
+                      const SizedBox.shrink(),
                   ],
                 ),
               ),
             ],
           ),
-        ],
-      ),
-      // The map has its own add button stacked with locate-me, clear of the
-      // carousel; the Routes tab has nothing to add.
-      floatingActionButton: _tab == PlacesHubTab.routes || mapMode
-          ? null
-          : FloatingActionButton.extended(
-              heroTag: 'add_place_fab',
-              onPressed: _addPlace,
-              backgroundColor: context.palette.primary,
-              foregroundColor:
-                  AppTheme.primaryButtonForeground(context.palette),
-              icon: Icon(Icons.add,
-                  color: AppTheme.primaryButtonForeground(context.palette)),
-              label: Text(context.l10n.addPlaceLower,
-                  style: TextStyle(
-                      color:
-                          AppTheme.primaryButtonForeground(context.palette))),
-            ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppDimensions.paddingMd,
-              AppDimensions.paddingSm,
-              AppDimensions.paddingMd,
-              0,
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<PlacesHubTab>(
-                showSelectedIcon: false,
-                segments: [
-                  ButtonSegment(
-                    value: PlacesHubTab.places,
-                    icon: const Icon(Icons.place_outlined, size: 18),
-                    label: Text(context.l10n.placesHubTabPlaces),
-                  ),
-                  ButtonSegment(
-                    value: PlacesHubTab.routes,
-                    icon: const Icon(Icons.route, size: 18),
-                    label: Text(context.l10n.placesHubTabRoutes),
-                  ),
-                  ButtonSegment(
-                    value: PlacesHubTab.saved,
-                    icon: const Icon(Icons.bookmark_outline, size: 18),
-                    label: Text(context.l10n.placesHubTabSaved),
-                  ),
-                ],
-                selected: {_tab},
-                onSelectionChanged: (s) => _selectTab(s.first),
-              ),
-            ),
-          ),
-          Expanded(
-            // IndexedStack, not a swipeable TabBarView: a horizontal swipe on
-            // the map must pan the map, not flip to Routes. Each tab keeps
-            // its state (scroll offset, the map camera) across switches.
-            child: IndexedStack(
-              index: _tab.index,
-              children: [
-                _PlacesExplorer(
-                  searchController: _searchCtrl,
-                  importing: _importing,
-                  onImport: () => _importNearby(confirm: false),
-                  onAddPlace: _addPlace,
-                  onOpenSaved: () => _selectTab(PlacesHubTab.saved),
-                ),
-                // Built on first visit only: IndexedStack builds every child,
-                // and the routes lists are two Firestore queries a rider who
-                // never opens the tab shouldn't pay for.
-                if (_visited.contains(PlacesHubTab.routes))
-                  const RoutesBrowser()
-                else
-                  const SizedBox.shrink(),
-                if (_visited.contains(PlacesHubTab.saved))
-                  const SavedPlacesTab()
-                else
-                  const SizedBox.shrink(),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+        ));
   }
 }
 
@@ -293,6 +305,8 @@ class _PlacesExplorer extends ConsumerWidget {
     final batchAsync = ref.watch(placesBatchProvider);
     final position = ref.watch(currentPositionProvider).valueOrNull;
     final viewMode = ref.watch(placesViewModeProvider);
+    final fullMap =
+        viewMode == PlacesViewMode.map && ref.watch(placesFullMapProvider);
     final l10n = context.l10n;
 
     String categoryLabel(PlaceCategory c) => c.localizedName(l10n);
@@ -307,97 +321,115 @@ class _PlacesExplorer extends ConsumerWidget {
       tagLabel: (t) => t.localizedName(l10n),
     );
 
+    final filterButton = IconButton(
+      tooltip: l10n.placesFiltersTooltip,
+      onPressed: () => PlacesFilterSheet.show(context),
+      icon: Badge(
+        isLabelVisible: query.activeRefinementCount > 0,
+        label: Text('${query.activeRefinementCount}'),
+        child: const Icon(Icons.tune),
+      ),
+    );
+
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd,
-            AppDimensions.paddingSm,
-            AppDimensions.paddingSm,
-            0,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: searchController,
-                  builder: (context, value, _) => TextField(
-                    controller: searchController,
-                    onChanged: notifier.setTextDebounced,
-                    onSubmitted: notifier.setText,
-                    textInputAction: TextInputAction.search,
-                    style: TextStyle(color: context.palette.textPrimary),
-                    decoration: InputDecoration(
-                      isDense: true,
-                      hintText: l10n.placesSearchHint,
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: value.text.isEmpty
-                          ? null
-                          : IconButton(
-                              tooltip: l10n.placesClearSearch,
-                              icon: const Icon(Icons.close),
-                              onPressed: () {
-                                searchController.clear();
-                                notifier.setText('');
-                              },
-                            ),
+        if (!fullMap)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd,
+              AppDimensions.paddingSm,
+              AppDimensions.paddingSm,
+              0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: searchController,
+                    builder: (context, value, _) => TextField(
+                      controller: searchController,
+                      onChanged: notifier.setTextDebounced,
+                      onSubmitted: notifier.setText,
+                      textInputAction: TextInputAction.search,
+                      style: TextStyle(color: context.palette.textPrimary),
+                      decoration: InputDecoration(
+                        isDense: true,
+                        hintText: l10n.placesSearchHint,
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: value.text.isEmpty
+                            ? null
+                            : IconButton(
+                                tooltip: l10n.placesClearSearch,
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  searchController.clear();
+                                  notifier.setText('');
+                                },
+                              ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              IconButton(
-                tooltip: l10n.placesFiltersTooltip,
-                onPressed: () => PlacesFilterSheet.show(context),
-                icon: Badge(
-                  isLabelVisible: query.activeRefinementCount > 0,
-                  label: Text('${query.activeRefinementCount}'),
-                  child: const Icon(Icons.tune),
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(
-          // Ribbon height increased per §97.2 requirements.
-          height: 52,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMd,
-              vertical: 6,
+                const SizedBox(width: 4),
+                filterButton,
+              ],
             ),
-            children: [
-              _CategoryChip(
-                key: const ValueKey('places-chip-all'),
-                label: l10n.allFilter,
-                icon: Icons.apps,
-                accent: context.palette.primary,
-                count: counts[null] ?? 0,
-                selected: query.category == null,
-                onTap: () => notifier.setCategory(null),
-              ),
-              for (final category in PlaceCategory.destinations)
-                _CategoryChip(
-                  key: ValueKey('places-chip-${category.name}'),
-                  label: category.localizedName(l10n),
-                  icon: category.markerIcon,
-                  accent: category.accent(context),
-                  count: counts[category] ?? 0,
-                  selected: query.category == category,
-                  onTap: () => notifier.setCategory(category),
-                ),
-            ],
           ),
-        ),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0, AppDimensions.paddingMd, 6),
-          child: HighwayRadarBanner(),
-        ),
+        Row(children: [
+          if (fullMap)
+            IconButton(
+              key: const Key('places_exit_full_map'),
+              tooltip: l10n.placesExitFullMap,
+              onPressed: () =>
+                  ref.read(placesFullMapProvider.notifier).state = false,
+              icon: const Icon(Icons.fullscreen_exit),
+            ),
+          Expanded(
+              child: SizedBox(
+            // Ribbon height increased per §97.2 requirements.
+            height: 52,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppDimensions.paddingMd,
+                vertical: 6,
+              ),
+              children: [
+                _CategoryChip(
+                  key: const ValueKey('places-chip-all'),
+                  label: l10n.allFilter,
+                  icon: Icons.apps,
+                  accent: context.palette.primary,
+                  count: counts[null] ?? 0,
+                  selected: query.category == null,
+                  onTap: () => notifier.setCategory(null),
+                ),
+                for (final category in PlaceCategory.destinations)
+                  _CategoryChip(
+                    key: ValueKey('places-chip-${category.name}'),
+                    label: category.localizedName(l10n),
+                    icon: category.markerIcon,
+                    accent: category.accent(context),
+                    count: counts[category] ?? 0,
+                    selected: query.category == category,
+                    onTap: () => notifier.setCategory(category),
+                  ),
+              ],
+            ),
+          )),
+          if (fullMap) filterButton,
+        ]),
+        if (!fullMap)
+          const Padding(
+            padding: EdgeInsets.fromLTRB(
+                AppDimensions.paddingMd, 0, AppDimensions.paddingMd, 6),
+            child: HighwayRadarBanner(),
+          ),
         Expanded(
           child: batchAsync.when(
-            loading: () =>
-                Center(child: CircularProgressIndicator(color: context.palette.primary)),
+            loading: () => Center(
+                child:
+                    CircularProgressIndicator(color: context.palette.primary)),
             error: (e, _) => PlacesErrorView(
               error: e,
               onRetry: () => _retry(ref),
@@ -433,13 +465,15 @@ class _PlacesExplorer extends ConsumerWidget {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
                           : const Icon(Icons.travel_explore_outlined, size: 18),
-                      label: Text(importing ? l10n.placesScanning : l10n.placesScanOsm),
+                      label: Text(
+                          importing ? l10n.placesScanning : l10n.placesScanOsm),
                     ),
                     if (nextRadius != null)
                       OutlinedButton.icon(
                         onPressed: () => notifier.setRadius(nextRadius),
                         icon: const Icon(Icons.zoom_out_map, size: 18),
-                        label: Text(l10n.placesWidenRadius(formatRadiusKm(nextRadius))),
+                        label: Text(
+                            l10n.placesWidenRadius(formatRadiusKm(nextRadius))),
                       ),
                     TextButton.icon(
                       onPressed: onAddPlace,
@@ -469,7 +503,8 @@ class _PlacesExplorer extends ConsumerWidget {
                       TextButton.icon(
                         onPressed: () => notifier.setRadius(nextRadius),
                         icon: const Icon(Icons.zoom_out_map, size: 18),
-                        label: Text(l10n.placesWidenRadius(formatRadiusKm(nextRadius))),
+                        label: Text(
+                            l10n.placesWidenRadius(formatRadiusKm(nextRadius))),
                       ),
                   ],
                 );
@@ -477,7 +512,9 @@ class _PlacesExplorer extends ConsumerWidget {
                 content = PlacesMapView(
                   hits: hits,
                   radarPoints: radar.all,
-                  origin: position == null ? null : LatLng(position.latitude, position.longitude),
+                  origin: position == null
+                      ? null
+                      : LatLng(position.latitude, position.longitude),
                   radiusKm: query.radiusKm,
                   onAddPlace: onAddPlace,
                 );
@@ -485,7 +522,8 @@ class _PlacesExplorer extends ConsumerWidget {
                 content = RefreshIndicator(
                   onRefresh: () {
                     ref.invalidate(currentPositionProvider);
-                    return ref.refresh(nearbyPlacesProvider(query.radiusKm).future);
+                    return ref
+                        .refresh(nearbyPlacesProvider(query.radiusKm).future);
                   },
                   color: context.palette.primary,
                   child: ListView.separated(
@@ -508,47 +546,62 @@ class _PlacesExplorer extends ConsumerWidget {
 
               return Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppDimensions.paddingMd,
-                      0,
-                      AppDimensions.paddingMd,
-                      6,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            '${l10n.placesResultCount(hits.length)} · '
-                            '${l10n.radarWithin(formatRadiusKm(query.radiusKm))}',
-                            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
-                          ),
-                        ),
-                        SegmentedButton<PlacesViewMode>(
-                          showSelectedIcon: false,
-                          style: const ButtonStyle(
-                            visualDensity: VisualDensity.compact,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          ),
-                          segments: [
-                            ButtonSegment(
-                              value: PlacesViewMode.map,
-                              icon: const Icon(Icons.map_outlined, size: 16),
-                              label: Text(l10n.placesMapView),
+                  if (!fullMap)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppDimensions.paddingMd,
+                        0,
+                        AppDimensions.paddingMd,
+                        6,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${l10n.placesResultCount(hits.length)} · '
+                              '${l10n.radarWithin(formatRadiusKm(query.radiusKm))}',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: context.palette.textSecondary),
                             ),
-                            ButtonSegment(
-                              value: PlacesViewMode.list,
-                              icon: const Icon(Icons.view_list_outlined, size: 16),
-                              label: Text(l10n.placesListView),
+                          ),
+                          if (viewMode == PlacesViewMode.map)
+                            IconButton(
+                              key: const Key('places_full_map'),
+                              tooltip: l10n.placesFullMap,
+                              visualDensity: VisualDensity.compact,
+                              onPressed: () => ref
+                                  .read(placesFullMapProvider.notifier)
+                                  .state = true,
+                              icon: const Icon(Icons.fullscreen),
                             ),
-                          ],
-                          selected: {viewMode},
-                          onSelectionChanged: (s) =>
-                              ref.read(placesViewModeProvider.notifier).state = s.first,
-                        ),
-                      ],
+                          SegmentedButton<PlacesViewMode>(
+                            showSelectedIcon: false,
+                            style: const ButtonStyle(
+                              visualDensity: VisualDensity.compact,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                            segments: [
+                              ButtonSegment(
+                                value: PlacesViewMode.map,
+                                icon: const Icon(Icons.map_outlined, size: 16),
+                                label: Text(l10n.placesMapView),
+                              ),
+                              ButtonSegment(
+                                value: PlacesViewMode.list,
+                                icon: const Icon(Icons.view_list_outlined,
+                                    size: 16),
+                                label: Text(l10n.placesListView),
+                              ),
+                            ],
+                            selected: {viewMode},
+                            onSelectionChanged: (s) => ref
+                                .read(placesViewModeProvider.notifier)
+                                .state = s.first,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                   Expanded(child: content),
                 ],
               );
@@ -592,29 +645,39 @@ class _CategoryChip extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: selected ? accent.withValues(alpha: 0.16) : context.palette.surface,
+              color: selected
+                  ? accent.withValues(alpha: 0.16)
+                  : context.palette.surface,
               borderRadius: BorderRadius.circular(context.shape.radiusFull),
-              border: Border.all(color: selected ? accent : context.palette.border),
+              border:
+                  Border.all(color: selected ? accent : context.palette.border),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(icon, size: 15, color: selected ? accent : context.palette.textSecondary),
+                Icon(icon,
+                    size: 15,
+                    color: selected ? accent : context.palette.textSecondary),
                 const SizedBox(width: 6),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 13,
-                    color: selected ? context.palette.textPrimary : context.palette.textSecondary,
+                    color: selected
+                        ? context.palette.textPrimary
+                        : context.palette.textSecondary,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                   decoration: BoxDecoration(
-                    color: (selected ? accent : context.palette.textTertiary).withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                    color: (selected ? accent : context.palette.textTertiary)
+                        .withValues(alpha: 0.18),
+                    borderRadius:
+                        BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: Text(
                     '$count',

@@ -5049,6 +5049,18 @@ abstract class AppLocalizations {
   /// **'Map'**
   String get placesMapView;
 
+  /// Places map: hides the search and header so the map fills the screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-screen map'**
+  String get placesFullMap;
+
+  /// Places map: brings the search and header back.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get placesExitFullMap;
+
   /// Places hub redesign (Places | Routes | Saved).
   ///
   /// In en, this message translates to:
@@ -11333,6 +11345,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.'**
   String get crashResearchDesc;
+
+  /// Menu item and sheet title for editing a shared ride's photos and caption.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit ride'**
+  String get editRide;
+
+  /// Menu item opening the full ride view from a shared ride.
+  ///
+  /// In en, this message translates to:
+  /// **'See more'**
+  String get seeMore;
+
+  /// Menu item / button for deleting a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete ride'**
+  String get deleteRide;
+
+  /// Body of the confirm dialog for deleting a shared ride post.
+  ///
+  /// In en, this message translates to:
+  /// **'This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.'**
+  String get deleteSharedPostBody;
+
+  /// Title of the confirm dialog on the ride history screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this ride?'**
+  String get deleteRideConfirmTitle;
+
+  /// Body of the confirm dialog on the ride history screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can\'t be undone.'**
+  String get deleteRideConfirmBody;
+
+  /// Snackbar when saving an edited shared ride fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save changes: {e}'**
+  String couldNotSaveChanges(Object e);
 }
 
 class _AppLocalizationsDelegate

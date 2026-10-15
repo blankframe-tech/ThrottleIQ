@@ -34,7 +34,8 @@ class PlacesStatusPanel extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 52, color: iconColor ?? context.palette.textTertiary),
+            Icon(icon,
+                size: 52, color: iconColor ?? context.palette.textTertiary),
             const SizedBox(height: 14),
             Text(
               title,
@@ -50,13 +51,15 @@ class PlacesStatusPanel extends StatelessWidget {
               Text(
                 body!,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 14, color: context.palette.textSecondary),
               ),
             ],
             if (actions.isNotEmpty) ...[
               const SizedBox(height: 18),
               for (final action in actions)
-                Padding(padding: const EdgeInsets.only(bottom: 8), child: action),
+                Padding(
+                    padding: const EdgeInsets.only(bottom: 8), child: action),
             ],
           ],
         ),
@@ -167,7 +170,8 @@ class PlacesErrorView extends StatelessWidget {
           onPressed: () => BugReportSheet.show(context),
           icon: const Icon(Icons.bug_report_outlined, size: 16),
           label: Text(l10n.reportProblem),
-          style: TextButton.styleFrom(foregroundColor: context.palette.textTertiary),
+          style: TextButton.styleFrom(
+              foregroundColor: context.palette.textTertiary),
         ),
       ],
     );

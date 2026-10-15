@@ -20,7 +20,9 @@ import '../../data/repositories/route_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import '../providers/ride_feed_provider.dart';
+import '../widgets/edit_shared_ride_sheet.dart';
 import '../widgets/ride_media_collage.dart';
+import '../widgets/rider_handle.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/i18n/numeric_locale.dart';
@@ -216,6 +218,62 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
     }
   }
 
+  Future<void> _onMenu(String val, SharedRideEntity ride) async {
+    switch (val) {
+      case 'report':
+        ReportBottomSheet.show(
+          context,
+          reportedId: ride.userId,
+          contentType: 'ride',
+          contentId: ride.id,
+        );
+      case 'more':
+        context.push('/ride/summary/${ride.id}');
+      case 'edit':
+        if (await EditSharedRideSheet.show(context, ride) == true) _refreshFeeds();
+      case 'delete':
+        await _deletePost(ride);
+    }
+  }
+
+  void _refreshFeeds() {
+    ref.invalidate(sharedRideProvider(widget.rideId));
+    ref.invalidate(myRidesProvider);
+    ref.read(rideFeedNotifierProvider.notifier).refresh();
+  }
+
+  /// Removes only the shared post; the rider's own ride data is untouched.
+  Future<void> _deletePost(SharedRideEntity ride) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(ctx.l10n.deleteSharedRide),
+        content: Text(ctx.l10n.deleteSharedPostBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(ctx.l10n.cancelAction)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await RideShareRepository().deleteSharedRide(ride.id);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.l10n.couldNotDelete(e))));
+      return;
+    }
+    _refreshFeeds();
+    if (mounted) context.pop();
+  }
+
   void _recenterMap(List<LatLng> polyline) {
     if (polyline.isEmpty) return;
     _mapController.fitCamera(
@@ -264,6 +322,7 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
       _localDownvotes = ride.downvotes;
     }
 
+    final isMine = ride.userId == ref.watch(currentUserProvider)?.uid;
     final polyline = ride.polyline;
     final netScore = _localUpvotes - _localDownvotes;
 
@@ -284,19 +343,16 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
         actions: [
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: context.palette.textPrimary),
-            onSelected: (val) {
-              if (val == 'report') {
-                ReportBottomSheet.show(
-                  context,
-                  reportedId: ride.userId,
-                  contentType: 'ride',
-                  contentId: ride.id,
-                );
-              }
-            },
-            itemBuilder: (_) => [
-              PopupMenuItem(value: 'report', child: Text(context.l10n.reportRide)),
-            ],
+            onSelected: (val) => _onMenu(val, ride),
+            itemBuilder: (_) => isMine
+                ? [
+                    PopupMenuItem(value: 'edit', child: Text(context.l10n.editRide)),
+                    PopupMenuItem(value: 'delete', child: Text(context.l10n.deleteRide)),
+                    PopupMenuItem(value: 'more', child: Text(context.l10n.seeMore)),
+                  ]
+                : [
+                    PopupMenuItem(value: 'report', child: Text(context.l10n.reportRide)),
+                  ],
           ),
         ],
       ),
@@ -548,8 +604,9 @@ class _SharedRideDetailScreenState extends ConsumerState<SharedRideDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    ride.userName,
+                  RiderHandle(
+                    uid: ride.userId,
+                    fallback: ride.userName,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

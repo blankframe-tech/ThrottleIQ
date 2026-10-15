@@ -155,6 +155,23 @@ class RideShareRepository {
     }
   }
 
+  /// Owner edit of a shared ride's caption and photos — nothing else on the
+  /// post changes. [photoUrls] is re-capped here (same invariant as
+  /// [shareRide]) and mirrored into the legacy `photoUrl` field.
+  Future<void> updateSharedRideContent(
+    String rideId, {
+    required String? caption,
+    required List<String> photoUrls,
+  }) {
+    final urls = normalizeRidePhotoUrls(photoUrls);
+    final trimmed = caption?.trim() ?? '';
+    return _firestore.collection('rides').doc(rideId).update({
+      'caption': trimmed.isEmpty ? null : trimmed,
+      'photoUrls': urls,
+      'photoUrl': urls.isEmpty ? null : urls.first,
+    });
+  }
+
   /// Gets a shared ride by ID.
   Future<SharedRideEntity?> getSharedRide(String rideId) async {
     final doc = await _firestore.collection('rides').doc(rideId).get();

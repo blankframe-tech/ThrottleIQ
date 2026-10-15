@@ -41,20 +41,42 @@ List<String> _ids(List<PlaceHit> hits) => [for (final h in hits) h.place.id];
 
 void main() {
   final places = [
-    _place('shell', name: 'Shell Mirpur', kmNorth: 3, address: 'Mirpur 10', tags: {PlaceTag.open24h, PlaceTag.octane95}),
-    _place('meghna', name: 'Meghna Fuel', kmNorth: 1, verified: true, tags: {PlaceTag.open24h}),
-    _place('moto', name: 'Central Moto Works', category: PlaceCategory.garage, kmNorth: 2, ratingSum: 24, ratingCount: 5),
-    _place('cafe', name: 'Biker Chai', category: PlaceCategory.recreation, kmNorth: 20, googleRating: 4.9),
-    _place('cam', name: 'Speed camera', category: PlaceCategory.aiCamera, kmNorth: 0.5),
-    _place('cop', name: 'Checkpost', category: PlaceCategory.police, kmNorth: 4),
+    _place('shell',
+        name: 'Shell Mirpur',
+        kmNorth: 3,
+        address: 'Mirpur 10',
+        tags: {PlaceTag.open24h, PlaceTag.octane95}),
+    _place('meghna',
+        name: 'Meghna Fuel',
+        kmNorth: 1,
+        verified: true,
+        tags: {PlaceTag.open24h}),
+    _place('moto',
+        name: 'Central Moto Works',
+        category: PlaceCategory.garage,
+        kmNorth: 2,
+        ratingSum: 24,
+        ratingCount: 5),
+    _place('cafe',
+        name: 'Biker Chai',
+        category: PlaceCategory.recreation,
+        kmNorth: 20,
+        googleRating: 4.9),
+    _place('cam',
+        name: 'Speed camera', category: PlaceCategory.aiCamera, kmNorth: 0.5),
+    _place('cop',
+        name: 'Checkpost', category: PlaceCategory.police, kmNorth: 4),
   ];
 
   List<PlaceHit> run(PlacesQuery q) =>
       applyPlacesQuery(places, q, originLat: _lat, originLng: _lng);
 
   group('applyPlacesQuery', () {
-    test('defaults: every destination within 25 km, nearest first, no safety points', () {
-      expect(_ids(run(const PlacesQuery())), ['meghna', 'moto', 'shell', 'cafe']);
+    test(
+        'defaults: every destination within 25 km, nearest first, no safety points',
+        () {
+      expect(
+          _ids(run(const PlacesQuery())), ['meghna', 'moto', 'shell', 'cafe']);
     });
 
     test('distances are computed once, in km', () {
@@ -63,20 +85,26 @@ void main() {
     });
 
     test('radius cuts off far places', () {
-      expect(_ids(run(const PlacesQuery(radiusKm: 15))), ['meghna', 'moto', 'shell']);
-      expect(_ids(run(const PlacesQuery(radiusKm: 5))), ['meghna', 'moto', 'shell']);
+      expect(_ids(run(const PlacesQuery(radiusKm: 15))),
+          ['meghna', 'moto', 'shell']);
+      expect(_ids(run(const PlacesQuery(radiusKm: 5))),
+          ['meghna', 'moto', 'shell']);
     });
 
     test('category narrows to one kind', () {
-      expect(_ids(run(const PlacesQuery(category: PlaceCategory.fuel))), ['meghna', 'shell']);
+      expect(_ids(run(const PlacesQuery(category: PlaceCategory.fuel))),
+          ['meghna', 'shell']);
     });
 
-    test('search matches name, address, category and tags; every token must match', () {
+    test(
+        'search matches name, address, category and tags; every token must match',
+        () {
       expect(_ids(run(const PlacesQuery(text: 'shell'))), ['shell']);
       expect(_ids(run(const PlacesQuery(text: 'mirpur'))), ['shell']);
       expect(_ids(run(const PlacesQuery(text: 'GARAGE'))), ['moto']);
       expect(_ids(run(const PlacesQuery(text: 'octane95'))), ['shell']);
-      expect(_ids(run(const PlacesQuery(text: 'fuel open24h'))), ['meghna', 'shell']);
+      expect(_ids(run(const PlacesQuery(text: 'fuel open24h'))),
+          ['meghna', 'shell']);
       expect(_ids(run(const PlacesQuery(text: 'shell garage'))), isEmpty);
     });
 
@@ -97,12 +125,19 @@ void main() {
 
     test('verified-only and tags (all selected tags required)', () {
       expect(_ids(run(const PlacesQuery(verifiedOnly: true))), ['meghna']);
-      expect(_ids(run(const PlacesQuery(tags: {PlaceTag.open24h}))), ['meghna', 'shell']);
-      expect(_ids(run(const PlacesQuery(tags: {PlaceTag.open24h, PlaceTag.octane95}))), ['shell']);
+      expect(_ids(run(const PlacesQuery(tags: {PlaceTag.open24h}))),
+          ['meghna', 'shell']);
+      expect(
+          _ids(run(
+              const PlacesQuery(tags: {PlaceTag.open24h, PlaceTag.octane95}))),
+          ['shell']);
     });
 
-    test('rating sort prefers riders\' average, falls back to Google, ties by distance', () {
-      expect(_ids(run(const PlacesQuery(sort: PlacesSort.rating))), ['cafe', 'moto', 'meghna', 'shell']);
+    test(
+        'rating sort prefers riders\' average, falls back to Google, ties by distance',
+        () {
+      expect(_ids(run(const PlacesQuery(sort: PlacesSort.rating))),
+          ['cafe', 'moto', 'meghna', 'shell']);
     });
 
     test('without a fix nothing is cut by radius and order is by name', () {
@@ -144,7 +179,10 @@ void main() {
 
   group('PlacesQuery', () {
     test('activeRefinementCount counts only sheet-level refinements', () {
-      expect(const PlacesQuery(text: 'x', category: PlaceCategory.fuel).activeRefinementCount, 0);
+      expect(
+          const PlacesQuery(text: 'x', category: PlaceCategory.fuel)
+              .activeRefinementCount,
+          0);
       expect(
         const PlacesQuery(
           verifiedOnly: true,

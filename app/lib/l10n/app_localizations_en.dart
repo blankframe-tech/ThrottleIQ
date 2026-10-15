@@ -2817,6 +2817,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placesMapView => 'Map';
 
   @override
+  String get placesFullMap => 'Full-screen map';
+
+  @override
+  String get placesExitFullMap => 'Exit full screen';
+
+  @override
   String get placesListView => 'List';
 
   @override
@@ -6625,4 +6631,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get crashResearchDesc =>
       'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.';
+
+  @override
+  String get editRide => 'Edit ride';
+
+  @override
+  String get seeMore => 'See more';
+
+  @override
+  String get deleteRide => 'Delete ride';
+
+  @override
+  String get deleteSharedPostBody =>
+      'This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.';
+
+  @override
+  String get deleteRideConfirmTitle => 'Delete this ride?';
+
+  @override
+  String get deleteRideConfirmBody =>
+      'This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can\'t be undone.';
+
+  @override
+  String couldNotSaveChanges(Object e) {
+    return 'Could not save changes: $e';
+  }
 }

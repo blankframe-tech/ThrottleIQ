@@ -8,6 +8,7 @@ import '../../../../core/services/app_modules.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/cloud/export_service.dart';
+import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/downsample.dart';
@@ -19,6 +20,10 @@ import '../../../../shared/widgets/full_screen_route_map_screen.dart';
 import '../../../../shared/widgets/metric_card.dart';
 import '../../../../shared/widgets/riding_score_badge.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/data/repositories/ride_share_repository.dart';
+import '../../../social/presentation/providers/ride_feed_provider.dart';
+import '../../../stats/presentation/providers/rider_stats_provider.dart';
 import '../../../stats/presentation/widgets/ride_line_chart.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/calculators/elevation_profile.dart';
@@ -559,12 +564,66 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   alignment: Alignment.centerLeft,
                   child: ReportCrashButton(ride: ride),
                 ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _deleteRide(ride),
+                    icon: Icon(Icons.delete_outline,
+                        size: 18, color: context.palette.danger),
+                    label: Text(l10n.deleteRide,
+                        style: TextStyle(color: context.palette.danger)),
+                  ),
+                ),
               ],
             ),
           );
         },
       ),
     );
+  }
+
+  /// Deletes the ride everywhere: local rows + a tombstone so sync removes the
+  /// cloud copy and never pulls it back (§90.C10), plus its shared post.
+  Future<void> _deleteRide(RideEntity ride) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(l10n.deleteRideConfirmTitle),
+        content: Text(l10n.deleteRideConfirmBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancelAction)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await RideDao().deleteWithTombstone(ride.id, userId: ride.userId);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.couldNotDelete(e))));
+      return;
+    }
+    // Best effort: a ride that was never shared (or an offline device) just
+    // leaves the post to be removed from My Shared Rides later.
+    try {
+      await RideShareRepository().deleteSharedRide(ride.id);
+    } catch (_) {}
+    ref.invalidate(rideHistoryProvider(ride.bikeId));
+    ref.invalidate(riderStatsProvider);
+    ref.invalidate(garageProvider);
+    ref.invalidate(myRidesProvider);
+    ref.read(rideFeedNotifierProvider.notifier).refresh();
+    if (mounted) _dismiss(context);
   }
 
   // Reached two ways: pushed on top of a rides list (bike detail / all

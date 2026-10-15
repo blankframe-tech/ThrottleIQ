@@ -2827,6 +2827,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get placesMapView => 'ম্যাপ';
 
   @override
+  String get placesFullMap => 'ফুল-স্ক্রিন ম্যাপ';
+
+  @override
+  String get placesExitFullMap => 'ফুল-স্ক্রিন থেকে বের হন';
+
+  @override
   String get placesListView => 'তালিকা';
 
   @override
@@ -6590,4 +6596,29 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get crashResearchDesc =>
       'পতন নিয়ে আপনার উত্তর আর তার আশপাশের সেন্সর রিডিং শেয়ার করে — আপনার নাম বা সঠিক অবস্থান ছাড়া (শুধু প্রায় 1 কিমি এলাকা)। শুরুতে বন্ধ থাকে।';
+
+  @override
+  String get editRide => 'রাইড সম্পাদনা';
+
+  @override
+  String get seeMore => 'আরও দেখুন';
+
+  @override
+  String get deleteRide => 'রাইড মুছুন';
+
+  @override
+  String get deleteSharedPostBody =>
+      'এতে শুধু শেয়ার করা পোস্টটি মুছবে। আপনার রাইডের তথ্য ইতিহাসে থাকবে।\n\nরাইডটির সবকিছু মুছতে যান রাইড → ইতিহাস → সেই রাইড → মুছুন।';
+
+  @override
+  String get deleteRideConfirmTitle => 'এই রাইড মুছবেন?';
+
+  @override
+  String get deleteRideConfirmBody =>
+      'এতে রাইড, তার রুট ও পরিসংখ্যান আপনার ইতিহাস থেকে স্থায়ীভাবে মুছে যাবে। শেয়ার করা পোস্ট থাকলে সেটিও সরে যাবে। এটি ফেরানো যাবে না।';
+
+  @override
+  String couldNotSaveChanges(Object e) {
+    return 'পরিবর্তন সংরক্ষণ করা যায়নি: $e';
+  }
 }

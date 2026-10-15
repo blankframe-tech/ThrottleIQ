@@ -66,7 +66,8 @@ class ImageCompressionUtils {
 
       // Create a temporary file for the compressed image
       final tempDir = Directory.systemTemp;
-      final fileName = 'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final fileName =
+          'compressed_${DateTime.now().millisecondsSinceEpoch}.jpg';
       final compressedFile = File('${tempDir.path}/$fileName');
 
       await compressedFile.writeAsBytes(compressed);

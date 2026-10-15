@@ -32,8 +32,10 @@ void main() {
     test('needs an average of at least 4.5 from at least 5 riders', () {
       expect(_place(ratingSum: 22.5, ratingCount: 5).isRiderApproved, isTrue);
       expect(_place(ratingSum: 24, ratingCount: 5).isRiderApproved, isTrue);
-      expect(_place(ratingSum: 22, ratingCount: 5).isRiderApproved, isFalse, reason: '4.4 average');
-      expect(_place(ratingSum: 20, ratingCount: 4).isRiderApproved, isFalse, reason: 'only 4 riders');
+      expect(_place(ratingSum: 22, ratingCount: 5).isRiderApproved, isFalse,
+          reason: '4.4 average');
+      expect(_place(ratingSum: 20, ratingCount: 4).isRiderApproved, isFalse,
+          reason: 'only 4 riders');
     });
 
     test('Google alone never earns it', () {
@@ -41,11 +43,15 @@ void main() {
     });
 
     test('safety points are never approved', () {
-      expect(_place(category: PlaceCategory.police, ratingSum: 25, ratingCount: 5).isRiderApproved, isFalse);
+      expect(
+          _place(category: PlaceCategory.police, ratingSum: 25, ratingCount: 5)
+              .isRiderApproved,
+          isFalse);
     });
 
     test('sortRating prefers riders, then Google', () {
-      expect(_place(ratingSum: 9, ratingCount: 2, googleRating: 4.9).sortRating, 4.5);
+      expect(_place(ratingSum: 9, ratingCount: 2, googleRating: 4.9).sortRating,
+          4.5);
       expect(_place(googleRating: 4.2).sortRating, 4.2);
       expect(_place().sortRating, 0);
     });
@@ -55,22 +61,31 @@ void main() {
     test('cameras and checkposts are safety points, not destinations', () {
       expect(PlaceCategory.aiCamera.isSafetyPoint, isTrue);
       expect(PlaceCategory.police.isSafetyPoint, isTrue);
-      expect(PlaceCategory.destinations,
-          [PlaceCategory.fuel, PlaceCategory.garage, PlaceCategory.parts, PlaceCategory.recreation]);
+      expect(PlaceCategory.destinations, [
+        PlaceCategory.fuel,
+        PlaceCategory.garage,
+        PlaceCategory.parts,
+        PlaceCategory.recreation
+      ]);
     });
   });
 
   group('PlaceTag', () {
     test('parseAll keeps known names once and drops the rest', () {
-      expect(PlaceTag.parseAll(['open24h', 'octane95', 'open24h', 'jetpack', 7, null]),
+      expect(
+          PlaceTag.parseAll(
+              ['open24h', 'octane95', 'open24h', 'jetpack', 7, null]),
           {PlaceTag.open24h, PlaceTag.octane95});
       expect(PlaceTag.parseAll(null), isEmpty);
     });
 
     test('forCategory only offers tags that make sense there', () {
-      expect(PlaceTag.forCategory(PlaceCategory.fuel), contains(PlaceTag.octane95));
-      expect(PlaceTag.forCategory(PlaceCategory.garage), isNot(contains(PlaceTag.octane95)));
-      expect(PlaceTag.forCategory(PlaceCategory.garage), contains(PlaceTag.efiDiagnostics));
+      expect(PlaceTag.forCategory(PlaceCategory.fuel),
+          contains(PlaceTag.octane95));
+      expect(PlaceTag.forCategory(PlaceCategory.garage),
+          isNot(contains(PlaceTag.octane95)));
+      expect(PlaceTag.forCategory(PlaceCategory.garage),
+          contains(PlaceTag.efiDiagnostics));
       expect(PlaceTag.forCategory(PlaceCategory.aiCamera), isEmpty);
       expect(PlaceTag.forCategory(PlaceCategory.police), isEmpty);
     });
@@ -82,7 +97,8 @@ void main() {
 
   group('PlaceModel tags', () {
     test('round-trip through the entity in a stable order', () {
-      final entity = _place(tags: {PlaceTag.paddockStand, PlaceTag.efiDiagnostics});
+      final entity =
+          _place(tags: {PlaceTag.paddockStand, PlaceTag.efiDiagnostics});
       final model = PlaceModel.fromEntity(entity);
       expect(model.tags, ['efiDiagnostics', 'paddockStand']);
       expect(model.toEntity().tags, entity.tags);

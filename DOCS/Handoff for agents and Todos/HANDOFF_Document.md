@@ -2,6 +2,11 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-15 (places): full-screen map
+
+- Places map has a fullscreen button (`places_full_map`, in the result row). `placesFullMapProvider` hides the AppBar, hub tabs, search, radar banner and result row; the category ribbon, filter button and carousel stay. Exit button `places_exit_full_map`; Android back exits full screen first.
+- Widget test in `places_hub_test.dart`. Not checked on a device; the E2E (`flutter drive`) needs a booted simulator. Not released; no version bump yet.
+
 ## 2026-10-15 (release): `1.0.0-beta.4.6.0+27` shipped as tag `beta-v4.6.0` — `main` pushed
 
 - `scripts/deploy.sh --skip-ios` (gate green, 2 min of tests), then `flutter run --release` to the founder's iPhone separately (the script's iOS step stays attached to the app). GitHub release has the four APKs + AAB; local APKs deleted, local AAB kept at `app/build/app/outputs/bundle/release/app-release.aab` (93 MB). APKs stay on the release because the install page links `app-release.apk`.
