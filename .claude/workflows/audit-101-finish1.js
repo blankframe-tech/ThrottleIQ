@@ -10,7 +10,7 @@ export const meta = {
   ],
 }
 
-const ROOT = '/Users/blackbird/Everything/dev/2_Ongoing/ThrottleIQ'
+const ROOT = '/Users/blackbird/Everything/dev/products/ThrottleIQ'
 const STATE = '/private/tmp/claude-501/-Users-blackbird-Everything-dev-2-Ongoing-ThrottleIQ/020fd0a6-acdc-491c-afe8-4a02b417b177/scratchpad/audit101_state.json'
 const BR = 'audit-101-integration'
 

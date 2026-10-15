@@ -10,9 +10,9 @@ export const meta = {
   ],
 }
 
-const ROOT = '/Users/blackbird/Everything/dev/2_Ongoing/ThrottleIQ'
+const ROOT = '/Users/blackbird/Everything/dev/products/ThrottleIQ'
 const DOCS = `${ROOT}/DOCS/Handoff for agents and Todos`
-const INT = '/Users/blackbird/Everything/dev/2_Ongoing/ThrottleIQ-audit101'
+const INT = '/Users/blackbird/Everything/dev/products/ThrottleIQ-audit101'
 const INT_BRANCH = 'audit-101-integration'
 
 const GROUPS = [
