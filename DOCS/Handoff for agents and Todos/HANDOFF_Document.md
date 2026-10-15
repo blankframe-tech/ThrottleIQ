@@ -2,6 +2,20 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
+
+- **PRD (F6 closed):** `node scripts/ste_sentence_length.js DOCS/PRD.md` finds 0 sentences over the STE limits (longest: 20 words). 7 passive sentences and 4 non-approved words were fixed by hand; the record is PRD §13. Not done: a full check against the STE dictionary. Content not re-checked: AUT-7 and open item 3 still say nothing calls the purge, but F3 wired it in.
+- **Rules:** the compile warning ("Invalid type. Received one of [null]. Expected one of [map].", now line ~523, the `publicStatsValid` call) is gone: the call passes `{}` for a new profile, as its siblings do. Same behaviour. `scripts/test/rules/rules_compile.test.js` loads the rules into the emulator and fails on any compiler issue. **Rules not deployed.**
+- **Backfill (written, NOT run):** `scripts/backfill_users_visibility.js` sets `visibility: 'public'` on `users` docs with no (or null) `visibility`. Owner, to run it once:
+  ```bash
+  cd scripts && npm install
+  export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+  node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+  node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # type BACKFILL VISIBILITY
+  node backfill_users_visibility.js --project=throttleiqfb                         # should report 0
+  ```
+  `--project` is required and must match the key. Writes use a BulkWriter with a per-doc read-time precondition, so a rider who changes their setting mid-run is skipped, not overwritten. Tests: `npm test` and `npm run test:rules` (emulator). Details: `scripts/README.md`.
+
 ## 2026-10-15 (live share): Firestore writes skipped while the rider barely moves — `main` pushed at `ce82025`
 
 - A 10 s live-share tick now writes `liveSessions/{token}` only on a new token, a status change, 100 m of movement or 15 s since the last write (`shouldWriteLiveSession` in `live_session_coordinator.dart`). A stopped rider writes every 20 s, inside the viewer's 30 s "updates delayed" warning. Saving is 0-50% by speed: the Spark ceiling moves from about 55 to at most about 111 live-share hours a day. Not in a release build yet.
