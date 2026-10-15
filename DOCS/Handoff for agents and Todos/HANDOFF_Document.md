@@ -2,6 +2,14 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-15 (live share): Firestore writes skipped while the rider barely moves — `main` pushed at `ce82025`
+
+- A 10 s live-share tick now writes `liveSessions/{token}` only on a new token, a status change, 100 m of movement or 15 s since the last write (`shouldWriteLiveSession` in `live_session_coordinator.dart`). A stopped rider writes every 20 s, inside the viewer's 30 s "updates delayed" warning. Saving is 0-50% by speed: the Spark ceiling moves from about 55 to at most about 111 live-share hours a day. Not in a release build yet.
+- RTDB rules deny everything on purpose (B9, `8872fef`). The relay is off: release builds have no `RTDB_URL` and the project has no RTDB instance. Rules unchanged.
+- **Owner, to do:**
+  1. **Decide the quota path.** (a) Revive the RTDB relay for live shares only: token-scoped rules (the old ones are in `8f8f774`), create the RTDB instance, add `RTDB_URL` to release builds in `scripts/deploy.sh`. RTDB doesn't count writes, so this is the real fix. (b) Move to Blaze (see "The Blaze decision has a dated consequence" below). (c) Keep this fix and delete the dormant `core/realtime` code (about 830 lines).
+  2. **Device test.** Ride in traffic with live share on and confirm the viewer never shows "updates delayed".
+
 ## 2026-10-15 (load test): Spark quota simulation — fails at about 18 daily riders
 
 - Added `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota` in `scripts/`). It replays the app's Firestore shapes on the emulator and counts reads and writes. Report: `DOCS/load_test/load-test-2026-10-15.md`. Issues: `issues_open.md` §104. Not committed.
