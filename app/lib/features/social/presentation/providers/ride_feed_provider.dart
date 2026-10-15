@@ -197,7 +197,8 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
   ///    limit — the §88.1 live-graph path, so a rider who followed after the
   ///    share still sees it. Authors whose restricted source is exhausted
   ///    aren't re-queried on later pages.
-  Future<List<SharedRideEntity>> _fetchPage({bool refreshMutuals = false}) async {
+  Future<List<SharedRideEntity>> _fetchPage(
+      {bool refreshMutuals = false}) async {
     final uid = _ref.read(currentUserProvider)?.uid;
     // The "Following" chip needs rides BY the people the rider follows, which
     // the public-discovery query can't be relied on to contain — that was the
@@ -226,7 +227,8 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     final keys = <String>[];
     final limits = <int>[];
     final futures = <Future<List<SharedRideEntity>>>[];
-    void add(String key, int limit, Future<List<SharedRideEntity>> Function() run) {
+    void add(
+        String key, int limit, Future<List<SharedRideEntity>> Function() run) {
       if (_exhausted.contains(key)) return;
       keys.add(key);
       limits.add(limit);
@@ -237,13 +239,22 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     // heavily, and hydrating inside each query would fetch the same ride's
     // vote several times. Hydrate once, after the merge (issues §83.20).
     final before = _cursor;
-    add('public', kFeedPageSize, () => _repo.getPublicRides(
-        limit: kFeedPageSize, before: before, hydrateVotes: false));
+    add(
+        'public',
+        kFeedPageSize,
+        () => _repo.getPublicRides(
+            limit: kFeedPageSize, before: before, hydrateVotes: false));
     if (uid != null) {
-      add('shared', kFeedPageSize, () => _repo.getSharedToMe(uid,
-          limit: kFeedPageSize, before: before, hydrateVotes: false));
-      add('mine', kFeedPageSize, () => _repo.getMyRides(uid,
-          limit: kFeedPageSize, before: before, hydrateVotes: false));
+      add(
+          'shared',
+          kFeedPageSize,
+          () => _repo.getSharedToMe(uid,
+              limit: kFeedPageSize, before: before, hydrateVotes: false));
+      add(
+          'mine',
+          kFeedPageSize,
+          () => _repo.getMyRides(uid,
+              limit: kFeedPageSize, before: before, hydrateVotes: false));
     }
 
     final authors = following.where((a) => a != uid).toList()..sort();
@@ -256,15 +267,16 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         ? null
         : _repo.getPublicRidesByAuthorChunks(
             [for (final i in liveChunks) chunks[i]],
-            limit: kFeedPageSize,
-            before: before);
+            limit: kFeedPageSize, before: before);
     for (var j = 0; j < liveChunks.length; j++) {
       add('pub:${liveChunks[j]}', kFeedPageSize,
           () => chunkResults!.then((all) => all[j]));
     }
 
     for (final author in authors) {
-      add('restricted:$author', kRestrictedPerAuthorLimit,
+      add(
+          'restricted:$author',
+          kRestrictedPerAuthorLimit,
           // Tolerant per author: an edge that vanished mid-session (an
           // unfollow racing this page, or the author blocking the viewer)
           // makes the rules deny just this query — it must not blank the
@@ -282,8 +294,8 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
     // See mergeFeedSources: the cursor is the newest "horizon" among sources
     // that returned a full page, not the oldest ride overall — the latter
     // skipped every ride a dense source had between the two.
-    final merged = mergeFeedSources(results,
-        pageSize: kFeedPageSize, pageSizes: limits);
+    final merged =
+        mergeFeedSources(results, pageSize: kFeedPageSize, pageSizes: limits);
     if (merged.cursor != null) _cursor = merged.cursor;
     _lastPageHasMore = merged.hasMore;
     final cut = merged.hasMore ? merged.cursor : null;

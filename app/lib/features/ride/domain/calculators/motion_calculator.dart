@@ -24,13 +24,16 @@ class MotionCalculator {
     required double currentLng,
     required DateTime currentTime,
   }) {
-    final deltaT = currentTime.difference(prev.timestamp).inMilliseconds / 1000.0;
+    final deltaT =
+        currentTime.difference(prev.timestamp).inMilliseconds / 1000.0;
     if (deltaT <= 0) {
       return MotionResult(speedMs: currentSpeedMs, distanceDeltaM: 0);
     }
 
     final accel = (currentSpeedMs - prev.speedMs) / deltaT;
-    final jerk = prev.acceleration != null ? (accel - prev.acceleration!) / deltaT : null;
+    final jerk = prev.acceleration != null
+        ? (accel - prev.acceleration!) / deltaT
+        : null;
     final dist = haversineMeters(prev.lat, prev.lng, currentLat, currentLng);
 
     return MotionResult(

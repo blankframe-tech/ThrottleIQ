@@ -41,7 +41,8 @@ int movingMilliseconds(
   for (var i = 1; i < samples.length; i++) {
     if (samples[i].speedMs < thresholdMs) continue;
 
-    final gapMs = samples[i].time.difference(samples[i - 1].time).inMilliseconds;
+    final gapMs =
+        samples[i].time.difference(samples[i - 1].time).inMilliseconds;
     if (gapMs <= 0 || gapMs > maxGapMs) continue;
     totalMs += gapMs;
   }

@@ -14,7 +14,8 @@ class SensorValidator {
       accuracyM.isFinite && accuracyM <= SensorConstants.maxGpsAccuracyM;
 
   bool isPlausibleAccel(double accelMs2) =>
-      accelMs2.isFinite && accelMs2.abs() <= SensorConstants.maxPlausibleAccelMs2;
+      accelMs2.isFinite &&
+      accelMs2.abs() <= SensorConstants.maxPlausibleAccelMs2;
 
   bool isPlausibleYawRate(double yawRateRadS) =>
       yawRateRadS.isFinite &&

@@ -49,8 +49,8 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
   Future<void> _pick() async {
     final remaining = kMaxRidePhotos - _photos.length;
     if (remaining <= 0) return;
-    final picked = await ImagePicker()
-        .pickMultiImage(imageQuality: 80, limit: remaining);
+    final picked =
+        await ImagePicker().pickMultiImage(imageQuality: 80, limit: remaining);
     if (picked.isEmpty || !mounted) return;
     setState(() => _photos.addAll(picked.take(remaining).map((x) => x.path)));
   }
@@ -72,8 +72,8 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l10n.couldNotSaveChanges(e))));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.couldNotSaveChanges(e))));
     }
   }
 
@@ -102,11 +102,12 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
               maxLines: 3,
               maxLength: _captionMaxLength,
               textCapitalization: TextCapitalization.sentences,
-              style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
+              style:
+                  TextStyle(color: context.palette.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: context.l10n.saySomethingAboutThis,
-                hintStyle:
-                    TextStyle(color: context.palette.textTertiary, fontSize: 14),
+                hintStyle: TextStyle(
+                    color: context.palette.textTertiary, fontSize: 14),
               ),
             ),
             const SizedBox(height: 16),
@@ -124,8 +125,8 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
                           fit: StackFit.expand,
                           children: [
                             ClipRRect(
-                              borderRadius: BorderRadius.circular(
-                                  context.shape.radiusXl),
+                              borderRadius:
+                                  BorderRadius.circular(context.shape.radiusXl),
                               child: _isRemote(_photos[i])
                                   ? Image.network(_photos[i], fit: BoxFit.cover)
                                   : Image.file(File(_photos[i]),

@@ -66,7 +66,8 @@ class ChangeBikeControl extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Icon(Icons.two_wheeler, size: 18, color: context.palette.textSecondary),
+              Icon(Icons.two_wheeler,
+                  size: 18, color: context.palette.textSecondary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -74,7 +75,8 @@ class ChangeBikeControl extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary),
                 ),
               ),
               const SizedBox(width: 8),
@@ -131,7 +133,8 @@ class ChangeBikeControl extends ConsumerWidget {
                   bike: bike,
                   subtitle: l10n.rideCountLabel(bike.rideCount),
                   trailing: bike.id == currentBike.id
-                      ? Icon(Icons.check, size: 18, color: sheetContext.palette.primary)
+                      ? Icon(Icons.check,
+                          size: 18, color: sheetContext.palette.primary)
                       : null,
                 ),
               ),

@@ -88,13 +88,13 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
   Future<void> _pickImages() async {
     final remaining = kMaxRidePhotos - _imagePaths.length;
     if (remaining <= 0) {
-      _showCapMessage(
-          context.l10n.canAddUpPhotos(kMaxRidePhotos));
+      _showCapMessage(context.l10n.canAddUpPhotos(kMaxRidePhotos));
       return;
     }
 
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(imageQuality: 80, limit: remaining);
+    final picked =
+        await picker.pickMultiImage(imageQuality: 80, limit: remaining);
     if (picked.isEmpty || !mounted) return;
 
     final accepted = picked.take(remaining).map((x) => x.path).toList();
@@ -133,26 +133,27 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
       // travel with it), which is why nothing is uploaded here first: an
       // upload that succeeded while the Firestore write didn't would otherwise
       // have to be redone, orphaning the first copy.
-      final deliveredNow = await ref.read(outboxServiceProvider).enqueueShareRide(
-        rideId: ride.id,
-        userId: user.uid,
-        userName: user.displayName ?? 'Rider',
-        userPhotoUrl: user.photoURL ?? '',
-        bikeId: ride.bikeId,
-        bikeName: bike?.displayName ?? 'Unknown Bike',
-        bikeType: bike?.cc != null ? '${bike!.cc}cc' : 'Motorcycle',
-        rideDate: ride.startTime,
-        distanceKm: ride.distanceKm,
-        durationSeconds: ride.durationSeconds ?? 0,
-        maxSpeedKmh: ride.maxSpeedKmh,
-        polyline: _polyline,
-        audience: _audience,
-        localPhotoPaths: _imagePaths,
-        caption: caption.isEmpty ? null : caption,
-        hardBrakeCount: ride.hardBrakeCount,
-        rapidAccelCount: ride.rapidAccelCount,
-        highJerkCount: ride.highJerkCount,
-      );
+      final deliveredNow =
+          await ref.read(outboxServiceProvider).enqueueShareRide(
+                rideId: ride.id,
+                userId: user.uid,
+                userName: user.displayName ?? 'Rider',
+                userPhotoUrl: user.photoURL ?? '',
+                bikeId: ride.bikeId,
+                bikeName: bike?.displayName ?? 'Unknown Bike',
+                bikeType: bike?.cc != null ? '${bike!.cc}cc' : 'Motorcycle',
+                rideDate: ride.startTime,
+                distanceKm: ride.distanceKm,
+                durationSeconds: ride.durationSeconds ?? 0,
+                maxSpeedKmh: ride.maxSpeedKmh,
+                polyline: _polyline,
+                audience: _audience,
+                localPhotoPaths: _imagePaths,
+                caption: caption.isEmpty ? null : caption,
+                hardBrakeCount: ride.hardBrakeCount,
+                rapidAccelCount: ride.rapidAccelCount,
+                highJerkCount: ride.highJerkCount,
+              );
 
       // Counted at the rider's intent (queued), not delivery: a share made offline is still a share.
       AnalyticsService.instance.log(AnalyticsEvent.rideShared);
@@ -196,10 +197,12 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.add_a_photo_outlined, color: context.palette.textTertiary, size: 32),
+                Icon(Icons.add_a_photo_outlined,
+                    color: context.palette.textTertiary, size: 32),
                 const SizedBox(height: 8),
                 Text(context.l10n.addUpRideBike(kMaxRidePhotos),
-                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                    style: TextStyle(
+                        color: context.palette.textSecondary, fontSize: 13)),
               ],
             ),
           ),
@@ -236,7 +239,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                         child: const CircleAvatar(
                           radius: 12,
                           backgroundColor: Colors.black54,
-                          child: Icon(Icons.close, size: 14, color: Colors.white),
+                          child:
+                              Icon(Icons.close, size: 14, color: Colors.white),
                         ),
                       ),
                     ),
@@ -296,11 +300,14 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
               maxLines: 3,
               maxLength: _captionMaxLength,
               textCapitalization: TextCapitalization.sentences,
-              style: TextStyle(color: context.palette.textPrimary, fontSize: 14),
+              style:
+                  TextStyle(color: context.palette.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: context.l10n.saySomethingAboutThis,
-                hintStyle: TextStyle(color: context.palette.textTertiary, fontSize: 14),
-                counterStyle: TextStyle(color: context.palette.textTertiary, fontSize: 11),
+                hintStyle: TextStyle(
+                    color: context.palette.textTertiary, fontSize: 14),
+                counterStyle: TextStyle(
+                    color: context.palette.textTertiary, fontSize: 11),
               ),
             ),
             const SizedBox(height: 16),
@@ -309,7 +316,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                 EditorialLabel(context.l10n.photosOptional),
                 const Spacer(),
                 Text('${_imagePaths.length}/$kMaxRidePhotos',
-                    style: TextStyle(color: context.palette.textTertiary, fontSize: 12)),
+                    style: TextStyle(
+                        color: context.palette.textTertiary, fontSize: 12)),
               ],
             ),
             const SizedBox(height: 10),
@@ -338,15 +346,20 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                     child: EditorialPill(
                       option.$2,
                       filled: _audience == option.$1,
-                      tone: _audience == option.$1 ? PillTone.accent : PillTone.neutral,
+                      tone: _audience == option.$1
+                          ? PillTone.accent
+                          : PillTone.neutral,
                     ),
                   ),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              _audienceOptions(context.l10n).firstWhere((o) => o.$1 == _audience).$3,
-              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+              _audienceOptions(context.l10n)
+                  .firstWhere((o) => o.$1 == _audience)
+                  .$3,
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary),
             ),
             const SizedBox(height: 24),
             // "Add to routes" belongs here because saving a route is something
@@ -369,7 +382,8 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
                   ? const SizedBox(
                       width: 18,
                       height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : Text(context.l10n.shareAction),
             ),

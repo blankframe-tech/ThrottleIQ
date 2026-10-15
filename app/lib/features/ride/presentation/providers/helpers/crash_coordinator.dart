@@ -29,7 +29,8 @@ class CrashCoordinator {
     _crashHandlingActive = true;
 
     await HapticService.maxVibration();
-    unawaited(NotificationService.instance.showCrashAlert(secondsRemaining: 60));
+    unawaited(
+        NotificationService.instance.showCrashAlert(secondsRemaining: 60));
 
     _crashCountdownTimer?.cancel();
     var secondsLeft = 60;
@@ -103,7 +104,8 @@ class CrashCoordinator {
     );
   }
 
-  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
+  Future<void> _bestEffortWrite(
+      String label, Future<void> Function() write) async {
     try {
       await write().timeout(kOutboxAttemptTimeout);
     } on TimeoutException {

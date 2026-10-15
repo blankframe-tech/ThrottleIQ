@@ -57,7 +57,8 @@ class RideRepositoryImpl implements RideRepository {
         headingDeg: (m['heading_deg'] as num?)?.toDouble(),
         confidence: m['confidence'] as int?,
         imuQuality: m['imu_quality'] as int?,
-        isCornering: m['is_cornering'] == null ? null : (m['is_cornering'] as int) == 1,
+        isCornering:
+            m['is_cornering'] == null ? null : (m['is_cornering'] as int) == 1,
       );
     }).toList();
   }

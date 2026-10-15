@@ -73,8 +73,8 @@ class JamLabel {
 
   bool get isOpen => end == null;
 
-  JamLabel close(JamLabelMark mark, JamLabelEndReason reason) =>
-      JamLabel(id: id, rideId: rideId, start: start, end: mark, endReason: reason);
+  JamLabel close(JamLabelMark mark, JamLabelEndReason reason) => JamLabel(
+      id: id, rideId: rideId, start: start, end: mark, endReason: reason);
 
   /// Wall-clock length of the window the rider labelled.
   int? get labelledSeconds => end?.at.difference(start.at).inSeconds;

@@ -41,8 +41,9 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
   Widget build(BuildContext context) {
     final feed = ref.watch(rideFeedNotifierProvider);
     final sort = ref.watch(feedSortProvider);
-    final activeGroupRides = ref.watch(activeGroupRidesForUserProvider).valueOrNull ??
-        const <GroupRideEntity>[];
+    final activeGroupRides =
+        ref.watch(activeGroupRidesForUserProvider).valueOrNull ??
+            const <GroupRideEntity>[];
 
     return RefreshIndicator(
       onRefresh: () => ref.read(rideFeedNotifierProvider.notifier).refresh(),
@@ -57,7 +58,8 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                 if (activeGroupRides.isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingMd),
                     child: Text(
                       context.l10n.ridingNowSectionTitle,
                       style: TextStyle(
@@ -73,28 +75,33 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                     height: 140,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingMd),
                       itemCount: activeGroupRides.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (_, i) => _LiveGroupRideCard(ride: activeGroupRides[i]),
+                      itemBuilder: (_, i) =>
+                          _LiveGroupRideCard(ride: activeGroupRides[i]),
                     ),
                   ),
                 ],
                 const SizedBox(height: 16),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingMd),
                   child: Row(
                     children: [
                       FeedSortPill(
                         label: context.l10n.following,
                         selected: sort == FeedSort.following,
-                        onTap: () => ref.read(feedSortProvider.notifier).state = FeedSort.following,
+                        onTap: () => ref.read(feedSortProvider.notifier).state =
+                            FeedSort.following,
                       ),
                       const SizedBox(width: 8),
                       FeedSortPill(
                         label: context.l10n.discover,
                         selected: sort == FeedSort.recent,
-                        onTap: () => ref.read(feedSortProvider.notifier).state = FeedSort.recent,
+                        onTap: () => ref.read(feedSortProvider.notifier).state =
+                            FeedSort.recent,
                       ),
                     ],
                   ),
@@ -110,7 +117,8 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: context.palette.primary),
+                      child: CircularProgressIndicator(
+                          color: context.palette.primary),
                     ),
                   ),
                 );
@@ -130,7 +138,8 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                   child: Center(
                     child: Padding(
                       padding: const EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: context.palette.primary),
+                      child: CircularProgressIndicator(
+                          color: context.palette.primary),
                     ),
                   ),
                 );
@@ -157,7 +166,8 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                                   ? context.l10n.nothingFromRidersYet
                                   : context.l10n.noRidesYet,
                               style: TextStyle(
-                                  color: context.palette.textSecondary, fontSize: 16)),
+                                  color: context.palette.textSecondary,
+                                  fontSize: 16)),
                         ],
                       ),
                     ),
@@ -168,7 +178,8 @@ class _FeedTabState extends ConsumerState<_FeedTab> {
                   feed.isLoadingMore || feed.hasMore || feed.error != null;
 
               return SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingMd, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingMd, vertical: 8),
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
@@ -226,12 +237,17 @@ class FeedSortPill extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? context.palette.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: selected ? context.palette.primary : context.palette.border),
+            border: Border.all(
+                color: selected
+                    ? context.palette.primary
+                    : context.palette.border),
           ),
           child: Text(
             label,
             style: TextStyle(
-              color: selected ? context.palette.background : context.palette.textPrimary,
+              color: selected
+                  ? context.palette.background
+                  : context.palette.textPrimary,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -269,114 +285,117 @@ class _LiveGroupRideCard extends ConsumerWidget {
       button: true,
       child: GestureDetector(
         onTap: () => context.push('/group-ride/${ride.id}'),
-      child: Container(
-        width: 170,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: context.palette.surface,
-          borderRadius: BorderRadius.circular(context.shape.radiusLg),
-          border: Border.all(color: context.palette.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(color: context.palette.primary, shape: BoxShape.circle),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'LIVE',
-                  style: TextStyle(
-                    color: context.palette.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            SizedBox(
-              height: 36,
-              child: Stack(
+        child: Container(
+          width: 170,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: context.palette.surface,
+            borderRadius: BorderRadius.circular(context.shape.radiusLg),
+            border: Border.all(color: context.palette.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  for (int i = 0; i < initials.length; i++)
-                    Positioned(
-                      left: i * 24.0,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: context.palette.background,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: context.palette.surface, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            initials[i],
-                            style: TextStyle(
-                              color: context.palette.textSecondary,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                        color: context.palette.primary, shape: BoxShape.circle),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'LIVE',
+                    style: TextStyle(
+                      color: context.palette.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
                     ),
-                  if (overflow > 0)
-                    Positioned(
-                      left: initials.length * 24.0,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: context.palette.background,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: context.palette.surface, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            '+$overflow',
-                            style: TextStyle(
-                              color: context.palette.textSecondary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              ride.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.palette.textPrimary,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+              const Spacer(),
+              SizedBox(
+                height: 36,
+                child: Stack(
+                  children: [
+                    for (int i = 0; i < initials.length; i++)
+                      Positioned(
+                        left: i * 24.0,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: context.palette.background,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: context.palette.surface, width: 2),
+                          ),
+                          child: Center(
+                            child: Text(
+                              initials[i],
+                              style: TextStyle(
+                                color: context.palette.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (overflow > 0)
+                      Positioned(
+                        left: initials.length * 24.0,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: context.palette.background,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                                color: context.palette.surface, width: 2),
+                          ),
+                          child: Center(
+                            child: Text(
+                              '+$overflow',
+                              style: TextStyle(
+                                color: context.palette.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              '$ridingCount riding',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: context.palette.textSecondary,
-                fontSize: 12,
+              const SizedBox(height: 12),
+              Text(
+                ride.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.palette.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 2),
+              Text(
+                '$ridingCount riding',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: context.palette.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -414,9 +433,11 @@ class _FeedFooter extends StatelessWidget {
           children: [
             Text(mapFirestoreError(error!, context.l10n),
                 textAlign: TextAlign.center,
-                style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                style: TextStyle(
+                    color: context.palette.textSecondary, fontSize: 13)),
             const SizedBox(height: 8),
-            OutlinedButton(onPressed: onRetry, child: Text(context.l10n.tryAgain)),
+            OutlinedButton(
+                onPressed: onRetry, child: Text(context.l10n.tryAgain)),
           ],
         ),
       );
@@ -425,7 +446,8 @@ class _FeedFooter extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 24),
       child: Center(
         child: Text(context.l10n.youreAllCaughtUp,
-            style: TextStyle(color: context.palette.textTertiary, fontSize: 13)),
+            style:
+                TextStyle(color: context.palette.textTertiary, fontSize: 13)),
       ),
     );
   }
@@ -488,7 +510,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
       await RideShareRepository().addComment(
         rideId: widget.ride.id,
         userId: user.uid,
-        userName: me?.bestName ?? user.displayName ?? context.l10n.riderFallbackName,
+        userName:
+            me?.bestName ?? user.displayName ?? context.l10n.riderFallbackName,
         userPhotoUrl: me?.photoUrl ?? user.photoURL ?? '',
         text: text,
       );
@@ -532,7 +555,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: context.palette.primary.withValues(alpha: 0.1),
+                            color:
+                                context.palette.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(Icons.two_wheeler,
@@ -617,7 +641,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
                         _stat('${ride.distanceKm.toStringAsFixed(1)} km',
                             context.l10n.distanceLabel),
                         _divider(),
-                        _stat('${ride.durationMinutes} min', context.l10n.duration),
+                        _stat('${ride.durationMinutes} min',
+                            context.l10n.duration),
                         _divider(),
                         _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
                             context.l10n.maxSpeed),
@@ -681,7 +706,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Icon(Icons.chat_bubble_outline,
-                                    color: context.palette.textSecondary, size: 18),
+                                    color: context.palette.textSecondary,
+                                    size: 18),
                                 const SizedBox(width: 6),
                                 Text('${ride.comments}',
                                     style: TextStyle(
@@ -756,13 +782,15 @@ class _RideCardState extends ConsumerState<_RideCard> {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12),
             child: Center(
-                child: CircularProgressIndicator(color: context.palette.primary)),
+                child:
+                    CircularProgressIndicator(color: context.palette.primary)),
           )
         else if ((_comments ?? const []).isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(context.l10n.noCommentsYet,
-                style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                style: TextStyle(
+                    fontSize: 13, color: context.palette.textSecondary)),
           )
         else
           ..._comments!.map((c) => Padding(
@@ -792,7 +820,8 @@ class _RideCardState extends ConsumerState<_RideCard> {
             Expanded(
               child: TextField(
                 controller: _commentController,
-                style: TextStyle(color: context.palette.textPrimary, fontSize: 13),
+                style:
+                    TextStyle(color: context.palette.textPrimary, fontSize: 13),
                 decoration: InputDecoration(
                   isDense: true,
                   hintText: context.l10n.addComment,
@@ -838,9 +867,18 @@ class _RideCardState extends ConsumerState<_RideCard> {
   Widget _scoreStat(int score) {
     final l10n = context.l10n;
     final (color, label) = switch (ridingScoreTier(score)) {
-      RidingScoreTier.smooth => (context.palette.success, l10n.scoreSmoothLabel),
-      RidingScoreTier.steady => (context.palette.attention, l10n.scoreSteadyLabel),
-      RidingScoreTier.aggressive => (context.palette.danger, l10n.scoreAggressiveLabel),
+      RidingScoreTier.smooth => (
+          context.palette.success,
+          l10n.scoreSmoothLabel
+        ),
+      RidingScoreTier.steady => (
+          context.palette.attention,
+          l10n.scoreSteadyLabel
+        ),
+      RidingScoreTier.aggressive => (
+          context.palette.danger,
+          l10n.scoreAggressiveLabel
+        ),
     };
     return _stat('$score', label, color: color);
   }

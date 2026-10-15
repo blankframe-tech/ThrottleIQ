@@ -47,9 +47,7 @@ class FollowRepository {
   /// Uids [uid] follows.
   Future<List<String>> getFollowing(String uid) async {
     final snap = await _follows.where('followerUid', isEqualTo: uid).get();
-    return snap.docs
-        .map((d) => d.data()['followeeUid'] as String)
-        .toList();
+    return snap.docs.map((d) => d.data()['followeeUid'] as String).toList();
   }
 
   /// Live view of [getFollowing]. The feed keys its "followed authors" source
@@ -68,9 +66,7 @@ class FollowRepository {
   /// Uids that follow [uid].
   Future<List<String>> getFollowers(String uid) async {
     final snap = await _follows.where('followeeUid', isEqualTo: uid).get();
-    return snap.docs
-        .map((d) => d.data()['followerUid'] as String)
-        .toList();
+    return snap.docs.map((d) => d.data()['followerUid'] as String).toList();
   }
 
   /// Up to [limit] uids that follow [uid] — a bounded sample for

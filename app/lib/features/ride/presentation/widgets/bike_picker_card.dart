@@ -88,7 +88,8 @@ class BikePickerCard extends ConsumerWidget {
                   bike: bike,
                   subtitle: l10n.rideCountLabel(bike.rideCount),
                   trailing: bike.id == activeBike.id
-                      ? Icon(Icons.check, size: 18, color: sheetContext.palette.primary)
+                      ? Icon(Icons.check,
+                          size: 18, color: sheetContext.palette.primary)
                       : null,
                 ),
               ),
@@ -170,7 +171,8 @@ class BikePickerCard extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                             fontSize: 13,
-                            color: context.palette.onInk.withValues(alpha: 0.8)),
+                            color:
+                                context.palette.onInk.withValues(alpha: 0.8)),
                       ),
                       const SizedBox(height: 2),
                     ],
@@ -179,8 +181,8 @@ class BikePickerCard extends ConsumerWidget {
                         titleText!,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style:
-                            display(context, 24, color: context.palette.onInk, height: 1.15),
+                        style: display(context, 24,
+                            color: context.palette.onInk, height: 1.15),
                       ),
                     const SizedBox(height: 10),
                     Row(
@@ -209,14 +211,14 @@ class BikePickerCard extends ConsumerWidget {
                                   fontSize: 11,
                                   fontWeight: FontWeight.w700,
                                   letterSpacing: 1,
-                                  color:
-                                      context.palette.onInk.withValues(alpha: 0.85),
+                                  color: context.palette.onInk
+                                      .withValues(alpha: 0.85),
                                 ),
                               ),
                               Icon(Icons.expand_more,
                                   size: 18,
-                                  color:
-                                      context.palette.onInk.withValues(alpha: 0.85)),
+                                  color: context.palette.onInk
+                                      .withValues(alpha: 0.85)),
                             ],
                           ),
                         ],
@@ -274,8 +276,8 @@ class BikeRow extends StatelessWidget {
               Text(subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style:
-                      TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary)),
             ],
           ),
         ),

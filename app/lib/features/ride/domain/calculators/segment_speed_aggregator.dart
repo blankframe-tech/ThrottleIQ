@@ -2,7 +2,11 @@ import '../../../../core/utils/geohash_util.dart';
 
 /// One geohash-cell "segment" this ride passed through, and the average
 /// speed it was ridden at while inside that cell.
-typedef SegmentSpeedSample = ({String segmentId, double avgSpeedKmh, int pointCount});
+typedef SegmentSpeedSample = ({
+  String segmentId,
+  double avgSpeedKmh,
+  int pointCount
+});
 
 /// Precision 7 geohash cells are roughly 150m × 150m at the latitudes this
 /// app's riders are ever at — small enough to separate distinct stretches of
@@ -32,6 +36,10 @@ List<SegmentSpeedSample> averageSpeedPerSegment(
 
   return [
     for (final id in sums.keys)
-      (segmentId: id, avgSpeedKmh: sums[id]! / counts[id]!, pointCount: counts[id]!),
+      (
+        segmentId: id,
+        avgSpeedKmh: sums[id]! / counts[id]!,
+        pointCount: counts[id]!
+      ),
   ];
 }

@@ -599,7 +599,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               child: Text(l10n.cancelAction)),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+            child:
+                Text(l10n.delete, style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
