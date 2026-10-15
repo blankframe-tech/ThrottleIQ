@@ -1,6 +1,12 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-15 · Branches: `main` = `origin/main` (`1349db5`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
+_Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
+
+## 2026-10-15 (release): `1.0.0-beta.4.7.0+28` shipped as tag `beta-v4.7.0`
+
+- Release notes and Play text: `DOCS/releases/beta-v4.7.0.md` (also the GitHub release body). `deploy.sh --skip-ios` passed the gate, pushed, built 4 APKs + AAB (all versionCode 28) and published the release. The iPhone build was installed and launched separately with `flutter run --release`.
+- Local: every APK deleted. The only AAB left is `app/build/app/outputs/bundle/release/app-release.aab` (98 MB). The GitHub release keeps its APKs, because the install page links `app-release.apk`.
+- Includes the Places full map, the compact shared-ride card + owner menu, History → Delete ride and the cockpit placement pill. None of it checked on a device beyond install + launch. Play upload not done.
 
 ## 2026-10-15 (state check): `main` pushed at `1349db5`, gate green
 
