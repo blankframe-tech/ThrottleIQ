@@ -6344,3 +6344,4 @@ deliberately left alone, so do not redo them. Nothing was deployed.
 - **Phone placement moved into the ride:** it was clipped on the Record screen, so it is now a pill at
   the top-left of the cockpit (`phone_placement_selector.dart`), switchable mid-ride. Read at impact
   time only; ride analytics do not yet record placement changes.
+- **§103.1 push blocked** (open-file section §103): `1349db5` reverted the format-only churn from `686bc73`; gate green and pushed. §103.2–103.5 stay open.

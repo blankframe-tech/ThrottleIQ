@@ -2032,8 +2032,9 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 
 ## §103 Shared-ride card / owner actions follow-ups (2026-10-15)
 
-- **103.1 Push blocked:** the shared-ride work is committed (`8bdb803`), unpushed. A parallel process committed a repo-wide `dart format` (`686bc73`) after which `flutter analyze` reports ~20 `curly_braces_in_flow_control_structures` infos in files outside this work (e.g. `login_screen.dart`, `crop_geometry.dart`), failing `scripts/check.sh`. Needs a decision: fix the lints, revert the format commits, or find the writer.
+- **103.1 Push blocked:** ✅ resolved 2026-10-15. `1349db5` reverted the format-only churn; gate green, pushed to `origin/main`.
 - **103.2 Delete ride:** bike odometer / bike stats are not rolled back when a ride is deleted from history (not checked). Shared-post delete there is best-effort (silent offline).
 - **103.3 Detail screen:** rider card still shows `bikeName · bikeType` ("Motorcycle" fallback) — only the feed card was changed.
-- **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator).
+- **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator). It covers the Places full map, the Social card/owner menu, history Delete ride and the cockpit placement pill, all on `1349db5`.
+- **103.5 Cockpit:** the `_GroupRideTalkPill` comment in `active_ride_screen.dart` now sits above `PhonePlacementSelector` (cosmetic). With a large iPhone bottom safe area, the controls (~174 px) may still reach the speed panel's fixed `bottom: 160` (not checked).
 

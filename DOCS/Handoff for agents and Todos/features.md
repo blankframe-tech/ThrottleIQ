@@ -777,8 +777,9 @@ crossing that the app never saw). The live alarm is still **off**; everything he
   (`impact_window_recorder.dart`, "TIQW" v1). Caps: at most 20 events and 5 windows per ride, a window
   for every tier 1+ event and for 10% of tier 0. Rides gain `phone_placement` and `imu_rate_hz`. Rows go
   with their ride in every delete path.
-- **Ride start:** "Phone: On a mount / In a pocket / In a bag" chips on the Record screen, remembered between
-  rides (`PhonePlacementSetting`). Auto-detected rides record `unknown`.
+- **Phone placement:** a pill at the top-left of the active-ride cockpit opens On a mount / In a pocket / In a bag
+  (2026-10-15; it was on the Record screen before). Switchable mid-ride, read at impact time, remembered between
+  rides (`PhonePlacementSetting`). Auto-detected rides record `unknown`. Ride analytics don't record changes yet.
 - **After the ride:** a "Possible fall at 9:28 PM — did you fall?" card on the ride summary for each answered
   tier-1+ impact. Answers: yes / phone fell / bump / braked hard / not sure; "yes" asks injury and road surface.
   Plus a **Report a crash or fall** button for falls the detector missed (tier -1, label `missed`), so recall

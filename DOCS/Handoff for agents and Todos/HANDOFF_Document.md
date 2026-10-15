@@ -1,6 +1,14 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
+_Last updated: 2026-10-15 · Branches: `main` = `origin/main` (`1349db5`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
+
+## 2026-10-15 (state check): `main` pushed at `1349db5`, gate green
+
+- Three sessions ran on one working tree at once (cockpit fix, shared-ride card, Places full map). One committed everything as `8bdb803`; `53fa993`/`686bc73` hold format + bare-catch fixes and repo-wide `dart format` churn; `1349db5` reverts the format-only files. The churn stays in history; the final tree is clean.
+- Verified on `1349db5`: `scripts/check.sh --force` passes (format, guards, analyze, 2221 tests). All `fix/oct14-tiq-*`, `fix/oct15-throttleiq`, `oct14-int`, `merge/oct15-origin-main` and `feat/crash-shadow-mode` are merged into `main`. Each feature is in the code: jam button above the speed panel, phone-placement pill in the cockpit (not on the Record screen), shared-ride card + owner menu, history Delete ride, Places full map.
+- **Superseded:** the "Record screen: collapsed `PhonePlacementSelector`" bullet below. The selector now lives only in the active-ride cockpit (top-left popup pill).
+- Still open: §103.2–103.4 in `issues_open.md`; nothing checked on a device; this code is after `beta-v4.6.0`, so it isn't released yet.
+- Rule for parallel sessions: one session commits. Never `git add -A`, `dart format lib` or `git checkout -- app` in a shared tree (see `.agents/rules/`).
 
 ## 2026-10-15 (places): full-screen map
 
@@ -13,7 +21,7 @@ _Last updated: 2026-10-15 · Branches: `main` = `experimental` (e6c9a54), `indri
 - Build number 26 was already used, hence +27. The tag is `beta-v4.6.0` (regex captures `4.6.0`).
 - Not checked: the build on the iPhone beyond install + launch, the Play upload, the `firestore.rules` / functions deploy order (`SECURITY.md`) before testers update.
 
-## 2026-10-15: local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — not pushed
+## 2026-10-15: local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — since pushed; placement superseded (see state check)
 
 - `oct14-int` already held every `fix/oct14-tiq-*` branch and `fix/oct15-throttleiq`, merged with origin/main; its gate stamp matched that commit. Local `main` now equals it. Not pushed; follow the rules deploy order in `SECURITY.md`.
 - Record screen: `PhonePlacementSelector` is one collapsed row ("Phone: On a mount"); tap opens the chips. Ride tests pass; not run on a device, so the reported iPhone breakage is unconfirmed. Full gate not re-run after this edit.
