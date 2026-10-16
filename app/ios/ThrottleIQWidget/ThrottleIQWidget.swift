@@ -91,7 +91,6 @@ enum WidgetKeys {
     static let themeTextTertiary = "ti_theme_text_tertiary"
     static let themeDanger = "ti_theme_danger"
     static let themeIsDark = "ti_theme_is_dark"
-    static let themeMode = "ti_theme_mode"
 }
 
 enum Placeholder {

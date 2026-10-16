@@ -6,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import 'gps_drop_log.dart';
+
 /// Collects a minimal diagnostic bundle and delivers it via the native share
 /// sheet (email, WhatsApp, etc.).
 ///
@@ -75,6 +77,8 @@ class BugReportService {
       'timestamp': DateTime.now().toUtc().toIso8601String(),
       'uid': uid ?? 'not-signed-in',
       'description': description,
+      // Per-ride GPS fixes dropped for accuracy, to tune that threshold.
+      'gpsAccuracyDrops': await GpsDropLog.recent(),
     };
   }
 }

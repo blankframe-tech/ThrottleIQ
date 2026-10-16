@@ -8,4 +8,8 @@ class RidePrefsKeys {
   /// recorded (or sits paused after a restore). The auto-tracker reads it to
   /// stay out of a manual recording's way (§90.C3).
   static const activeRideId = 'active_ride_id';
+
+  /// The ride clock snapshot a restore resumes from. The foreground service
+  /// advances it while it records a ride whose UI has gone (critique B5).
+  static const elapsedSeconds = 'ride_elapsed_s';
 }

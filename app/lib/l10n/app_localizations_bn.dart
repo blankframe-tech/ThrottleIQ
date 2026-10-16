@@ -24,21 +24,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get appearanceSection => 'অ্যাপের চেহারা';
 
   @override
-  String get vibeFieldLabel => 'ভাইব';
-
-  @override
-  String get vibeBoxyLabel => 'বক্সি';
-
-  @override
-  String get vibeBoxyDescription => 'ধারালো কোণ';
-
-  @override
-  String get vibeCurvyLabel => 'কার্ভি';
-
-  @override
-  String get vibeCurvyDescription => 'গোল কোণ';
-
-  @override
   String get brightnessFieldLabel => 'উজ্জ্বলতা';
 
   @override
@@ -58,51 +43,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get brightnessSystemDescription => 'ফোনের সেটিং অনুসরণ করুন';
-
-  @override
-  String get colorFieldLabel => 'রং';
-
-  @override
-  String get themeSportLabel => 'স্পোর্ট';
-
-  @override
-  String get themeSportDescription => 'লাইম আর ম্যাজেন্টা, কার্বন প্যানেল';
-
-  @override
-  String get themeRainLabel => 'রেইন';
-
-  @override
-  String get themeRainDescription => 'গাঢ় নীল সন্ধ্যা, বেগুনি আর টিল';
-
-  @override
-  String get themeRaceLabel => 'রেস';
-
-  @override
-  String get themeRaceDescription => 'রেস পোস্টার, সরিষা ও মরিচা রং';
-
-  @override
-  String get themeCommuteLabel => 'কমিউট';
-
-  @override
-  String get themeCommuteDescription => 'শান্ত ক্রিম, সবুজ আর বাদামি';
-
-  @override
-  String get themeTourLabel => 'ট্যুর';
-
-  @override
-  String get themeTourDescription => 'ঝলমলে কমলা আর আকাশি নীল';
-
-  @override
-  String get themeAdvLabel => 'এডিভি';
-
-  @override
-  String get themeAdvDescription => 'নেভি কনসোল, সায়ান মিটার';
-
-  @override
-  String get themeCityLabel => 'সিটি';
-
-  @override
-  String get themeCityDescription => 'কাগজের উষ্ণতা, নীল আর কমলা';
 
   @override
   String get languageSection => 'ভাষা';
@@ -897,7 +837,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'আপনি কি ঠিক আছেন? টাইমার শেষ হলে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+      'আপনি কি ঠিক আছেন? টাইমার শেষ হওয়ার আগে উত্তর না দিলে রাইডটি সম্ভাব্য দুর্ঘটনা হিসেবে সেভ হবে। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
 
   @override
   String get seconds => 'সেকেন্ড';
@@ -935,7 +875,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get backgroundLocationRationale =>
-      'ThrottleIQ রাইড চলাকালীন আপনার লোকেশন ব্যবহার করে রুট, গতি ও দূরত্ব রেকর্ড করে — ফোন লক থাকলে বা পকেটে থাকলেও, যাতে রাইড মাঝপথে কেটে না যায়। পরের স্ক্রিনে \"সব সময় অনুমতি দিন\" লোকেশন অ্যাক্সেস চাওয়া হবে। লোকেশন শুধু আপনার রাইড রেকর্ড করতে ব্যবহার হয় এবং রাইড শেষ করার সাথে সাথেই ট্র্যাকিং বন্ধ হয়ে যায়।';
+      '\"স্বয়ংক্রিয়ভাবে রাইড শনাক্ত করুন\" চালু থাকলে ThrottleIQ আপনার রাইড শনাক্ত ও রেকর্ড করতে আপনার লোকেশন সংগ্রহ করে, অ্যাপ বন্ধ থাকলে বা ব্যবহার না করলেও। আগে চলাচল লক্ষ্য করে, আর আপনি কোনো যানবাহনে চলতে শুরু করলে তবেই GPS চালু করে। পরের স্ক্রিনে \"সব সময় অনুমতি দিন\" লোকেশন অ্যাক্সেস চাওয়া হবে। সেটিংস থেকে যেকোনো সময় এটি বন্ধ করতে পারবেন।';
 
   @override
   String get notNow => 'এখন নয়';
@@ -948,9 +888,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get settingsCaps => 'সেটিংস';
-
-  @override
-  String get slideStartRide => 'রাইড শুরু করতে স্লাইড করুন';
 
   @override
   String get close => 'বন্ধ করুন';
@@ -2348,7 +2285,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get thisActionIrreversibleAll =>
-      'এই কাজটি ফেরানো যাবে না। আপনার সব রেকর্ড করা রাইড, বাইক প্রোফাইল, পরিসংখ্যান ও ব্যক্তিগত তথ্য চিরতরে মুছে যাবে।';
+      'এটি আর ফেরানো যাবে না। আপনার সাইন-ইন এবং এই ফোনে রাখা সবকিছু এখনই মুছে যাবে। আপনার ক্লাউড ডেটা (প্রোফাইল, রাইড ও GPS ট্র্যাক, বাইক, জরুরি কন্টাক্ট, পোস্ট ও মেসেজ) আপনার অনুরোধের 30 দিনের মধ্যে হাতে মুছে ফেলা হয়। অনুরোধ করতে, যে ইমেইল দিয়ে সাইন আপ করেছিলেন সেটি থেকে hello@blankframe.tech-এ ইমেইল করুন।';
 
   @override
   String get deletePermanently => 'চিরতরে মুছুন';
@@ -2888,6 +2825,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get placesMapView => 'ম্যাপ';
+
+  @override
+  String get placesFullMap => 'ফুল-স্ক্রিন ম্যাপ';
+
+  @override
+  String get placesExitFullMap => 'ফুল-স্ক্রিন থেকে বের হন';
 
   @override
   String get placesListView => 'তালিকা';
@@ -4229,26 +4172,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get badgeRungSaddle8h => 'আট ঘণ্টা';
 
   @override
-  String get badgeFamSpeedName => 'সর্বোচ্চ গতি';
-
-  @override
-  String get badgeFamSpeedAbout => 'আপনার সব রাইডে রেকর্ড করা সর্বোচ্চ গতি।';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return '$n কিমি/ঘণ্টা সর্বোচ্চ গতি রেকর্ড করুন।';
-  }
-
-  @override
-  String get badgeRungTonUp => 'টন-আপ';
-
-  @override
-  String get badgeRungSpeed140 => 'কুইক';
-
-  @override
-  String get badgeRungSpeedDemon => 'স্পিড ডেমন';
-
-  @override
   String get badgeFamNightName => 'নাইট রাইডার';
 
   @override
@@ -4349,9 +4272,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'ঘণ্টা';
-
-  @override
-  String get badgeUnitKmh => 'কিমি/ঘণ্টা';
 
   @override
   String get badgeUnitDays => 'দিন';
@@ -4458,7 +4378,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'আপনি \"আমি ঠিক আছি\"-তে ট্যাপ না করলে $seconds সেকেন্ডের মধ্যে আপনার জরুরি কন্টাক্টদের জানানো হবে।';
+    return 'আপনি ঠিক থাকলে $seconds সেকেন্ডের মধ্যে \"আমি ঠিক আছি\"-তে ট্যাপ করুন। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।';
   }
 
   @override
@@ -4473,6 +4393,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String notifRideDetectedBody(String bike) {
     return '$bike-এ এটি লগ করা হয়েছে। নিশ্চিত করতে বা বদলাতে ট্যাপ করুন।';
   }
+
+  @override
+  String get notifRecordingStoppedTitle => 'রেকর্ডিং বন্ধ হয়ে গেছে';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।';
 
   @override
   String get notifConfirm => 'নিশ্চিত করুন';
@@ -5795,12 +5722,6 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'লাইভ';
-
-  @override
-  String get groupRideRealtimeDelayed => 'বিলম্বিত';
-
-  @override
   String get chatTyping => 'টাইপ করছে…';
 
   @override
@@ -5813,6 +5734,16 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get deleteAccountOffline =>
       'ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।';
+
+  @override
+  String get updateRequiredTitle => 'আপডেট দরকার';
+
+  @override
+  String get updateRequiredBody =>
+      'ThrottleIQ-এর এই সংস্করণটি আর সার্ভারের সঙ্গে কাজ করে না। অ্যাপটি ব্যবহার চালিয়ে যেতে সর্বশেষ সংস্করণ ইনস্টল করুন।';
+
+  @override
+  String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
 
   @override
   String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';
@@ -5900,33 +5831,6 @@ class AppLocalizationsBn extends AppLocalizations {
       'শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।';
 
   @override
-  String get badgeRarityCommon => 'সাধারণ';
-
-  @override
-  String get badgeRarityUncommon => 'কিছুটা বিরল';
-
-  @override
-  String get badgeRarityRare => 'দুর্লভ';
-
-  @override
-  String get badgeRarityEpic => 'এপিক';
-
-  @override
-  String get badgeRarityLegendary => 'কিংবদন্তি';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent রাইডারের কাছে এই ব্যাজ আছে';
-  }
-
-  @override
-  String get badgeOwnershipUnknown =>
-      'এই মুহূর্তে বিরলতার তথ্য পাওয়া যাচ্ছে না';
-
-  @override
-  String get badgeRarityLabel => 'বিরলতা';
-
-  @override
   String get badgeHowToEarn => 'কীভাবে পাবেন';
 
   @override
@@ -5956,11 +5860,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি।';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'আমি ThrottleIQ-তে $badge ব্যাজ অর্জন করেছি। $rarity: $percent রাইডারের কাছে এটি আছে।';
   }
 
   @override
@@ -6005,11 +5904,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'একা চালান, অথবা গ্রুপ রাইড শুরু করে বন্ধুদের আমন্ত্রণ জানান বা জয়েন কোড শেয়ার করুন।';
 
   @override
-  String get tourRecordStartTitle => 'শুরু করতে চেপে ধরুন বা স্লাইড করুন';
+  String get tourRecordStartTitle => 'শুরু করতে চেপে ধরুন';
 
   @override
   String get tourRecordStartBody =>
-      'স্টার্ট রিং চেপে ধরুন (বক্সি স্টাইলে বারটি স্লাইড করুন), যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।';
+      'স্টার্ট রিং চেপে ধরুন, যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।';
 
   @override
   String get tourCockpitTitle => 'আপনার লাইভ ককপিট';
@@ -6255,6 +6154,43 @@ class AppLocalizationsBn extends AppLocalizations {
       'সেটিংসে রক্তের গ্রুপ ও জরুরি যোগাযোগসহ একটি স্ক্যানযোগ্য কার্ড তৈরি করুন, যা উদ্ধারকারীদের কাজে আসবে।';
 
   @override
+  String get tourForumsFindTitle => 'আপনার বাইকের ফোরাম খুঁজুন';
+
+  @override
+  String get tourForumsFindBody =>
+      'ব্র্যান্ড ও মডেলের হাব, আর অন্য রাইডারদের খোলা ফোরাম। বাইক বা বিষয় দিয়ে খুঁজুন।';
+
+  @override
+  String get tourForumsAskTitle => 'প্রশ্ন করুন, উত্তর দিন';
+
+  @override
+  String get tourForumsAskBody =>
+      'সমস্যা, DIY গাইড বা গিয়ার রিভিউ পোস্ট করুন। যে উত্তরে সমাধান হয়েছে, সেটি সমাধান হিসেবে চিহ্নিত হয়।';
+
+  @override
+  String get tourForumsBikeTitle => 'আপনার বাইক দেখান';
+
+  @override
+  String get tourForumsBikeBody =>
+      'পোস্টে আপনার বাইক বা রক্ষণাবেক্ষণ লগ যুক্ত করুন, যাতে সবাই জানে আপনি ঠিক কোন বাইক চালান।';
+
+  @override
+  String get tourGarageSubtitleNoTracking =>
+      'আপনার প্রতিটি বাইক, প্রত্যেকটির আলাদা ওডোমিটার ও সার্ভিস ইতিহাসসহ।';
+
+  @override
+  String get tourGarageActiveBodyNoTracking =>
+      'মেইনটেন্যান্স সক্রিয় বাইক দিয়ে খোলে। যেকোনো সময় বদলাতে পারবেন।';
+
+  @override
+  String get tourGarageDetailBodyNoTracking =>
+      'ছবি যোগ করতে ও স্পেসিফিকেশন বদলাতে বাইকে ট্যাপ করুন।';
+
+  @override
+  String get tourProfileSubtitleNoSocial =>
+      'আপনার পাবলিক পেজ: পরিসংখ্যান ও গ্যারেজ।';
+
+  @override
   String get fuelTitle => 'জ্বালানি';
 
   @override
@@ -6425,4 +6361,264 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।';
+
+  @override
+  String get oemGuideTitle => 'রাইড রেকর্ডিং চালু রাখুন';
+
+  @override
+  String oemGuideIntro(String brand) {
+    return '$brand ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। এই তিনটি সেটিং একবার বদলে নিন।';
+  }
+
+  @override
+  String get oemGuideStepAutostart =>
+      'ThrottleIQ-এর জন্য অটোস্টার্ট (অটো-লঞ্চ বা ব্যাকগ্রাউন্ড স্টার্ট নামেও থাকে) চালু করুন।';
+
+  @override
+  String get oemGuideOpenAutostart => 'অটোস্টার্ট সেটিংস খুলুন';
+
+  @override
+  String get oemGuideStepBattery =>
+      'ThrottleIQ-এর অ্যাপ ইনফোতে ব্যাটারি \"কোনো সীমা নেই\" বা \"ব্যাকগ্রাউন্ডে চলতে দিন\" করে দিন।';
+
+  @override
+  String get oemGuideStepLock =>
+      'সাম্প্রতিক অ্যাপে ThrottleIQ লক করুন (কার্ডটি চেপে ধরুন বা নিচে টানুন), যাতে সব মুছে দিলেও এটি বন্ধ না হয়।';
+
+  @override
+  String oemGuideMoreHelp(String brand) {
+    return '$brand ফোনের জন্য ধাপে ধাপে গাইড';
+  }
+
+  @override
+  String oemGuideOfferTitle(String brand) {
+    return '$brand-এ রাইড মাঝপথে কেটে যায়?';
+  }
+
+  @override
+  String oemGuideOfferBody(String brand) {
+    return 'ব্যাটারি বাঁচাতে $brand ফোন রাইডের মাঝপথে ThrottleIQ বন্ধ করে দিতে পারে। তিনটি সেটিং বদলালে আর হবে না, এক মিনিট লাগে।';
+  }
+
+  @override
+  String get oemGuideShowMe => 'দেখান';
+
+  @override
+  String get yourThrottleIqSection => 'আপনার ThrottleIQ';
+
+  @override
+  String get yourThrottleIqDescription =>
+      'শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।';
+
+  @override
+  String get communityFieldLabel => 'কমিউনিটি';
+
+  @override
+  String get communityFullLabel => 'সবকিছু';
+
+  @override
+  String get communityFullDescription => 'রাইড, রাইডার ও ফোরাম';
+
+  @override
+  String get communityForumsLabel => 'শুধু ফোরাম';
+
+  @override
+  String get communityForumsDescription => 'ফিড বা মানুষ নেই';
+
+  @override
+  String get communityOffLabel => 'বন্ধ';
+
+  @override
+  String get communityOffDescription => 'কমিউনিটি নেই';
+
+  @override
+  String get placesModuleTitle => 'প্লেস ও রুট';
+
+  @override
+  String get placesModuleSubtitle =>
+      'পেট্রোল পাম্প, মেকানিক, চেকপোস্ট ও সেভ করা রুট';
+
+  @override
+  String get rideTrackingModuleTitle => 'রাইড ট্র্যাকিং';
+
+  @override
+  String get rideTrackingModuleSubtitle =>
+      'রেকর্ডিং, রাইড অ্যানালিটিক্স, স্বয়ংক্রিয় ওডোমিটার ও ক্র্যাশ শনাক্তকরণ। আপনার লোকেশন ব্যবহার করে।';
+
+  @override
+  String get moduleKeepOnAction => 'চালু রাখুন';
+
+  @override
+  String get moduleTurnOffAction => 'বন্ধ করুন';
+
+  @override
+  String get communityForumsOnlyWarningTitle => 'রাইড ও রাইডার লুকাবেন?';
+
+  @override
+  String get communityForumsOnlyWarningBody =>
+      'অন্যদের শেয়ার করা রাইড দেখবেন না, আর কাউকে ফলো, মেসেজ বা গ্রুপ রাইড করতে পারবেন না। একই রাস্তার রাইডাররাই প্রায়ই প্রথম বন্ধ রাস্তার খবর দেন।';
+
+  @override
+  String get communityOffWarningTitle => 'কমিউনিটি বন্ধ করবেন?';
+
+  @override
+  String get communityOffWarningBody =>
+      'ফোরামও হারাবেন, যেখানে আপনার একই বাইকের মালিকরা প্রশ্নের উত্তর দেন ও সমাধান শেয়ার করেন। আগে পোস্ট করা সবকিছু থেকে যাবে।';
+
+  @override
+  String get placesOffWarningTitle => 'প্লেস বন্ধ করবেন?';
+
+  @override
+  String get placesOffWarningBody =>
+      'পেট্রোল পাম্প, মেকানিক, পুলিশ চেকপোস্ট, স্পিড ক্যামেরা বা আপনার সেভ করা রুট দেখবেন না, যা আশেপাশের রাইডাররা যাচাই করেছেন।';
+
+  @override
+  String get rideTrackingOffWarningTitle => 'রাইড ট্র্যাকিং বন্ধ করবেন?';
+
+  @override
+  String get rideTrackingOffWarningBody =>
+      'ThrottleIQ আপনার লোকেশন ব্যবহার বন্ধ করবে। রাইড রেকর্ডিং, অ্যানালিটিক্স, ট্রিপ শনাক্তকরণ ও ক্র্যাশ শনাক্তকরণ বন্ধ হবে, আর সার্ভিস রিমাইন্ডার শুধু আপনার দেওয়া ওডোমিটার রিডিং ব্যবহার করবে। আগের রাইডগুলো থেকে যাবে।';
+
+  @override
+  String get rideTrackingOffDuringRide =>
+      'রাইড ট্র্যাকিং বন্ধ করার আগে রাইড শেষ করুন।';
+
+  @override
+  String get modulesUpdatedSnack =>
+      'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
+
+  @override
+  String get manualOdometerHint =>
+      'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
+
+  @override
+  String get phonePlacementLabel => 'ফোন';
+
+  @override
+  String get phonePlacementMount => 'মাউন্টে';
+
+  @override
+  String get phonePlacementPocket => 'পকেটে';
+
+  @override
+  String get phonePlacementBag => 'ব্যাগে';
+
+  @override
+  String get phonePlacementHint =>
+      'পড়ে যাওয়া আর ঝাঁকুনির পার্থক্য বুঝতে অ্যাপকে সাহায্য করে।';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return '$time-এ সম্ভাব্য পতন';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'আপনার ফোনে জোরে ধাক্কা লেগেছে, তারপর ফোনটি থেমে গেছে। আপনি কি পড়ে গিয়েছিলেন?';
+
+  @override
+  String get impactAnswerYes => 'হ্যাঁ, পড়ে গিয়েছিলাম';
+
+  @override
+  String get impactAnswerPhoneFell => 'না, ফোন পড়ে গিয়েছিল';
+
+  @override
+  String get impactAnswerBump => 'না, শুধু ঝাঁকুনি';
+
+  @override
+  String get impactAnswerHardStop => 'না, জোরে ব্রেক করেছিলাম';
+
+  @override
+  String get impactAnswerUnsure => 'নিশ্চিত নই';
+
+  @override
+  String get impactFollowUpTitle =>
+      'আপনি ঠিক আছেন জেনে ভালো লাগল। দুটি ছোট প্রশ্ন অ্যাপকে শিখতে সাহায্য করবে:';
+
+  @override
+  String get impactSeverityLabel => 'কতটা গুরুতর ছিল?';
+
+  @override
+  String get impactSeverityNone => 'কোনো আঘাত নেই';
+
+  @override
+  String get impactSeverityMinor => 'সামান্য আঘাত';
+
+  @override
+  String get impactSeverityMedical => 'চিকিৎসা লেগেছে';
+
+  @override
+  String get impactSurfaceLabel => 'রাস্তার অবস্থা';
+
+  @override
+  String get surfacePaved => 'পাকা রাস্তা';
+
+  @override
+  String get surfaceBroken => 'ভাঙা রাস্তা';
+
+  @override
+  String get surfaceDirt => 'কাঁচা রাস্তা';
+
+  @override
+  String get surfaceGravel => 'নুড়ি-পাথর';
+
+  @override
+  String get surfaceWet => 'ভেজা রাস্তা';
+
+  @override
+  String get surfaceRailCrossing => 'রেলক্রসিং';
+
+  @override
+  String get surfaceSpeedBump => 'স্পিড ব্রেকার';
+
+  @override
+  String get impactSaveAnswer => 'সেভ করুন';
+
+  @override
+  String get impactThanks => 'ধন্যবাদ — এটা কাজে লাগবে।';
+
+  @override
+  String get reportCrashAction => 'দুর্ঘটনা বা পতন জানান';
+
+  @override
+  String get reportCrashTitle => 'কখন ঘটেছিল?';
+
+  @override
+  String get reportCrashBody =>
+      'যে মুহূর্তে পড়েছিলেন সেখানে টেনে আনুন। অ্যাপ যেসব পতন ধরতে পারেনি, সেগুলো শিখতে এটা সাহায্য করে।';
+
+  @override
+  String get reportCrashSaved => 'জানানো হয়েছে। ধন্যবাদ।';
+
+  @override
+  String get crashResearchTitle => 'দুর্ঘটনা শনাক্তকরণ উন্নত করতে সাহায্য করুন';
+
+  @override
+  String get crashResearchDesc =>
+      'পতন নিয়ে আপনার উত্তর আর তার আশপাশের সেন্সর রিডিং শেয়ার করে — আপনার নাম বা সঠিক অবস্থান ছাড়া (শুধু প্রায় 1 কিমি এলাকা)। শুরুতে বন্ধ থাকে।';
+
+  @override
+  String get editRide => 'রাইড সম্পাদনা';
+
+  @override
+  String get seeMore => 'আরও দেখুন';
+
+  @override
+  String get deleteRide => 'রাইড মুছুন';
+
+  @override
+  String get deleteSharedPostBody =>
+      'এতে শুধু শেয়ার করা পোস্টটি মুছবে। আপনার রাইডের তথ্য ইতিহাসে থাকবে।\n\nরাইডটির সবকিছু মুছতে যান রাইড → ইতিহাস → সেই রাইড → মুছুন।';
+
+  @override
+  String get deleteRideConfirmTitle => 'এই রাইড মুছবেন?';
+
+  @override
+  String get deleteRideConfirmBody =>
+      'এতে রাইড, তার রুট ও পরিসংখ্যান আপনার ইতিহাস থেকে স্থায়ীভাবে মুছে যাবে। শেয়ার করা পোস্ট থাকলে সেটিও সরে যাবে। এটি ফেরানো যাবে না।';
+
+  @override
+  String couldNotSaveChanges(Object e) {
+    return 'পরিবর্তন সংরক্ষণ করা যায়নি: $e';
+  }
 }

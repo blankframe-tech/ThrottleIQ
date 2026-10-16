@@ -20,26 +20,6 @@
   "@appearanceSection": {
     "description": "Section header for the theme/appearance controls."
   },
-  "vibeFieldLabel": "Vibe",
-  "@vibeFieldLabel": {
-    "description": "Label above the Boxy/Curvy shape selector."
-  },
-  "vibeBoxyLabel": "Boxy",
-  "@vibeBoxyLabel": {
-    "description": "Name of the sharp-cornered shape vibe."
-  },
-  "vibeBoxyDescription": "Sharp corners",
-  "@vibeBoxyDescription": {
-    "description": "One-line description under the Boxy vibe option."
-  },
-  "vibeCurvyLabel": "Curvy",
-  "@vibeCurvyLabel": {
-    "description": "Name of the rounded-corner shape vibe."
-  },
-  "vibeCurvyDescription": "Rounded corners",
-  "@vibeCurvyDescription": {
-    "description": "One-line description under the Curvy vibe option."
-  },
   "brightnessFieldLabel": "Brightness",
   "@brightnessFieldLabel": {
     "description": "Label above the Dark/Light brightness selector."
@@ -67,66 +47,6 @@
   },
   "@brightnessLightDescription": {
     "description": "One-line description under the Light brightness option."
-  },
-  "colorFieldLabel": "Color",
-  "@colorFieldLabel": {
-    "description": "Label above the dropdown that picks the app's color mode."
-  },
-  "themeSportLabel": "Sport",
-  "@themeSportLabel": {
-    "description": "Name of the Sport color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeSportDescription": "Lime and magenta, carbon-black panel",
-  "@themeSportDescription": {
-    "description": "One-line description of the Sport color mode's hues, shown under its name in the picker."
-  },
-  "themeRainLabel": "Rain",
-  "@themeRainLabel": {
-    "description": "Name of the Rain color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeRainDescription": "Indigo dusk, lavender and teal",
-  "@themeRainDescription": {
-    "description": "One-line description of the Rain color mode's hues, shown under its name in the picker."
-  },
-  "themeRaceLabel": "Race",
-  "@themeRaceLabel": {
-    "description": "Name of the Race color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeRaceDescription": "Blocky race poster, mustard and rust",
-  "@themeRaceDescription": {
-    "description": "One-line description of the Race color mode's hues, shown under its name in the picker."
-  },
-  "themeCommuteLabel": "Commute",
-  "@themeCommuteLabel": {
-    "description": "Name of the Commute color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeCommuteDescription": "Calm cream, sage and tan",
-  "@themeCommuteDescription": {
-    "description": "One-line description of the Commute color mode's hues, shown under its name in the picker."
-  },
-  "themeTourLabel": "Tour",
-  "@themeTourLabel": {
-    "description": "Name of the Tour color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeTourDescription": "Punchy orange and sky blue",
-  "@themeTourDescription": {
-    "description": "One-line description of the Tour color mode's hues, shown under its name in the picker."
-  },
-  "themeAdvLabel": "ADV",
-  "@themeAdvLabel": {
-    "description": "Name of the ADV color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeAdvDescription": "Navy console, cyan telemetry",
-  "@themeAdvDescription": {
-    "description": "One-line description of the ADV color mode's hues, shown under its name in the picker."
-  },
-  "themeCityLabel": "City",
-  "@themeCityLabel": {
-    "description": "Name of the City color mode (a riding-mode name). Product name \u2014 kept recognisable across languages."
-  },
-  "themeCityDescription": "Paper warmth, blue and orange",
-  "@themeCityDescription": {
-    "description": "One-line description of the City color mode's hues, shown under its name in the picker."
   },
   "languageSection": "Language",
   "@languageSection": {
@@ -1165,7 +1085,7 @@
   "@crashDetected": {
     "description": "Text in active_ride_screen."
   },
-  "okEmergencyContactsWill": "Are you OK? Your emergency contacts will be notified when the timer ends.",
+  "okEmergencyContactsWill": "Are you OK? If you don't answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.",
   "@okEmergencyContactsWill": {
     "description": "Text in active_ride_screen."
   },
@@ -1213,9 +1133,9 @@
   "@backgroundLocation": {
     "description": "Text in record_screen."
   },
-  "backgroundLocationRationale": "ThrottleIQ records your route, speed, and distance using your location while a ride is active \u2014 including while your phone is locked or in a pocket, so the ride isn't cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.",
+  "backgroundLocationRationale": "With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.",
   "@backgroundLocationRationale": {
-    "description": "Text in record_screen."
+    "description": "Play prominent disclosure, shown before the background-location request when the rider turns on automatic ride detection."
   },
   "notNow": "Not now",
   "@notNow": {
@@ -1232,10 +1152,6 @@
   "settingsCaps": "SETTINGS",
   "@settingsCaps": {
     "description": "Label in record_screen."
-  },
-  "slideStartRide": "Slide to start ride",
-  "@slideStartRide": {
-    "description": "Text in record_screen."
   },
   "close": "Close",
   "@close": {
@@ -3240,7 +3156,7 @@
   "@deleteAccountQuestion": {
     "description": "Text in settings_screen."
   },
-  "thisActionIrreversibleAll": "This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.",
+  "thisActionIrreversibleAll": "This can't be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.",
   "@thisActionIrreversibleAll": {
     "description": "Text in settings_screen."
   },
@@ -3940,6 +3856,14 @@
   "placesMapView": "Map",
   "@placesMapView": {
     "description": "Places hub redesign (Places | Routes | Saved)."
+  },
+  "placesFullMap": "Full-screen map",
+  "@placesFullMap": {
+    "description": "Places map: hides the search and header so the map fills the screen."
+  },
+  "placesExitFullMap": "Exit full screen",
+  "@placesExitFullMap": {
+    "description": "Places map: brings the search and header back."
   },
   "placesListView": "List",
   "@placesListView": {
@@ -5890,35 +5814,6 @@
   "@badgeRungSaddle8h": {
     "description": "Badge rung name (saddle_8h)."
   },
-  "badgeFamSpeedName": "Top speed",
-  "@badgeFamSpeedName": {
-    "description": "Badge family name (speed)."
-  },
-  "badgeFamSpeedAbout": "The highest speed recorded on any of your rides.",
-  "@badgeFamSpeedAbout": {
-    "description": "What the speed badge family measures."
-  },
-  "badgeFamSpeedReq": "Record a top speed of {n} km/h.",
-  "@badgeFamSpeedReq": {
-    "description": "How to earn a speed badge rung; {n} is the threshold.",
-    "placeholders": {
-      "n": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeRungTonUp": "Ton-up",
-  "@badgeRungTonUp": {
-    "description": "Badge rung name (ton_up)."
-  },
-  "badgeRungSpeed140": "Quick",
-  "@badgeRungSpeed140": {
-    "description": "Badge rung name (speed_140)."
-  },
-  "badgeRungSpeedDemon": "Speed demon",
-  "@badgeRungSpeedDemon": {
-    "description": "Badge rung name (speed_demon)."
-  },
   "badgeFamNightName": "Night rider",
   "@badgeFamNightName": {
     "description": "Badge family name (night)."
@@ -6059,10 +5954,6 @@
   "@badgeUnitHours": {
     "description": "Unit word after a badge figure (h)."
   },
-  "badgeUnitKmh": "km/h",
-  "@badgeUnitKmh": {
-    "description": "Unit word after a badge figure (km/h)."
-  },
   "badgeUnitDays": "days",
   "@badgeUnitDays": {
     "description": "Unit word after a badge figure (days)."
@@ -6200,7 +6091,7 @@
   "@notifCrashTitle": {
     "description": "Crash-alert notification title."
   },
-  "notifCrashBody": "Contacting your emergency contacts in {seconds}s unless you tap \"I'm OK\".",
+  "notifCrashBody": "Tap \"I'm OK\" within {seconds}s if you're fine. ThrottleIQ does not contact anyone for you.",
   "@notifCrashBody": {
     "description": "Crash-alert notification body; {seconds} is the countdown.",
     "placeholders": {
@@ -6230,6 +6121,14 @@
         "type": "String"
       }
     }
+  },
+  "notifRecordingStoppedTitle": "Recording stopped",
+  "@notifRecordingStoppedTitle": {
+    "description": "Notification when the phone stopped the ride's foreground service mid-ride."
+  },
+  "notifRecordingStoppedBody": "Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.",
+  "@notifRecordingStoppedBody": {
+    "description": "Body of the recording-stopped notification; tapping opens the app on the paused ride."
   },
   "notifConfirm": "Confirm",
   "@notifConfirm": {
@@ -8067,14 +7966,6 @@
       }
     }
   },
-  "groupRideRealtimeLive": "Live",
-  "@groupRideRealtimeLive": {
-    "description": "Badge on the group ride map: positions are arriving over the realtime channel (every ~2s)."
-  },
-  "groupRideRealtimeDelayed": "Delayed",
-  "@groupRideRealtimeDelayed": {
-    "description": "Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback."
-  },
   "chatTyping": "typing…",
   "@chatTyping": {
     "description": "Shown under the chat partner's name while they are typing."
@@ -8090,6 +7981,18 @@
   "deleteAccountOffline": "No connection. Check your internet and try again.",
   "@deleteAccountOffline": {
     "description": "Snackbar when delete-account fails with network-request-failed."
+  },
+  "updateRequiredTitle": "Update required",
+  "@updateRequiredTitle": {
+    "description": "Title of the blocking screen shown when this build is older than config/app.minBuild."
+  },
+  "updateRequiredBody": "This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.",
+  "@updateRequiredBody": {
+    "description": "Body of the blocking update screen."
+  },
+  "updateRequiredAction": "Get the latest version",
+  "@updateRequiredAction": {
+    "description": "Button on the blocking update screen; opens the install page."
   },
   "reauthRequiredTitle": "Confirm it's you",
   "@reauthRequiredTitle": {
@@ -8197,43 +8100,6 @@
   "@couldNotArchiveSharedRides": {
     "description": "Snackbar when archiving fails because the shared rides could not be deleted."
   },
-  "badgeRarityCommon": "Common",
-  "@badgeRarityCommon": {
-    "description": "Badge rarity tier: 40% or more of riders own it."
-  },
-  "badgeRarityUncommon": "Uncommon",
-  "@badgeRarityUncommon": {
-    "description": "Badge rarity tier: 15–40% of riders own it."
-  },
-  "badgeRarityRare": "Rare",
-  "@badgeRarityRare": {
-    "description": "Badge rarity tier: 5–15% of riders own it."
-  },
-  "badgeRarityEpic": "Epic",
-  "@badgeRarityEpic": {
-    "description": "Badge rarity tier: 1–5% of riders own it."
-  },
-  "badgeRarityLegendary": "Legendary",
-  "@badgeRarityLegendary": {
-    "description": "Badge rarity tier: under 1% of riders own it."
-  },
-  "badgeOwnedByPercent": "{percent} of riders own this badge",
-  "@badgeOwnedByPercent": {
-    "description": "Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.",
-    "placeholders": {
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
-  "badgeOwnershipUnknown": "Rarity isn't available right now",
-  "@badgeOwnershipUnknown": {
-    "description": "Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available."
-  },
-  "badgeRarityLabel": "Rarity",
-  "@badgeRarityLabel": {
-    "description": "Badge detail sheet: section label for the rarity figure."
-  },
   "badgeHowToEarn": "How to earn it",
   "@badgeHowToEarn": {
     "description": "Badge detail sheet: section label for the requirement."
@@ -8295,21 +8161,6 @@
       }
     }
   },
-  "badgeShareTextRarity": "I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.",
-  "@badgeShareTextRarity": {
-    "description": "Share text for an earned badge when its rarity is known.",
-    "placeholders": {
-      "badge": {
-        "type": "String"
-      },
-      "rarity": {
-        "type": "String"
-      },
-      "percent": {
-        "type": "String"
-      }
-    }
-  },
   "badgeViewDetails": "Tap for details",
   "@badgeViewDetails": {
     "description": "Accessibility hint on a badge row that opens the badge detail sheet."
@@ -8366,13 +8217,13 @@
   "@tourRecordModeBody": {
     "description": "Feature tour, Record step: explains Solo/Group."
   },
-  "tourRecordStartTitle": "Hold or slide to start",
+  "tourRecordStartTitle": "Hold to start",
   "@tourRecordStartTitle": {
     "description": "Feature tour, Record step: callout about the start control."
   },
-  "tourRecordStartBody": "Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.",
+  "tourRecordStartBody": "Press and hold the start ring, so a stray tap never starts a ride.",
   "@tourRecordStartBody": {
-    "description": "Feature tour, Record step: explains hold-to-start / slide-to-start."
+    "description": "Feature tour, Record step: explains hold-to-start."
   },
   "tourCockpitTitle": "Your live cockpit",
   "@tourCockpitTitle": {
@@ -8654,6 +8505,46 @@
   "@tourProfileSafeQrBody": {
     "description": "Feature tour, profile step: explains SafeQR."
   },
+  "tourForumsFindTitle": "Find your bike's forum",
+  "@tourForumsFindTitle": {
+    "description": "Feature tour, forums-only community step: finding a forum."
+  },
+  "tourForumsFindBody": "Brand and model hubs, plus forums other riders started. Search by bike or topic.",
+  "@tourForumsFindBody": {
+    "description": "Feature tour, forums-only community step: finding a forum."
+  },
+  "tourForumsAskTitle": "Ask and answer",
+  "@tourForumsAskTitle": {
+    "description": "Feature tour, forums-only community step: posting."
+  },
+  "tourForumsAskBody": "Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.",
+  "@tourForumsAskBody": {
+    "description": "Feature tour, forums-only community step: posting."
+  },
+  "tourForumsBikeTitle": "Show your bike",
+  "@tourForumsBikeTitle": {
+    "description": "Feature tour, forums-only community step: attachments."
+  },
+  "tourForumsBikeBody": "Attach your bike or a maintenance log to a post, so others know exactly what you ride.",
+  "@tourForumsBikeBody": {
+    "description": "Feature tour, forums-only community step: attachments."
+  },
+  "tourGarageSubtitleNoTracking": "Every bike you own, each with its own odometer and service history.",
+  "@tourGarageSubtitleNoTracking": {
+    "description": "Feature tour, garage step subtitle when ride tracking is off (no rides)."
+  },
+  "tourGarageActiveBodyNoTracking": "Maintenance opens on the active bike. Switch it any time.",
+  "@tourGarageActiveBodyNoTracking": {
+    "description": "Feature tour, garage step, active bike, when ride tracking is off."
+  },
+  "tourGarageDetailBodyNoTracking": "Tap a bike to add a photo and edit its specs.",
+  "@tourGarageDetailBodyNoTracking": {
+    "description": "Feature tour, garage step, bike details, when ride tracking is off."
+  },
+  "tourProfileSubtitleNoSocial": "Your public page: stats and garage.",
+  "@tourProfileSubtitleNoSocial": {
+    "description": "Feature tour, profile step subtitle when the rider turned off follows (community Forums only or Off)."
+  },
   "fuelTitle": "Fuel",
   "@fuelTitle": {
     "description": "Heading of the fuel card on bike detail."
@@ -8879,5 +8770,339 @@
   "insightFuelNeedFullFills": "Log two full-tank fill-ups to measure this.",
   "@insightFuelNeedFullFills": {
     "description": "Insight on efficiency charts when fewer than two full-tank fills exist."
+  },
+  "oemGuideTitle": "Keep rides recording",
+  "@oemGuideTitle": {
+    "description": "Title of the OEM battery-settings guide screen."
+  },
+  "oemGuideIntro": "{brand} phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.",
+  "@oemGuideIntro": {
+    "description": "Intro on the OEM guide; brand is the phone maker, e.g. Xiaomi.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideStepAutostart": "Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.",
+  "@oemGuideStepAutostart": {
+    "description": "OEM guide step 1."
+  },
+  "oemGuideOpenAutostart": "Open Autostart settings",
+  "@oemGuideOpenAutostart": {
+    "description": "Button opening the phone maker's autostart screen."
+  },
+  "oemGuideStepBattery": "In ThrottleIQ's app info, set Battery to \"No restrictions\" or \"Allow background activity\".",
+  "@oemGuideStepBattery": {
+    "description": "OEM guide step 2."
+  },
+  "oemGuideStepLock": "In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn't close it.",
+  "@oemGuideStepLock": {
+    "description": "OEM guide step 3."
+  },
+  "oemGuideMoreHelp": "Step-by-step guide for {brand} phones",
+  "@oemGuideMoreHelp": {
+    "description": "Link to dontkillmyapp.com for the phone maker.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideOfferTitle": "Rides cut short on {brand}?",
+  "@oemGuideOfferTitle": {
+    "description": "Title of the one-time offer of the OEM guide after the first ride.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideOfferBody": "{brand} phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.",
+  "@oemGuideOfferBody": {
+    "description": "Body of the one-time OEM guide offer.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
+  "oemGuideShowMe": "Show me",
+  "@oemGuideShowMe": {
+    "description": "Button that opens the OEM guide."
+  },
+  "yourThrottleIqSection": "Your ThrottleIQ",
+  "@yourThrottleIqSection": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "yourThrottleIqDescription": "Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.",
+  "@yourThrottleIqDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFieldLabel": "Community",
+  "@communityFieldLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullLabel": "Everything",
+  "@communityFullLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityFullDescription": "Rides, riders & forums",
+  "@communityFullDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsLabel": "Forums only",
+  "@communityForumsLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsDescription": "No feed or people",
+  "@communityForumsDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffLabel": "Off",
+  "@communityOffLabel": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffDescription": "No community",
+  "@communityOffDescription": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleTitle": "Places & routes",
+  "@placesModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesModuleSubtitle": "Fuel, mechanics, checkposts and saved routes",
+  "@placesModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleTitle": "Ride tracking",
+  "@rideTrackingModuleTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingModuleSubtitle": "Recording, ride analytics, automatic odometer and crash detection. Uses your location.",
+  "@rideTrackingModuleSubtitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleKeepOnAction": "Keep it on",
+  "@moduleKeepOnAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "moduleTurnOffAction": "Turn off",
+  "@moduleTurnOffAction": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningTitle": "Hide rides and riders?",
+  "@communityForumsOnlyWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityForumsOnlyWarningBody": "You won't see rides others share, and you can't follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.",
+  "@communityForumsOnlyWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningTitle": "Turn off the community?",
+  "@communityOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "communityOffWarningBody": "You'll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.",
+  "@communityOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningTitle": "Turn off Places?",
+  "@placesOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "placesOffWarningBody": "You won't see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.",
+  "@placesOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningTitle": "Turn off ride tracking?",
+  "@rideTrackingOffWarningTitle": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffWarningBody": "ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.",
+  "@rideTrackingOffWarningBody": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "rideTrackingOffDuringRide": "Finish your ride before turning ride tracking off.",
+  "@rideTrackingOffDuringRide": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "modulesUpdatedSnack": "Done. Your tabs now show only what you use.",
+  "@modulesUpdatedSnack": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
+  "@manualOdometerHint": {
+    "description": "Settings → Your ThrottleIQ (app modules)."
+  },
+  "phonePlacementLabel": "Phone",
+  "@phonePlacementLabel": {
+    "description": "Ride-start label before the phone placement chips."
+  },
+  "phonePlacementMount": "On a mount",
+  "@phonePlacementMount": {
+    "description": "Phone placement chip: phone held in a handlebar mount."
+  },
+  "phonePlacementPocket": "In a pocket",
+  "@phonePlacementPocket": {
+    "description": "Phone placement chip: phone in a trouser or jacket pocket."
+  },
+  "phonePlacementBag": "In a bag",
+  "@phonePlacementBag": {
+    "description": "Phone placement chip: phone in a backpack or tank bag."
+  },
+  "phonePlacementHint": "Helps the app tell a fall from a bump.",
+  "@phonePlacementHint": {
+    "description": "Small hint under the phone placement chips."
+  },
+  "impactQuestionTitle": "Possible fall at {time}",
+  "@impactQuestionTitle": {
+    "description": "After-ride card title. {time} is a clock time like 9:28 PM.",
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "impactQuestionBody": "Your phone felt a hard knock and then stopped moving. Did you fall?",
+  "@impactQuestionBody": {
+    "description": "After-ride card question."
+  },
+  "impactAnswerYes": "Yes, I fell",
+  "@impactAnswerYes": {
+    "description": "Answer: the rider fell or crashed."
+  },
+  "impactAnswerPhoneFell": "No, my phone fell",
+  "@impactAnswerPhoneFell": {
+    "description": "Answer: only the phone fell."
+  },
+  "impactAnswerBump": "No, just a bump",
+  "@impactAnswerBump": {
+    "description": "Answer: a pothole, rail crossing or bump."
+  },
+  "impactAnswerHardStop": "No, I braked hard",
+  "@impactAnswerHardStop": {
+    "description": "Answer: a hard stop, no fall."
+  },
+  "impactAnswerUnsure": "Not sure",
+  "@impactAnswerUnsure": {
+    "description": "Answer: the rider doesn't know."
+  },
+  "impactFollowUpTitle": "Glad you're OK. Two quick questions help the app learn:",
+  "@impactFollowUpTitle": {
+    "description": "Shown after 'Yes, I fell'; both questions are optional."
+  },
+  "impactSeverityLabel": "How bad was it?",
+  "@impactSeverityLabel": {
+    "description": "Follow-up question about injury."
+  },
+  "impactSeverityNone": "No injury",
+  "@impactSeverityNone": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMinor": "Minor injury",
+  "@impactSeverityMinor": {
+    "description": "Severity chip."
+  },
+  "impactSeverityMedical": "Needed medical help",
+  "@impactSeverityMedical": {
+    "description": "Severity chip."
+  },
+  "impactSurfaceLabel": "Road surface",
+  "@impactSurfaceLabel": {
+    "description": "Follow-up question about the road."
+  },
+  "surfacePaved": "Paved",
+  "@surfacePaved": {
+    "description": "Road surface chip."
+  },
+  "surfaceBroken": "Broken road",
+  "@surfaceBroken": {
+    "description": "Road surface chip."
+  },
+  "surfaceDirt": "Dirt",
+  "@surfaceDirt": {
+    "description": "Road surface chip."
+  },
+  "surfaceGravel": "Gravel",
+  "@surfaceGravel": {
+    "description": "Road surface chip."
+  },
+  "surfaceWet": "Wet",
+  "@surfaceWet": {
+    "description": "Road surface chip."
+  },
+  "surfaceRailCrossing": "Rail crossing",
+  "@surfaceRailCrossing": {
+    "description": "Road surface chip."
+  },
+  "surfaceSpeedBump": "Speed bump",
+  "@surfaceSpeedBump": {
+    "description": "Road surface chip."
+  },
+  "impactSaveAnswer": "Save",
+  "@impactSaveAnswer": {
+    "description": "Saves the follow-up answers."
+  },
+  "impactThanks": "Thanks — that helps.",
+  "@impactThanks": {
+    "description": "Shown after the rider answers."
+  },
+  "reportCrashAction": "Report a crash or fall",
+  "@reportCrashAction": {
+    "description": "Ride summary button for a fall the app did not detect."
+  },
+  "reportCrashTitle": "When did it happen?",
+  "@reportCrashTitle": {
+    "description": "Title of the report-a-crash sheet."
+  },
+  "reportCrashBody": "Slide to the moment you fell. It helps the app learn the falls it missed.",
+  "@reportCrashBody": {
+    "description": "Report-a-crash sheet explanation."
+  },
+  "reportCrashSaved": "Reported. Thank you.",
+  "@reportCrashSaved": {
+    "description": "Snackbar after a crash report is saved."
+  },
+  "crashResearchTitle": "Help improve crash detection",
+  "@crashResearchTitle": {
+    "description": "Settings switch title."
+  },
+  "crashResearchDesc": "Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.",
+  "@crashResearchDesc": {
+    "description": "Settings switch subtitle for the research data opt-in."
+  },
+  "editRide": "Edit ride",
+  "@editRide": {
+    "description": "Menu item and sheet title for editing a shared ride's photos and caption."
+  },
+  "seeMore": "See more",
+  "@seeMore": {
+    "description": "Menu item opening the full ride view from a shared ride."
+  },
+  "deleteRide": "Delete ride",
+  "@deleteRide": {
+    "description": "Menu item / button for deleting a ride."
+  },
+  "deleteSharedPostBody": "This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.",
+  "@deleteSharedPostBody": {
+    "description": "Body of the confirm dialog for deleting a shared ride post."
+  },
+  "deleteRideConfirmTitle": "Delete this ride?",
+  "@deleteRideConfirmTitle": {
+    "description": "Title of the confirm dialog on the ride history screen."
+  },
+  "deleteRideConfirmBody": "This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can't be undone.",
+  "@deleteRideConfirmBody": {
+    "description": "Body of the confirm dialog on the ride history screen."
+  },
+  "couldNotSaveChanges": "Could not save changes: {e}",
+  "@couldNotSaveChanges": {
+    "description": "Snackbar when saving an edited shared ride fails.",
+    "placeholders": {
+      "e": {
+        "type": "Object"
+      }
+    }
   }
 }

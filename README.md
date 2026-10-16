@@ -4,8 +4,8 @@
 
 ![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
 
-> **Status:** pre-launch beta `1.0.0-beta.4.5.0+26`, tagged
-> [`beta-v4.5`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.5).
+> **Status:** pre-launch beta `1.0.0-beta.4.7.1+29`, tagged
+> [`beta-v4.7.1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.7.1).
 > Real riders are testing a signed Android build from GitHub Releases and a Play
 > Console internal-testing track. There is no public Play Store or App Store
 > listing yet. App id: `com.bft.throttleiq`.
@@ -25,9 +25,10 @@
 - **Rides tab analytics**: score, per-ride and lifetime charts (basics, time, riding behaviour, cornering and elevation, activity patterns, per-bike, fuel), badges and streaks.
 - **Garage and maintenance**: multiple bikes, per-model service schedules, "what's due next" by km or date, service visits with receipts, paperwork expiry, PDF service record.
 - **Places and routes**: fuel, garage and spare-parts directory with reviews; saved routes; Dhaka-focused seed data.
-- **Social**: ride feed with privacy zones, forums, direct messages, group rides with live positions, challenges, QR follow.
+- **Social**: ride feed with privacy zones, forums, direct messages, group rides with live positions, QR follow.
 - **Safety (shipped parts)**: revocable 24 h live-share link, emergency contacts and a SafeQR medical card.
-- **Data**: JSON, CSV and GPX export; Firestore sync on resume and every 5 min; in-app account deletion.
+- **Data**: JSON, CSV and GPX export; Firestore sync on resume and every 5 min; in-app account deletion (sign-in and phone data at once, cloud data by hand within 30 days).
+- **Your ThrottleIQ**: riders can turn off the community (or keep forums only), Places, or ride tracking itself, down to a maintenance-only app that never uses location.
 - **Bilingual**: full English and Bangla.
 
 ## 📹 Indriyo — the hardware side
@@ -66,7 +67,7 @@ It runs once per commit, and git runs it before every push. CI calls the same sc
 
 ## 🔒 Privacy
 
-Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad or behavioural-analytics SDK; Crashlytics collects crash diagnostics only. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
+Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad SDK. Firebase Analytics is **on by default**: it counts screen views and a fixed list of funnel events (sign-up, ride started, bike added and so on), never a location, ride figure or account id, and riders can turn it off in Settings → Privacy & Safety. Crashlytics collects crash diagnostics. Riders can turn off social features, Places, or ride tracking (no location use at all) in Settings → Your ThrottleIQ. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
 
 ## 📚 Documentation
 

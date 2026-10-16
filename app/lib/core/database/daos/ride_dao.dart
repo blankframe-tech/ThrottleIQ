@@ -17,7 +17,8 @@ const _finishedStatusSql = "status IN ('completed', 'crash')";
 class RideDao {
   Future<void> insert(Map<String, dynamic> ride) async {
     final db = await DatabaseHelper.instance.database;
-    await db.insert('rides', ride, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert('rides', ride,
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Map<String, dynamic>>> getAllForUser(String userId) async {
@@ -79,11 +80,13 @@ class RideDao {
       var modified = false;
 
       // 1. Heal corrupted massive max speeds (> 70 m/s ~ 252 km/h)
-      if (healedMax != null && healedMax > SensorConstants.maxPlausibleSpeedMs) {
+      if (healedMax != null &&
+          healedMax > SensorConstants.maxPlausibleSpeedMs) {
         final plausibleFallback = (healedAvg != null &&
                 healedAvg > 0 &&
                 healedAvg <= SensorConstants.maxPlausibleSpeedMs)
-            ? (healedAvg * 1.5).clamp(healedAvg, SensorConstants.maxPlausibleSpeedMs)
+            ? (healedAvg * 1.5)
+                .clamp(healedAvg, SensorConstants.maxPlausibleSpeedMs)
             : SensorConstants.maxPlausibleSpeedMs;
         healedMax = plausibleFallback;
         modified = true;
@@ -96,7 +99,8 @@ class RideDao {
         if (healedAvg != null && healedAvg > 0) {
           healedMax = healedAvg;
         } else if (overallSpeed > 0) {
-          healedMax = overallSpeed.clamp(0.0, SensorConstants.maxPlausibleSpeedMs);
+          healedMax =
+              overallSpeed.clamp(0.0, SensorConstants.maxPlausibleSpeedMs);
         }
         if (healedMax != null && healedMax > 0) {
           modified = true;
@@ -145,7 +149,8 @@ class RideDao {
           where: 'id = ?',
           whereArgs: [row['id']],
         ).catchError((Object e) {
-          debugPrint('[RideDao] self-heal write failed for ride ${row['id']}: $e');
+          debugPrint(
+              '[RideDao] self-heal write failed for ride ${row['id']}: $e');
           return 0;
         }));
       } else {
@@ -183,6 +188,15 @@ class RideDao {
       where: 'id = ?',
       whereArgs: [id],
     );
+  }
+
+  /// Changes a ride's `status` and nothing else: no end time, stats or sync
+  /// flags. A dismissed crash alert puts a still-recording ride back to
+  /// `active` with this; [finalizeRide] is the end-of-ride write (B12).
+  Future<void> setStatus(String id, String status) async {
+    final db = await DatabaseHelper.instance.database;
+    await db.update('rides', {'status': status},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   /// issues §33.1: scoped to [userId] — this feeds directly into
@@ -226,7 +240,8 @@ class RideDao {
 
   Future<void> updateSyncedStatus(String id, bool synced) async {
     final db = await DatabaseHelper.instance.database;
-    await db.update('rides', {'synced': synced ? 1 : 0}, where: 'id = ?', whereArgs: [id]);
+    await db.update('rides', {'synced': synced ? 1 : 0},
+        where: 'id = ?', whereArgs: [id]);
   }
 
   /// Completed auto-detected rides whose bike attribution the rider hasn't
@@ -269,7 +284,10 @@ class RideDao {
     );
   }
 
-  /// Rides finishing within [day], for the daily prompt and the weekly digest.
+  /// Rides starting in `[from, to)`, for the daily prompt and the weekly
+  /// digest. `start_time` is stored UTC (v28), so the bounds are compared
+  /// as UTC too: pass the rider's local midnights and the day is the local
+  /// day, whatever zone the rides were recorded in.
   Future<List<Map<String, dynamic>>> getCompletedBetween(
     String userId,
     DateTime from,
@@ -282,8 +300,8 @@ class RideDao {
           'AND start_time >= ? AND start_time < ?',
       whereArgs: [
         userId,
-        from.toIso8601String(),
-        to.toIso8601String(),
+        from.toUtc().toIso8601String(),
+        to.toUtc().toIso8601String(),
       ],
       orderBy: 'start_time ASC',
     );
@@ -293,6 +311,7 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('impact_events', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
     });
   }
@@ -306,6 +325,7 @@ class RideDao {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
+      await txn.delete('impact_events', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);
       await txn.insert(
         'deleted_rides',
@@ -373,9 +393,13 @@ class RideDao {
   Future<void> deleteForBike(String bikeId) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
-      final rides = await txn.query('rides', where: 'bike_id = ?', whereArgs: [bikeId], columns: ['id']);
+      final rides = await txn.query('rides',
+          where: 'bike_id = ?', whereArgs: [bikeId], columns: ['id']);
       for (final ride in rides) {
-        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('ride_points',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'bike_id = ?', whereArgs: [bikeId]);
     });
@@ -384,11 +408,18 @@ class RideDao {
   Future<void> deleteAllForUser(String userId) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
-      final rides = await txn.query('rides', where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
+      final rides = await txn.query('rides',
+          where: 'user_id = ?', whereArgs: [userId], columns: ['id']);
       for (final ride in rides) {
-        await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('ride_points',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
+      // Including any whose ride row is already gone.
+      await txn
+          .delete('impact_events', where: 'user_id = ?', whereArgs: [userId]);
     });
   }
 }

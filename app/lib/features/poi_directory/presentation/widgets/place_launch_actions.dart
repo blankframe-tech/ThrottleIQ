@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../domain/entities/place_entity.dart';
@@ -26,12 +27,15 @@ abstract final class PlaceLaunchActions {
   /// silently, which a rider who only wanted the route never agreed to.
   /// Returns null when the rider backed out of the sheet, in which case
   /// nothing launches at all.
-  static Future<bool?> _shouldRecord(BuildContext context, WidgetRef ref) async {
+  static Future<bool?> _shouldRecord(
+      BuildContext context, WidgetRef ref) async {
     // A ride already running is just carried on — nothing to ask.
     final status = ref.read(rideRecordingProvider).status;
     if (status != RecordingStatus.idle && status != RecordingStatus.completed) {
       return false;
     }
+    // Ride tracking is off: directions only, nothing to ask.
+    if (!ref.read(appModulesProvider).rideTracking) return false;
     final prefs = await SharedPreferences.getInstance();
     final remembered = prefs.getString(directionsChoiceKey);
     if (remembered == 'record') return true;
@@ -46,7 +50,8 @@ abstract final class PlaceLaunchActions {
     if (answer == null) return null;
     final (record, dontAskAgain) = answer;
     if (dontAskAgain) {
-      await prefs.setString(directionsChoiceKey, record ? 'record' : 'directions');
+      await prefs.setString(
+          directionsChoiceKey, record ? 'record' : 'directions');
     }
     return record;
   }
@@ -100,8 +105,7 @@ abstract final class PlaceLaunchActions {
         label: place.name,
       );
       try {
-        launched =
-            await launchUrl(apple, mode: LaunchMode.externalApplication);
+        launched = await launchUrl(apple, mode: LaunchMode.externalApplication);
       } catch (_) {
         launched = false;
       }
@@ -160,7 +164,8 @@ class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
             const SizedBox(height: 6),
             Text(
               context.l10n.mapsAppGivesDirections,
-              style: TextStyle(fontSize: 14, color: context.palette.textSecondary),
+              style:
+                  TextStyle(fontSize: 14, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 16),
             ElevatedButton.icon(
@@ -179,7 +184,8 @@ class _RecordChoiceSheetState extends State<_RecordChoiceSheet> {
               value: _dontAskAgain,
               onChanged: (v) => setState(() => _dontAskAgain = v ?? false),
               title: Text(context.l10n.dontAskAgain,
-                  style: TextStyle(fontSize: 14, color: context.palette.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 14, color: context.palette.textSecondary)),
               controlAffinity: ListTileControlAffinity.leading,
               contentPadding: EdgeInsets.zero,
               activeColor: context.palette.primary,

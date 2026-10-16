@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/end_ride_sheet.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
@@ -11,12 +13,15 @@ void main() {
   late EndRideChoice? result;
   late bool closed;
 
-  Future<void> openSheet(WidgetTester tester) async {
+  Future<void> openSheet(WidgetTester tester,
+      {Map<String, Object> prefs = const {}}) async {
     closed = false;
     result = null;
-    await tester.pumpWidget(MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+    SharedPreferences.setMockInitialValues(prefs);
+    await tester.pumpWidget(ProviderScope(
+        child: MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
@@ -28,7 +33,7 @@ void main() {
           ),
         ),
       ),
-    ));
+    )));
     await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
@@ -49,7 +54,9 @@ void main() {
     expect(tester.getSize(find.byKey(const Key('endRideShareToggle'))).height,
         greaterThanOrEqualTo(56));
     expect(
-        tester.getSize(find.widgetWithText(OutlinedButton, 'Keep riding')).height,
+        tester
+            .getSize(find.widgetWithText(OutlinedButton, 'Keep riding'))
+            .height,
         greaterThanOrEqualTo(56));
   });
 
@@ -88,5 +95,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(closed, isTrue);
     expect(result, isNull);
+  });
+
+  // Sharing posts to the social feed, so riders with social turned off
+  // (Settings → Your ThrottleIQ) aren't offered it.
+  testWidgets('no share toggle when social is off', (tester) async {
+    await openSheet(tester, prefs: {'module_community': 'forumsOnly'});
+    expect(find.byKey(const Key('endRideShareToggle')), findsNothing);
+    expect(find.byKey(const Key('holdToEndButton')), findsOneWidget);
   });
 }

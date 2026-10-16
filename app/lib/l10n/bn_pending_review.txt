@@ -95,7 +95,6 @@ notNow
 continueLabel
 turnOnCaps
 settingsCaps
-slideStartRide
 close
 fetchingRoute
 routeNotAvailable
@@ -888,12 +887,6 @@ badgeRungSaddle1h
 badgeRungSaddle2h
 badgeRungSaddle4h
 badgeRungSaddle8h
-badgeFamSpeedName
-badgeFamSpeedAbout
-badgeFamSpeedReq
-badgeRungTonUp
-badgeRungSpeed140
-badgeRungSpeedDemon
 badgeFamNightName
 badgeFamNightAbout
 badgeFamNightReq
@@ -924,7 +917,6 @@ badgeRungSmooth98
 badgeUnitRides
 badgeUnitKm
 badgeUnitHours
-badgeUnitKmh
 badgeUnitDays
 badgeUnitPts
 badgeTierBronze
@@ -1373,8 +1365,6 @@ forumAddPhotos
 paddockPosts
 
 # batch: realtime
-groupRideRealtimeLive
-groupRideRealtimeDelayed
 chatTyping
 
 # batch: audit101-g5
@@ -1408,14 +1398,6 @@ archivedPurgesIn
 couldNotExportBike
 couldNotArchiveSharedRides
 # batch: badge-rarity
-badgeRarityCommon
-badgeRarityUncommon
-badgeRarityRare
-badgeRarityEpic
-badgeRarityLegendary
-badgeOwnedByPercent
-badgeOwnershipUnknown
-badgeRarityLabel
 badgeHowToEarn
 badgeEarnedOn
 badgeEarnedStatus
@@ -1424,7 +1406,6 @@ badgeProgressFraction
 badgeProgressToGo
 badgeShareAction
 badgeShareText
-badgeShareTextRarity
 badgeViewDetails
 # batch: rides-analytics
 ridesAnalyticsTab
@@ -1652,3 +1633,100 @@ analyticsColDistance
 insightPeakMonth
 insightFuelAverage
 insightFuelNeedFullFills
+# batch: oct14 update gate
+updateRequiredTitle
+updateRequiredBody
+updateRequiredAction
+# batch: oct14 ride recording
+notifRecordingStoppedTitle
+notifRecordingStoppedBody
+oemGuideTitle
+oemGuideIntro
+oemGuideStepAutostart
+oemGuideOpenAutostart
+oemGuideStepBattery
+oemGuideStepLock
+oemGuideMoreHelp
+oemGuideOfferTitle
+oemGuideOfferBody
+oemGuideShowMe
+# batch: app modules (Settings → Your ThrottleIQ)
+yourThrottleIqSection
+yourThrottleIqDescription
+communityFieldLabel
+communityFullLabel
+communityFullDescription
+communityForumsLabel
+communityForumsDescription
+communityOffLabel
+communityOffDescription
+placesModuleTitle
+placesModuleSubtitle
+rideTrackingModuleTitle
+rideTrackingModuleSubtitle
+moduleKeepOnAction
+moduleTurnOffAction
+communityForumsOnlyWarningTitle
+communityForumsOnlyWarningBody
+communityOffWarningTitle
+communityOffWarningBody
+placesOffWarningTitle
+placesOffWarningBody
+rideTrackingOffWarningTitle
+rideTrackingOffWarningBody
+rideTrackingOffDuringRide
+modulesUpdatedSnack
+manualOdometerHint
+
+# batch: crash shadow mode
+phonePlacementLabel
+phonePlacementMount
+phonePlacementPocket
+phonePlacementBag
+phonePlacementHint
+impactQuestionTitle
+impactQuestionBody
+impactAnswerYes
+impactAnswerPhoneFell
+impactAnswerBump
+impactAnswerHardStop
+impactAnswerUnsure
+impactFollowUpTitle
+impactSeverityLabel
+impactSeverityNone
+impactSeverityMinor
+impactSeverityMedical
+impactSurfaceLabel
+surfacePaved
+surfaceBroken
+surfaceDirt
+surfaceGravel
+surfaceWet
+surfaceRailCrossing
+surfaceSpeedBump
+impactSaveAnswer
+impactThanks
+reportCrashAction
+reportCrashTitle
+reportCrashBody
+reportCrashSaved
+crashResearchTitle
+crashResearchDesc
+# batch: feature tour for Your ThrottleIQ modules
+tourForumsFindTitle
+tourForumsFindBody
+tourForumsAskTitle
+tourForumsAskBody
+tourForumsBikeTitle
+tourForumsBikeBody
+tourGarageSubtitleNoTracking
+tourGarageActiveBodyNoTracking
+tourGarageDetailBodyNoTracking
+tourProfileSubtitleNoSocial
+editRide
+seeMore
+deleteRide
+deleteSharedPostBody
+deleteRideConfirmTitle
+deleteRideConfirmBody
+couldNotSaveChanges

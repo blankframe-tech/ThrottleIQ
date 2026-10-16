@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../../core/cloud/export_service.dart';
+import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/downsample.dart';
@@ -18,14 +20,20 @@ import '../../../../shared/widgets/full_screen_route_map_screen.dart';
 import '../../../../shared/widgets/metric_card.dart';
 import '../../../../shared/widgets/riding_score_badge.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../social/data/repositories/ride_share_repository.dart';
+import '../../../social/presentation/providers/ride_feed_provider.dart';
+import '../../../stats/presentation/providers/rider_stats_provider.dart';
 import '../../../stats/presentation/widgets/ride_line_chart.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../domain/calculators/elevation_profile.dart';
 import '../../domain/calculators/speed_segments.dart';
+import '../speed_band_style.dart';
 import '../../domain/calculators/segment_speed_aggregator.dart';
 import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
 import '../widgets/change_bike_control.dart';
+import '../widgets/impact_question_card.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/cloud/cloud_repository.dart';
@@ -109,19 +117,27 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
 
     final segments = averageSpeedPerSegment([
       for (var i = 0; i < _polyline.length; i++)
-        (lat: _polyline[i].latitude, lng: _polyline[i].longitude, speedMs: _speedsMs[i]),
+        (
+          lat: _polyline[i].latitude,
+          lng: _polyline[i].longitude,
+          speedMs: _speedsMs[i]
+        ),
     ]);
     if (segments.isEmpty) return;
-    final fastest = segments.reduce((a, b) => a.avgSpeedKmh >= b.avgSpeedKmh ? a : b);
+    final fastest =
+        segments.reduce((a, b) => a.avgSpeedKmh >= b.avgSpeedKmh ? a : b);
 
     try {
       final historical =
           await CloudRepository().fetchRoadSpeedSamples(fastest.segmentId);
       final baseline = computeBaseline(historical);
-      if (baseline == null || !isSpeedOutlier(fastest.avgSpeedKmh, baseline)) return;
+      if (baseline == null || !isSpeedOutlier(fastest.avgSpeedKmh, baseline)) {
+        return;
+      }
       if (!mounted) return;
       setState(() {
-        _speedOutlier = (riderKmh: fastest.avgSpeedKmh, baselineKmh: baseline.meanKmh);
+        _speedOutlier =
+            (riderKmh: fastest.avgSpeedKmh, baselineKmh: baseline.meanKmh);
       });
     } catch (e) {
       debugPrint('[RideSummary] speed-outlier check failed: $e');
@@ -160,7 +176,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.wb_sunny_outlined, size: 13, color: context.palette.onInk),
+            Icon(Icons.wb_sunny_outlined,
+                size: 13, color: context.palette.onInk),
             const SizedBox(width: 4),
             Text(
               '${_weather!.tempC.round()}°C',
@@ -181,7 +198,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         decoration: BoxDecoration(
           color: context.palette.onInk.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: context.palette.onInkMuted.withValues(alpha: 0.3)),
+          border: Border.all(
+              color: context.palette.onInkMuted.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -222,7 +240,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           onPressed: () => _dismiss(context),
         ),
         actions: [
-          if (rideVal != null)
+          if (rideVal != null && ref.watch(appModulesProvider).forums)
             IconButton(
               key: const Key('ride_share_to_forum'),
               tooltip: context.l10n.shareToForum,
@@ -234,10 +252,12 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   kind: ForumAttachmentKind.ride,
                   refId: rideVal.id,
                   bikeId: rideVal.bikeId,
-                  title: context.l10n.rideAttachmentTitle(_formatDate(rideVal.startTime)),
+                  title: context.l10n
+                      .rideAttachmentTitle(_formatDate(rideVal.startTime)),
                   subtitle: [
                     SpeedFormatter.distanceKm(rideVal.distanceM),
-                    SpeedFormatter.durationFromSeconds(rideVal.durationSeconds ?? 0),
+                    SpeedFormatter.durationFromSeconds(
+                        rideVal.durationSeconds ?? 0),
                     '${rideVal.maxSpeedKmh.toStringAsFixed(0)} km/h',
                   ].join(' · '),
                 ),
@@ -246,8 +266,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         ],
       ),
       body: rideAsync.when(
-        loading: () =>
-            Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(rideDetailProvider(widget.rideId)),
@@ -285,6 +305,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 // above is already showing for this same ride.
                 ChangeBikeControl(ride: ride),
 
+                // "Possible fall at 9:28 PM — did you fall?" for impacts
+                // shadow-mode crash detection saved on this ride. No-op
+                // when there's nothing to ask.
+                ImpactQuestionCard(rideId: ride.id),
+
                 // ── Black "nice ride" header ─────────────────────────────
                 InkPanel(
                   child: Column(
@@ -294,14 +319,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                           name != null
                               ? l10n.niceRideGreetingNamed(name)
                               : l10n.niceRideGreeting,
-                          style: display(context, 24, color: context.palette.onInk)),
+                          style: display(context, 24,
+                              color: context.palette.onInk)),
                       const SizedBox(height: 4),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(_formatDate(ride.startTime),
                               style: TextStyle(
-                                  fontSize: 13, color: context.palette.onInkMuted)),
+                                  fontSize: 13,
+                                  color: context.palette.onInkMuted)),
                           _buildWeatherChip(context),
                         ],
                       ),
@@ -483,16 +510,18 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         child: Text(l10n.saveAndDoneAction),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: !_polylineLoaded
-                            ? null
-                            : () => context.push('/ride/share/${ride.id}'),
-                        icon: const Icon(Icons.public, size: 18),
-                        label: Text(l10n.shareAction),
+                    if (ref.watch(appModulesProvider).social) ...[
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: !_polylineLoaded
+                              ? null
+                              : () => context.push('/ride/share/${ride.id}'),
+                          icon: const Icon(Icons.public, size: 18),
+                          label: Text(l10n.shareAction),
+                        ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -530,12 +559,75 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 8),
+                // A fall the detector missed: the only way to measure recall.
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: ReportCrashButton(ride: ride),
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: () => _deleteRide(ride),
+                    icon: Icon(Icons.delete_outline,
+                        size: 18, color: context.palette.danger),
+                    label: Text(l10n.deleteRide,
+                        style: TextStyle(color: context.palette.danger)),
+                  ),
+                ),
               ],
             ),
           );
         },
       ),
     );
+  }
+
+  /// Deletes the ride everywhere: local rows + a tombstone so sync removes the
+  /// cloud copy and never pulls it back (§90.C10), plus its shared post.
+  Future<void> _deleteRide(RideEntity ride) async {
+    final l10n = context.l10n;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: ctx.palette.surface,
+        title: Text(l10n.deleteRideConfirmTitle),
+        content: Text(l10n.deleteRideConfirmBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancelAction)),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child:
+                Text(l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await RideDao().deleteWithTombstone(ride.id, userId: ride.userId);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.couldNotDelete(e))));
+      return;
+    }
+    // Best effort: a ride that was never shared (or an offline device) just
+    // leaves the post to be removed from My Shared Rides later.
+    try {
+      await RideShareRepository().deleteSharedRide(ride.id);
+    } catch (e) {
+      debugPrint('shared post delete skipped: $e');
+    }
+    ref.invalidate(rideHistoryProvider(ride.bikeId));
+    ref.invalidate(riderStatsProvider);
+    ref.invalidate(garageProvider);
+    ref.invalidate(myRidesProvider);
+    ref.read(rideFeedNotifierProvider.notifier).refresh();
+    if (mounted) _dismiss(context);
   }
 
   // Reached two ways: pushed on top of a rides list (bike detail / all
@@ -557,7 +649,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   /// time for older rides with no moving time recorded.
   Widget _buildPaceCard(AppLocalizations l10n, RideEntity ride) {
     final moving = ride.movingSeconds;
-    final seconds = (moving != null && moving > 0) ? moving : (ride.durationSeconds ?? 0);
+    final seconds =
+        (moving != null && moving > 0) ? moving : (ride.durationSeconds ?? 0);
     final avgKmh = (ride.distanceKm > 0 && seconds > 0)
         ? (ride.distanceKm / (seconds / 3600)).toStringAsFixed(0)
         : '--';
@@ -576,7 +669,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
               const SizedBox(width: 12),
               Text(l10n.ridingPaceLabel,
-                  style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                  style: TextStyle(
+                      color: context.palette.textSecondary, fontSize: 13)),
               const Spacer(),
               Text('$avgKmh km/h',
                   style: TextStyle(
@@ -591,12 +685,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               children: [
                 const SizedBox(width: 32),
                 Text(l10n.movingStoppedLabel,
-                    style: TextStyle(color: context.palette.textSecondary, fontSize: 13)),
+                    style: TextStyle(
+                        color: context.palette.textSecondary, fontSize: 13)),
                 const Spacer(),
                 Text(
                     '${SpeedFormatter.durationFromSeconds(moving)} / '
                     '${SpeedFormatter.durationFromSeconds(stopped)}',
-                    style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
+                    style: TextStyle(
+                        color: context.palette.textPrimary, fontSize: 14)),
               ],
             ),
           ],
@@ -608,14 +704,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   void _zoomIn() {
     try {
       final currentZoom = _mapController.camera.zoom;
-      _mapController.move(_mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
+      _mapController.move(
+          _mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
     } catch (_) {}
   }
 
   void _zoomOut() {
     try {
       final currentZoom = _mapController.camera.zoom;
-      _mapController.move(_mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
+      _mapController.move(
+          _mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
     } catch (_) {}
   }
 
@@ -636,6 +734,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       MaterialPageRoute(
         builder: (_) => FullScreenRouteMapScreen(
           polyline: _polyline,
+          speedsMs: _speedsMs,
           title: _formatDate(ride.startTime),
           subtitle: '${ride.distanceKm.toStringAsFixed(1)} km · '
               '${SpeedFormatter.durationFromSeconds(ride.durationSeconds ?? 0)}',
@@ -648,7 +747,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           // the rider's own ride, so they get the full "My Routes" flow that
           // already exists at /routes/save/:rideId instead of a one-tap
           // stand-in for it.
-          onSaveRoute: (ctx) => ctx.push('/routes/save/${ride.id}'),
+          onSaveRoute: ref.read(appModulesProvider).places
+              ? (ctx) => ctx.push('/routes/save/${ride.id}')
+              : null,
         ),
       ),
     );
@@ -723,7 +824,9 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 initialZoom: _polyline.length > 1 ? 13 : 15,
                 interactionOptions:
                     const InteractionOptions(flags: InteractiveFlag.all),
-                onTap: _polyline.isEmpty ? null : (_, __) => _openFullScreenMap(ride),
+                onTap: _polyline.isEmpty
+                    ? null
+                    : (_, __) => _openFullScreenMap(ride),
               ),
               children: [
                 const AppTileLayer(),
@@ -734,7 +837,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                             for (final segment in speedSegments)
                               Polyline(
                                 points: segment.points,
-                                color: _speedBandColor(segment.band),
+                                color: segment.band.color(context),
                                 strokeWidth: 4,
                               ),
                           ]
@@ -777,7 +880,6 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   ),
               ],
             ),
-
             if (_polyline.isNotEmpty)
               Positioned(
                 left: 12,
@@ -785,16 +887,19 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 child: GestureDetector(
                   onTap: () => _openFullScreenMap(ride),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: context.palette.surface.withValues(alpha: 0.85),
-                      borderRadius: BorderRadius.circular(context.shape.radiusFull),
+                      borderRadius:
+                          BorderRadius.circular(context.shape.radiusFull),
                       border: Border.all(color: context.palette.border),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.open_in_full, size: 14, color: context.palette.primary),
+                        Icon(Icons.open_in_full,
+                            size: 14, color: context.palette.primary),
                         const SizedBox(width: 6),
                         Text(
                           l10n.mapExpandHintLabel,
@@ -809,7 +914,6 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   ),
                 ),
               ),
-
             if (_polyline.isNotEmpty)
               Positioned(
                 right: 12,
@@ -819,7 +923,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   children: [
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_zoom_in',
-                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      backgroundColor:
+                          context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
                       tooltip: context.l10n.zoomIn,
                       onPressed: _zoomIn,
@@ -828,7 +933,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_zoom_out',
-                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      backgroundColor:
+                          context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
                       tooltip: context.l10n.zoomOut,
                       onPressed: _zoomOut,
@@ -837,7 +943,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_recenter',
-                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      backgroundColor:
+                          context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
                       tooltip: context.l10n.recenterRoute,
                       onPressed: _recenterMap,
@@ -846,21 +953,26 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                     const SizedBox(height: 6),
                     FloatingActionButton.small(
                       heroTag: 'ride_summary_fullscreen',
-                      backgroundColor: context.palette.surface.withValues(alpha: 0.9),
+                      backgroundColor:
+                          context.palette.surface.withValues(alpha: 0.9),
                       foregroundColor: context.palette.textPrimary,
                       tooltip: context.l10n.fullscreenMap,
                       onPressed: () => _openFullScreenMap(ride),
                       child: const Icon(Icons.fullscreen, size: 20),
                     ),
-                    const SizedBox(height: 6),
-                    FloatingActionButton.small(
-                      heroTag: 'ride_summary_save_route',
-                      backgroundColor: context.palette.primary,
-                      foregroundColor: Colors.white,
-                      tooltip: l10n.saveAsRouteAction,
-                      onPressed: () => context.push('/routes/save/${ride.id}'),
-                      child: const Icon(Icons.bookmark_add_outlined, size: 18),
-                    ),
+                    if (ref.watch(appModulesProvider).places) ...[
+                      const SizedBox(height: 6),
+                      FloatingActionButton.small(
+                        heroTag: 'ride_summary_save_route',
+                        backgroundColor: context.palette.primary,
+                        foregroundColor: Colors.white,
+                        tooltip: l10n.saveAsRouteAction,
+                        onPressed: () =>
+                            context.push('/routes/save/${ride.id}'),
+                        child:
+                            const Icon(Icons.bookmark_add_outlined, size: 18),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -868,19 +980,6 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
         ),
       ),
     );
-  }
-
-  Color _speedBandColor(SpeedBand band) {
-    switch (band) {
-      case SpeedBand.idle:
-        return context.palette.textTertiary;
-      case SpeedBand.normal:
-        return context.palette.success;
-      case SpeedBand.brisk:
-        return context.palette.warning;
-      case SpeedBand.hard:
-        return context.palette.danger;
-    }
   }
 
   String _speedBandLabel(AppLocalizations l10n, SpeedBand band) {
@@ -913,7 +1012,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                   height: 10,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: _speedBandColor(band),
+                    color: band.color(context),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -936,7 +1035,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       decoration: BoxDecoration(
         color: context.palette.warning.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(context.shape.radiusMd),
-        border: Border.all(color: context.palette.warning.withValues(alpha: 0.4)),
+        border:
+            Border.all(color: context.palette.warning.withValues(alpha: 0.4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -955,7 +1055,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 Text(
                   l10n.speedOutlierBody(
                       outlier.riderKmh.round(), outlier.baselineKmh.round()),
-                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -995,7 +1096,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               const Spacer(),
               Text(
                 l10n.trackPointsCountLabel(_polyline.length),
-                style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -1005,14 +1107,19 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               Container(
                 width: 8,
                 height: 8,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: context.palette.success),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle, color: context.palette.success),
               ),
               const SizedBox(width: 8),
               Text('${l10n.startPointLabel}: ',
-                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
+                  style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: context.palette.textPrimary)),
               Text(
                 '${start.latitude.toStringAsFixed(4)}°, ${start.longitude.toStringAsFixed(4)}°',
-                style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textSecondary),
               ),
             ],
           ),
@@ -1023,14 +1130,19 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 Container(
                   width: 8,
                   height: 8,
-                  decoration: BoxDecoration(shape: BoxShape.circle, color: context.palette.danger),
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle, color: context.palette.danger),
                 ),
                 const SizedBox(width: 8),
                 Text('${l10n.finishPointLabel}: ',
-                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: context.palette.textPrimary)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                        color: context.palette.textPrimary)),
                 Text(
                   '${end.latitude.toStringAsFixed(4)}°, ${end.longitude.toStringAsFixed(4)}°',
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary),
                 ),
               ],
             ),
@@ -1042,14 +1154,16 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               onPressed: () => _openFullScreenMap(ride),
               icon: const Icon(Icons.fullscreen, size: 18),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               ),
               label: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Text(
                   l10n.exploreFullRouteAction,
                   maxLines: 1,
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -1185,8 +1299,18 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     const weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return '${weekdays[dt.weekday - 1]}, ${dt.day} ${months[dt.month - 1]} ${dt.year} · '

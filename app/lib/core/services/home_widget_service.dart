@@ -27,17 +27,15 @@ final homeWidgetServiceProvider = Provider<HomeWidgetService>((ref) {
 });
 
 /// Keeps the home-screen widgets in the app's color theme: publishes the
-/// active palette now and again on every appearance change (color mode,
-/// brightness — including an OS flip while on "System"). Watched once from
+/// active palette now and again on every appearance change (including an OS
+/// flip while on "System"). Watched once from
 /// the app root so it lives as long as the app does.
 final homeWidgetThemeSyncProvider = Provider<void>((ref) {
   final service = ref.watch(homeWidgetServiceProvider);
   ref.listen<AppAppearance>(
     appearanceProvider,
-    (_, appearance) => service.publishTheme(
-      AppColorPalette.forMode(appearance.colorMode, appearance.brightness),
-      colorMode: appearance.colorMode,
-    ),
+    (_, appearance) => service
+        .publishTheme(AppColorPalette.forBrightness(appearance.brightness)),
     fireImmediately: true,
   );
 });
@@ -86,7 +84,7 @@ const String kWidgetKeyLeanSymmetry = 'ti_lean_symmetry';
 const String kWidgetKeyApexUpdatedAt = 'ti_apex_updated_at';
 
 /// Theme keys: the active palette as `#AARRGGBB` hex strings, plus whether it
-/// is a dark palette and which color mode it came from. Native widgets read
+/// is a dark palette. Native widgets read
 /// these at render time and fall back to their built-in Carbon Mono colors
 /// when a key is missing (widget placed before the app ever ran).
 const String kWidgetKeyThemeBackground = 'ti_theme_background';
@@ -101,7 +99,6 @@ const String kWidgetKeyThemeTextMuted = 'ti_theme_text_muted';
 const String kWidgetKeyThemeTextTertiary = 'ti_theme_text_tertiary';
 const String kWidgetKeyThemeDanger = 'ti_theme_danger';
 const String kWidgetKeyThemeIsDark = 'ti_theme_is_dark';
-const String kWidgetKeyThemeMode = 'ti_theme_mode';
 
 /// Shown by both platforms before the app has ever published anything. Native
 /// code has its own copy of these as a defensive default; keeping them here
@@ -216,16 +213,13 @@ String widgetColorHex(Color color) =>
     '#${color.toARGB32().toRadixString(16).padLeft(8, '0').toUpperCase()}';
 
 /// The theme payload published for the native widgets: [palette]'s colors as
-/// hex strings keyed by the `kWidgetKeyTheme*` constants, plus brightness and
-/// (when known) the color mode's persisted name.
+/// hex strings keyed by the `kWidgetKeyTheme*` constants, plus brightness.
 ///
 /// "ink" is the palette's text-primary color (what the widgets draw their
 /// main figures in) — not [AppColorPalette.ink], which is a fill token whose
 /// role flips between palettes. "on primary" is exactly what a filled primary
-/// button uses, so Race's mustard gets dark text like it does in the app.
-Map<String, Object> widgetThemeData(AppColorPalette palette,
-        {AppColorMode? colorMode}) =>
-    {
+/// button uses.
+Map<String, Object> widgetThemeData(AppColorPalette palette) => {
       kWidgetKeyThemeBackground: widgetColorHex(palette.background),
       kWidgetKeyThemeSurface: widgetColorHex(palette.surface),
       kWidgetKeyThemeBorder: widgetColorHex(palette.border),
@@ -239,7 +233,6 @@ Map<String, Object> widgetThemeData(AppColorPalette palette,
       kWidgetKeyThemeTextTertiary: widgetColorHex(palette.textTertiary),
       kWidgetKeyThemeDanger: widgetColorHex(palette.danger),
       kWidgetKeyThemeIsDark: palette.isDark,
-      if (colorMode != null) kWidgetKeyThemeMode: colorMode.name,
     };
 
 /// Kilometres ridden in the rolling 7 days ending at [now] (defaults to
@@ -355,9 +348,8 @@ class HomeWidgetService {
   /// Publishes [palette] as the widgets' color theme and re-renders every
   /// widget. Called by [homeWidgetThemeSyncProvider] on each appearance
   /// change. No-op safe, like everything else here.
-  Future<void> publishTheme(AppColorPalette palette,
-      {AppColorMode? colorMode}) async {
-    final data = widgetThemeData(palette, colorMode: colorMode);
+  Future<void> publishTheme(AppColorPalette palette) async {
+    final data = widgetThemeData(palette);
     if (_mapEquals(data, _themeData)) return;
     _themeData = data;
     try {

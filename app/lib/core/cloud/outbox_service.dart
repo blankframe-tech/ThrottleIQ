@@ -11,9 +11,12 @@ import '../database/daos/fuel_log_dao.dart';
 import '../database/daos/maintenance_dao.dart';
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
+import 'cloud_repository.dart';
+import 'last_writer_wins.dart';
 import 'maintenance_settings_sync.dart';
 import '../../features/maintenance/data/models/fuel_log_model.dart';
 import '../../features/social/data/repositories/ride_share_repository.dart';
+import '../realtime/realtime_providers.dart';
 
 /// The operations that can be queued for later delivery.
 ///
@@ -147,6 +150,32 @@ enum OutboxDeliveryResult {
   discarded,
 }
 
+/// Removes `/live_shares/{token}`, the 1 Hz RTDB channel, as part of a queued
+/// live-share teardown. The coordinator removes it when a share stops normally;
+/// this covers the app being killed mid-share, which used to leave the node
+/// until its `expiresAt` (§99.4). Holds a socket lease for the write, because
+/// the connection manager takes the socket offline when nobody holds one.
+/// A timeout throws, so the outbox retries the whole (idempotent) teardown.
+/// A rejection (e.g. the deny-all rules, B9) is logged, not thrown: the node
+/// is throwaway and must never park the Firestore revoke behind it.
+Future<void> removeLiveShareNode(
+  RealtimeServices realtime,
+  String token, {
+  Duration timeout = kOutboxAttemptTimeout,
+}) async {
+  if (!realtime.isEnabled) return;
+  final lease = realtime.acquire('live-teardown');
+  try {
+    await realtime.store.remove('live_shares/$token').timeout(timeout);
+  } on TimeoutException {
+    rethrow;
+  } catch (e) {
+    debugPrint('[Outbox] remove of live_shares/$token failed: $e');
+  } finally {
+    lease.release();
+  }
+}
+
 /// Records and replays cloud writes the rider has already committed to.
 ///
 /// The contract every caller relies on: **once [enqueue] returns, the rider's
@@ -156,7 +185,7 @@ enum OutboxDeliveryResult {
 /// Riverpod provider for [OutboxService]. Participates in the dependency graph
 /// and can be cleanly overridden in unit/integration tests.
 final outboxServiceProvider = Provider<OutboxService>((ref) {
-  final service = OutboxService();
+  final service = OutboxService(realtime: ref.read(realtimeServicesProvider));
   ref.onDispose(() => service.dispose());
   return service;
 });
@@ -168,7 +197,9 @@ class OutboxService {
     FirebaseFirestore? firestore,
     String? Function()? currentUid,
     Future<OutboxDeliveryResult> Function(OutboxEntry entry)? deliverOverride,
+    RealtimeServices? realtime,
   })  : _dao = dao ?? OutboxDao(),
+        _realtime = realtime,
         _explicitShareRepository = shareRepository,
         _explicitFirestore = firestore,
         _currentUid =
@@ -176,6 +207,9 @@ class OutboxService {
         _deliverOverride = deliverOverride;
 
   final OutboxDao _dao;
+
+  /// RTDB wiring for the live-share teardown; null (as in most tests) skips it.
+  final RealtimeServices? _realtime;
 
   /// Who is signed in right now. Injected so tests can switch accounts
   /// without a live FirebaseAuth.
@@ -644,6 +678,11 @@ class OutboxService {
           'updatedAt': FieldValue.serverTimestamp(),
         });
       }).timeout(kOutboxAttemptTimeout);
+      // Last, so the RTDB node can never hold up the revoke or the pointer.
+      final realtime = _realtime;
+      if (token != null && realtime != null) {
+        await removeLiveShareNode(realtime, token);
+      }
       return OutboxDeliveryResult.delivered;
     } on TimeoutException {
       return OutboxDeliveryResult.deferred;
@@ -664,25 +703,36 @@ class OutboxService {
       return OutboxDeliveryResult.discarded;
     }
     try {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('maintenance')
-          .doc(logId)
-          // `syncedAt` (server-set) like every other upload to this
-          // collection: other devices' incremental pull filters on it
-          // (§90.C7), so a log without it would never reach them.
-          .set({...log, 'syncedAt': FieldValue.serverTimestamp()}).timeout(
-              kOutboxAttemptTimeout);
+      // Last-writer-wins (C4): a newer copy from another device is not
+      // overwritten; it replaces this log locally instead.
+      final remote = await LastWriterWins.setUnlessRemoteNewer(
+        _firestore,
+        _firestore
+            .collection('users')
+            .doc(uid)
+            .collection('maintenance')
+            .doc(logId),
+        // `syncedAt` (server-set) like every other upload to this
+        // collection: other devices' incremental pull filters on it
+        // (§90.C7), so a log without it would never reach them.
+        {...log, 'syncedAt': FieldValue.serverTimestamp()},
+      ).timeout(kOutboxAttemptTimeout);
 
       try {
         final db = await DatabaseHelper.instance.database;
-        await db.update(
-          'maintenance_logs',
-          {'synced': 1},
-          where: 'id = ?',
-          whereArgs: [logId],
-        );
+        if (remote != null) {
+          await LastWriterWins.adopt(db, 'maintenance_logs',
+              CloudRepository.maintenanceOverwriteRow({...remote, 'id': logId}),
+              localUpdatedAt: log['updated_at']);
+        } else {
+          // Not if edited since this snapshot: that edit still has to go up.
+          await db.update(
+            'maintenance_logs',
+            {'synced': 1},
+            where: 'id = ? AND updated_at IS ?',
+            whereArgs: [logId, log['updated_at']],
+          );
+        }
       } catch (e) {
         debugPrint('[Outbox] local maintenance sync status update skipped: $e');
       }
@@ -707,18 +757,33 @@ class OutboxService {
       return OutboxDeliveryResult.discarded;
     }
     try {
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection(FuelLogModel.collection)
-          .doc(logId)
-          // `syncedAt` drives other devices' incremental pull (§90.C7).
-          .set({
-        ...FuelLogModel.toCloudPayload(Map<String, dynamic>.from(log)),
-        'syncedAt': FieldValue.serverTimestamp(),
-      }).timeout(kOutboxAttemptTimeout);
+      // Last-writer-wins (C4), as for maintenance logs above.
+      final remote = await LastWriterWins.setUnlessRemoteNewer(
+        _firestore,
+        _firestore
+            .collection('users')
+            .doc(uid)
+            .collection(FuelLogModel.collection)
+            .doc(logId),
+        // `syncedAt` drives other devices' incremental pull (§90.C7).
+        {
+          ...FuelLogModel.toCloudPayload(Map<String, dynamic>.from(log)),
+          'syncedAt': FieldValue.serverTimestamp(),
+        },
+      ).timeout(kOutboxAttemptTimeout);
       try {
-        await FuelLogDao().markSynced(logId);
+        final db = await DatabaseHelper.instance.database;
+        final row = remote == null
+            ? null
+            : FuelLogModel.fromCloud({...remote, 'id': logId});
+        if (row != null) {
+          await LastWriterWins.adopt(db, 'fuel_logs', row,
+              localUpdatedAt: log['updated_at']);
+        } else if (remote == null) {
+          await db.update('fuel_logs', {'synced': 1},
+              where: 'id = ? AND updated_at IS ?',
+              whereArgs: [logId, log['updated_at']]);
+        }
       } catch (e) {
         debugPrint('[Outbox] local fuel sync status update skipped: $e');
       }

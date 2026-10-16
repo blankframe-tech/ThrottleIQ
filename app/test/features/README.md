@@ -11,7 +11,7 @@ This directory contains the following submodules:
 - **[garage](./garage)**: Garage feature managing the user's vehicles.
 - **[maintenance](./maintenance)**: Maintenance entities, providers, reminders and running-cost tests.
 - **[poi_directory](./poi_directory)**: Points of Interest (POI) directory feature for finding and managing locations on the map.
-- **[profile](./profile)**: Profile, appearance picker, bike visibility and SafeQR tests.
+- **[profile](./profile)**: Profile, bike visibility and SafeQR tests.
 - **[ride](./ride)**: Ride recording state, cockpit widgets and sensor-fusion coordinator tests.
 - **[routes](./routes)**: Route navigation tests (progress, session, banner, GPX replay fixtures).
 - **[social](./social)**: Social feature handling followers, feeds, and notifications.

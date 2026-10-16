@@ -5,9 +5,11 @@ class RideModel {
         id: m['id'] as String,
         userId: m['user_id'] as String,
         bikeId: m['bike_id'] as String,
-        startTime: DateTime.parse(m['start_time'] as String),
+        // Stored UTC since schema v28 (older rows: device-local, no offset);
+        // the entity is always local time, which is what every screen shows.
+        startTime: DateTime.parse(m['start_time'] as String).toLocal(),
         endTime: m['end_time'] != null
-            ? DateTime.parse(m['end_time'] as String)
+            ? DateTime.parse(m['end_time'] as String).toLocal()
             : null,
         distanceM: (m['distance_m'] as num).toDouble(),
         avgSpeedMs: m['avg_speed_ms'] != null
@@ -50,8 +52,8 @@ class RideModel {
         'id': e.id,
         'user_id': e.userId,
         'bike_id': e.bikeId,
-        'start_time': e.startTime.toIso8601String(),
-        'end_time': e.endTime?.toIso8601String(),
+        'start_time': e.startTime.toUtc().toIso8601String(),
+        'end_time': e.endTime?.toUtc().toIso8601String(),
         'distance_m': e.distanceM,
         'avg_speed_ms': e.avgSpeedMs,
         'max_speed_ms': e.maxSpeedMs,
@@ -74,7 +76,10 @@ class RideModel {
         'route_id': e.routeId,
         'route_name': e.routeName,
         'synced': 0,
-        'created_at': e.startTime.toIso8601String(),
+        'created_at': e.startTime.toUtc().toIso8601String(),
+        // Every toMap is a local write: the edit time last-writer-wins
+        // sync compares (C4).
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 
   static RideStatus _statusFromString(String s) => RideStatus.values

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
@@ -41,8 +42,8 @@ class GarageScreen extends ConsumerWidget {
             // Shared Rides), then Notifications and Settings — the two
             // account-level actions RecordScreen used to carry.
             Padding(
-              padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 12,
-                  AppDimensions.paddingMd, 4),
+              padding: const EdgeInsets.fromLTRB(
+                  AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 4),
               child: Row(
                 children: [
                   const Expanded(child: _ProfileSummary()),
@@ -59,12 +60,14 @@ class GarageScreen extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 8),
-              child: Text(context.l10n.yourBikesTitle, style: display(context, 22)),
+              child: Text(context.l10n.yourBikesTitle,
+                  style: display(context, 22)),
             ),
             Expanded(
               child: bikesAsync.when(
                 loading: () => Center(
-                    child: CircularProgressIndicator(color: context.palette.primary)),
+                    child: CircularProgressIndicator(
+                        color: context.palette.primary)),
                 error: (e, _) => ErrorView(
                   error: e,
                   onRetry: () => ref.invalidate(garageProvider),
@@ -75,8 +78,8 @@ class GarageScreen extends ConsumerWidget {
                     return const _EmptyGarage();
                   }
                   return ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
-                        AppDimensions.paddingMd, AppDimensions.paddingLg),
+                    padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
+                        4, AppDimensions.paddingMd, AppDimensions.paddingLg),
                     itemCount: bikes.length + 1 + (archived.isEmpty ? 0 : 1),
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) => i < bikes.length
@@ -108,10 +111,12 @@ class _ProfileSummary extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final profile = ref.watch(myProfileProvider).valueOrNull;
-    final name = profile?.bestName ?? user?.displayName ?? context.l10n.riderFallbackName;
+    final name = profile?.bestName ??
+        user?.displayName ??
+        context.l10n.riderFallbackName;
 
     return GestureDetector(
-      onTap: () => _showMenu(context),
+      onTap: () => _showMenu(context, ref.read(appModulesProvider)),
       behavior: HitTestBehavior.opaque,
       child: Row(
         children: [
@@ -130,8 +135,8 @@ class _ProfileSummary extends ConsumerWidget {
                     style: display(context, 18, letterSpacing: 0),
                     overflow: TextOverflow.ellipsis),
                 Text(context.l10n.viewProfile,
-                    style:
-                        TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
               ],
             ),
           ),
@@ -150,7 +155,7 @@ class _ProfileSummary extends ConsumerWidget {
   // this exact menu, tapping "My Places"). Awaiting the sheet's own Future
   // and pushing only after it fully resolves guarantees the sheet's route
   // is completely gone before anything else touches the Navigator.
-  Future<void> _showMenu(BuildContext context) async {
+  Future<void> _showMenu(BuildContext context, AppModules modules) async {
     final destination = await showModalBottomSheet<String>(
       context: context,
       backgroundColor: context.palette.background,
@@ -159,22 +164,27 @@ class _ProfileSummary extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.person_outline, color: sheetContext.palette.primary),
+              leading: Icon(Icons.person_outline,
+                  color: sheetContext.palette.primary),
               title: Text(sheetContext.l10n.navProfileLabel),
               // The read-only profile view, not the edit form — editing is an
               // action inside it now.
               onTap: () => Navigator.pop(sheetContext, '/profile'),
             ),
-            ListTile(
-              leading: Icon(Icons.place_outlined, color: sheetContext.palette.primary),
-              title: Text(sheetContext.l10n.myPlaces),
-              onTap: () => Navigator.pop(sheetContext, '/places/mine'),
-            ),
-            ListTile(
-              leading: Icon(Icons.ios_share, color: sheetContext.palette.primary),
-              title: Text(sheetContext.l10n.mySharedRides),
-              onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
-            ),
+            if (modules.places)
+              ListTile(
+                leading: Icon(Icons.place_outlined,
+                    color: sheetContext.palette.primary),
+                title: Text(sheetContext.l10n.myPlaces),
+                onTap: () => Navigator.pop(sheetContext, '/places/mine'),
+              ),
+            if (modules.social)
+              ListTile(
+                leading:
+                    Icon(Icons.ios_share, color: sheetContext.palette.primary),
+                title: Text(sheetContext.l10n.mySharedRides),
+                onTap: () => Navigator.pop(sheetContext, '/rides/mine'),
+              ),
           ],
         ),
       ),
@@ -194,12 +204,14 @@ class _EmptyGarage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.garage_outlined, size: 56, color: context.palette.textTertiary),
+            Icon(Icons.garage_outlined,
+                size: 56, color: context.palette.textTertiary),
             const SizedBox(height: 16),
             Text(context.l10n.noBikesYet, style: display(context, 20)),
             const SizedBox(height: 6),
             Text(context.l10n.addFirstBikeGet,
-                style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
+                style: TextStyle(
+                    color: context.palette.textTertiary, fontSize: 14)),
             const SizedBox(height: 20),
             DashedAddButton(
               label: context.l10n.addABike,
@@ -221,7 +233,8 @@ class _BikeCard extends ConsumerWidget {
     return EditorialCard(
       padding: EdgeInsets.zero,
       onTap: () => context.go('/home/profile/${bike.id}'),
-      borderColor: bike.isActive ? context.palette.primary : context.palette.border,
+      borderColor:
+          bike.isActive ? context.palette.primary : context.palette.border,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -241,7 +254,8 @@ class _BikeCard extends ConsumerWidget {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: EditorialPill(context.l10n.activePill, tone: PillTone.accent),
+                  child: EditorialPill(context.l10n.activePill,
+                      tone: PillTone.accent),
                 ),
             ],
           ),
@@ -253,23 +267,27 @@ class _BikeCard extends ConsumerWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(bike.displayName, style: display(context, 18, letterSpacing: 0)),
+                      child: Text(bike.displayName,
+                          style: display(context, 18, letterSpacing: 0)),
                     ),
                     if (!bike.isActive)
                       TextButton(
-                        onPressed: () =>
-                            ref.read(garageProvider.notifier).setActiveBike(bike.id),
+                        onPressed: () => ref
+                            .read(garageProvider.notifier)
+                            .setActiveBike(bike.id),
                         style: TextButton.styleFrom(
                             foregroundColor: context.palette.textSecondary,
                             padding: EdgeInsets.zero,
                             minimumSize: const Size(60, 32)),
-                        child: Text(context.l10n.setActive, style: const TextStyle(fontSize: 12)),
+                        child: Text(context.l10n.setActive,
+                            style: const TextStyle(fontSize: 12)),
                       ),
                   ],
                 ),
                 if (bike.cc != null)
                   Text('${bike.cc}cc',
-                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.palette.textSecondary)),
                 const SizedBox(height: 14),
                 Row(
                   children: [
@@ -281,7 +299,10 @@ class _BikeCard extends ConsumerWidget {
                       ),
                     ),
                     Expanded(
-                      child: StatCell(value: '${bike.rideCount}', label: context.l10n.ridesLower, valueSize: 18),
+                      child: StatCell(
+                          value: '${bike.rideCount}',
+                          label: context.l10n.ridesLower,
+                          valueSize: 18),
                     ),
                     Expanded(
                       child: StatCell(
@@ -316,7 +337,8 @@ class _BikeCard extends ConsumerWidget {
                     children: [
                       Text(context.l10n.maintenance,
                           style: display(context, 14,
-                              letterSpacing: 0, color: context.palette.primary)),
+                              letterSpacing: 0,
+                              color: context.palette.primary)),
                       const SizedBox(width: 10),
                       // This bike's next job, so a multi-bike rider sees
                       // every bike's without switching on the page.
@@ -350,7 +372,8 @@ class _ArchivedBikesSection extends ConsumerWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           key: const Key('archived-bikes-section'),
-          leading: Icon(Icons.inventory_2_outlined, color: context.palette.textSecondary),
+          leading: Icon(Icons.inventory_2_outlined,
+              color: context.palette.textSecondary),
           title: Text(context.l10n.archivedBikes(bikes.length),
               style: display(context, 16, letterSpacing: 0)),
           children: [
@@ -359,7 +382,8 @@ class _ArchivedBikesSection extends ConsumerWidget {
                 title: Text(bike.displayName),
                 subtitle: Text(
                     [
-                      context.l10n.ridesAndDistance(bike.rideCount, SpeedFormatter.distanceKm(bike.totalDistanceM)),
+                      context.l10n.ridesAndDistance(bike.rideCount,
+                          SpeedFormatter.distanceKm(bike.totalDistanceM)),
                       if (bike.daysUntilPurge() != null)
                         context.l10n.archivedPurgesIn(bike.daysUntilPurge()!),
                     ].join(' · '),

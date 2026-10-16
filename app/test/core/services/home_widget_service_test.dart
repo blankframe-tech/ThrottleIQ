@@ -556,10 +556,9 @@ void main() {
       expect(widgetColorHex(const Color(0xCC020A15)), '#CC020A15');
     });
 
-    test('carries every themed role from the palette, plus brightness and mode',
-        () {
-      const palette = AppColorPalette.commuteLight;
-      final data = widgetThemeData(palette, colorMode: AppColorMode.commute);
+    test('carries every themed role from the palette, plus brightness', () {
+      const palette = AppColorPalette.calmingLight;
+      final data = widgetThemeData(palette);
       expect(
           data[kWidgetKeyThemeBackground], widgetColorHex(palette.background));
       expect(data[kWidgetKeyThemeSurface], widgetColorHex(palette.surface));
@@ -575,23 +574,15 @@ void main() {
           widgetColorHex(palette.textTertiary));
       expect(data[kWidgetKeyThemeDanger], widgetColorHex(palette.danger));
       expect(data[kWidgetKeyThemeIsDark], isFalse);
-      expect(data[kWidgetKeyThemeMode], 'commute');
     });
 
-    test(
-        'on-primary matches the app\'s filled-button ink (dark on Race mustard)',
-        () {
-      for (final mode in AppColorMode.values) {
-        for (final brightness in Brightness.values) {
-          final palette = AppColorPalette.forMode(mode, brightness);
-          expect(widgetThemeData(palette)[kWidgetKeyThemeOnPrimary],
-              widgetColorHex(AppTheme.primaryButtonForeground(palette)),
-              reason: '$mode/$brightness');
-        }
+    test('on-primary matches the app\'s filled-button ink', () {
+      for (final brightness in Brightness.values) {
+        final palette = AppColorPalette.forBrightness(brightness);
+        expect(widgetThemeData(palette)[kWidgetKeyThemeOnPrimary],
+            widgetColorHex(AppTheme.primaryButtonForeground(palette)),
+            reason: '$brightness');
       }
-      expect(
-          widgetThemeData(AppColorPalette.raceLight)[kWidgetKeyThemeOnPrimary],
-          '#FF1A1A1A');
     });
 
     test('the keys match the native contract strings', () {
@@ -608,15 +599,12 @@ void main() {
       expect(kWidgetKeyThemeTextTertiary, 'ti_theme_text_tertiary');
       expect(kWidgetKeyThemeDanger, 'ti_theme_danger');
       expect(kWidgetKeyThemeIsDark, 'ti_theme_is_dark');
-      expect(kWidgetKeyThemeMode, 'ti_theme_mode');
     });
 
-    test('mode is omitted when unknown', () {
+    test('the dark theme reports isDark', () {
       expect(
-          widgetThemeData(AppColorPalette.sportDark)
-              .containsKey(kWidgetKeyThemeMode),
-          isFalse);
-      expect(widgetThemeData(AppColorPalette.sportDark)[kWidgetKeyThemeIsDark],
+          widgetThemeData(
+              AppColorPalette.carbonMonoDark)[kWidgetKeyThemeIsDark],
           isTrue);
     });
   });
@@ -625,12 +613,9 @@ void main() {
     test('is no-op safe with no platform plugin, and remembers the theme',
         () async {
       final service = HomeWidgetService();
-      await service.publishTheme(AppColorPalette.rainDark,
-          colorMode: AppColorMode.rain);
-      expect(
-          service.publishedThemeData,
-          widgetThemeData(AppColorPalette.rainDark,
-              colorMode: AppColorMode.rain));
+      await service.publishTheme(AppColorPalette.carbonMonoDark);
+      expect(service.publishedThemeData,
+          widgetThemeData(AppColorPalette.carbonMonoDark));
     });
   });
 
@@ -648,31 +633,21 @@ void main() {
 
       container.read(homeWidgetThemeSyncProvider);
       await pumpEventQueue();
-      const initial = AppAppearance.defaultAppearance;
-      expect(fake.published.last.$2, initial.colorMode);
-      expect(fake.published.last.$1,
-          same(AppColorPalette.forMode(initial.colorMode, initial.brightness)));
-
-      await container
-          .read(appearanceProvider.notifier)
-          .setColorMode(AppColorMode.race);
-      expect(fake.published.last.$1, same(AppColorPalette.raceLight));
-      expect(fake.published.last.$2, AppColorMode.race);
+      expect(fake.published.last, same(AppColorPalette.calmingLight));
 
       await container
           .read(appearanceProvider.notifier)
           .setBrightnessMode(AppBrightnessMode.dark);
-      expect(fake.published.last.$1, same(AppColorPalette.raceDark));
+      expect(fake.published.last, same(AppColorPalette.carbonMonoDark));
     });
   });
 }
 
 class _RecordingWidgetService extends HomeWidgetService {
-  final published = <(AppColorPalette, AppColorMode?)>[];
+  final published = <AppColorPalette>[];
 
   @override
-  Future<void> publishTheme(AppColorPalette palette,
-      {AppColorMode? colorMode}) async {
-    published.add((palette, colorMode));
+  Future<void> publishTheme(AppColorPalette palette) async {
+    published.add(palette);
   }
 }

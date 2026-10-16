@@ -8,8 +8,8 @@ Widget _wrap(Widget child) {
   return MaterialApp(
     theme: ThemeData.dark().copyWith(
       extensions: [
-        AppColorPalette.sportDark,
-        AppShapeProfile.forVibe(AppShapeVibe.boxy),
+        AppColorPalette.carbonMonoDark,
+        AppShapeProfile.curvy,
       ],
     ),
     home: Scaffold(body: Center(child: child)),
@@ -33,7 +33,8 @@ void main() {
       expect(find.text('STREET'), findsOneWidget);
     });
 
-    testWidgets('renders active left lean with arrow and subtitle', (tester) async {
+    testWidgets('renders active left lean with arrow and subtitle',
+        (tester) async {
       await tester.pumpWidget(
         _wrap(
           const DualLeanArcGauge(
@@ -51,7 +52,8 @@ void main() {
       expect(find.text('HAIRPIN ENTRY'), findsOneWidget);
     });
 
-    testWidgets('renders active right lean angle with right arrow and rating', (tester) async {
+    testWidgets('renders active right lean angle with right arrow and rating',
+        (tester) async {
       await tester.pumpWidget(
         _wrap(
           const DualLeanArcGauge(

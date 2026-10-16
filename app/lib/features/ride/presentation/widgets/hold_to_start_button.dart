@@ -6,8 +6,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
-/// Circular press-and-hold start control — the rounded skins' counterpart to
-/// the Record screen's slide-to-start track (see [StartControlStyle]).
+/// Circular press-and-hold start control on the Record screen.
 ///
 /// Hold anywhere on the ring and a progress arc sweeps clockwise from the top
 /// over [holdDuration]; complete it and [onStart] fires. Release early and the
@@ -140,7 +139,8 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
     final faceColor = enabled
         ? (isLightPalette ? context.palette.primary : context.palette.ink)
         : context.palette.textTertiary;
-    final arcColor = isLightPalette ? context.palette.primaryDark : context.palette.primary;
+    final arcColor =
+        isLightPalette ? context.palette.primaryDark : context.palette.primary;
 
     return Semantics(
       button: true,
@@ -173,7 +173,8 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
                   progress: t,
                   faceColor: faceColor,
                   arcColor: arcColor,
-                  trackColor: context.palette.textTertiary.withValues(alpha: 0.25),
+                  trackColor:
+                      context.palette.textTertiary.withValues(alpha: 0.25),
                 ),
                 child: Center(
                   child: widget.busy

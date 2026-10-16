@@ -8,7 +8,8 @@ import '../../domain/entities/user_profile_entity.dart';
 /// Only the profile fields live at the document root; the owner-only
 /// subcollections (rides/bikes/maintenance/...) are untouched by this model.
 class UserProfileModel {
-  static UserProfileEntity fromFirestore(Map<String, dynamic> data, String uid) {
+  static UserProfileEntity fromFirestore(
+      Map<String, dynamic> data, String uid) {
     return UserProfileEntity(
       uid: uid,
       displayName: (data['displayName'] as String?) ?? '',
@@ -28,8 +29,11 @@ class UserProfileModel {
       bikesVisibility:
           (data['bikesVisibility'] as String?) ?? kBikesVisibilityPublic,
       totalDistanceKm:
-          ((data['publicStats'] as Map?)?['totalDistanceKm'] as num?)?.toDouble() ?? 0,
-      totalRides: ((data['publicStats'] as Map?)?['totalRides'] as num?)?.toInt() ?? 0,
+          ((data['publicStats'] as Map?)?['totalDistanceKm'] as num?)
+                  ?.toDouble() ??
+              0,
+      totalRides:
+          ((data['publicStats'] as Map?)?['totalRides'] as num?)?.toInt() ?? 0,
       badgeIds: ((data['publicStats'] as Map?)?['badgeIds'] as List?)
               ?.whereType<String>()
               .toList() ??
@@ -39,15 +43,14 @@ class UserProfileModel {
     );
   }
 
-  /// The subset of fields written on profile edit. `usernameLower`/`emailLower`
-  /// are denormalized copies used purely for case-insensitive search queries.
+  /// The subset of fields written on profile edit. `usernameLower` is a
+  /// denormalized copy used purely for case-insensitive search queries.
   static Map<String, dynamic> editableFields({
     String? displayName,
     String? username,
     String? nickname,
     String? bio,
     String? photoUrl,
-    String? email,
   }) {
     return {
       if (displayName != null) 'displayName': displayName,
@@ -58,10 +61,6 @@ class UserProfileModel {
       if (nickname != null) 'nickname': nickname,
       if (bio != null) 'bio': bio,
       if (photoUrl != null) 'photoUrl': photoUrl,
-      if (email != null) ...{
-        'email': email,
-        'emailLower': email.toLowerCase(),
-      },
       'updatedAt': FieldValue.serverTimestamp(),
     };
   }

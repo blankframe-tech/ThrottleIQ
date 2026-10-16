@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme.dart';
-import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/features/auth/presentation/screens/onboarding_manifest.dart';
@@ -163,6 +161,30 @@ void main() {
         find.text(_en.tourStepCounter(2, kOnboardingSlideCount)), findsWidgets);
   });
 
+  testWidgets('a rider with ride tracking off gets a tour of only their app',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'module_ride_tracking': false});
+    await _setSize(tester, const Size(390, 844));
+    await tester.pumpWidget(_app());
+    await _settle(tester);
+
+    // Garage, Maintenance, Places, Social, Profile.
+    expect(find.text(_en.tourStepCounter(1, 5)), findsWidgets);
+    expect(find.text(_en.tourGarageTitle), findsOneWidget);
+    expect(find.text(_en.tourRecordTitle), findsNothing);
+    // The mini nav mirrors the rider's own: Maintenance in, Record and Rides out.
+    expect(find.text(_en.maintenance), findsWidgets);
+    expect(find.text(_en.navRecordLabel), findsNothing);
+    expect(find.text(_en.navRidesLabel), findsNothing);
+
+    await _tap(tester, 'tour-next');
+    expect(find.text(_en.tourMaintenanceTitle), findsOneWidget);
+    await _tap(tester, 'tour-show-me');
+    expect(find.text('screen:/home/maintenance'), findsOneWidget);
+    expect(find.text(_en.tourStepCounter(2, 5)), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('beta riders see the jam-labelling callout on the cockpit step',
       (tester) async {
     await _setSize(tester, const Size(390, 844));
@@ -180,26 +202,18 @@ void main() {
     expect(find.text(_en.jamLabelBetaTag), findsOneWidget);
   });
 
-  testWidgets('renders every step in every color mode, shape and brightness',
-      (tester) async {
+  testWidgets('renders every step in both themes', (tester) async {
     await _setSize(tester, const Size(390, 844));
-    for (final mode in AppColorMode.values) {
-      for (final vibe in AppShapeVibe.values) {
-        for (final brightness in Brightness.values) {
-          await tester.pumpWidget(_app(
-            appearance: AppAppearance(
-                colorMode: mode, shapeVibe: vibe, brightness: brightness),
-          ));
-          await _settle(tester);
-          for (var i = 1; i < kOnboardingSlideCount; i++) {
-            await _tap(tester, 'tour-next');
-          }
-          expect(tester.takeException(), isNull,
-              reason: '${mode.name}/${vibe.name}/${brightness.name}');
-          // Fresh tree per combination.
-          await tester.pumpWidget(const SizedBox());
-        }
+    for (final brightness in Brightness.values) {
+      await tester
+          .pumpWidget(_app(appearance: AppAppearance(brightness: brightness)));
+      await _settle(tester);
+      for (var i = 1; i < kOnboardingSlideCount; i++) {
+        await _tap(tester, 'tour-next');
       }
+      expect(tester.takeException(), isNull, reason: brightness.name);
+      // Fresh tree per theme.
+      await tester.pumpWidget(const SizedBox());
     }
   });
 

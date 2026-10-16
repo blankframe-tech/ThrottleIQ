@@ -74,7 +74,7 @@ jobs:
       - run: npm test
       # Same as `npm run test:rules` minus the Mac-only JAVA_HOME.
       - run: npm run test:rules:ci
-      # Realtime Database: rules + two-client WebSocket delivery suite.
+      # Realtime Database: deny-all rules (RTDB retired, B9).
       - run: npm run test:rtdb:ci
 
   functions:

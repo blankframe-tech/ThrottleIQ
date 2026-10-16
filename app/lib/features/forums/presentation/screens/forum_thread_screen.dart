@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
@@ -52,21 +53,25 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
     super.initState();
     if (widget.compose) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _showNewPostSheet(context, ref, attachment: widget.attachment);
+        if (mounted) {
+          _showNewPostSheet(context, ref, attachment: widget.attachment);
+        }
       });
     }
   }
 
-  void _showNewPostSheet(BuildContext context, WidgetRef ref, {ForumAttachment? attachment}) {
+  void _showNewPostSheet(BuildContext context, WidgetRef ref,
+      {ForumAttachment? attachment}) {
     showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(context.shape.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
       ),
-      builder: (_) => _NewPostSheet(forumId: forumId, initialAttachment: attachment),
+      builder: (_) =>
+          _NewPostSheet(forumId: forumId, initialAttachment: attachment),
     ).then((posted) {
       // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
       // which inserts the new post into forumPostsNotifierProvider directly
@@ -95,9 +100,12 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
         title: Text(forumAsync.valueOrNull?.displayName ?? context.l10n.forum),
         actions: [
           IconButton(
-            icon: Icon(isFollowing ? Icons.notifications_active : Icons.notifications_none),
+            icon: Icon(isFollowing
+                ? Icons.notifications_active
+                : Icons.notifications_none),
             tooltip: isFollowing ? context.l10n.unfollow : context.l10n.follow,
-            onPressed: () => setForumFollowing(context, ref, forumId, follow: !isFollowing),
+            onPressed: () =>
+                setForumFollowing(context, ref, forumId, follow: !isFollowing),
           ),
           if (showMaintainers)
             IconButton(
@@ -120,12 +128,15 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
         onPressed: () => _showNewPostSheet(context, ref),
         backgroundColor: context.palette.primary,
         icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(context.l10n.newPost, style: const TextStyle(color: Colors.white)),
+        label: Text(context.l10n.newPost,
+            style: const TextStyle(color: Colors.white)),
       ),
       body: postsAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-        error: (e, _) =>
-            ErrorView(error: e, onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
+        error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
         data: (_) {
           final posts = ref.watch(forumPostsNotifierProvider(forumId));
           if (posts.isEmpty) {
@@ -135,13 +146,18 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.forum_outlined, size: 64, color: context.palette.textTertiary),
+                    Icon(Icons.forum_outlined,
+                        size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
-                    Text(context.l10n.noPostsYet, style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                    Text(context.l10n.noPostsYet,
+                        style: TextStyle(
+                            color: context.palette.textSecondary,
+                            fontSize: 16)),
                     const SizedBox(height: 8),
                     Text(context.l10n.beFirstAskQuestion,
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
+                        style: TextStyle(
+                            color: context.palette.textTertiary, fontSize: 14)),
                   ],
                 ),
               ),
@@ -151,7 +167,8 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
             onRefresh: () => ref.refresh(forumPostsProvider(forumId).future),
             color: context.palette.primary,
             child: Builder(builder: (context) {
-              final notifier = ref.read(forumPostsNotifierProvider(forumId).notifier);
+              final notifier =
+                  ref.read(forumPostsNotifierProvider(forumId).notifier);
               final showMore = notifier.hasMore;
               return ListView.separated(
                 padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -165,7 +182,8 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
                       child: notifier.isLoadingMore
                           ? Padding(
                               padding: const EdgeInsets.all(8),
-                              child: CircularProgressIndicator(color: context.palette.primary),
+                              child: CircularProgressIndicator(
+                                  color: context.palette.primary),
                             )
                           : OutlinedButton(
                               onPressed: () async {
@@ -174,7 +192,9 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
                                 } catch (e) {
                                   if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+                                    SnackBar(
+                                        content: Text(mapFirestoreError(
+                                            e, context.l10n))),
                                   );
                                 }
                               },
@@ -262,13 +282,15 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: Icon(Icons.photo_camera_outlined, color: sheetContext.palette.primary),
+              leading: Icon(Icons.photo_camera_outlined,
+                  color: sheetContext.palette.primary),
               title: Text(sheetContext.l10n.takeAPhoto,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
             ),
             ListTile(
-              leading: Icon(Icons.photo_library_outlined, color: sheetContext.palette.primary),
+              leading: Icon(Icons.photo_library_outlined,
+                  color: sheetContext.palette.primary),
               title: Text(sheetContext.l10n.chooseFromGallery,
                   style: TextStyle(color: sheetContext.palette.textPrimary)),
               onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
@@ -284,7 +306,10 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
       final List<XFile> picked;
       if (source == ImageSource.gallery && remaining > 1) {
         picked = await picker.pickMultiImage(
-            imageQuality: 80, maxWidth: 2048, maxHeight: 2048, limit: remaining);
+            imageQuality: 80,
+            maxWidth: 2048,
+            maxHeight: 2048,
+            limit: remaining);
       } else {
         final one = await picker.pickImage(
             source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048);
@@ -328,13 +353,15 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
       final repo = ForumRepository();
       try {
         imageUrls = [
-          for (final path in _photoPaths) await repo.uploadPostPhoto(user.uid, File(path)),
+          for (final path in _photoPaths)
+            await repo.uploadPostPhoto(user.uid, File(path)),
         ];
       } catch (e) {
         if (!mounted) return;
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
+          SnackBar(
+              content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
         );
         return;
       }
@@ -386,125 +413,139 @@ class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
         left: AppDimensions.paddingMd,
         right: AppDimensions.paddingMd,
         top: AppDimensions.paddingMd,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
       child: SingleChildScrollView(
-       child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            context.l10n.newPost,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            context.l10n.forumPostTypeLabel,
-            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
-          ),
-          const SizedBox(height: 6),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              for (final type in [
-                ForumPostType.general,
-                ForumPostType.troubleshoot,
-                ForumPostType.diyGuide,
-                ForumPostType.gearReview,
-              ])
-                ChoiceChip(
-                  key: Key('post_type_${type.name}'),
-                  avatar: Icon(forumPostTypeIcon(type), size: 16),
-                  label: Text(forumPostTypeLabel(context.l10n, type)),
-                  selected: _postType == type,
-                  onSelected: (_) => setState(() => _postType = type),
-                ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _titleController,
-            style: TextStyle(color: context.palette.textPrimary),
-            onChanged: (_) {
-              if (_titleError) setState(() => _titleError = false);
-            },
-            decoration: InputDecoration(
-              hintText: context.l10n.title,
-              errorText: _titleError ? context.l10n.titleRequired : null,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              context.l10n.newPost,
+              style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: context.palette.textPrimary),
             ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _bodyController,
-            style: TextStyle(color: context.palette.textPrimary),
-            maxLines: 4,
-            onChanged: (_) {
-              if (_bodyError) setState(() => _bodyError = false);
-            },
-            decoration: InputDecoration(
-              hintText: context.l10n.whatsGoing,
-              errorText: _bodyError ? context.l10n.saySomethingBeforePosting : null,
-            ),
-          ),
-          if (_attachment != null) ...[
             const SizedBox(height: 12),
-            ForumAttachmentCard(
-              attachment: _attachment!,
-              viewerIsAuthor: true,
-              authorName: '',
-              onRemove: () => setState(() => _attachment = null),
+            Text(
+              context.l10n.forumPostTypeLabel,
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
-          ],
-          const SizedBox(height: 12),
-          if (_photoPaths.isNotEmpty) ...[
-            ForumPickedPhotos(
-              paths: _photoPaths,
-              onRemove: (i) => setState(() => _photoPaths.removeAt(i)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                for (final type in [
+                  ForumPostType.general,
+                  ForumPostType.troubleshoot,
+                  ForumPostType.diyGuide,
+                  ForumPostType.gearReview,
+                ])
+                  ChoiceChip(
+                    key: Key('post_type_${type.name}'),
+                    avatar: Icon(forumPostTypeIcon(type), size: 16),
+                    label: Text(forumPostTypeLabel(context.l10n, type)),
+                    selected: _postType == type,
+                    onSelected: (_) => setState(() => _postType = type),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _titleController,
+              style: TextStyle(color: context.palette.textPrimary),
+              onChanged: (_) {
+                if (_titleError) setState(() => _titleError = false);
+              },
+              decoration: InputDecoration(
+                hintText: context.l10n.title,
+                errorText: _titleError ? context.l10n.titleRequired : null,
+              ),
             ),
             const SizedBox(height: 8),
+            TextField(
+              controller: _bodyController,
+              style: TextStyle(color: context.palette.textPrimary),
+              maxLines: 4,
+              onChanged: (_) {
+                if (_bodyError) setState(() => _bodyError = false);
+              },
+              decoration: InputDecoration(
+                hintText: context.l10n.whatsGoing,
+                errorText:
+                    _bodyError ? context.l10n.saySomethingBeforePosting : null,
+              ),
+            ),
+            if (_attachment != null) ...[
+              const SizedBox(height: 12),
+              ForumAttachmentCard(
+                attachment: _attachment!,
+                viewerIsAuthor: true,
+                authorName: '',
+                onRemove: () => setState(() => _attachment = null),
+              ),
+            ],
+            const SizedBox(height: 12),
+            if (_photoPaths.isNotEmpty) ...[
+              ForumPickedPhotos(
+                paths: _photoPaths,
+                onRemove: (i) => setState(() => _photoPaths.removeAt(i)),
+              ),
+              const SizedBox(height: 8),
+            ],
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const Key('post_add_photo'),
+                onPressed:
+                    _submitting || _photoPaths.length >= kForumPostMaxImages
+                        ? null
+                        : _pickPhoto,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: Text(context.l10n
+                    .forumAddPhotos(_photoPaths.length, kForumPostMaxImages)),
+              ),
+            ),
+            const SizedBox(height: 4),
+            if (bike != null)
+              SwitchListTile(
+                key: const Key('post_attach_bike'),
+                contentPadding: EdgeInsets.zero,
+                value: _attachBike,
+                onChanged: (v) => setState(() => _attachBike = v),
+                title: Text(context.l10n.forumAttachMyBike,
+                    style: TextStyle(
+                        fontSize: 14, color: context.palette.textPrimary)),
+                subtitle: Text(authorBikeLabel(bike),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              )
+            else
+              Text(
+                context.l10n.forumNoBikeToAttach,
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textTertiary),
+              ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: context.palette.primary),
+              onPressed: _submitting ? null : _submit,
+              child: _submitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2.5))
+                  : Text(context.l10n.post,
+                      style: const TextStyle(color: Colors.white)),
+            ),
           ],
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              key: const Key('post_add_photo'),
-              onPressed: _submitting || _photoPaths.length >= kForumPostMaxImages
-                  ? null
-                  : _pickPhoto,
-              icon: const Icon(Icons.add_photo_alternate_outlined),
-              label: Text(context.l10n.forumAddPhotos(_photoPaths.length, kForumPostMaxImages)),
-            ),
-          ),
-          const SizedBox(height: 4),
-          if (bike != null)
-            SwitchListTile(
-              key: const Key('post_attach_bike'),
-              contentPadding: EdgeInsets.zero,
-              value: _attachBike,
-              onChanged: (v) => setState(() => _attachBike = v),
-              title: Text(context.l10n.forumAttachMyBike,
-                  style: TextStyle(fontSize: 14, color: context.palette.textPrimary)),
-              subtitle: Text(authorBikeLabel(bike),
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
-            )
-          else
-            Text(
-              context.l10n.forumNoBikeToAttach,
-              style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
-            ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: context.palette.primary),
-            onPressed: _submitting ? null : _submit,
-            child: _submitting
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5))
-                : Text(context.l10n.post, style: const TextStyle(color: Colors.white)),
-          ),
-        ],
-       ),
+        ),
       ),
     );
   }
@@ -515,9 +556,12 @@ class _PostCard extends ConsumerWidget {
   final ForumPostEntity post;
   const _PostCard({required this.forumId, required this.post});
 
-  Future<void> _castVote(BuildContext context, WidgetRef ref, String postId, int value) async {
+  Future<void> _castVote(
+      BuildContext context, WidgetRef ref, String postId, int value) async {
     try {
-      await ref.read(forumPostsNotifierProvider(forumId).notifier).vote(postId, value);
+      await ref
+          .read(forumPostsNotifierProvider(forumId).notifier)
+          .vote(postId, value);
     } catch (_) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -531,7 +575,8 @@ class _PostCard extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: ctx.palette.surface,
-        title: Text(ctx.l10n.deletePostQuestion, style: TextStyle(color: ctx.palette.textPrimary)),
+        title: Text(ctx.l10n.deletePostQuestion,
+            style: TextStyle(color: ctx.palette.textPrimary)),
         content: Text(
           ctx.l10n.thisRemovesPostIts,
           style: TextStyle(color: ctx.palette.textSecondary),
@@ -539,11 +584,13 @@ class _PostCard extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(ctx.l10n.cancelAction, style: TextStyle(color: ctx.palette.textSecondary)),
+            child: Text(ctx.l10n.cancelAction,
+                style: TextStyle(color: ctx.palette.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.delete,
+                style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -555,7 +602,8 @@ class _PostCard extends ConsumerWidget {
       // post merged in from a bike-model forum onto its brand forum's list
       // (see ForumRepository.getPosts) — the post only actually lives in
       // its own forum's `posts` subcollection.
-      await ForumRepository().deletePost(forumId: post.forumId, postId: post.id);
+      await ForumRepository()
+          .deletePost(forumId: post.forumId, postId: post.id);
       if (!context.mounted) return;
       ref.invalidate(forumPostsProvider(post.forumId));
       if (post.forumId != forumId) ref.invalidate(forumPostsProvider(forumId));
@@ -599,17 +647,24 @@ class _PostCard extends ConsumerWidget {
               // forum posts": the profile screen has the Follow button.
               GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onTap: () => context.push('/profile/${post.userId}'),
+                onTap: ref.watch(appModulesProvider).social
+                    ? () => context.push('/profile/${post.userId}')
+                    : null,
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 14),
+                    UserAvatar(
+                        photoUrl: post.userPhotoUrl,
+                        name: post.userName,
+                        radius: 14),
                     const SizedBox(width: 8),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(post.userName,
-                            style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: context.palette.textTertiary)),
                         if (post.authorBike != null)
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 200),
@@ -625,14 +680,17 @@ class _PostCard extends ConsumerWidget {
               if (canDelete)
                 IconButton(
                   padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
                   tooltip: context.l10n.deletePost,
                   onPressed: () => _confirmDelete(context, ref),
-                  icon: Icon(Icons.delete_outline, size: 18, color: context.palette.textTertiary),
+                  icon: Icon(Icons.delete_outline,
+                      size: 18, color: context.palette.textTertiary),
                 )
               else
                 PopupMenuButton<String>(
-                  icon: Icon(Icons.more_vert, color: context.palette.textTertiary, size: 18),
+                  icon: Icon(Icons.more_vert,
+                      color: context.palette.textTertiary, size: 18),
                   padding: EdgeInsets.zero,
                   onSelected: (value) {
                     if (value == 'report') {
@@ -658,14 +716,17 @@ class _PostCard extends ConsumerWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.subdirectory_arrow_right, size: 14, color: context.palette.textTertiary),
+                Icon(Icons.subdirectory_arrow_right,
+                    size: 14, color: context.palette.textTertiary),
                 const SizedBox(width: 4),
                 Flexible(
                   child: Text(
                     context.l10n.fromUser(mergedFrom.displayName),
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                        fontSize: 11, color: context.palette.textTertiary, fontStyle: FontStyle.italic),
+                        fontSize: 11,
+                        color: context.palette.textTertiary,
+                        fontStyle: FontStyle.italic),
                   ),
                 ),
               ],
@@ -674,14 +735,18 @@ class _PostCard extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             post.title,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 6),
           Text(
             post.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           if (post.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -704,23 +769,34 @@ class _PostCard extends ConsumerWidget {
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, 1),
                 icon: Icon(Icons.arrow_upward,
-                    color: post.myVote == 1 ? context.palette.primary : context.palette.textSecondary, size: 18),
+                    color: post.myVote == 1
+                        ? context.palette.primary
+                        : context.palette.textSecondary,
+                    size: 18),
               ),
               Text('${post.netScore}',
                   style: TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600, color: context.palette.textPrimary)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: context.palette.textPrimary)),
               IconButton(
                 tooltip: context.l10n.downvote,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 onPressed: () => _castVote(context, ref, post.id, -1),
                 icon: Icon(Icons.arrow_downward,
-                    color: post.myVote == -1 ? context.palette.danger : context.palette.textSecondary, size: 18),
+                    color: post.myVote == -1
+                        ? context.palette.danger
+                        : context.palette.textSecondary,
+                    size: 18),
               ),
               const Spacer(),
-              Icon(Icons.chat_bubble_outline, size: 16, color: context.palette.textSecondary),
+              Icon(Icons.chat_bubble_outline,
+                  size: 16, color: context.palette.textSecondary),
               const SizedBox(width: 4),
-              Text('${post.replyCount}', style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+              Text('${post.replyCount}',
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary)),
             ],
           ),
         ],
@@ -788,7 +864,8 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
         left: AppDimensions.paddingMd,
         right: AppDimensions.paddingMd,
         top: AppDimensions.paddingMd,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -797,18 +874,22 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
           Text(
             context.l10n.maintainers,
             style: TextStyle(
-                fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
             context.l10n.maintainersCanDeletePosts,
-            style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 12, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 16),
           if (maintainers.isEmpty)
             Text(
               context.l10n.noMaintainersYet,
-              style: TextStyle(fontSize: 13, color: context.palette.textTertiary),
+              style:
+                  TextStyle(fontSize: 13, color: context.palette.textTertiary),
             )
           else
             for (final uid in maintainers)
@@ -816,24 +897,28 @@ class _MaintainersSheetState extends ConsumerState<_MaintainersSheet> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.person_outline, size: 18, color: context.palette.textSecondary),
+                    Icon(Icons.person_outline,
+                        size: 18, color: context.palette.textSecondary),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         uid,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 13, color: context.palette.textPrimary),
+                        style: TextStyle(
+                            fontSize: 13, color: context.palette.textPrimary),
                       ),
                     ),
                     IconButton(
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                      constraints:
+                          const BoxConstraints(minWidth: 32, minHeight: 32),
                       tooltip: context.l10n.remove,
                       onPressed: _busy
                           ? null
-                          : () => _run(() =>
-                              ForumRepository().removeMaintainer(widget.forumId, uid)),
-                      icon: Icon(Icons.close, size: 18, color: context.palette.danger),
+                          : () => _run(() => ForumRepository()
+                              .removeMaintainer(widget.forumId, uid)),
+                      icon: Icon(Icons.close,
+                          size: 18, color: context.palette.danger),
                     ),
                   ],
                 ),

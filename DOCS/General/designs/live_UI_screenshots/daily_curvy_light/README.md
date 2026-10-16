@@ -2,7 +2,6 @@
 
 55 screenshots from the iOS Simulator (iPhone 17, iOS 26.5), numbered in walkthrough order. The app default: calm sage and tan, rounded corners, light theme.
 
-The same screens in the other looks are in the sibling folders (identical filenames).
 
 | # | File | Screen |
 |---|------|--------|

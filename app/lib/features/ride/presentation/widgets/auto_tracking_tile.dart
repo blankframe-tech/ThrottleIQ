@@ -7,6 +7,7 @@ import '../../../../l10n/app_localizations.dart';
 import '../providers/auto_tracking_provider.dart';
 import '../providers/daily_ride_summary_provider.dart';
 import 'auto_detection_history_sheet.dart';
+import 'recording_gate.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
 /// Settings control for automatic ride detection.
@@ -40,74 +41,82 @@ class AutoTrackingTile extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             SwitchListTile(
-            value: isEnabled,
-            onChanged: enabled.isLoading
-                ? null
-                : (value) => _toggle(context, ref, value),
-            title: Text(
-              l10n.autoTrackingTileTitle,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              value: isEnabled,
+              onChanged: enabled.isLoading
+                  ? null
+                  : (value) => _toggle(context, ref, value),
+              title: Text(
+                l10n.autoTrackingTileTitle,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+              subtitle: Text(l10n.autoTrackingTileSubtitle),
+              secondary: Icon(Icons.motorcycle, color: context.palette.primary),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             ),
-            subtitle: Text(l10n.autoTrackingTileSubtitle),
-            secondary: Icon(Icons.motorcycle, color: context.palette.primary),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          ),
-          if (isIos && isEnabled)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: context.palette.attention.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: context.palette.attention.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.info_outline, size: 16, color: context.palette.attention),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        l10n.iosAutoTrackingAdvisory,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.palette.textPrimary,
-                          height: 1.3,
+            if (isIos && isEnabled)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: context.palette.attention.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                        color:
+                            context.palette.attention.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline,
+                          size: 16, color: context.palette.attention),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.iosAutoTrackingAdvisory,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: context.palette.textPrimary,
+                            height: 1.3,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+            if (isEnabled) const _TodaySummaryRow(),
+            const Divider(height: 1),
+            InkWell(
+              onTap: () => AutoDetectionHistorySheet.show(context),
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(12)),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.history,
+                        size: 18, color: context.palette.textSecondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.dailySummariesTitle,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: context.palette.textPrimary,
+                      ),
                     ),
+                    const Spacer(),
+                    Icon(Icons.chevron_right,
+                        size: 18, color: context.palette.textTertiary),
                   ],
                 ),
               ),
             ),
-          if (isEnabled) const _TodaySummaryRow(),
-          const Divider(height: 1),
-          InkWell(
-            onTap: () => AutoDetectionHistorySheet.show(context),
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: Row(
-                children: [
-                  Icon(Icons.history, size: 18, color: context.palette.textSecondary),
-                  const SizedBox(width: 8),
-                  Text(
-                    l10n.dailySummariesTitle,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: context.palette.textPrimary,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(Icons.chevron_right, size: 18, color: context.palette.textTertiary),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+          ],
+        ),
       ),
     );
   }
@@ -120,6 +129,9 @@ class AutoTrackingTile extends ConsumerWidget {
       return;
     }
 
+    // Play's background-location disclosure comes before enable() asks for
+    // "Allow all the time" (B4).
+    if (!await ensureBackgroundLocationDisclosure(context)) return;
     final failure = await notifier.enable();
     if (failure == null || !context.mounted) return;
 
@@ -234,48 +246,50 @@ class AutoTrackingScheduleTile extends ConsumerWidget {
         child: Column(
           children: [
             SwitchListTile(
-            value: schedule.enabled,
-            onChanged: (value) =>
-                ref.read(autoTrackingScheduleProvider.notifier).setEnabled(value),
-            title: Text(context.l10n.activeHours,
-                style: const TextStyle(fontWeight: FontWeight.w600)),
-            subtitle: Text(schedule.enabled
-                ? context.l10n.onlyWatchingRidesBetween(_formatMinutes(schedule.startMinutes), _formatMinutes(schedule.endMinutes))
-                : context.l10n.watchingRidesAllDay),
-            secondary: Icon(Icons.schedule, color: context.palette.primary),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          ),
-          if (schedule.enabled) ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _TimeField(
-                      label: context.l10n.fromLabel,
-                      minutes: schedule.startMinutes,
-                      onPicked: (picked) => _updateWindow(
-                          context, ref, start: picked, end: schedule.endMinutes),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _TimeField(
-                      label: context.l10n.untilLabel,
-                      minutes: schedule.endMinutes,
-                      onPicked: (picked) => _updateWindow(
-                          context, ref,
-                          start: schedule.startMinutes, end: picked),
-                    ),
-                  ),
-                ],
-              ),
+              value: schedule.enabled,
+              onChanged: (value) => ref
+                  .read(autoTrackingScheduleProvider.notifier)
+                  .setEnabled(value),
+              title: Text(context.l10n.activeHours,
+                  style: const TextStyle(fontWeight: FontWeight.w600)),
+              subtitle: Text(schedule.enabled
+                  ? context.l10n.onlyWatchingRidesBetween(
+                      _formatMinutes(schedule.startMinutes),
+                      _formatMinutes(schedule.endMinutes))
+                  : context.l10n.watchingRidesAllDay),
+              secondary: Icon(Icons.schedule, color: context.palette.primary),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             ),
+            if (schedule.enabled) ...[
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _TimeField(
+                        label: context.l10n.fromLabel,
+                        minutes: schedule.startMinutes,
+                        onPicked: (picked) => _updateWindow(context, ref,
+                            start: picked, end: schedule.endMinutes),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _TimeField(
+                        label: context.l10n.untilLabel,
+                        minutes: schedule.endMinutes,
+                        onPicked: (picked) => _updateWindow(context, ref,
+                            start: schedule.startMinutes, end: picked),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
-        ],
-      ),
+        ),
       ),
     );
   }
@@ -325,7 +339,8 @@ class _TimeField extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(label,
-              style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+              style:
+                  TextStyle(fontSize: 11, color: context.palette.textTertiary)),
           Text(AutoTrackingScheduleTile._formatMinutes(minutes)),
         ],
       ),

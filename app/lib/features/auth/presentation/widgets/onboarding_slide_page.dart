@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -511,8 +513,9 @@ class _Spotlight extends StatelessWidget {
   }
 }
 
-/// Miniature of the app's bottom navigation, with the step's tab spotlit.
-class _MiniNavBar extends StatelessWidget {
+/// Miniature of the rider's bottom navigation (only the tabs their
+/// Settings → Your ThrottleIQ choice keeps), with the step's tab spotlit.
+class _MiniNavBar extends ConsumerWidget {
   const _MiniNavBar({
     required this.height,
     required this.activeTab,
@@ -526,9 +529,10 @@ class _MiniNavBar extends StatelessWidget {
   final Animation<double> pulse;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final palette = context.palette;
     final l10n = context.l10n;
+    final modules = ref.watch(appModulesProvider);
     return Container(
       height: height,
       decoration: BoxDecoration(
@@ -539,39 +543,40 @@ class _MiniNavBar extends StatelessWidget {
       child: Row(
         children: [
           for (final tab in TourTab.values)
-            Expanded(
-              child: tab == activeTab
-                  ? AnimatedBuilder(
-                      animation: pulse,
-                      builder: (context, child) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: accent.withValues(alpha: 0.14),
-                          borderRadius:
-                              BorderRadius.circular(context.shape.radiusMd),
-                          border: Border.all(
-                            color: accent.withValues(
-                                alpha: 0.55 + 0.45 * pulse.value),
-                            width: 1.5,
+            if (modules.tabs.contains(tab.route))
+              Expanded(
+                child: tab == activeTab
+                    ? AnimatedBuilder(
+                        animation: pulse,
+                        builder: (context, child) => Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: accent.withValues(alpha: 0.14),
+                            borderRadius:
+                                BorderRadius.circular(context.shape.radiusMd),
+                            border: Border.all(
+                              color: accent.withValues(
+                                  alpha: 0.55 + 0.45 * pulse.value),
+                              width: 1.5,
+                            ),
                           ),
+                          child: child,
                         ),
-                        child: child,
+                        child: _MiniNavItem(
+                          icon: tab.activeIcon(modules),
+                          label: tab.label(l10n, modules),
+                          iconColor: accent,
+                          labelColor: palette.textPrimary,
+                          bold: true,
+                        ),
+                      )
+                    : _MiniNavItem(
+                        icon: tab.icon(modules),
+                        label: tab.label(l10n, modules),
+                        iconColor: palette.textTertiary,
+                        labelColor: palette.textTertiary,
                       ),
-                      child: _MiniNavItem(
-                        icon: tab.activeIcon,
-                        label: tab.label(l10n),
-                        iconColor: accent,
-                        labelColor: palette.textPrimary,
-                        bold: true,
-                      ),
-                    )
-                  : _MiniNavItem(
-                      icon: tab.icon,
-                      label: tab.label(l10n),
-                      iconColor: palette.textTertiary,
-                      labelColor: palette.textTertiary,
-                    ),
-            ),
+              ),
         ],
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
+import '../constants/sensor_constants.dart';
 import '../i18n/l10n_lookup.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -41,6 +42,7 @@ class NotificationService {
   static const crashNotificationId = 9001;
   static const confirmPromptId = 9002;
   static const weeklyDigestId = 9003;
+  static const recordingStoppedId = 9004;
 
   /// Maintenance and paperwork alerts take ids in
   /// [maintenanceIdBase, maintenanceIdBase + maintenanceIdSpan) — see
@@ -164,7 +166,8 @@ class NotificationService {
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
-      return await ios.requestPermissions(alert: true, badge: true, sound: true) ??
+      return await ios.requestPermissions(
+              alert: true, badge: true, sound: true) ??
           false;
     }
     return false;
@@ -184,6 +187,8 @@ class NotificationService {
   /// swiping away a crash alert must not silently cancel the countdown *or*
   /// silently let it run — the rider has to answer it.
   Future<void> showCrashAlert({required int secondsRemaining}) async {
+    // Crash copy only with the detector on (CrtiQue_Oct14 B11).
+    if (!SensorConstants.crashAlertsEnabled) return;
     await init();
     final l10n = await savedL10n();
     await _plugin.show(
@@ -224,6 +229,29 @@ class NotificationService {
 
   Future<void> cancelCrashAlert() async {
     await _plugin.cancel(crashNotificationId);
+  }
+
+  /// "Recording stopped, tap to resume": the ride's foreground service died
+  /// mid-ride (critique B5). The tap just opens the app, which restores the
+  /// ride paused for the rider to resume. Callable from the foreground-task
+  /// isolate as well as the UI one.
+  Future<void> showRecordingStopped() async {
+    await init();
+    final l10n = await savedL10n();
+    await _plugin.show(
+      recordingStoppedId,
+      l10n.notifRecordingStoppedTitle,
+      l10n.notifRecordingStoppedBody,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          ridesChannelId,
+          l10n.notifChannelRides,
+          importance: Importance.defaultImportance,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+    );
   }
 
   /// Asks which bike an auto-detected ride was on, immediately after it ends.

@@ -34,15 +34,15 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// Every upload is therefore recorded in a ledger at
 /// `users/{uid}/cloudinaryAssets/{docId}` — `public_id` plus the resource
 /// type, which is all Cloudinary's `destroy` endpoint needs. The server-side
-/// sweep that consumes it lives in `functions/src/account-deletion.ts` and is
-/// gated on a `CLOUDINARY_API_SECRET` being configured; until it is, the
-/// ledger still accumulates, so nothing is lost and the sweep can run
-/// retroactively the first time it is deployed.
+/// sweep that consumes it lives in `functions/src/account-erasure.ts` and
+/// needs the `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` functions
+/// secrets; without them it skips and records the skip.
 ///
 /// The ledger write is best-effort and never blocks or fails an upload: a
 /// rider losing connectivity between the upload and the ledger write gets
-/// their photo, and the ledger gets an orphan that the folder-prefix fallback
-/// in the sweep still catches (every folder is `<kind>/<uid>`).
+/// their photo, and that asset has no ledger row, so the sweep misses it.
+/// Every folder is `<kind>/<uid>`, so it can still be found by hand in the
+/// Cloudinary console.
 class CloudinaryUploadService {
   final Dio _dio;
   final FirebaseFirestore _firestore;

@@ -4,6 +4,22 @@ _Rewritten 2026-09-21 (evening) against the real state of `main` @ `0222f03`. Ea
 listed things that have since been done (keystore, route navigation, print sticker, rules deploy).
 What is left needs the founder: an account, a real device, a decision, or the Blaze plan._
 
+## From the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`)
+
+- [ ] **Create `config/app` with `minBuild`** (an int) in Firestore once the public-read rule for it
+      is deployed. Leave it at or below the oldest build you still support; raise it to force an update.
+- [ ] **Check that hello@blankframe.tech reaches you.** `privacy.html` and the delete dialog now send
+      every privacy and deletion request there (they used a personal Gmail before).
+- [ ] **Handle deletion requests by hand within 30 days**, with
+      `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function is
+      live on Blaze. Deploy `privacy.html` (hosting) so the new §9 is live.
+- [ ] **Update the Play Data Safety form** from `General/store_listing/throttleiq_data_safety.csv`
+      (App interactions now declared, on by default with opt-out).
+- [ ] **`gov-pitch/`:** rewrite it from `iDEA_PITCH_SUBMISSION.md` or delete it. It still claims
+      crash detection and carries a "do not submit" banner.
+- [ ] **iOS widget extension privacy manifest** (`ThrottleIQWidget`, App Group UserDefaults) before
+      any App Store submission.
+
 ## Release — the one thing everything else waits on
 
 _Update 2026-10-07 (later):_ the current release is `beta-v4.2` (`1.0.0-beta.4.2.0+23`, AAB + APK

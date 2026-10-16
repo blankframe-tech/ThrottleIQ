@@ -224,6 +224,71 @@ service cloud.firestore {
         d.syncedAt == request.time;
     }
 
+    // Shadow-mode crash detection (crash-detection plan §8), shared with
+    // impact_event_payload.dart: the field lists must match it.
+    function impactLabelValid(label) {
+      return label in ['crash', 'fall', 'phone_fell', 'bump', 'hard_stop',
+          'unsure', 'missed'];
+    }
+
+    // A rider's own impact (impactEventCloudPayload + syncedAt). `imu` is the
+    // gzip'd sensor window (ImpactWindowRecorder), capped at 64 KiB; tier -1
+    // is a fall the rider reported that the detector missed.
+    function impactEventValid(d) {
+      return d.keys().hasOnly(['schema', 'rideId', 'at', 'tier', 'reason',
+          'peakUserG', 'peakRawG', 'freefallMs', 'rotationDeg',
+          'orientationChangeDeg', 'stillAfter', 'resumedAfter',
+          'speedBeforeMs', 'speedAfterMs', 'gpsGapS', 'lat', 'lng',
+          'placement', 'appForeground', 'charging', 'vibrationRms',
+          'sampleRateHz', 'features', 'imu', 'label', 'labelDetail',
+          'labelSource', 'labeledAt', 'consent', 'createdAt', 'syncedAt']) &&
+        d.keys().hasAll(['schema', 'rideId', 'at', 'tier', 'consent',
+          'createdAt', 'syncedAt']) &&
+        d.schema == 1 &&
+        d.rideId is string && d.rideId.size() > 0 && d.rideId.size() <= 128 &&
+        d.at is string && d.at.size() <= 40 &&
+        d.createdAt is string && d.createdAt.size() <= 40 &&
+        d.tier is int && d.tier >= -1 && d.tier <= 2 &&
+        d.consent is bool &&
+        (!('imu' in d) || (d.imu is bytes && d.imu.size() <= 65536)) &&
+        (!('features' in d) || (d.features is map && d.features.size() <= 40)) &&
+        (!('labelDetail' in d) ||
+          (d.labelDetail is map && d.labelDetail.size() <= 10)) &&
+        (!('label' in d) || impactLabelValid(d.label)) &&
+        optionalString(d, 'reason', 32) &&
+        optionalString(d, 'placement', 16) &&
+        optionalString(d, 'labelSource', 16) &&
+        optionalString(d, 'labeledAt', 40) &&
+        d.syncedAt == request.time;
+    }
+
+    // The de-identified research copy of an answered impact
+    // (crashEventCloudPayload + updatedAt): no exact position (a geohash-6
+    // cell), no free text, and the owner only so they can delete it.
+    function crashEventValid(d) {
+      return d.keys().hasOnly(['ownerUid', 'createdAt', 'platform', 'label',
+          'detectedTier', 'reason', 'peakG', 'freefallMs', 'rotationDeg',
+          'orientationChangeDeg', 'speedBeforeKmh', 'placement', 'bikeCc',
+          'bikeClass', 'surface', 'severity', 'geohash6', 'hourLocal',
+          'weekday', 'rulesVersion', 'consentVersion', 'updatedAt']) &&
+        d.keys().hasAll(['ownerUid', 'label', 'consentVersion', 'updatedAt']) &&
+        d.ownerUid is string &&
+        impactLabelValid(d.label) &&
+        d.consentVersion is int && d.consentVersion >= 1 &&
+        (!('detectedTier' in d) ||
+          (d.detectedTier is int && d.detectedTier >= 0 && d.detectedTier <= 2)) &&
+        (!('geohash6' in d) || (d.geohash6 is string && d.geohash6.size() <= 6)) &&
+        (!('surface' in d) || d.surface in ['paved', 'broken', 'dirt',
+          'gravel', 'wet', 'rail_crossing', 'speed_bump']) &&
+        (!('severity' in d) || d.severity in ['none', 'minor', 'medical']) &&
+        optionalString(d, 'createdAt', 40) &&
+        optionalString(d, 'platform', 16) &&
+        optionalString(d, 'reason', 32) &&
+        optionalString(d, 'placement', 16) &&
+        optionalString(d, 'bikeClass', 16) &&
+        d.updatedAt == request.time;
+    }
+
     function forumImageUrlValid(url, uid) {
       return url is string && url.size() <= 1000 &&
         url.matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?forumPhotos/' + uid + '/.+');
@@ -325,7 +390,8 @@ service cloud.firestore {
     // do safely without deploy/device access. Tracked as deferred in
     // issues §62.
     function publicStatsValid(existingProfile, incomingStats) {
-      let oldStats = existingProfile != null ? existingProfile.get('publicStats', {}) : {};
+      // A new profile is passed as {} (not null) so the compiler sees a map.
+      let oldStats = existingProfile.get('publicStats', {});
       let oldKm = oldStats.get('totalDistanceKm', 0);
       let oldRides = oldStats.get('totalRides', 0);
       let oldBadges = oldStats.get('badgeIds', []);
@@ -364,21 +430,19 @@ service cloud.firestore {
 
     // The free-form identity fields on users/{uid}.
     //
-    // §90.D6: `email`/`emailLower` feed find-by-email, the chat picker and the
-    // group-ride friend picker, so a client-chosen value was impersonation:
-    // set a victim's email and receive their friends' invites and locations.
-    // A NEW value must now be the caller's own verified-by-Auth token email
-    // (lowercased for emailLower). Removing the field is always allowed.
+    // B2 (critique 2026-10-14): `email`/`emailLower` no longer live on the
+    // public profile, where any signed-in rider could list them. They moved
+    // to the owner-only users/{uid}/private/account, and find-by-email goes
+    // through emailLookup/{hash} below. A legacy value may stay until the
+    // migration strips it (unrelated merges must not trip on it), and
+    // removing it is always allowed, but a NEW value is refused.
     //
     // §90.D10: a changed photoUrl must pass the §33.4 allow-list, and a
     // changed displayName/nickname is capped at 100 characters. `visibility`
     // must be one of the three tiers, since the list rule keys off it.
     function profileFieldsValid(before, after) {
-      let tokenEmail = request.auth.token.get('email', null);
-      return (keeps(before, after, 'email') || !('email' in after) ||
-          (tokenEmail != null && after.email == tokenEmail)) &&
-        (keeps(before, after, 'emailLower') || !('emailLower' in after) ||
-          (tokenEmail != null && after.emailLower == tokenEmail.lower())) &&
+      return (keeps(before, after, 'email') || !('email' in after)) &&
+        (keeps(before, after, 'emailLower') || !('emailLower' in after)) &&
         (keeps(before, after, 'photoUrl') || photoUrlAllowed(after.get('photoUrl', null))) &&
         (keeps(before, after, 'displayName') || optionalNameValid(after.get('displayName', null))) &&
         (keeps(before, after, 'nickname') || optionalNameValid(after.get('nickname', null))) &&
@@ -404,8 +468,9 @@ service cloud.firestore {
     // riders are found by @username prefix / exact email and followed, which
     // requires cross-user profile reads (see ProfileRepository.searchBy*). The
     // root doc holds only public-facing fields (displayName, username,
-    // nickname, bio, photoUrl, email — email exposure is intentional, the user
-    // explicitly wants find-by-email). Writes stay owner-only, and every
+    // nickname, bio, photoUrl). The email is NOT one of them: it lives in
+    // private/account, and find-by-email resolves through emailLookup (B2,
+    // 2026-10-14). Writes stay owner-only, and every
     // subcollection below (rides/bikes/maintenance/emergencyContacts/...)
     // keeps its own owner-only rule, so opening the root doc does not expose
     // any of them.
@@ -423,9 +488,13 @@ service cloud.firestore {
     // drop out of search until ProfileRepository.ensureProfile stamps
     // 'public' on the rider's next sign-in (or a backfill runs) — single-doc
     // gets still treat a missing field as public, as before.
+    //
+    // B2: a list is also capped at 20 docs per query, so a scraper pages
+    // through the rider base instead of pulling it in one read.
     match /users/{uid} {
       allow get: if profileVisibleTo(uid, resource.data);
-      allow list: if request.auth != null && resource.data.visibility == 'public';
+      allow list: if request.auth != null && resource.data.visibility == 'public' &&
+        request.query.limit <= 20;
 
       // Owner-only, PLUS issues §24.5: a usernameLower change must be
       // backed by a real claim in usernames/{handle}. This rule used to be a
@@ -452,7 +521,7 @@ service cloud.firestore {
           resource.data.get('usernameLower', null) == request.resource.data.usernameLower) ||
          usernameClaimedBy(request.resource.data.usernameLower, request.auth.uid)) &&
         (!('publicStats' in request.resource.data) ||
-         publicStatsValid(resource == null ? null : resource.data, request.resource.data.publicStats)) &&
+         publicStatsValid(resource == null ? {} : resource.data, request.resource.data.publicStats)) &&
         profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
         badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
       // A profile already counted in stats/badges.totalRiders can't be
@@ -524,6 +593,9 @@ service cloud.firestore {
       // Note this sits under users/{uid}, whose *profile document* is publicly
       // readable — a subcollection does NOT inherit the parent document's
       // read rule, so this is genuinely private.
+      //
+      // `account` holds {email, emailLower} since B2 (2026-10-14), moved off
+      // the public profile (ProfileRepository.ensureProfile).
       match /private/{docId} {
         allow read, write: if request.auth.uid == uid;
       }
@@ -578,6 +650,15 @@ service cloud.firestore {
       match /falseCrashPositives/{documentId} {
         allow write: if request.auth.uid == uid;
         allow read: if request.auth.uid == uid;
+      }
+
+      // Shadow-mode crash detection: the impacts this rider's phone logged,
+      // with their sensor windows and the rider's answers. Owner-only.
+      match /impactEvents/{eventId} {
+        allow read, delete: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if request.auth != null &&
+          request.auth.uid == uid &&
+          impactEventValid(request.resource.data);
       }
 
       // Rider Stats milestone badges (Epic F). Earned/not-earned is always
@@ -654,9 +735,16 @@ service cloud.firestore {
              (data.get('groupRideId', '') is string &&
               data.get('groupRideId', '') != ''));
         }
+        // B3 (critique 2026-10-14): neither side of a block may notify the
+        // other, the same pair of checks as chats and follows.
+        function notBlockedEitherWay() {
+          return !exists(/databases/$(database)/documents/users/$(uid)/blocks/$(request.auth.uid)) &&
+            !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(uid));
+        }
         allow read, update, delete: if request.auth.uid == uid;
         allow create: if request.auth != null &&
-          notificationShapeValid(request.resource.data);
+          notificationShapeValid(request.resource.data) &&
+          notBlockedEitherWay();
         // §90.A9: a follow notification lives at the deterministic id
         // `follow_{fromUid}` (NotificationRepository.notifyFollow `set`s it),
         // so re-following rewrites one row instead of stacking new ones. A
@@ -666,7 +754,8 @@ service cloud.firestore {
           notificationId == 'follow_' + request.auth.uid &&
           resource.data.fromUid == request.auth.uid &&
           request.resource.data.get('type', '') == 'follow' &&
-          notificationShapeValid(request.resource.data);
+          notificationShapeValid(request.resource.data) &&
+          notBlockedEitherWay();
       }
 
       // Blocked users subcollection
@@ -821,6 +910,25 @@ service cloud.firestore {
         (!('timestamp' in request.resource.data) ||
          request.resource.data.timestamp is string);
       allow read: if request.auth != null && request.auth.uid == resource.data.uid;
+    }
+
+    // Research copies of answered impacts, written only with the rider's
+    // opt-in (Settings → "Help improve crash detection"). Never readable by
+    // clients: the Admin SDK scripts (scripts/crash_stats.js) aggregate them.
+    // The owner can create, change their answer, and delete — including a
+    // delete of a copy that doesn't exist, which is how withdrawing consent
+    // is applied without first having to read the collection.
+    match /crashEvents/{eventId} {
+      allow create: if request.auth != null &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        crashEventValid(request.resource.data);
+      allow update: if request.auth != null &&
+        resource.data.ownerUid == request.auth.uid &&
+        request.resource.data.ownerUid == request.auth.uid &&
+        crashEventValid(request.resource.data);
+      allow delete: if request.auth != null &&
+        (resource == null || resource.data.ownerUid == request.auth.uid);
+      allow read: if false;
     }
 
     // Shared/public rides (Social feed) — top-level collection.
@@ -1388,6 +1496,40 @@ service cloud.firestore {
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
+    // Find-by-email (B2, critique 2026-10-14): `emailLookup/{hash}` → {uid},
+    // where hash is the lowercase hex SHA-256 of the lowercased email
+    // (ProfileRepository.emailLookupId). A rider who already knows an address
+    // can `get` its account; nobody can `list`, so the addresses can't be
+    // harvested the way the public profiles' `email` field could.
+    //
+    // A write must hash the caller's OWN token email (§90.D6), and that
+    // email must be verified (CrtiQue_Oct15 N3): otherwise anyone could sign
+    // up with an address they don't own and be the rider it finds. Google
+    // accounts arrive verified; email/password riders verify through the link
+    // the app sends (AuthNotifier.completeEmailVerification). That proof is
+    // stronger than the stored uid, so update doesn't require it: a lookup
+    // left behind by a deleted account is taken over by whoever holds that
+    // email now.
+    match /emailLookup/{emailHash} {
+      allow get: if request.auth != null;
+      allow create, update: if request.auth != null &&
+        request.resource.data.keys().hasOnly(['uid']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.auth.token.get('email', '') != '' &&
+        request.auth.token.get('email_verified', false) == true &&
+        emailHash == hashing.sha256(request.auth.token.email.lower()).toHexString().lower();
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // App-wide config the client reads at start. `config/app.minBuild` (an
+    // int) drives the forced-update gate: a build below it shows a blocking
+    // "update" screen. Readable signed out, because the gate runs before
+    // sign-in; written only from the console / Admin SDK.
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Live pointer — `livePointers/{uid}` → { token, active }. The other half
     // of the permanent share link: resolves a uid to "are they riding right
     // now, and if so which liveSessions/{token}". Deliberately keyed by uid
@@ -1414,11 +1556,15 @@ service cloud.firestore {
     // forum_follows / reviews deterministic-id pattern). Reads are open to
     // authed users so follower/following lists and mutual-friend computation
     // work. Counts are derived via count() aggregation — no counter to spoof.
+    // B3 (critique 2026-10-14): a block in either direction refuses the edge,
+    // so a blocked rider can't re-follow back into the followers tier.
     match /follows/{edgeId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null &&
         request.resource.data.followerUid == request.auth.uid &&
-        edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid);
+        edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid) &&
+        !exists(/databases/$(database)/documents/users/$(request.resource.data.followeeUid)/blocks/$(request.auth.uid)) &&
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(request.resource.data.followeeUid));
       // The follower may unfollow; the FOLLOWEE may also remove an edge
       // pointing at them (§90.D8/§90.A11) — blocking someone drops their
       // follow, so they stop qualifying for followers/mutual posts.
@@ -1833,6 +1979,15 @@ service cloud.firestore {
 
     // Direct Messaging (Chats)
     match /chats/{chatId} {
+      // B3 (critique 2026-10-14): the messages create rule's two block
+      // checks, applied to the parent doc too. Without them a blocked rider
+      // could still open a room with you, or write up to 5000 characters into
+      // your inbox preview (`lastMessage`).
+      function notBlockedBy(participants) {
+        return !exists(/databases/$(database)/documents/users/$(participants[0])/blocks/$(request.auth.uid)) &&
+          !exists(/databases/$(database)/documents/users/$(participants[1])/blocks/$(request.auth.uid));
+      }
+
       // User can read a chat if they are a participant.
       // §78.14: ChatRepository.getOrCreateChat reads the deterministic DM id
       // (`<uidA>_<uidB>`, sorted) before and inside the create transaction,
@@ -1865,7 +2020,8 @@ service cloud.firestore {
         request.resource.data.lastMessage.get('text', null) is string &&
         request.resource.data.lastMessage.text.size() <= 5000 &&
         request.resource.data.lastMessage.get('createdAt', null) == request.time &&
-        request.resource.data.updatedAt == request.time;
+        request.resource.data.updatedAt == request.time &&
+        notBlockedBy(resource.data.participants);
       // §78.14: new chats must live at the deterministic DM id with
       // `participants` stored sorted, so the doc id alone names the pair and
       // two concurrent "Message" taps can't create two rooms. Only
@@ -1880,7 +2036,8 @@ service cloud.firestore {
         request.resource.data.participants.size() == 2 &&
         request.auth.uid in request.resource.data.participants &&
         request.resource.data.participants[0] < request.resource.data.participants[1] &&
-        chatId == request.resource.data.participants[0] + '_' + request.resource.data.participants[1];
+        chatId == request.resource.data.participants[0] + '_' + request.resource.data.participants[1] &&
+        notBlockedBy(request.resource.data.participants);
 
       match /messages/{messageId} {
         // Can read if a participant of the parent chat.

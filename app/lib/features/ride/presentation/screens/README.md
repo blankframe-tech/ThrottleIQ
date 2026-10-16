@@ -10,3 +10,4 @@ The following files are present in this directory:
 - `record_screen.dart`: Flutter screen widget.
 - `ride_summary_screen.dart`: Flutter screen widget.
 
+- `oem_guide_screen.dart`: one-time battery-settings guide for Xiaomi, OPPO, vivo and realme phones.

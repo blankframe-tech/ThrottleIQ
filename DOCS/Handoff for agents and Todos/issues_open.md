@@ -373,6 +373,39 @@ What remains open:
   - the founder's choice of alert delivery (`DOCS/needs_attention.md` b);
   - field rides plus a padded drop test to calibrate the thresholds
     (claude_sol §1.1.1 step 6).
+  **First real field crash, 2026-10-14:** a low-speed fall at a railway crossing, not detected because the flag is off.
+  No IMU spike was saved, so it gives no calibration value. Speed drop was ≤2 m/s, borderline for the
+  `minSpeedDropMs` rule. Analysis in `DOCS/CRASH TESTING/` (the raw track exports and the phone DB copy stay on
+  the founder's machine). Rider's account: accelerating over the second rail of a double-track crossing at an
+  angle, the rear kicked out to the left. Public write-up: blankframe.tech/throttleiq/crash/1.
+  The real `ImpactDetector` was replayed over this crash's GPS fixes with simulated impacts. Even with the flag
+  on, today's rules confirm it in only 2 of 5 placement scenarios, for three reasons:
+  - the speed before an impact is only looked up within 5 s, but fixes at walking pace are 2–9 s apart;
+  - GPS silence after an impact only counts as "stopped" if the phone is completely still;
+  - the 2 m/s drop rule rules out slower falls.
+  The iPhone system log shows a motion wake at 21:28:58.9, about 10 s after the phone stopped: the phone being moved,
+  per the rider. Tip-overs from a standstill are still a real gap, though, and no speed-based rule can catch one.
+  Six rule changes (a tip-over rule included) plus a shadow-mode, labelling and cloud-logging plan were written
+  up in `DOCS/CRASH TESTING/crash_analysis_and_detection_plan.html`.
+  **BUILT 2026-10-15 on `feat/crash-shadow-mode`: phases 1–3 of that plan.** See features.md, "Shadow-mode crash
+  detection". The live alarm stays OFF (`SensorConstants.crashAlertsEnabled = false`). Still open:
+  - **Deploy** `firestore.rules` and `firestore.indexes.json` (both work on Spark). Until then the new
+    `impactEvents`/`crashEvents` writes are rejected, and the `track.points` exemption isn't live.
+  - **Privacy policy / Play Data safety / App Store labels** must mention the opt-in research sharing before
+    a release ships it. The toggle defaults OFF.
+  - **Battery** cost of 50 Hz IMU sampling is unmeasured (plan Phase 1).
+  - **Not built:** the next-app-open prompt for auto-detected rides (the ride summary card covers any ride
+    whose summary is opened), Track v2, the retention job for old sensor windows, and Phase 0 phyphox
+    recordings (the founder's task).
+  - `onUserAccountDeleted` now also erases `crashEvents`. Like the rest of server-side erasure, it can't run
+    until Cloud Functions can deploy (Spark).
+- **Track sync gaps (2026-10-14, see `DOCS/gaps/phone_vs_cloud_data.md`):**
+  - (a) `track.points` has no index exemption in `firestore.indexes.json`. That is an estimated ~695 B of index
+    per point against ~41 B of data, about 25 MB for one heavy rider on Spark's 1 GiB.
+  - (b) Only 5 of the 16 `ride_points` columns sync. A reinstall loses altitude, accuracy, heading, confidence,
+    period_type and segment_start. This has already happened for 115 of the founder's rides.
+  - (c) The codec's "append a field at the end" rule is unsafe. Older builds step through flat chunks 5 values at a
+    time and would misread wider ones. The track format needs a version number before any field is added.
 - **78.12 Gyro heading sign and axis** (`vehicle_state_estimator.dart`).
   This needs a mounted phone to verify, so it wasn't attempted.
 - **78.16 Tile provider not chosen.** The shared cached tile layer is in
@@ -1663,6 +1696,12 @@ Tecno or Redmi would check all three.
   per-brand guidance. Onboarding should detect the manufacturer and send the
   rider to the right autostart / background-activity / battery settings for
   that brand (see dontkillmyapp.com for each brand's steps).
+  - **Partly done 2026-10-15 (critique B5, not on a device):** Xiaomi/Redmi/POCO,
+    OPPO, realme and vivo/iQOO get a one-time guide after the first finished
+    ride (`oem_guide_screen.dart`: vendor autostart screen, app info, lock in
+    recents, dontkillmyapp link). Manual rides now run in the foreground-task
+    service and keep recording when the UI goes away. Still open: Tecno,
+    Infinix, itel, Samsung; a settings entry to reopen the guide.
 - **96.2 Phones with no gyroscope / weak accelerometer — MEDIUM.** Many budget
   phones have no gyroscope. The manifest already marks the accelerometer and
   gyroscope `required="false"`, so the app installs. Still to check: crash
@@ -1801,7 +1840,8 @@ IDs are `101.<area><n>`. "AUTO" = an agent can fix and verify it with analyze/te
   **Resolution:** FIXED (2026-10-08): connectivity check moved inside the try so `finally` always clears `_isSyncing`. Test: `test/core/cloud/sync_manager_guard_test.dart`.
 - **101.C3 MED — failed ride or bike inserts are lost for good:** the pull watermark advances past them; only maintenance has the `firstFailed` rewind. AUTO.  
   **Resolution:** FIXED (2026-10-08): `markShortOfFailures`/`earlierFailure` hold the pull watermark back for failed ride/bike inserts (rides of tombstoned bikes excepted). Tests: `incremental_pull_test.dart`.
-- **101.C4 MED (design) — remote edits never reach a second device.** Downloads insert missing rows only. Needs a conflict policy. Founder.
+- **101.C4 MED (design) — remote edits never reach a second device.** Downloads insert missing rows only. Needs a conflict policy. Founder.  
+  **Resolution:** FIXED (2026-10-14, branch `fix/oct14-tiq-sync`): founder decided last-writer-wins. Schema v28 `updated_at` on rides, bikes and maintenance logs (fuel logs already had it); a newer cloud copy replaces a synced local row on download, and uploads are read-then-write transactions that never overwrite a newer copy. Docs from pre-v28 builds count as oldest. Deletions stay with the tombstones. See `arch.md` §5. Tests: `last_writer_wins_test.dart`, `sync_stamps_migration_v28_test.dart`.
 - **101.C5 MED — `app.dart:146-175` runs on every auth emission,** re-calling `restoreInterruptedRide()` and `AutoTrackingService.start()` (re-prompts, §90.C11) with no catch. Gate on uid change. AUTO.  
   **Resolution:** FIXED (2026-10-08): `authSideEffect(prevUid, nextUid, isError)` gates the auth listener, so only real sign-in/out acts; restore/auto-tracking calls are caught. Test: `test/app_test.dart`.
 - **101.C6 MED — `auto_tracking_service.dart:414 allowWakeLock: true`** holds a CPU wakelock all day. Needs battery test on a budget phone. Device.
@@ -1989,3 +2029,23 @@ itself worked), but not proven either way. Likely fix: replace that `pumpAndSett
 - **102.7 Bangla review — deferred to November 2026 (founder, 2026-10-09):** new keys for themes, analytics, badge rarity, follow-QR and tour v4 are machine-drafted;
   listed in `app/lib/l10n/bn_pending_review.txt`.
 - **102.8 Diff noise:** a `dart format` run may have reflowed `all_rides_screen.dart` and `badge_grid.dart` beyond their real edits.
+
+## §103 Shared-ride card / owner actions follow-ups (2026-10-15)
+
+- **103.1 Push blocked:** ✅ resolved 2026-10-15. `1349db5` reverted the format-only churn; gate green, pushed to `origin/main`.
+- **103.2 Delete ride:** bike odometer / bike stats are not rolled back when a ride is deleted from history (not checked). Shared-post delete there is best-effort (silent offline).
+- **103.3 Detail screen:** rider card still shows `bikeName · bikeType` ("Motorcycle" fallback) — only the feed card was changed.
+- **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator). It covers the Places full map, the Social card/owner menu, history Delete ride and the cockpit placement pill, all on `1349db5`.
+- **103.5 Cockpit:** the `_GroupRideTalkPill` comment in `active_ride_screen.dart` now sits above `PhonePlacementSelector` (cosmetic). With a large iPhone bottom safe area, the controls (~174 px) may still reach the speed panel's fixed `bottom: 160` (not checked).
+
+
+## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/load_test/load-test-2026-10-15.md`)
+
+Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.js`, `npm run loadtest:quota`). Verdict: fail. Reads run out first, at about 18 daily active riders (about 9 at the 50% target).
+
+- **104.1 HIGH — nearby places refetched every 5 km during a ride.** `live_ride_places_provider.dart:45` fetches all places within 25 km at ride start and after each 5 km moved. In Dhaka that is about 400-515 reads per fetch (estimate, not simulated), about 2,000 reads per rider-day. *Fix:* cache on the device; pull with `updatedAt > lastPull` like sync does.
+- **104.2 HIGH — group-ride reads grow with N².** Measured: N² + N reads per 20 s tick. A 20-rider ride uses the whole daily read quota in about 40 min. Supersedes the 5 s figure in §90.A2 (now 20 s + 25 m gate). *Fix:* move positions to the RTDB relay (its rules deny everything, B9) or widen the interval and move gate.
+- **104.3 MEDIUM — feed vote hydration costs 40 of 63 base reads per page.** 20 vote `get()`s, each with a rules `get()` on the ride (`ride_share_repository.dart:350`). *Fix:* one per-user votes doc or one query.
+- **104.4 LOW — the per-author restricted query costs 3 reads even when the author has no such posts** (query + 2 rules `exists()`). The `hasRestrictedPosts` flag from §90.A1 is still open.
+- **104.5 Pending:** real per-user usage from Firebase console → Usage. The local gcloud account (Play publisher SA) cannot read Cloud Monitoring.
+- **Stale note:** §90.C7 (full re-download every 5 min) no longer holds. Pulls are incremental (`cloud_repository.dart:549`), and an idle cycle costs 4 reads.

@@ -8,7 +8,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:throttleiq/core/theme/app_shape_profile.dart';
 import 'package:throttleiq/core/theme/app_theme.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
@@ -34,11 +33,8 @@ double _contrast(Color a, Color b) {
 }
 
 /// Sport/dark: the lime primary that white text failed on (issues §101.P1).
-final _sportDark = AppTheme.build(const AppAppearance(
-  colorMode: AppColorMode.sport,
-  shapeVibe: AppShapeVibe.boxy,
-  brightness: Brightness.dark,
-));
+final _sportDark =
+    AppTheme.build(const AppAppearance(brightness: Brightness.dark));
 const _lng = 90.3900;
 
 class _FakeUser extends Fake implements User {
@@ -53,7 +49,8 @@ class _MemorySavedPlaces extends SavedPlacesRepository {
   bool failNext = false;
 
   @override
-  Future<List<PlaceEntity>> savedPlaces(String userId) async => [...?byUser[userId]];
+  Future<List<PlaceEntity>> savedPlaces(String userId) async =>
+      [...?byUser[userId]];
 
   @override
   Future<void> save(String userId, PlaceEntity place, {DateTime? now}) async {
@@ -104,7 +101,11 @@ final _places = [
   _place('meghna', 'Meghna Fuel', PlaceCategory.fuel,
       kmNorth: 1, phone: '+880 1711-000000', tags: {PlaceTag.open24h}),
   _place('moto', 'Central Moto Works', PlaceCategory.garage,
-      kmNorth: 3, ratingSum: 24, ratingCount: 5, googleRating: 4.4, googleRatingCount: 110),
+      kmNorth: 3,
+      ratingSum: 24,
+      ratingCount: 5,
+      googleRating: 4.4,
+      googleRatingCount: 110),
   _place('chai', 'Biker Chai', PlaceCategory.recreation, kmNorth: 6),
   _place('cam1', 'Bijoy Sarani camera', PlaceCategory.aiCamera, kmNorth: 2),
   _place('cam2', 'Airport Rd camera', PlaceCategory.aiCamera, kmNorth: 8),
@@ -195,7 +196,8 @@ void main() {
       n.setTextDebounced('sh');
       n.setTextDebounced('shell');
       expect(c.read(placesQueryProvider).text, '');
-      await Future<void>.delayed(placesSearchDebounce + const Duration(milliseconds: 50));
+      await Future<void>.delayed(
+          placesSearchDebounce + const Duration(milliseconds: 50));
       expect(c.read(placesQueryProvider).text, 'shell');
     });
 
@@ -204,7 +206,8 @@ void main() {
       final n = c.read(placesQueryProvider.notifier);
       n.setTextDebounced('stale');
       n.setText('');
-      await Future<void>.delayed(placesSearchDebounce + const Duration(milliseconds: 50));
+      await Future<void>.delayed(
+          placesSearchDebounce + const Duration(milliseconds: 50));
       expect(c.read(placesQueryProvider).text, '');
     });
 
@@ -233,14 +236,17 @@ void main() {
       final q = c.read(placesQueryProvider);
       expect(q.tags, isEmpty);
       expect(q.verifiedOnly, isFalse);
-      expect(q.category, PlaceCategory.fuel, reason: 'the chip is not a sheet refinement');
+      expect(q.category, PlaceCategory.fuel,
+          reason: 'the chip is not a sheet refinement');
     });
 
-    test('the batch is fetched for the selected radius and the radar reads it', () async {
+    test('the batch is fetched for the selected radius and the radar reads it',
+        () async {
       final c = container();
       await c.read(nearbyPlacesProvider(placesDefaultRadiusKm).future);
       await c.read(currentPositionProvider.future);
-      expect(c.read(placesBatchProvider).valueOrNull, hasLength(_places.length));
+      expect(
+          c.read(placesBatchProvider).valueOrNull, hasLength(_places.length));
       final radar = c.read(highwayRadarProvider);
       expect(radar.cameras.length, 2);
       expect(radar.police.length, 1);
@@ -248,7 +254,8 @@ void main() {
       await c.read(placesQueryProvider.notifier).setRadius(5);
       await c.read(nearbyPlacesProvider(5).future);
       expect(fetchedRadii, containsAll([25.0, 5.0]));
-      expect(c.read(highwayRadarProvider).total, 2, reason: 'the 8 km camera drops out');
+      expect(c.read(highwayRadarProvider).total, 2,
+          reason: 'the 8 km camera drops out');
     });
   });
 
@@ -271,14 +278,17 @@ void main() {
       final c = container();
       await c.read(savedPlacesProvider.future);
       saved.failNext = true;
-      await expectLater(c.read(savedPlacesProvider.notifier).toggle(_places.first), throwsStateError);
+      await expectLater(
+          c.read(savedPlacesProvider.notifier).toggle(_places.first),
+          throwsStateError);
       await c.read(savedPlacesProvider.future);
       expect(c.read(savedPlaceIdsProvider), isEmpty);
     });
   });
 
   group('Places hub screen', () {
-    testWidgets('list: stops only, with counts, badges and one-tap actions', (tester) async {
+    testWidgets('list: stops only, with counts, badges and one-tap actions',
+        (tester) async {
       await pumpHub(tester);
 
       expect(find.text('Meghna Fuel'), findsOneWidget);
@@ -292,7 +302,9 @@ void main() {
       expect(find.byKey(const ValueKey('places-chip-aiCamera')), findsNothing);
       expect(find.byKey(const ValueKey('places-chip-police')), findsNothing);
       expect(
-        find.descendant(of: find.byKey(const ValueKey('places-chip-all')), matching: find.text('3')),
+        find.descendant(
+            of: find.byKey(const ValueKey('places-chip-all')),
+            matching: find.text('3')),
         findsOneWidget,
       );
 
@@ -312,9 +324,13 @@ void main() {
       expect(find.text('Saved'), findsOneWidget);
     });
 
-    testWidgets('Highway Radar banner summarises cameras and checkposts', (tester) async {
+    testWidgets('Highway Radar banner summarises cameras and checkposts',
+        (tester) async {
       final c = await pumpHub(tester);
-      expect(find.textContaining('Highway Radar: 2 speed cameras · 1 police checkpost'), findsOneWidget);
+      expect(
+          find.textContaining(
+              'Highway Radar: 2 speed cameras · 1 police checkpost'),
+          findsOneWidget);
 
       await tester.tap(find.byTooltip('Dismiss radar'));
       await tester.pumpAndSettle();
@@ -322,7 +338,9 @@ void main() {
       expect(c.read(radarDismissedProvider), isTrue);
     });
 
-    testWidgets('tapping the radar switches to the map and highlights the points', (tester) async {
+    testWidgets(
+        'tapping the radar switches to the map and highlights the points',
+        (tester) async {
       final c = await pumpHub(tester);
       await tester.tap(find.textContaining('Highway Radar:'));
       await tester.pumpAndSettle();
@@ -344,13 +362,15 @@ void main() {
     testWidgets('search narrows the list after the debounce', (tester) async {
       await pumpHub(tester);
       await tester.enterText(find.byType(TextField), 'chai');
-      await tester.pump(placesSearchDebounce + const Duration(milliseconds: 50));
+      await tester
+          .pump(placesSearchDebounce + const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
       expect(find.text('Biker Chai'), findsOneWidget);
       expect(find.text('Meghna Fuel'), findsNothing);
 
       await tester.enterText(find.byType(TextField), 'nothing like this');
-      await tester.pump(placesSearchDebounce + const Duration(milliseconds: 50));
+      await tester
+          .pump(placesSearchDebounce + const Duration(milliseconds: 50));
       await tester.pumpAndSettle();
       expect(find.text('No places match'), findsOneWidget);
       await tester.tap(find.text('Clear filters'));
@@ -358,7 +378,8 @@ void main() {
       expect(find.text('Meghna Fuel'), findsOneWidget);
     });
 
-    testWidgets('Save on a card puts the place in the Saved tab', (tester) async {
+    testWidgets('Save on a card puts the place in the Saved tab',
+        (tester) async {
       await pumpHub(tester);
       await tester.tap(find.text('Save').first);
       await tester.pumpAndSettle();
@@ -373,7 +394,8 @@ void main() {
       expect(find.byKey(const ValueKey('saved-meghna')), findsOneWidget);
     });
 
-    testWidgets('map mode shows category pins and the carousel', (tester) async {
+    testWidgets('map mode shows category pins and the carousel',
+        (tester) async {
       await pumpHub(tester, mode: PlacesViewMode.map);
       expect(find.byType(PlacesMapView), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
@@ -382,9 +404,39 @@ void main() {
       expect(find.byTooltip('Centre on me'), findsOneWidget);
     });
 
+    testWidgets('full-screen map hides search and header, keeps filters',
+        (tester) async {
+      await pumpHub(tester, mode: PlacesViewMode.map);
+      await tester.tap(find.byKey(const Key('places_full_map')));
+      await tester.pump();
+      expect(find.byType(TextField), findsNothing);
+      expect(find.byType(AppBar), findsNothing);
+      expect(find.byType(PlacesMapView), findsOneWidget);
+      expect(find.byKey(const ValueKey('places-chip-all')), findsOneWidget);
+      expect(find.byTooltip('Filters'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('places_exit_full_map')));
+      await tester.pump();
+      expect(find.byType(TextField), findsOneWidget);
+    });
+
+    testWidgets('full-screen map controls stay below the status bar',
+        (tester) async {
+      // A Dynamic Island inset: 59 logical px at devicePixelRatio 2.
+      tester.view.padding = const FakeViewPadding(top: 118);
+      await pumpHub(tester, mode: PlacesViewMode.map);
+      await tester.tap(find.byKey(const Key('places_full_map')));
+      await tester.pump();
+      final exit = find.byKey(const Key('places_exit_full_map'));
+      expect(tester.getTopLeft(exit).dy, greaterThanOrEqualTo(59));
+      expect(tester.getTopLeft(find.byTooltip('Filters')).dy,
+          greaterThanOrEqualTo(59));
+    });
+
     for (final locale in const [Locale('en'), Locale('bn')]) {
       for (final mode in PlacesViewMode.values) {
-        testWidgets('lays out without overflow on a small phone ($mode, $locale)', (tester) async {
+        testWidgets(
+            'lays out without overflow on a small phone ($mode, $locale)',
+            (tester) async {
           await pumpHub(tester, mode: mode, locale: locale);
           tester.view.physicalSize = const Size(720, 1480); // 360×740 logical
           await tester.pumpAndSettle();
@@ -393,22 +445,28 @@ void main() {
       }
     }
 
-    testWidgets('an empty area offers an explained OpenStreetMap scan', (tester) async {
+    testWidgets('an empty area offers an explained OpenStreetMap scan',
+        (tester) async {
       await pumpHub(tester, places: const []);
       expect(find.text('Nothing mapped here yet'), findsOneWidget);
       expect(find.text('Scan OpenStreetMap'), findsOneWidget);
       expect(find.text('Search 50 km'), findsOneWidget);
     });
 
-    testWidgets('GPS off gets a "Turn on location" fix and a way to saved places', (tester) async {
+    testWidgets(
+        'GPS off gets a "Turn on location" fix and a way to saved places',
+        (tester) async {
       await pumpHub(tester,
-          error: const PlaceLocationException(PlaceLocationProblem.serviceDisabled));
+          error: const PlaceLocationException(
+              PlaceLocationProblem.serviceDisabled));
       expect(find.text('GPS is off'), findsOneWidget);
       expect(find.text('Open saved places'), findsOneWidget);
     });
 
     testWidgets('offline gets its own card', (tester) async {
-      await pumpHub(tester, error: FirebaseException(plugin: 'cloud_firestore', code: 'unavailable'));
+      await pumpHub(tester,
+          error: FirebaseException(
+              plugin: 'cloud_firestore', code: 'unavailable'));
       expect(find.text("You're offline"), findsOneWidget);
       await tester.tap(find.text('Open saved places'));
       await tester.pumpAndSettle();
@@ -419,7 +477,7 @@ void main() {
       await pumpHub(tester);
       await tester.tap(find.text('Saved'));
       await tester.pumpAndSettle();
-      
+
       final listView = tester.widget<ListView>(find.byType(ListView).last);
       expect(listView.childrenDelegate, isA<SliverChildBuilderDelegate>());
     });
@@ -475,16 +533,14 @@ void main() {
           (tester) async {
         // Alone, so it is drawn as its own pin rather than in a cluster.
         await pumpHub(tester,
-            mode: PlacesViewMode.map,
-            theme: _sportDark,
-            places: [_places[1]]);
+            mode: PlacesViewMode.map, theme: _sportDark, places: [_places[1]]);
         final icon = tester.widget<Icon>(find.descendant(
           of: find.byKey(const ValueKey('place-marker-moto')),
           matching: find.byIcon(Icons.build),
         ));
         expect(icon.color, markerDarkInk);
-        expect(_contrast(icon.color!, palette.primary),
-            greaterThanOrEqualTo(3));
+        expect(
+            _contrast(icon.color!, palette.primary), greaterThanOrEqualTo(3));
       });
     });
 
@@ -502,20 +558,18 @@ void main() {
       });
 
       test('every palette accent meets 3:1', () {
-        for (final mode in AppColorMode.values) {
-          for (final b in Brightness.values) {
-            final p = AppColorPalette.forMode(mode, b);
-            for (final accent in [
-              p.primary,
-              p.secondary,
-              p.warning,
-              p.success,
-              p.danger,
-            ]) {
-              expect(_contrast(markerIconColor(accent), accent),
-                  greaterThanOrEqualTo(3),
-                  reason: '${mode.name}/${b.name} $accent');
-            }
+        for (final b in Brightness.values) {
+          final p = AppColorPalette.forBrightness(b);
+          for (final accent in [
+            p.primary,
+            p.secondary,
+            p.warning,
+            p.success,
+            p.danger,
+          ]) {
+            expect(_contrast(markerIconColor(accent), accent),
+                greaterThanOrEqualTo(3),
+                reason: '${b.name} $accent');
           }
         }
       });

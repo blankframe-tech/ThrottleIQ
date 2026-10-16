@@ -22,26 +22,24 @@ class StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hardShadow = context.palette.hasHardShadow;
-    final borderColor = isPrimary ? context.palette.primary : context.palette.border;
+    final borderColor =
+        isPrimary ? context.palette.primary : context.palette.border;
     return Container(
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
       decoration: BoxDecoration(
         color: context.palette.surface,
         borderRadius: BorderRadius.circular(context.shape.radiusLg),
-        border: Border.all(
-          color: borderColor,
-          width: isPrimary || hardShadow ? 1.5 : 1,
-        ),
-        boxShadow: hardShadow
-            ? [BoxShadow(color: context.palette.border, offset: const Offset(3, 3))]
-            : null,
+        border: Border.all(color: borderColor, width: isPrimary ? 1.5 : 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (icon != null)
-            Icon(icon, size: 18, color: isPrimary ? context.palette.primary : context.palette.textSecondary),
+            Icon(icon,
+                size: 18,
+                color: isPrimary
+                    ? context.palette.primary
+                    : context.palette.textSecondary),
           const SizedBox(height: 4),
           RichText(
             text: TextSpan(
@@ -51,7 +49,10 @@ class StatCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w700,
-                    color: valueColor ?? (isPrimary ? context.palette.primary : context.palette.textPrimary),
+                    color: valueColor ??
+                        (isPrimary
+                            ? context.palette.primary
+                            : context.palette.textPrimary),
                     letterSpacing: -0.5,
                   ),
                 ),
@@ -61,14 +62,21 @@ class StatCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: isPrimary ? context.palette.primary.withValues(alpha: 0.8) : context.palette.textSecondary,
+                      color: isPrimary
+                          ? context.palette.primary.withValues(alpha: 0.8)
+                          : context.palette.textSecondary,
                     ),
                   ),
               ],
             ),
           ),
           const SizedBox(height: 2),
-          Text(label, style: TextStyle(fontSize: 12, color: isPrimary ? context.palette.primary.withValues(alpha: 0.7) : context.palette.textSecondary)),
+          Text(label,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: isPrimary
+                      ? context.palette.primary.withValues(alpha: 0.7)
+                      : context.palette.textSecondary)),
         ],
       ),
     );

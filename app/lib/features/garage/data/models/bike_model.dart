@@ -46,5 +46,8 @@ class BikeModel {
         'archived_at': e.archivedAt?.toIso8601String(),
         'synced': 0,
         'created_at': e.createdAt.toIso8601String(),
+        // Every toMap is a local write: the edit time last-writer-wins
+        // sync compares (C4).
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       };
 }

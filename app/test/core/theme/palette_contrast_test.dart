@@ -12,29 +12,24 @@ double contrastRatio(Color a, Color b) {
   return (max(la, lb) + 0.05) / (min(la, lb) + 0.05);
 }
 
-/// Every filled primary button (Start Ride, Save, End Ride on most skins)
-/// draws [AppTheme.primaryButtonForeground] on `palette.primary`. The default
-/// Calming/Light skin shipped at 2.62:1 before this guard existed, so the
-/// check covers every (color mode, brightness) pair rather than a sample.
+/// Every filled primary button (Start Ride, Save, End Ride) draws
+/// [AppTheme.primaryButtonForeground] on `palette.primary`. The default
+/// Calming/Light theme shipped at 2.62:1 before this guard existed.
 void main() {
-  for (final mode in AppColorMode.values) {
-    for (final brightness in Brightness.values) {
-      test('${mode.name}/${brightness.name} primary button text meets WCAG AA',
-          () {
-        final palette = AppColorPalette.forMode(mode, brightness);
-        final fg = AppTheme.primaryButtonForeground(palette);
-        final ratio = contrastRatio(palette.primary, fg);
-        expect(ratio, greaterThanOrEqualTo(4.5),
-            reason: '${mode.name}/${brightness.name}: '
-                '${ratio.toStringAsFixed(2)}:1 is below AA');
-      });
-    }
+  for (final brightness in Brightness.values) {
+    test('${brightness.name} primary button text meets WCAG AA', () {
+      final palette = AppColorPalette.forBrightness(brightness);
+      final fg = AppTheme.primaryButtonForeground(palette);
+      final ratio = contrastRatio(palette.primary, fg);
+      expect(ratio, greaterThanOrEqualTo(4.5),
+          reason:
+              '${brightness.name}: ${ratio.toStringAsFixed(2)}:1 is below AA');
+    });
   }
 
-  test('commuteLight (Calming) keeps the old sage as the non-text highlight',
-      () {
-    expect(AppColorPalette.commuteLight.primary, const Color(0xFF537D5C));
+  test('calmingLight keeps the old sage as the non-text highlight', () {
+    expect(AppColorPalette.calmingLight.primary, const Color(0xFF537D5C));
     expect(
-        AppColorPalette.commuteLight.primaryHighlight, const Color(0xFF84A98B));
+        AppColorPalette.calmingLight.primaryHighlight, const Color(0xFF84A98B));
   });
 }

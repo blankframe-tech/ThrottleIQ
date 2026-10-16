@@ -6,8 +6,8 @@ Copy this into Play Console → Store presence → Main store listing.
 Throttle IQ
 (already locked in at app creation)
 
-## Short description (max 80 characters — this is 78)
-Track every ride: speed, routes, crash alerts, bike maintenance & rider feed.
+## Short description (max 80 characters — this is 75)
+Track every ride: routes, stats, bike maintenance, live share & rider feed.
 
 ## Full description (max 4000 characters — this is ~1850)
 
@@ -25,10 +25,9 @@ RIDE HISTORY & STATS
 • Routes sync automatically across your devices
 • Export any ride as JSON or GPX to use in other tools
 
-CRASH DETECTION
-• Detects a likely crash from a sudden impact combined with a rapid drop in speed
-• Starts a countdown you can cancel if you're okay
-• Share a live link with your emergency contacts so they can see your location, speed, and battery in real time during a ride
+LIVE SHARE
+• Share a live link so family or friends can see your location, speed, and battery during a ride
+• You choose when it starts, you can stop it any time, and it stops working after 24 hours
 
 GARAGE & MAINTENANCE
 • Track multiple bikes, their odometers, and service history
@@ -52,7 +51,7 @@ CLOUD BACKUP
 • Your profile, bikes, and maintenance logs back up automatically when you're online
 • Sign in with Google or email
 
-Throttle IQ is under active development — expect frequent updates as we add features like curvy-route navigation, club events, and leaderboards.
+Throttle IQ is under active development — expect frequent updates as we add features like curvy-route navigation and club events.
 
 ---
 
@@ -65,22 +64,19 @@ Goes in **App content → Privacy policy**, not in the store listing text. Sourc
 Suggested: Auto & Vehicles (alternative: Maps & Navigation)
 
 ## Tags / search terms (for your own reference — Play auto-derives from description + category)
-motorcycle, ride tracker, GPS tracker, crash detection, bike maintenance, rider community, motorcycle log, ride log
+motorcycle, ride tracker, GPS tracker, bike maintenance, rider community, motorcycle log, ride log
 
 ## Notes on what was deliberately left out (accuracy)
-- No claim of automatic SMS/email alerts to emergency contacts on no-response — that escalation path is currently mocked in the backend (Cloud Functions with Twilio/SendGrid aren't deployed yet, blocked on the Blaze billing plan — see `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`'s "Soon" section and `DOCS/For Devs and Contributors/architecture/backend_options.md`). Only the manual live-share link and in-app countdown are described above, because those are the parts that actually work today.
+- **No crash detection or emergency-alert claim anywhere (2026-10-14, critique `CrtiQue_Oct14.md` §11).** The detector is off in every build (`SensorConstants.impactDetectorLiveEnabled = false`), its thresholds are uncalibrated, and alert delivery to contacts is a mock. Advertising it would misrepresent the app to Google and to riders. Restore a safety section only after field calibration on labelled drop, pothole and fall recordings, and real delivery. Speed badges and leaderboards are gone from the app too, so the listing promises neither.
+- No claim of automatic SMS/email alerts to emergency contacts on no-response — that escalation path is currently mocked in the backend (Cloud Functions with Twilio/SendGrid aren't deployed yet, blocked on the Blaze billing plan — see `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`'s "Soon" section and `DOCS/For Devs and Contributors/architecture/backend_options.md`). Only the manual live-share link is described above, because it is the part that actually works today.
 - No specific data-point-per-second or accuracy numbers, to avoid over-precise claims that could be read as guarantees.
 
 GPS route/track syncing across devices is now real (chunked `track` docs, `DOCS/Handoff for agents and Todos/issues_fixed.md` §11) — added to the RIDE HISTORY & STATS section above (2026-09-05).
 
 Update this listing once the SMS/email escalation is actually wired up — that's a meaningful safety feature worth promoting once it's real.
 
-**Not yet added, worth considering:** the app now ships 7 selectable color
-families (Carbon Mono, Editorial, Nocturne, Trail Social, Calming, Retro,
-Analyst Blue) × 2 shape styles (boxy/curvy) × dark/light —
-`app/lib/core/theme/app_theme_style.dart` / `app_shape_profile.dart`. This
-isn't in the listing at all today and is a genuine differentiator (most
-ride-tracking apps don't offer this level of visual personalization) —
-holding off on adding a bullet for it here since it benefits from a real
-screenshot per look, which doesn't exist yet (see
-`docs/marketing/marketing_lead_notes/screenshot_shot_list.md`).
+**Themes (2026-10-14):** the app has one light theme (Calming: cream and
+sage) and one dark theme (Carbon Mono: carbon black and lime), plus "follow
+the phone". The 28 color/shape combinations were cut (`CrtiQue_Oct14.md`
+§14), so store screenshots need only these two looks, and the listing makes
+no personalization claim.

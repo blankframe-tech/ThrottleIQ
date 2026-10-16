@@ -24,21 +24,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appearanceSection => 'Appearance';
 
   @override
-  String get vibeFieldLabel => 'Vibe';
-
-  @override
-  String get vibeBoxyLabel => 'Boxy';
-
-  @override
-  String get vibeBoxyDescription => 'Sharp corners';
-
-  @override
-  String get vibeCurvyLabel => 'Curvy';
-
-  @override
-  String get vibeCurvyDescription => 'Rounded corners';
-
-  @override
   String get brightnessFieldLabel => 'Brightness';
 
   @override
@@ -58,51 +43,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get brightnessSystemDescription => 'Match your phone';
-
-  @override
-  String get colorFieldLabel => 'Color';
-
-  @override
-  String get themeSportLabel => 'Sport';
-
-  @override
-  String get themeSportDescription => 'Lime and magenta, carbon-black panel';
-
-  @override
-  String get themeRainLabel => 'Rain';
-
-  @override
-  String get themeRainDescription => 'Indigo dusk, lavender and teal';
-
-  @override
-  String get themeRaceLabel => 'Race';
-
-  @override
-  String get themeRaceDescription => 'Blocky race poster, mustard and rust';
-
-  @override
-  String get themeCommuteLabel => 'Commute';
-
-  @override
-  String get themeCommuteDescription => 'Calm cream, sage and tan';
-
-  @override
-  String get themeTourLabel => 'Tour';
-
-  @override
-  String get themeTourDescription => 'Punchy orange and sky blue';
-
-  @override
-  String get themeAdvLabel => 'ADV';
-
-  @override
-  String get themeAdvDescription => 'Navy console, cyan telemetry';
-
-  @override
-  String get themeCityLabel => 'City';
-
-  @override
-  String get themeCityDescription => 'Paper warmth, blue and orange';
 
   @override
   String get languageSection => 'Language';
@@ -895,7 +835,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get okEmergencyContactsWill =>
-      'Are you OK? Your emergency contacts will be notified when the timer ends.';
+      'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.';
 
   @override
   String get seconds => 'seconds';
@@ -933,7 +873,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backgroundLocationRationale =>
-      'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.';
+      'With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.';
 
   @override
   String get notNow => 'Not now';
@@ -946,9 +886,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsCaps => 'SETTINGS';
-
-  @override
-  String get slideStartRide => 'Slide to start ride';
 
   @override
   String get close => 'Close';
@@ -2341,7 +2278,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get thisActionIrreversibleAll =>
-      'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.';
+      'This can\'t be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.';
 
   @override
   String get deletePermanently => 'Delete Permanently';
@@ -2878,6 +2815,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get placesMapView => 'Map';
+
+  @override
+  String get placesFullMap => 'Full-screen map';
+
+  @override
+  String get placesExitFullMap => 'Exit full screen';
 
   @override
   String get placesListView => 'List';
@@ -4249,27 +4192,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get badgeRungSaddle8h => 'Eight hours';
 
   @override
-  String get badgeFamSpeedName => 'Top speed';
-
-  @override
-  String get badgeFamSpeedAbout =>
-      'The highest speed recorded on any of your rides.';
-
-  @override
-  String badgeFamSpeedReq(String n) {
-    return 'Record a top speed of $n km/h.';
-  }
-
-  @override
-  String get badgeRungTonUp => 'Ton-up';
-
-  @override
-  String get badgeRungSpeed140 => 'Quick';
-
-  @override
-  String get badgeRungSpeedDemon => 'Speed demon';
-
-  @override
   String get badgeFamNightName => 'Night rider';
 
   @override
@@ -4369,9 +4291,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get badgeUnitHours => 'h';
-
-  @override
-  String get badgeUnitKmh => 'km/h';
 
   @override
   String get badgeUnitDays => 'days';
@@ -4478,7 +4397,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String notifCrashBody(int seconds) {
-    return 'Contacting your emergency contacts in ${seconds}s unless you tap \"I\'m OK\".';
+    return 'Tap \"I\'m OK\" within ${seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.';
   }
 
   @override
@@ -4493,6 +4412,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String notifRideDetectedBody(String bike) {
     return 'We logged this to $bike. Tap to confirm or change.';
   }
+
+  @override
+  String get notifRecordingStoppedTitle => 'Recording stopped';
+
+  @override
+  String get notifRecordingStoppedBody =>
+      'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.';
 
   @override
   String get notifConfirm => 'Confirm';
@@ -5830,12 +5756,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get groupRideRealtimeLive => 'Live';
-
-  @override
-  String get groupRideRealtimeDelayed => 'Delayed';
-
-  @override
   String get chatTyping => 'typing…';
 
   @override
@@ -5848,6 +5768,16 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get deleteAccountOffline =>
       'No connection. Check your internet and try again.';
+
+  @override
+  String get updateRequiredTitle => 'Update required';
+
+  @override
+  String get updateRequiredBody =>
+      'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.';
+
+  @override
+  String get updateRequiredAction => 'Get the latest version';
 
   @override
   String get reauthRequiredTitle => 'Confirm it\'s you';
@@ -5936,32 +5866,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.';
 
   @override
-  String get badgeRarityCommon => 'Common';
-
-  @override
-  String get badgeRarityUncommon => 'Uncommon';
-
-  @override
-  String get badgeRarityRare => 'Rare';
-
-  @override
-  String get badgeRarityEpic => 'Epic';
-
-  @override
-  String get badgeRarityLegendary => 'Legendary';
-
-  @override
-  String badgeOwnedByPercent(String percent) {
-    return '$percent of riders own this badge';
-  }
-
-  @override
-  String get badgeOwnershipUnknown => 'Rarity isn\'t available right now';
-
-  @override
-  String get badgeRarityLabel => 'Rarity';
-
-  @override
   String get badgeHowToEarn => 'How to earn it';
 
   @override
@@ -5991,11 +5895,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String badgeShareText(String badge) {
     return 'I earned the $badge badge on ThrottleIQ.';
-  }
-
-  @override
-  String badgeShareTextRarity(String badge, String rarity, String percent) {
-    return 'I earned the $badge badge on ThrottleIQ. $rarity: $percent of riders have it.';
   }
 
   @override
@@ -6040,11 +5939,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Ride solo, or start a group ride and invite friends or share a join code.';
 
   @override
-  String get tourRecordStartTitle => 'Hold or slide to start';
+  String get tourRecordStartTitle => 'Hold to start';
 
   @override
   String get tourRecordStartBody =>
-      'Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.';
+      'Press and hold the start ring, so a stray tap never starts a ride.';
 
   @override
   String get tourCockpitTitle => 'Your live cockpit';
@@ -6290,6 +6189,43 @@ class AppLocalizationsEn extends AppLocalizations {
       'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.';
 
   @override
+  String get tourForumsFindTitle => 'Find your bike\'s forum';
+
+  @override
+  String get tourForumsFindBody =>
+      'Brand and model hubs, plus forums other riders started. Search by bike or topic.';
+
+  @override
+  String get tourForumsAskTitle => 'Ask and answer';
+
+  @override
+  String get tourForumsAskBody =>
+      'Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.';
+
+  @override
+  String get tourForumsBikeTitle => 'Show your bike';
+
+  @override
+  String get tourForumsBikeBody =>
+      'Attach your bike or a maintenance log to a post, so others know exactly what you ride.';
+
+  @override
+  String get tourGarageSubtitleNoTracking =>
+      'Every bike you own, each with its own odometer and service history.';
+
+  @override
+  String get tourGarageActiveBodyNoTracking =>
+      'Maintenance opens on the active bike. Switch it any time.';
+
+  @override
+  String get tourGarageDetailBodyNoTracking =>
+      'Tap a bike to add a photo and edit its specs.';
+
+  @override
+  String get tourProfileSubtitleNoSocial =>
+      'Your public page: stats and garage.';
+
+  @override
   String get fuelTitle => 'Fuel';
 
   @override
@@ -6461,4 +6397,263 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get insightFuelNeedFullFills =>
       'Log two full-tank fill-ups to measure this.';
+
+  @override
+  String get oemGuideTitle => 'Keep rides recording';
+
+  @override
+  String oemGuideIntro(String brand) {
+    return '$brand phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.';
+  }
+
+  @override
+  String get oemGuideStepAutostart =>
+      'Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.';
+
+  @override
+  String get oemGuideOpenAutostart => 'Open Autostart settings';
+
+  @override
+  String get oemGuideStepBattery =>
+      'In ThrottleIQ\'s app info, set Battery to \"No restrictions\" or \"Allow background activity\".';
+
+  @override
+  String get oemGuideStepLock =>
+      'In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn\'t close it.';
+
+  @override
+  String oemGuideMoreHelp(String brand) {
+    return 'Step-by-step guide for $brand phones';
+  }
+
+  @override
+  String oemGuideOfferTitle(String brand) {
+    return 'Rides cut short on $brand?';
+  }
+
+  @override
+  String oemGuideOfferBody(String brand) {
+    return '$brand phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.';
+  }
+
+  @override
+  String get oemGuideShowMe => 'Show me';
+
+  @override
+  String get yourThrottleIqSection => 'Your ThrottleIQ';
+
+  @override
+  String get yourThrottleIqDescription =>
+      'Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.';
+
+  @override
+  String get communityFieldLabel => 'Community';
+
+  @override
+  String get communityFullLabel => 'Everything';
+
+  @override
+  String get communityFullDescription => 'Rides, riders & forums';
+
+  @override
+  String get communityForumsLabel => 'Forums only';
+
+  @override
+  String get communityForumsDescription => 'No feed or people';
+
+  @override
+  String get communityOffLabel => 'Off';
+
+  @override
+  String get communityOffDescription => 'No community';
+
+  @override
+  String get placesModuleTitle => 'Places & routes';
+
+  @override
+  String get placesModuleSubtitle =>
+      'Fuel, mechanics, checkposts and saved routes';
+
+  @override
+  String get rideTrackingModuleTitle => 'Ride tracking';
+
+  @override
+  String get rideTrackingModuleSubtitle =>
+      'Recording, ride analytics, automatic odometer and crash detection. Uses your location.';
+
+  @override
+  String get moduleKeepOnAction => 'Keep it on';
+
+  @override
+  String get moduleTurnOffAction => 'Turn off';
+
+  @override
+  String get communityForumsOnlyWarningTitle => 'Hide rides and riders?';
+
+  @override
+  String get communityForumsOnlyWarningBody =>
+      'You won\'t see rides others share, and you can\'t follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.';
+
+  @override
+  String get communityOffWarningTitle => 'Turn off the community?';
+
+  @override
+  String get communityOffWarningBody =>
+      'You\'ll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.';
+
+  @override
+  String get placesOffWarningTitle => 'Turn off Places?';
+
+  @override
+  String get placesOffWarningBody =>
+      'You won\'t see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.';
+
+  @override
+  String get rideTrackingOffWarningTitle => 'Turn off ride tracking?';
+
+  @override
+  String get rideTrackingOffWarningBody =>
+      'ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.';
+
+  @override
+  String get rideTrackingOffDuringRide =>
+      'Finish your ride before turning ride tracking off.';
+
+  @override
+  String get modulesUpdatedSnack =>
+      'Done. Your tabs now show only what you use.';
+
+  @override
+  String get manualOdometerHint =>
+      'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.';
+
+  @override
+  String get phonePlacementLabel => 'Phone';
+
+  @override
+  String get phonePlacementMount => 'On a mount';
+
+  @override
+  String get phonePlacementPocket => 'In a pocket';
+
+  @override
+  String get phonePlacementBag => 'In a bag';
+
+  @override
+  String get phonePlacementHint => 'Helps the app tell a fall from a bump.';
+
+  @override
+  String impactQuestionTitle(String time) {
+    return 'Possible fall at $time';
+  }
+
+  @override
+  String get impactQuestionBody =>
+      'Your phone felt a hard knock and then stopped moving. Did you fall?';
+
+  @override
+  String get impactAnswerYes => 'Yes, I fell';
+
+  @override
+  String get impactAnswerPhoneFell => 'No, my phone fell';
+
+  @override
+  String get impactAnswerBump => 'No, just a bump';
+
+  @override
+  String get impactAnswerHardStop => 'No, I braked hard';
+
+  @override
+  String get impactAnswerUnsure => 'Not sure';
+
+  @override
+  String get impactFollowUpTitle =>
+      'Glad you\'re OK. Two quick questions help the app learn:';
+
+  @override
+  String get impactSeverityLabel => 'How bad was it?';
+
+  @override
+  String get impactSeverityNone => 'No injury';
+
+  @override
+  String get impactSeverityMinor => 'Minor injury';
+
+  @override
+  String get impactSeverityMedical => 'Needed medical help';
+
+  @override
+  String get impactSurfaceLabel => 'Road surface';
+
+  @override
+  String get surfacePaved => 'Paved';
+
+  @override
+  String get surfaceBroken => 'Broken road';
+
+  @override
+  String get surfaceDirt => 'Dirt';
+
+  @override
+  String get surfaceGravel => 'Gravel';
+
+  @override
+  String get surfaceWet => 'Wet';
+
+  @override
+  String get surfaceRailCrossing => 'Rail crossing';
+
+  @override
+  String get surfaceSpeedBump => 'Speed bump';
+
+  @override
+  String get impactSaveAnswer => 'Save';
+
+  @override
+  String get impactThanks => 'Thanks — that helps.';
+
+  @override
+  String get reportCrashAction => 'Report a crash or fall';
+
+  @override
+  String get reportCrashTitle => 'When did it happen?';
+
+  @override
+  String get reportCrashBody =>
+      'Slide to the moment you fell. It helps the app learn the falls it missed.';
+
+  @override
+  String get reportCrashSaved => 'Reported. Thank you.';
+
+  @override
+  String get crashResearchTitle => 'Help improve crash detection';
+
+  @override
+  String get crashResearchDesc =>
+      'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.';
+
+  @override
+  String get editRide => 'Edit ride';
+
+  @override
+  String get seeMore => 'See more';
+
+  @override
+  String get deleteRide => 'Delete ride';
+
+  @override
+  String get deleteSharedPostBody =>
+      'This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.';
+
+  @override
+  String get deleteRideConfirmTitle => 'Delete this ride?';
+
+  @override
+  String get deleteRideConfirmBody =>
+      'This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can\'t be undone.';
+
+  @override
+  String couldNotSaveChanges(Object e) {
+    return 'Could not save changes: $e';
+  }
 }

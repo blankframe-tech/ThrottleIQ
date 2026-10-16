@@ -4,21 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../../../core/realtime/realtime_providers.dart';
-import '../../data/repositories/group_ride_live_channel.dart';
 import '../../data/repositories/group_ride_repository.dart';
 import '../../domain/entities/group_ride_entity.dart';
 import '../../domain/utilities/group_ride_liveness.dart';
 
-/// The RTDB movement channel for group rides (moving dots). See
-/// [GroupRideLiveChannel].
-final groupRideLiveChannelProvider = Provider<GroupRideLiveChannel>(
-  (ref) => GroupRideLiveChannel(ref.watch(realtimeServicesProvider)),
-);
-
 final groupRideRepositoryProvider = Provider<GroupRideRepository>(
-  (ref) => GroupRideRepository()
-    ..attachLiveChannel(ref.watch(groupRideLiveChannelProvider)),
+  (ref) => GroupRideRepository(),
 );
 
 /// The signed-in rider's live group rides — the Social feed's "Riding Now"
@@ -90,8 +81,7 @@ final currentLiveGroupRideProvider =
   final rides =
       ref.watch(activeGroupRidesForUserProvider).valueOrNull ?? const [];
   if (rides.isEmpty) return null;
-  return ([...rides]..sort((a, b) => b.startTime.compareTo(a.startTime)))
-      .first;
+  return ([...rides]..sort((a, b) => b.startTime.compareTo(a.startTime))).first;
 });
 
 /// How often the creator's device refreshes `lastActiveAt` while recording.
@@ -149,13 +139,13 @@ final groupRideLifecycleProvider = Provider<void>((ref) {
           void beat() => unawaited(
               repo.heartbeatCreatedRides(uid).catchError((Object _) {}));
           beat();
-          heartbeat = Timer.periodic(kGroupRideHeartbeatInterval, (_) => beat());
+          heartbeat =
+              Timer.periodic(kGroupRideHeartbeatInterval, (_) => beat());
         case GroupRideRecordingEffect.finish:
           stopHeartbeat();
           if (uid == null) return;
-          unawaited(repo
-              .finishGroupRidesForUser(uid)
-              .catchError((Object _) {}));
+          unawaited(
+              repo.finishGroupRidesForUser(uid).catchError((Object _) {}));
         case GroupRideRecordingEffect.none:
           break;
       }

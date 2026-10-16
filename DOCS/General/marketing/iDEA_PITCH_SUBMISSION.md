@@ -4,7 +4,7 @@
 *Project:* **ThrottleIQ**  
 *Company:* **Blankframe Technologies** (`com.bft.throttleiq`)  
 *Tagline:* **Machine Memory for Motorcycles** (*রাইডের ডিজিটাল ব্ল্যাকবক্স ও সুরক্ষাকবচ*)  
-*Stage:* Pre-Launch Working Beta (`1.0.0-beta.2.2+7`), Tested & Internal Track Deployed  
+*Stage:* Pre-Launch Working Beta (`1.0.0-beta.4.5`), Internal Track Deployed; crash detection off, alert delivery not built  
 *Target Grant:* **Pre-Seed Grant (BDT 10,00,000 / 10 Lakh)**  
 
 ---
@@ -33,9 +33,9 @@
 
 In Bangladesh, over **4.5 million motorcycles** are registered with the BRTA, with more than **500,000 new two-wheelers** added every year. Motorcycles are the backbone of rapid urban transport and last-mile commerce. Yet, two-wheelers account for over **40% of all road crash fatalities in Bangladesh**. When an accident occurs on a national highway or isolated rural corridor, emergency assistance is delayed because no one knows a crash has occurred until it is too late. Furthermore, riders have no digital tool to monitor vehicle health, tracking maintenance with arbitrary guesswork that leads to mechanical failures and costly breakdowns.
 
-**ThrottleIQ** transforms any standard Android or iOS smartphone into an intelligent, hardware-less motorcycle telematics "black box." Using proprietary multi-sensor fusion algorithms (accelerometer, gyroscope, GPS velocity derivatives), ThrottleIQ detects crash impact signatures, initiates a 60-second cancellable audio-visual countdown to filter out potholes and false alarms, and automatically shares a live, encrypted emergency location link with designated loved ones. Crucially, ThrottleIQ is built **100% offline-first**: all ride telematics, telemetry curves, and maintenance triggers operate reliably even in complete cellular dead zones, synchronizing seamlessly with cloud servers when network connectivity resumes.
+**ThrottleIQ** transforms any standard Android or iOS smartphone into an intelligent, hardware-less motorcycle telematics "black box." Using proprietary multi-sensor fusion algorithms (accelerometer, gyroscope, GPS velocity derivatives), ThrottleIQ records every ride, tracks maintenance against real kilometres, and lets a rider share a live location link with family. A crash detector (impact signature plus a 60-second cancellable countdown) is written but **switched off in every build**: it has not yet been calibrated on real falls, and nothing yet delivers an alert to anyone. Calibrating it and building alert delivery is what this grant would fund. Crucially, ThrottleIQ is built **100% offline-first**: all ride telematics, telemetry curves, and maintenance triggers operate reliably even in complete cellular dead zones, synchronizing seamlessly with cloud servers when network connectivity resumes.
 
-With a fully functioning app (`862 unit & domain tests, 73 Firestore security tests`), verified Android APK, and Play Console deployment, ThrottleIQ is seeking a **10 Lakh BDT Pre-Seed Grant** from the iDEA Project to scale its automated SMS/voice emergency dispatch infrastructure, complete nationwide crash-calibration testing, and onboard 50,000 riders in Bangladesh.
+With a working beta app (2,100+ automated tests, 274 Firestore security-rule tests), a signed Android APK and a Play Console internal track, ThrottleIQ is seeking a **10 Lakh BDT Pre-Seed Grant** from the iDEA Project to calibrate crash detection in the field, build SMS/voice alert delivery (neither exists today), and onboard 50,000 riders in Bangladesh.
 
 ---
 
@@ -51,11 +51,11 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 - **Tagline:** Machine Memory for Motorcycles (*রাইডের ডিজিটাল ব্ল্যাকবক্স ও সুরক্ষাকবচ*)
 - **Company Name:** Blankframe Technologies (`com.bft.throttleiq`)
 - **Key Snapshot:**
-  - **What we do:** AI-powered smartphone telematics, crash detection, and predictive maintenance for two-wheelers.
-  - **Status:** Fully functional working beta (`1.0.0-beta.2.2+7`), 862+ automated tests green, signed APK & Play Console internal track.
-  - **Mission:** Zero unwitnessed motorcycle crashes and data-driven vehicle longevity for every rider in Bangladesh.
+  - **What we do:** Smartphone ride tracking and predictive maintenance for two-wheelers; crash detection in development (off until field-calibrated).
+  - **Status:** Working beta (`1.0.0-beta.4.5`), 2,100+ automated tests green, signed APK & Play Console internal track. Crash detection and alert delivery are not live.
+  - **Mission:** Data-driven vehicle longevity and safer riding for every rider in Bangladesh.
 - **Presenter Names:** Founder & Lead Architect / Core Management Team
-- **Contact:** info@throttleiq.com | Dhaka, Bangladesh | https://github.com/blankframe-tech/ThrottleIQ
+- **Contact:** hello@blankframe.tech | Dhaka, Bangladesh | https://github.com/blankframe-tech/ThrottleIQ
 
 ---
 
@@ -73,7 +73,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 #### The Solution (ThrottleIQ)
 - **Smartphone-Only Black Box:** Transforms the rider's phone into an onboard computer with zero extra hardware or wiring modifications required.
-- **Real-Time Signature Crash Detection:** Sensor-fusion algorithm (impact acceleration spike + rapid velocity drop) initiates a 60-second audio-visual alarm. If uncancelled, it broadcasts an unguessable emergency token link displaying live GPS location, battery percentage, and speed.
+- **Live Share Link:** The rider starts a link that shows live GPS location, battery and speed in any browser, with no login; it stops after 24 hours. **Crash detection** (impact spike + rapid speed drop + 60-second cancellable countdown) is written and unit-tested but switched off until field calibration; it does not alert anyone today.
 - **True Offline-First Architecture:** 100% functional without mobile data. Telemetry is saved locally in an ACID SQLite database and syncs when back online.
 - **Distance-Based Garage Memory:** Service intervals for engine oil, drive chain, air filter, and tires are automatically tracked against actual kilometers ridden.
 - **Localized Rider Ecosystem:** Built-in community directory of verified fuel stations, repair mechanics, and spare parts shops, with full dual English/Bangla language support.
@@ -104,8 +104,8 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 | Evaluation Criteria | Global Fitness Apps (Strava, Komoot) | Western Moto Apps (Rever, Detecht) | Hardware OBD Trackers | **ThrottleIQ (Blankframe Tech)** |
 | :--- | :--- | :--- | :--- | :--- |
-| **Crash Detection** | ❌ None (Bicycle/Run focus) | ⚠️ Requires active 4G data | ⚠️ Basic tilt sensor only | ✅ **Impact + Speed-Drop Signature (Filters Potholes)** |
-| **Emergency Live Link** | ⚠️ Paid paywall | ⚠️ Account required by recipient | ❌ SMS only, no map | ✅ **Token-Based Link (Openable on any browser)** |
+| **Crash Detection** | ❌ None (Bicycle/Run focus) | ✅ Shipping (Detecht, EatSleepRIDE) | ⚠️ Basic tilt sensor only | 🔬 **In development, off until field-calibrated** |
+| **Live Share Link** | ⚠️ Paid paywall | ⚠️ Account required by recipient | ❌ SMS only, no map | ✅ **Token-Based Link (Openable on any browser)** |
 | **Network Resilience** | ❌ Fails on weak signal | ❌ Dropped rides | ⚠️ Dependent on 2G SIM | ✅ **100% Offline-First SQLite Architecture** |
 | **Maintenance Tracking** | ❌ None | ❌ Manual date entry | ❌ None | ✅ **Automatic km-Based Service Triggers** |
 | **Hardware Requirement** | ✅ None | ✅ None | ❌ Costs BDT 3,500 - 8,000 + SIM | ✅ **Zero Hardware (Uses Phone Sensors)** |
@@ -113,7 +113,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 | **Price Point** | \$80 / year (BDT 9,500) | \$60 / year (BDT 7,200) | BDT 500/month recharge | **Freemium + BDT 99/mo (Pro)** |
 
 #### Key Moats:
-1. **Proprietary Sensor Tuning:** Calibrated specifically against Bangladesh road conditions (filtering sudden bumps, speed breakers, and Dhaka traffic stops).
+1. **Local Sensor Tuning (planned):** Thresholds to be calibrated on Bangladeshi roads (bumps, speed breakers, Dhaka traffic stops). Today they are uncalibrated, which is why crash detection is off.
 2. **Zero Hardware Barrier:** Zero installation fee makes adoption instantaneous for everyday 100cc–160cc commuter bikes (Yamaha, Bajaj, TVS, Hero, Runner).
 3. **Verified Local Utility:** POI database crowdsourced and verified for Bangladeshi mechanics and fuel pumps.
 
@@ -155,7 +155,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 │  │                  OFFLINE-FIRST STORAGE LAYER                       │  │
 │  │  • Local SQLite Engine (Single Source of Truth)                    │  │
 │  │  • Transactional Outbox Pattern (Guaranteed Zero Data Loss)        │  │
-│  │  • SafeQR Medical Card (Device-Encrypted Emergency Info)          │  │
+│  │  • SafeQR Medical Card (Plain-Text QR, Stored on the Phone)       │  │
 │  └────────────────────────────────────────────────────────────────────┘  │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │ Async Sync (Resume / 5-min timer)
@@ -163,20 +163,20 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                         FIREBASE CLOUD BACKEND                           │
 │  • Cloud Firestore: Encrypted Multi-Tenant Telemetry & User Profiles     │
-│  • Cloud Functions (Node.js/TS): Crash Escalation & Tokenized Web Views │
+│  • Cloud Functions (Node.js/TS): Written, Not Deployed (Spark plan)    │
 │  • Geohash Spatial Engine: Efficient POI Queries for Fuel/Garages        │
 │  • Firebase Crashlytics: Real-time Device Diagnostic & Quality Metrics    │
 └────────────────────────────────────┬─────────────────────────────────────┘
                                      │ Webhook Trigger
                                      ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
-│                   EMERGENCY DISPATCH & TELECOM LAYER                     │
-│  • Emergency Web Portal: Unguessable 24-hr Token Link (No login needed)  │
-│  • National SMS / Voice Gateway: Multi-Contact Automated Broadcast       │
+│              LIVE SHARE (LIVE) & ALERT DELIVERY (PLANNED)                │
+│  • Live-Share Web Viewer: Unguessable 24-hr Token Link (No login needed) │
+│  • SMS / Voice Gateway: Not Built (grant deliverable)                   │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Engineering Excellence:** 862 automated unit/domain tests covering motion calculators and DAO safety; 73 automated Firestore security rules.
+- **Engineering Excellence:** 2,100+ automated unit/domain tests covering motion calculators and DAO safety; 274 automated Firestore security-rule tests.
 - **Battery & Resource Optimization:** Adaptive foreground service sampling that dynamically throttles sensor polling when the vehicle is stationary, preserving all-day phone battery.
 
 ---
@@ -185,11 +185,11 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 #### Phase 1: Community Grassroots & Enthusiast Seeding (Months 1–4)
 - **Moto Clubs & Brand Communities:** Direct seeding with Dhaka and regional touring clubs (Yamaha FZ/R15 Clubs, Honda Hornet BD, Bajaj Pulsar Owners, Royal Enfield Bangladesh).
-- **Influencer Validation:** Collaboration with top Bangladeshi moto vloggers to demonstrate real offline tracking and crash-detection simulations on YouTube and Facebook Reels.
+- **Influencer Validation:** Collaboration with top Bangladeshi moto vloggers to demonstrate real offline tracking and maintenance tracking on YouTube and Facebook Reels.
 - **Bangla-First Campaign:** Street poster and social campaigns highlighting *"Works when your signal doesn't"* (*"সিগন্যাল না থাকলেও রেকর্ড হতে থাকে"*).
 
 #### Phase 2: B2B Fleet Pilots & Commercial Logistics (Months 5–8)
-- **Gig Worker Safety Program:** Pilot rollouts with courier and food delivery riders. Providing companies with a dashboard tracking fleet safety scores, excessive speeding, and automated crash alerts.
+- **Gig Worker Safety Program:** Pilot rollouts with courier and food delivery riders. Providing companies with a dashboard tracking fleet safety scores, excessive speeding, and maintenance.
 - **Value Proposition for Fleets:** Reduced delivery accidents, lower insurance liability, and automated preventive maintenance alerts for company bikes.
 
 #### Phase 3: Garage & Ecosystem Monetization (Months 9–12+)
@@ -201,9 +201,9 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 #### Revenue Model
 1. **B2C Freemium Core (Free Forever):**
-   - Unlimited offline ride recording, ride summary analytics, local maintenance alerts, cancellable crash countdown, tokenized live share link.
+   - Unlimited offline ride recording, ride summary analytics, local maintenance alerts, tokenized live share link.
 2. **ThrottleIQ Pro (BDT 99 / month or BDT 899 / year):**
-   - Automated multi-contact SMS and automated voice call crash escalation.
+   - Automated SMS and voice-call crash alerts to family, once detection is calibrated and delivery is built (neither exists today).
    - Cloud backup of lifetime riding telemetry, GPX/JSON route export.
    - Advanced vehicle dynamics: lean-angle analysis, acceleration curves, and monthly riding performance certificates.
 3. **B2B Fleet Safety SaaS (BDT 150 / bike / month):**
@@ -232,7 +232,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 ### Slide 9: Management Team & Execution Track Record
 
 - **Founder & Lead Software Architect (Blankframe Technologies):**
-  - Full-stack mobile and cloud systems engineer. Architected the entire 862-test ThrottleIQ offline-first engine, motion filtering calculators, and transactional database layer.
+  - Full-stack mobile and cloud systems engineer. Architected the ThrottleIQ offline-first engine (2,100+ tests), motion filtering calculators, and transactional database layer.
 - **Embedded & Sensor Systems Lead:**
   - Background in robotics and IoT signal processing. Manages 3-axis accelerometer calibration, jerk profiling, and dynamic motion models.
 - **Growth, Community & Operations Lead:**
@@ -243,7 +243,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 **Execution Track Record:**
 - Shipped `1.0.0-beta.2.2+7` with zero external funding.
-- 862 automated unit tests + 73 security-rule tests passing green.
+- 2,100+ automated unit tests + 274 security-rule tests passing green.
 - Internal test release live on Google Play Console.
 
 ---
@@ -280,9 +280,9 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 #### [0:40 – 1:15] The Product & Solution
 **Speaker 1 (Founder/CEO):**
-> "We built **ThrottleIQ** to solve this. ThrottleIQ turns any standard smartphone into an intelligent black box and lifesaver for motorcycles—with zero expensive hardware needed.
+> "We built **ThrottleIQ** to solve this. ThrottleIQ turns any standard smartphone into an intelligent black box for motorcycles—with zero expensive hardware needed.
 >
-> First: **Intelligent Crash Detection**. ThrottleIQ continuously monitors motion dynamics. When it senses a crash impact followed by an instant drop in speed, it sounds a loud 60-second countdown. If the rider is unharmed or it was just a dropped phone, they tap to cancel. If they are unresponsive, ThrottleIQ immediately broadcasts an emergency link with their exact live GPS location, speed, and battery level to their family.
+> First: **Live Share**. Before a long ride, the rider sends family a link. It shows their live GPS location, speed and battery in any browser, and stops after 24 hours. Crash detection is built but switched off: we will not turn it on until it has been calibrated on real falls, and that is part of what this grant pays for.
 >
 > Second: **Machine Memory**. ThrottleIQ automatically tracks engine oil, chain slack, brake pads, and tires against actual kilometers ridden—alerting the rider exactly when maintenance is due."
 
@@ -303,8 +303,8 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 **Speaker 3 (Growth Lead):**
 > "Our business model is built around accessibility and scalable high-margin software:
 >
-> 1. **B2C Freemium Core:** Essential offline ride recording, trip analytics, and local emergency links are completely free forever.
-> 2. **ThrottleIQ Pro:** At just 99 Taka a month or 899 Taka a year—the cost of a cup of tea a week—riders get automated SMS and emergency voice-call dispatch, lifetime cloud backups, and advanced lean-angle telemetry.
+> 1. **B2C Freemium Core:** Essential offline ride recording, trip analytics, and live share links are completely free forever.
+> 2. **ThrottleIQ Pro:** At just 99 Taka a month or 899 Taka a year—the cost of a cup of tea a week—riders get lifetime cloud backups and advanced lean-angle telemetry, and later automated SMS and voice-call crash alerts once those are built and validated.
 > 3. **B2B Fleet Safety Dashboard:** Courier and delivery logistics companies pay 150 Taka per bike monthly for fleet safety monitoring, driver risk scores, and automated fleet maintenance scheduling.
 > 4. **Verified Garage Network:** Local mechanics pay a small monthly listing fee to be featured as certified service hubs in our rider directory."
 
@@ -312,11 +312,11 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 
 #### [2:25 – 3:00] Traction, Competition & The Ask
 **Speaker 1 (Founder/CEO):**
-> "Where do we stand today? We aren't an idea on a napkin. ThrottleIQ is a fully built, battle-tested product. We have tagged version `1.0.0-beta.2.2`, backed by 862 automated tests, and our build is currently in internal testing on the Google Play Console!
+> "Where do we stand today? We aren't an idea on a napkin. ThrottleIQ is a working beta. We have tagged version `1.0.0-beta.4.5`, backed by more than 2,100 automated tests, and our build is in internal testing on the Google Play Console.
 >
 > While foreign apps like Strava or Rever exist, they charge 10 dollars a month, fail completely in network dead zones, and don't care about Bangladeshi road conditions. ThrottleIQ is 100% offline-first, fully bilingual in Bangla, and requires zero external hardware.
 >
-> To take this to every rider in Bangladesh, we are seeking the **10 Lakh BDT Pre-Seed Grant** from the iDEA Project. This funding will scale our automated SMS telecom gateway for crash alerts, support rigorous track-calibration testing, and fund our public launch on the Google Play Store and App Store."
+> To take this to every rider in Bangladesh, we are seeking the **10 Lakh BDT Pre-Seed Grant** from the iDEA Project. This funding will pay for crash-detection calibration on real falls, build the SMS alert gateway that does not exist yet, and fund our public launch on the Google Play Store and App Store."
 
 ---
 
@@ -328,13 +328,13 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 >
 > We engineered ThrottleIQ on a resilient, three-layer architecture:
 >
-> 1. **Edge Sensor Fusion Engine:** Written in Flutter and Dart, our engine samples 3-axis accelerometer and GPS velocity derivatives 20 times every second. Our adaptive `EventDetector` uses jerk profiling and deceleration curves to distinguish a genuine highway crash from a pothole, speed bump, or sudden brake.
+> 1. **Edge Sensor Fusion Engine:** Written in Flutter and Dart, our engine samples 3-axis accelerometer and GPS velocity derivatives 20 times every second. Our `EventDetector` uses jerk profiling and deceleration curves to flag hard braking and rapid acceleration today. Telling a real crash from a pothole or a dropped phone is the open problem, so crash detection stays off until it is calibrated on labelled recordings.
 >
 > 2. **True Offline-First Storage:** Most apps fail when connectivity drops. ThrottleIQ uses a local SQLite database with an ACID-compliant transactional outbox pattern. Even if you ride through 100 kilometers of cellular blackout, zero data is lost. The moment the phone detects signal, it syncs incrementally to Cloud Firestore in the background.
 >
-> 3. **Serverless Escalation & Tokenized Web Access:** Our Firebase Cloud Functions generate unguessable, 24-hour emergency tokens. Anxious family members don't even need to download the app—they click a text link and immediately see their rider's live map, battery level, and nearest hospital.
+> 3. **Tokenized Web Access:** The app generates an unguessable, 24-hour live-share token. Family members don't need to download the app—they open a link and see their rider's live map, speed and battery level.
 >
-> Every line of code is held to mission-critical standards: 862 automated domain tests and 73 security-rule tests running green on every build."
+> The code is held to a strict standard: more than 2,100 automated tests and 274 security-rule tests run green before every push."
 
 ---
 
@@ -344,7 +344,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 *(Whole team on screen, looking confident and united)*
 > "Behind ThrottleIQ is a team with the technical depth and domain passion to execute:
 >
-> I am the Founder and Lead Systems Architect at Blankframe Technologies. I've engineered real-time distributed applications, mobile telemetry pipelines, and led ThrottleIQ from concept to over 800 passing tests and working production builds.
+> I am the Founder and Lead Systems Architect at Blankframe Technologies. I've engineered real-time distributed applications, mobile telemetry pipelines, and led ThrottleIQ from concept to over 2,100 passing tests and working beta builds.
 >
 > Alongside me is our Embedded & Sensor Systems Lead, who brings specialized expertise in signal processing, accelerometer noise filtering, and vehicle dynamics.
 >
@@ -352,7 +352,7 @@ With a fully functioning app (`862 unit & domain tests, 73 Firestore security te
 >
 > We are advised by senior automotive safety experts and cloud infrastructure veterans.
 >
-> Honorable judges of the iDEA Project: Road safety is not just a technology problem—it is a national imperative. We have built the technology, verified the code, and proven the concept. With your 10 Lakh Taka pre-seed grant and mentorship, we will make sure that no motorcycle rider in Bangladesh ever rides alone or unprotected.
+> Honorable judges of the iDEA Project: Road safety is not just a technology problem—it is a national imperative. We have built the tracker and the maintenance memory, and we are honest about what is not finished. With your 10 Lakh Taka pre-seed grant and mentorship, we will validate crash detection properly before any rider is asked to rely on it.
 >
 > Thank you. জয় বাংলা, জয় বঙ্গবন্ধু।"
 
@@ -364,31 +364,31 @@ Be prepared to answer these exact tough questions from the iDEA panel:
 
 ### Q1: "Dhaka has potholes, speed bumps, and erratic traffic. How do you prevent your crash detector from firing false alarms every 5 minutes?"
 **Answer:**
-> "That was the very first engineering problem we solved. A simple accelerometer spike triggers on any pothole. ThrottleIQ does NOT rely on a single acceleration threshold. Our `EventDetector` requires a multi-condition signature: a high-g impact spike AND a simultaneous jerk vector spike, followed within 2.0 seconds by a sharp drop in GPS speed to near zero (stopped vehicle). 
-> Furthermore, even if an aggressive drop triggers the sensor, our system initiates a prominent 60-second audio-visual countdown with vibration and loud alarm beeps. A conscious rider who simply dropped their phone has a full minute to dismiss it with a single tap. Only an uncancelled countdown escalates to emergency contacts."
+> "We have not solved it yet, and that is why crash detection is switched off in every build today. A single accelerometer spike fires on any pothole, so our design needs a multi-condition signature: a high-g impact spike AND a jerk spike, followed within 2.0 seconds by a sharp drop in GPS speed to near zero. 
+> Then a 60-second countdown the rider can cancel with one tap. The thresholds are not yet calibrated. The grant pays for labelled recordings of drops, potholes and real falls on Bangladeshi roads; the detector stays off until those show it works."
 
 ### Q2: "Why not use an external hardware GPS tracker like the ones available in the market for 3,000–5,000 BDT?"
 **Answer:**
-> "Hardware GPS trackers require wiring into the bike's battery, which frequently voids manufacturer warranties, drains the battery when parked, and requires buying and maintaining a separate SIM card with monthly recharges. Furthermore, Chinese hardware trackers offer zero intelligent crash impact detection, zero maintenance analytics, and no community features. 
+> "Hardware GPS trackers require wiring into the bike's battery, which frequently voids manufacturer warranties, drains the battery when parked, and requires buying and maintaining a separate SIM card with monthly recharges. Furthermore, they offer zero maintenance analytics and no community features. 
 > ThrottleIQ requires **zero hardware cost**. Every rider already owns a smartphone with high-precision accelerometers and GPS. By eliminating the hardware barrier, our adoption friction is zero."
 
 ### Q3: "Bangladeshi commuter riders are notoriously price-sensitive. How can you realistically make money?"
 **Answer:**
 > "We designed our financial strategy knowing that Bangladeshi commuters will not pay high upfront fees. That is why our core ride tracking and local maintenance alerts are free. 
 > We monetize in three distinct ways: 
-> 1. **High-Value Peace of Mind (B2C Pro):** Parents, spouses, and touring enthusiasts happily pay 99 BDT/month (less than the price of one liter of petrol) for automated SMS/call alerts to family. 
+> 1. **High-Value Peace of Mind (B2C Pro):** Parents, spouses, and touring enthusiasts happily pay 99 BDT/month (less than the price of one liter of petrol) for automated SMS/call alerts to family, once those are built and validated. 
 > 2. **B2B Fleet Telematics:** Logistics and courier companies (Foodpanda, Pathao, Steadfast) actively seek ways to monitor rider safety, reduce delivery accidents, and audit vehicle maintenance. At 150 BDT/bike/month, we provide an enterprise-grade fleet telematics dashboard at a fraction of hardware tracker costs. 
 > 3. **Marketplace Monetization:** Local repair garages and spare parts retailers pay for featured listings in our verified POI directory."
 
 ### Q4: "What happens when a rider crashes in an area with zero mobile network coverage?"
 **Answer:**
-> "Our architecture is offline-first. All telemetry, crash event timestamps, and sensor curves are written locally to SQLite. While an SMS or web link requires cellular transmission to reach family, the app immediately activates maximum volume local audio distress sirens and displays the on-screen SafeQR medical card (blood group, allergies, emergency contact phone numbers). This allows on-scene bystanders or highway first-responders to immediately identify the victim and call for help, even without internet access."
+> "Today the app does not detect crashes, so we will not claim it helps in that moment. What works offline now: rides record to the phone with no signal, and the SafeQR medical card (blood group, allergies, emergency contact numbers) is a plain QR code a bystander can read with any phone camera, no internet needed. When crash detection ships, it will be offline-first too: the event is recorded locally and the alert goes out as soon as there is signal."
 
 ### Q5: "What exactly will you deliver with the 10 Lakh BDT iDEA grant?"
 **Answer:**
 > "We will hit three non-negotiable milestones within 12 months:
-> 1. Complete integration and licensing of local automated telecom SMS and voice-call gateways so emergency dispatch functions seamlessly nationwide.
-> 2. Complete controlled physical track testing to calibrate our sensor algorithms with BRTA and safety consultants.
+> 1. Complete controlled physical track testing to calibrate our sensor algorithms with BRTA and safety consultants, and turn crash detection on only if it passes.
+> 2. Build and license local SMS and voice-call gateways so a confirmed crash alert actually reaches family.
 > 3. Public release on Google Play Store and Apple App Store, acquiring our first 50,000 active riders across Dhaka, Chattogram, and Sylhet."
 
 ---

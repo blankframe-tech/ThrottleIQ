@@ -68,14 +68,10 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
     try {
       final recorder = ref.read(rideRecordingProvider.notifier);
       final status = ref.read(rideRecordingProvider).status;
-      final alreadyRiding = status == RecordingStatus.active ||
-          status == RecordingStatus.paused;
+      final alreadyRiding =
+          status == RecordingStatus.active || status == RecordingStatus.paused;
 
       if (!alreadyRiding) {
-        // Same Play background-location disclosure the Record button shows,
-        // from the same helper — see recording_gate.dart.
-        if (!await ensureLocationDisclosure(context)) return;
-        if (!mounted) return;
         await recorder.startRide(routeId: route.id, routeName: route.name);
         if (!mounted) return;
         final result = ref.read(rideRecordingProvider);
@@ -128,7 +124,8 @@ class _RouteNavigationScreenState extends ConsumerState<RouteNavigationScreen> {
           // manoeuvre, and counting them would tell the rider a straight road
           // has two turns on it.
           final manoeuvres = turns
-              .where((t) => t.kind != TurnKind.start && t.kind != TurnKind.arrive)
+              .where(
+                  (t) => t.kind != TurnKind.start && t.kind != TurnKind.arrive)
               .length;
 
           return Column(

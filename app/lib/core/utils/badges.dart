@@ -162,7 +162,6 @@ class BadgeFamilyProgress {
 class BadgeStats {
   final int totalRides;
   final double totalDistanceKm;
-  final double topSpeedKmh;
 
   /// Average smoothness score, but **0 until the rider has 5 rides** — a
   /// perfect score off a single two-minute ride is not evidence of anything,
@@ -178,7 +177,6 @@ class BadgeStats {
   const BadgeStats({
     this.totalRides = 0,
     this.totalDistanceKm = 0,
-    this.topSpeedKmh = 0,
     this.smoothnessScore = 0,
     this.longestRideKm = 0,
     this.longestRideHours = 0,
@@ -221,7 +219,6 @@ class BadgeStats {
     return BadgeStats(
       totalRides: stats.totalRides,
       totalDistanceKm: stats.totalDistanceKm,
-      topSpeedKmh: stats.allTimeTopSpeedKmh,
       smoothnessScore:
           stats.totalRides >= smoothnessRideFloor ? stats.avgRidingScore : 0,
       longestRideKm: longestKm,
@@ -240,8 +237,8 @@ int computeLongestDayStreak(List<RideEntity> rides) {
   if (rides.isEmpty) return 0;
 
   final days = rides
-      .map((r) =>
-          DateTime(r.startTime.year, r.startTime.month, r.startTime.day))
+      .map(
+          (r) => DateTime(r.startTime.year, r.startTime.month, r.startTime.day))
       .toSet()
       .toList()
     ..sort();
@@ -284,8 +281,8 @@ int computeCurrentDayStreak(List<RideEntity> rides, {DateTime? now}) {
   }();
 
   final days = rides
-      .map((r) =>
-          DateTime(r.startTime.year, r.startTime.month, r.startTime.day))
+      .map(
+          (r) => DateTime(r.startTime.year, r.startTime.month, r.startTime.day))
       .toSet()
       .toList()
     ..sort((a, b) => b.compareTo(a)); // newest first
@@ -463,29 +460,6 @@ const List<BadgeFamily> badgeFamilies = [
     ],
   ),
   BadgeFamily(
-    id: 'speed',
-    name: 'Top speed',
-    icon: Icons.speed_outlined,
-    unit: 'km/h',
-    about: 'The highest speed recorded on any of your rides.',
-    requirement: 'Record a top speed of {n} km/h.',
-    valueOf: _topSpeedKmh,
-    tiers: [
-      BadgeTierSpec(
-          id: 'ton_up', name: 'Ton-up', tier: BadgeTier.bronze, threshold: 100),
-      BadgeTierSpec(
-          id: 'speed_140',
-          name: 'Quick',
-          tier: BadgeTier.silver,
-          threshold: 140),
-      BadgeTierSpec(
-          id: 'speed_demon',
-          name: 'Speed demon',
-          tier: BadgeTier.gold,
-          threshold: 160),
-    ],
-  ),
-  BadgeFamily(
     id: 'night',
     name: 'Night rider',
     icon: Icons.nightlight_outlined,
@@ -608,7 +582,6 @@ const List<BadgeFamily> badgeFamilies = [
 // table above can stay `const`.
 num _totalRides(BadgeStats s) => s.totalRides;
 num _totalDistanceKm(BadgeStats s) => s.totalDistanceKm;
-num _topSpeedKmh(BadgeStats s) => s.topSpeedKmh;
 num _longestRideKm(BadgeStats s) => s.longestRideKm;
 num _longestRideHours(BadgeStats s) => s.longestRideHours;
 num _nightRides(BadgeStats s) => s.nightRides;

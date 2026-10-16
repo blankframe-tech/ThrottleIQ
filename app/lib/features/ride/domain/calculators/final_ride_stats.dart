@@ -55,7 +55,7 @@ Map<String, dynamic> buildFinalRideStats({
       : derivedAvg;
 
   return {
-    'end_time': endTime.toIso8601String(),
+    'end_time': endTime.toUtc().toIso8601String(),
     'distance_m': distanceM,
     'avg_speed_ms': avgSpeed,
     'max_speed_ms': effectiveMax,

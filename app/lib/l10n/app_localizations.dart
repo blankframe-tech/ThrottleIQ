@@ -128,36 +128,6 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearanceSection;
 
-  /// Label above the Boxy/Curvy shape selector.
-  ///
-  /// In en, this message translates to:
-  /// **'Vibe'**
-  String get vibeFieldLabel;
-
-  /// Name of the sharp-cornered shape vibe.
-  ///
-  /// In en, this message translates to:
-  /// **'Boxy'**
-  String get vibeBoxyLabel;
-
-  /// One-line description under the Boxy vibe option.
-  ///
-  /// In en, this message translates to:
-  /// **'Sharp corners'**
-  String get vibeBoxyDescription;
-
-  /// Name of the rounded-corner shape vibe.
-  ///
-  /// In en, this message translates to:
-  /// **'Curvy'**
-  String get vibeCurvyLabel;
-
-  /// One-line description under the Curvy vibe option.
-  ///
-  /// In en, this message translates to:
-  /// **'Rounded corners'**
-  String get vibeCurvyDescription;
-
   /// Label above the Dark/Light brightness selector.
   ///
   /// In en, this message translates to:
@@ -199,96 +169,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Match your phone'**
   String get brightnessSystemDescription;
-
-  /// Label above the dropdown that picks the app's color mode.
-  ///
-  /// In en, this message translates to:
-  /// **'Color'**
-  String get colorFieldLabel;
-
-  /// Name of the Sport color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Sport'**
-  String get themeSportLabel;
-
-  /// One-line description of the Sport color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Lime and magenta, carbon-black panel'**
-  String get themeSportDescription;
-
-  /// Name of the Rain color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Rain'**
-  String get themeRainLabel;
-
-  /// One-line description of the Rain color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Indigo dusk, lavender and teal'**
-  String get themeRainDescription;
-
-  /// Name of the Race color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Race'**
-  String get themeRaceLabel;
-
-  /// One-line description of the Race color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Blocky race poster, mustard and rust'**
-  String get themeRaceDescription;
-
-  /// Name of the Commute color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Commute'**
-  String get themeCommuteLabel;
-
-  /// One-line description of the Commute color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Calm cream, sage and tan'**
-  String get themeCommuteDescription;
-
-  /// Name of the Tour color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'Tour'**
-  String get themeTourLabel;
-
-  /// One-line description of the Tour color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Punchy orange and sky blue'**
-  String get themeTourDescription;
-
-  /// Name of the ADV color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'ADV'**
-  String get themeAdvLabel;
-
-  /// One-line description of the ADV color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Navy console, cyan telemetry'**
-  String get themeAdvDescription;
-
-  /// Name of the City color mode (a riding-mode name). Product name — kept recognisable across languages.
-  ///
-  /// In en, this message translates to:
-  /// **'City'**
-  String get themeCityLabel;
-
-  /// One-line description of the City color mode's hues, shown under its name in the picker.
-  ///
-  /// In en, this message translates to:
-  /// **'Paper warmth, blue and orange'**
-  String get themeCityDescription;
 
   /// Section header for the app language control.
   ///
@@ -1727,7 +1607,7 @@ abstract class AppLocalizations {
   /// Text in active_ride_screen.
   ///
   /// In en, this message translates to:
-  /// **'Are you OK? Your emergency contacts will be notified when the timer ends.'**
+  /// **'Are you OK? If you don\'t answer before the timer ends, the ride is saved as a possible crash. ThrottleIQ does not contact anyone for you.'**
   String get okEmergencyContactsWill;
 
   /// Text in active_ride_screen.
@@ -1796,10 +1676,10 @@ abstract class AppLocalizations {
   /// **'Background location'**
   String get backgroundLocation;
 
-  /// Text in record_screen.
+  /// Play prominent disclosure, shown before the background-location request when the rider turns on automatic ride detection.
   ///
   /// In en, this message translates to:
-  /// **'ThrottleIQ records your route, speed, and distance using your location while a ride is active — including while your phone is locked or in a pocket, so the ride isn\'t cut short. The next screen will ask for \"Allow all the time\" location access. Location is only used to record your ride, and tracking stops the moment you end it.'**
+  /// **'With \"Detect rides automatically\" on, ThrottleIQ collects your location to detect and record your rides, even when the app is closed or not in use. It watches for motion first and turns GPS on only once you are moving in a vehicle. The next screen asks for \"Allow all the time\" location access. You can turn this off at any time in Settings.'**
   String get backgroundLocationRationale;
 
   /// Text in record_screen.
@@ -1825,12 +1705,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'SETTINGS'**
   String get settingsCaps;
-
-  /// Text in record_screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Slide to start ride'**
-  String get slideStartRide;
 
   /// Tooltip in ride_summary_screen (+1 more).
   ///
@@ -4230,7 +4104,7 @@ abstract class AppLocalizations {
   /// Text in settings_screen.
   ///
   /// In en, this message translates to:
-  /// **'This action is irreversible. All your recorded rides, bike profiles, stats, and personal data will be permanently deleted.'**
+  /// **'This can\'t be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with.'**
   String get thisActionIrreversibleAll;
 
   /// Text in settings_screen.
@@ -5174,6 +5048,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Map'**
   String get placesMapView;
+
+  /// Places map: hides the search and header so the map fills the screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-screen map'**
+  String get placesFullMap;
+
+  /// Places map: brings the search and header back.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit full screen'**
+  String get placesExitFullMap;
 
   /// Places hub redesign (Places | Routes | Saved).
   ///
@@ -7488,42 +7374,6 @@ abstract class AppLocalizations {
   /// **'Eight hours'**
   String get badgeRungSaddle8h;
 
-  /// Badge family name (speed).
-  ///
-  /// In en, this message translates to:
-  /// **'Top speed'**
-  String get badgeFamSpeedName;
-
-  /// What the speed badge family measures.
-  ///
-  /// In en, this message translates to:
-  /// **'The highest speed recorded on any of your rides.'**
-  String get badgeFamSpeedAbout;
-
-  /// How to earn a speed badge rung; {n} is the threshold.
-  ///
-  /// In en, this message translates to:
-  /// **'Record a top speed of {n} km/h.'**
-  String badgeFamSpeedReq(String n);
-
-  /// Badge rung name (ton_up).
-  ///
-  /// In en, this message translates to:
-  /// **'Ton-up'**
-  String get badgeRungTonUp;
-
-  /// Badge rung name (speed_140).
-  ///
-  /// In en, this message translates to:
-  /// **'Quick'**
-  String get badgeRungSpeed140;
-
-  /// Badge rung name (speed_demon).
-  ///
-  /// In en, this message translates to:
-  /// **'Speed demon'**
-  String get badgeRungSpeedDemon;
-
   /// Badge family name (night).
   ///
   /// In en, this message translates to:
@@ -7703,12 +7553,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'h'**
   String get badgeUnitHours;
-
-  /// Unit word after a badge figure (km/h).
-  ///
-  /// In en, this message translates to:
-  /// **'km/h'**
-  String get badgeUnitKmh;
 
   /// Unit word after a badge figure (days).
   ///
@@ -7911,7 +7755,7 @@ abstract class AppLocalizations {
   /// Crash-alert notification body; {seconds} is the countdown.
   ///
   /// In en, this message translates to:
-  /// **'Contacting your emergency contacts in {seconds}s unless you tap \"I\'m OK\".'**
+  /// **'Tap \"I\'m OK\" within {seconds}s if you\'re fine. ThrottleIQ does not contact anyone for you.'**
   String notifCrashBody(int seconds);
 
   /// Action button on the crash alert.
@@ -7931,6 +7775,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'We logged this to {bike}. Tap to confirm or change.'**
   String notifRideDetectedBody(String bike);
+
+  /// Notification when the phone stopped the ride's foreground service mid-ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording stopped'**
+  String get notifRecordingStoppedTitle;
+
+  /// Body of the recording-stopped notification; tapping opens the app on the paused ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.'**
+  String get notifRecordingStoppedBody;
 
   /// Action button on the ride-detected notification.
   ///
@@ -10002,18 +9858,6 @@ abstract class AppLocalizations {
   /// **'Could not upload photo(s): {e}'**
   String forumPhotoUploadFailed(String e);
 
-  /// Badge on the group ride map: positions are arriving over the realtime channel (every ~2s).
-  ///
-  /// In en, this message translates to:
-  /// **'Live'**
-  String get groupRideRealtimeLive;
-
-  /// Badge on the group ride map: realtime channel down, positions update every ~20s via the fallback.
-  ///
-  /// In en, this message translates to:
-  /// **'Delayed'**
-  String get groupRideRealtimeDelayed;
-
   /// Shown under the chat partner's name while they are typing.
   ///
   /// In en, this message translates to:
@@ -10037,6 +9881,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No connection. Check your internet and try again.'**
   String get deleteAccountOffline;
+
+  /// Title of the blocking screen shown when this build is older than config/app.minBuild.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get updateRequiredTitle;
+
+  /// Body of the blocking update screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.'**
+  String get updateRequiredBody;
+
+  /// Button on the blocking update screen; opens the install page.
+  ///
+  /// In en, this message translates to:
+  /// **'Get the latest version'**
+  String get updateRequiredAction;
 
   /// Title of the re-authentication dialog before deleting an account.
   ///
@@ -10170,54 +10032,6 @@ abstract class AppLocalizations {
   /// **'Could not remove the shared rides, so the bike was not archived. Check your connection and try again.'**
   String get couldNotArchiveSharedRides;
 
-  /// Badge rarity tier: 40% or more of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Common'**
-  String get badgeRarityCommon;
-
-  /// Badge rarity tier: 15–40% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Uncommon'**
-  String get badgeRarityUncommon;
-
-  /// Badge rarity tier: 5–15% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Rare'**
-  String get badgeRarityRare;
-
-  /// Badge rarity tier: 1–5% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Epic'**
-  String get badgeRarityEpic;
-
-  /// Badge rarity tier: under 1% of riders own it.
-  ///
-  /// In en, this message translates to:
-  /// **'Legendary'**
-  String get badgeRarityLegendary;
-
-  /// Badge detail sheet: share of all riders who own the badge. percent is preformatted, e.g. '12%' or '<1%'.
-  ///
-  /// In en, this message translates to:
-  /// **'{percent} of riders own this badge'**
-  String badgeOwnedByPercent(String percent);
-
-  /// Badge detail sheet: shown instead of the ownership figure when offline or the stats aren't available.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity isn\'t available right now'**
-  String get badgeOwnershipUnknown;
-
-  /// Badge detail sheet: section label for the rarity figure.
-  ///
-  /// In en, this message translates to:
-  /// **'Rarity'**
-  String get badgeRarityLabel;
-
   /// Badge detail sheet: section label for the requirement.
   ///
   /// In en, this message translates to:
@@ -10265,12 +10079,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'I earned the {badge} badge on ThrottleIQ.'**
   String badgeShareText(String badge);
-
-  /// Share text for an earned badge when its rarity is known.
-  ///
-  /// In en, this message translates to:
-  /// **'I earned the {badge} badge on ThrottleIQ. {rarity}: {percent} of riders have it.'**
-  String badgeShareTextRarity(String badge, String rarity, String percent);
 
   /// Accessibility hint on a badge row that opens the badge detail sheet.
   ///
@@ -10347,13 +10155,13 @@ abstract class AppLocalizations {
   /// Feature tour, Record step: callout about the start control.
   ///
   /// In en, this message translates to:
-  /// **'Hold or slide to start'**
+  /// **'Hold to start'**
   String get tourRecordStartTitle;
 
-  /// Feature tour, Record step: explains hold-to-start / slide-to-start.
+  /// Feature tour, Record step: explains hold-to-start.
   ///
   /// In en, this message translates to:
-  /// **'Press and hold the start ring (or slide the bar on boxy styles), so a stray tap never starts a ride.'**
+  /// **'Press and hold the start ring, so a stray tap never starts a ride.'**
   String get tourRecordStartBody;
 
   /// Feature tour, live ride step: title.
@@ -10776,6 +10584,66 @@ abstract class AppLocalizations {
   /// **'In Settings, set up a scannable card with your blood group and emergency contacts for first responders.'**
   String get tourProfileSafeQrBody;
 
+  /// Feature tour, forums-only community step: finding a forum.
+  ///
+  /// In en, this message translates to:
+  /// **'Find your bike\'s forum'**
+  String get tourForumsFindTitle;
+
+  /// Feature tour, forums-only community step: finding a forum.
+  ///
+  /// In en, this message translates to:
+  /// **'Brand and model hubs, plus forums other riders started. Search by bike or topic.'**
+  String get tourForumsFindBody;
+
+  /// Feature tour, forums-only community step: posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask and answer'**
+  String get tourForumsAskTitle;
+
+  /// Feature tour, forums-only community step: posting.
+  ///
+  /// In en, this message translates to:
+  /// **'Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution.'**
+  String get tourForumsAskBody;
+
+  /// Feature tour, forums-only community step: attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Show your bike'**
+  String get tourForumsBikeTitle;
+
+  /// Feature tour, forums-only community step: attachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach your bike or a maintenance log to a post, so others know exactly what you ride.'**
+  String get tourForumsBikeBody;
+
+  /// Feature tour, garage step subtitle when ride tracking is off (no rides).
+  ///
+  /// In en, this message translates to:
+  /// **'Every bike you own, each with its own odometer and service history.'**
+  String get tourGarageSubtitleNoTracking;
+
+  /// Feature tour, garage step, active bike, when ride tracking is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance opens on the active bike. Switch it any time.'**
+  String get tourGarageActiveBodyNoTracking;
+
+  /// Feature tour, garage step, bike details, when ride tracking is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a bike to add a photo and edit its specs.'**
+  String get tourGarageDetailBodyNoTracking;
+
+  /// Feature tour, profile step subtitle when the rider turned off follows (community Forums only or Off).
+  ///
+  /// In en, this message translates to:
+  /// **'Your public page: stats and garage.'**
+  String get tourProfileSubtitleNoSocial;
+
   /// Heading of the fuel card on bike detail.
   ///
   /// In en, this message translates to:
@@ -11063,6 +10931,462 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Log two full-tank fill-ups to measure this.'**
   String get insightFuelNeedFullFills;
+
+  /// Title of the OEM battery-settings guide screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep rides recording'**
+  String get oemGuideTitle;
+
+  /// Intro on the OEM guide; brand is the phone maker, e.g. Xiaomi.
+  ///
+  /// In en, this message translates to:
+  /// **'{brand} phones close apps in the background to save battery, which can cut a ride short. Change these three settings once.'**
+  String oemGuideIntro(String brand);
+
+  /// OEM guide step 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ.'**
+  String get oemGuideStepAutostart;
+
+  /// Button opening the phone maker's autostart screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Autostart settings'**
+  String get oemGuideOpenAutostart;
+
+  /// OEM guide step 2.
+  ///
+  /// In en, this message translates to:
+  /// **'In ThrottleIQ\'s app info, set Battery to \"No restrictions\" or \"Allow background activity\".'**
+  String get oemGuideStepBattery;
+
+  /// OEM guide step 3.
+  ///
+  /// In en, this message translates to:
+  /// **'In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn\'t close it.'**
+  String get oemGuideStepLock;
+
+  /// Link to dontkillmyapp.com for the phone maker.
+  ///
+  /// In en, this message translates to:
+  /// **'Step-by-step guide for {brand} phones'**
+  String oemGuideMoreHelp(String brand);
+
+  /// Title of the one-time offer of the OEM guide after the first ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides cut short on {brand}?'**
+  String oemGuideOfferTitle(String brand);
+
+  /// Body of the one-time OEM guide offer.
+  ///
+  /// In en, this message translates to:
+  /// **'{brand} phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute.'**
+  String oemGuideOfferBody(String brand);
+
+  /// Button that opens the OEM guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Show me'**
+  String get oemGuideShowMe;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Your ThrottleIQ'**
+  String get yourThrottleIqSection;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time.'**
+  String get yourThrottleIqDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Community'**
+  String get communityFieldLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Everything'**
+  String get communityFullLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Rides, riders & forums'**
+  String get communityFullDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Forums only'**
+  String get communityForumsLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'No feed or people'**
+  String get communityForumsDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get communityOffLabel;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'No community'**
+  String get communityOffDescription;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Places & routes'**
+  String get placesModuleTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel, mechanics, checkposts and saved routes'**
+  String get placesModuleSubtitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride tracking'**
+  String get rideTrackingModuleTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Recording, ride analytics, automatic odometer and crash detection. Uses your location.'**
+  String get rideTrackingModuleSubtitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Keep it on'**
+  String get moduleKeepOnAction;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off'**
+  String get moduleTurnOffAction;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Hide rides and riders?'**
+  String get communityForumsOnlyWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t see rides others share, and you can\'t follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road.'**
+  String get communityForumsOnlyWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off the community?'**
+  String get communityOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up.'**
+  String get communityOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off Places?'**
+  String get placesOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'You won\'t see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you.'**
+  String get placesOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off ride tracking?'**
+  String get rideTrackingOffWarningTitle;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept.'**
+  String get rideTrackingOffWarningBody;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Finish your ride before turning ride tracking off.'**
+  String get rideTrackingOffDuringRide;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Done. Your tabs now show only what you use.'**
+  String get modulesUpdatedSnack;
+
+  /// Settings → Your ThrottleIQ (app modules).
+  ///
+  /// In en, this message translates to:
+  /// **'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.'**
+  String get manualOdometerHint;
+
+  /// Ride-start label before the phone placement chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phonePlacementLabel;
+
+  /// Phone placement chip: phone held in a handlebar mount.
+  ///
+  /// In en, this message translates to:
+  /// **'On a mount'**
+  String get phonePlacementMount;
+
+  /// Phone placement chip: phone in a trouser or jacket pocket.
+  ///
+  /// In en, this message translates to:
+  /// **'In a pocket'**
+  String get phonePlacementPocket;
+
+  /// Phone placement chip: phone in a backpack or tank bag.
+  ///
+  /// In en, this message translates to:
+  /// **'In a bag'**
+  String get phonePlacementBag;
+
+  /// Small hint under the phone placement chips.
+  ///
+  /// In en, this message translates to:
+  /// **'Helps the app tell a fall from a bump.'**
+  String get phonePlacementHint;
+
+  /// After-ride card title. {time} is a clock time like 9:28 PM.
+  ///
+  /// In en, this message translates to:
+  /// **'Possible fall at {time}'**
+  String impactQuestionTitle(String time);
+
+  /// After-ride card question.
+  ///
+  /// In en, this message translates to:
+  /// **'Your phone felt a hard knock and then stopped moving. Did you fall?'**
+  String get impactQuestionBody;
+
+  /// Answer: the rider fell or crashed.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, I fell'**
+  String get impactAnswerYes;
+
+  /// Answer: only the phone fell.
+  ///
+  /// In en, this message translates to:
+  /// **'No, my phone fell'**
+  String get impactAnswerPhoneFell;
+
+  /// Answer: a pothole, rail crossing or bump.
+  ///
+  /// In en, this message translates to:
+  /// **'No, just a bump'**
+  String get impactAnswerBump;
+
+  /// Answer: a hard stop, no fall.
+  ///
+  /// In en, this message translates to:
+  /// **'No, I braked hard'**
+  String get impactAnswerHardStop;
+
+  /// Answer: the rider doesn't know.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure'**
+  String get impactAnswerUnsure;
+
+  /// Shown after 'Yes, I fell'; both questions are optional.
+  ///
+  /// In en, this message translates to:
+  /// **'Glad you\'re OK. Two quick questions help the app learn:'**
+  String get impactFollowUpTitle;
+
+  /// Follow-up question about injury.
+  ///
+  /// In en, this message translates to:
+  /// **'How bad was it?'**
+  String get impactSeverityLabel;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'No injury'**
+  String get impactSeverityNone;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Minor injury'**
+  String get impactSeverityMinor;
+
+  /// Severity chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Needed medical help'**
+  String get impactSeverityMedical;
+
+  /// Follow-up question about the road.
+  ///
+  /// In en, this message translates to:
+  /// **'Road surface'**
+  String get impactSurfaceLabel;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Paved'**
+  String get surfacePaved;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Broken road'**
+  String get surfaceBroken;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Dirt'**
+  String get surfaceDirt;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Gravel'**
+  String get surfaceGravel;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Wet'**
+  String get surfaceWet;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Rail crossing'**
+  String get surfaceRailCrossing;
+
+  /// Road surface chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Speed bump'**
+  String get surfaceSpeedBump;
+
+  /// Saves the follow-up answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get impactSaveAnswer;
+
+  /// Shown after the rider answers.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — that helps.'**
+  String get impactThanks;
+
+  /// Ride summary button for a fall the app did not detect.
+  ///
+  /// In en, this message translates to:
+  /// **'Report a crash or fall'**
+  String get reportCrashAction;
+
+  /// Title of the report-a-crash sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'When did it happen?'**
+  String get reportCrashTitle;
+
+  /// Report-a-crash sheet explanation.
+  ///
+  /// In en, this message translates to:
+  /// **'Slide to the moment you fell. It helps the app learn the falls it missed.'**
+  String get reportCrashBody;
+
+  /// Snackbar after a crash report is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported. Thank you.'**
+  String get reportCrashSaved;
+
+  /// Settings switch title.
+  ///
+  /// In en, this message translates to:
+  /// **'Help improve crash detection'**
+  String get crashResearchTitle;
+
+  /// Settings switch subtitle for the research data opt-in.
+  ///
+  /// In en, this message translates to:
+  /// **'Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default.'**
+  String get crashResearchDesc;
+
+  /// Menu item and sheet title for editing a shared ride's photos and caption.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit ride'**
+  String get editRide;
+
+  /// Menu item opening the full ride view from a shared ride.
+  ///
+  /// In en, this message translates to:
+  /// **'See more'**
+  String get seeMore;
+
+  /// Menu item / button for deleting a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete ride'**
+  String get deleteRide;
+
+  /// Body of the confirm dialog for deleting a shared ride post.
+  ///
+  /// In en, this message translates to:
+  /// **'This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete.'**
+  String get deleteSharedPostBody;
+
+  /// Title of the confirm dialog on the ride history screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this ride?'**
+  String get deleteRideConfirmTitle;
+
+  /// Body of the confirm dialog on the ride history screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can\'t be undone.'**
+  String get deleteRideConfirmBody;
+
+  /// Snackbar when saving an edited shared ride fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save changes: {e}'**
+  String couldNotSaveChanges(Object e);
 }
 
 class _AppLocalizationsDelegate

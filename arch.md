@@ -125,7 +125,7 @@ app/lib/
 │   ├── i18n/                  # l10n context/lookup helpers, locale provider
 │   ├── services/              # Background tracking, notifications, home widgets, Cloudinary
 │   ├── router/                # GoRouter routing tree & auth redirects
-│   ├── theme/                 # 7-color family appearance engine (dark/light, boxy/curvy)
+│   ├── theme/                 # Two themes: Calming light, Carbon Mono dark (+ follow system)
 │   └── utils/                 # Pure helpers: geo math, geohash, formatters, badges
 ├── l10n/                      # ARB files + checked-in generated AppLocalizations
 ├── shared/                    # AppShell, shared widgets and screens
@@ -177,6 +177,7 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 - Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
 - Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
 - `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed_ms`, `acceleration`, `jerk`, `heading_deg`, `confidence`, `imu_quality`, `is_cornering`).
+- **Times.** Ride `start_time`/`end_time`/`created_at` are stored as UTC ISO-8601 (`…Z`) since schema v28; older rows were device-local with no offset and were rewritten by the v28 step, and a ride doc from an older build is read in this phone's zone on download. `RideModel` hands the app local `DateTime`s; day-range queries (`RideDao.getCompletedBetween`) bind the local day's bounds as UTC. GPS point timestamps were already UTC. Bike, maintenance and fuel dates keep their old format.
 - **Adding a column to a synced table is a cross-version concern.** `CloudRepository.downloadRides` inserts cloud documents verbatim, so a field written by a newer build is an `INSERT` into a column an older one doesn't have — which throws and silently drops that ride. Two guards: the upload side omits a field when it is null (`ridePayload`, `bikePayload`), and since v17 the download side filters to the columns the local schema actually has (`knownRideColumnsOnly`). Maintenance logs have no such filter: a row a build can't store is skipped, and since v20 `downloadMaintenance` stops its pull watermark before that row so it is fetched again after the app updates. Deleted maintenance logs are tombstoned (`deleted_maintenance_logs`) like rides and bikes.
 
 ### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
@@ -193,9 +194,17 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
   4. Scheduled 5-minute background interval.
 - **Sync Sequence**:
   1. Drain Outbox queue (`_outbox.drain()`).
-  2. Download remote updates (Bikes, Maintenance, Maintenance settings, Rides) for multi-device parity.
+  2. Download remote updates (Bikes, Maintenance, Fuel, Maintenance settings, Rides): missing rows and newer edits (last writer wins, below).
   3. Push local deletions first.
-  4. Upload unsynced local rows (`synced = 0`).
+  4. Upload unsynced local rows (`synced = 0`), one transaction per row.
+
+### Multi-device conflicts: last writer wins (founder decision C4, 2026-10-14)
+- Rides, bikes, maintenance logs and fuel logs carry `updated_at`, the UTC time of the row's last local edit. The models stamp it on every full write, and the v28 `*_touch_updated_at` SQLite triggers stamp every other `UPDATE` that leaves a row `synced = 0` (finalize, bike reattribution, odometer, archive, stats), so a new DAO method needs no extra code. Fuel logs set it in `FuelLogModel` (since v27). The v28 step backfilled it from the best existing time (ride end or start, the latest bike time, the log's `created_at`).
+- **Download:** a cloud copy with a newer `updated_at` replaces the local row only if that row has no unsynced changes, and only if it was not edited while the download ran (`LastWriterWins.adopt`). The active bike, local photo, receipt and map-snapshot files and the trail flag stay this device's own.
+- **Upload:** each row is a Firestore transaction that reads the cloud copy first (`LastWriterWins.setUnlessRemoteNewer`, also used by the outbox for maintenance and fuel). A newer cloud copy is never overwritten; it replaces the older local row instead. A row is marked synced only if it was not edited again during the upload. This costs one read per uploaded row, and uploads are no longer one batch.
+- **Older builds:** a document without `updated_at` counts as the oldest copy, so it never replaces anything, and a new build's upload replaces it. Older builds still overwrite the cloud copy blindly and never take in remote edits. Beta 4.4/4.5 drop the unknown `updated_at` column for rides and bikes, but `downloadMaintenance` there has no column filter, so they skip maintenance logs written by v28 builds until they update (the pull watermark stops short, so the logs arrive after the update). Older builds also show v28 rides' times in UTC. Set `config/app.minBuild` once the v28 build is out.
+- After the v28 upgrade each rider gets one full pull (`SyncManager.resetPullMarksOnceForV28`), so edits the old download skipped arrive once.
+- **Not covered:** deletions (tombstones decide them, as before); a phone with a wrong clock wins or loses conflicts by that error; bike totals (`total_distance_m`, `ride_count`) are whole-row LWW, so rides recorded on the same bike on two phones between syncs keep only one phone's increment in the totals (the rides themselves are kept).
 
 ### Firestore Track Chunking ([`RideTrackCodec`](app/lib/core/cloud/ride_track_codec.dart))
 - Long rides generate thousands of telemetry points. Writing one document per point exhausts read/write quotas; writing all points to one document breaches Firestore's 1 MiB limit.
@@ -206,17 +215,26 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 
 ### Server side (`functions/`)
 Cloud Functions only backstop what the client can't be trusted with or can't do after the fact. See `functions/README.md`:
-- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data.
+- `onUserAccountDeleted`: recursive cleanup of a deleted rider's cloud data (profile and subcollections, shared rides, chats, email lookup, Cloudinary media; forum bylines anonymized).
+- `purgeOldGpsTracks`: daily deletion of `track` chunks older than 12 months; ride summaries stay.
 - `reconcileRideIdentity`: overwrites a shared ride's display name/photo from the profile doc (anti-impersonation).
 - `onMessageCreate`: keyword chat moderation (placeholder).
 - `onCrashNotification` / `escalateCrashAlert`: crash-alert fan-out and escalation. **Delivery is still a mock**; nothing is actually sent.
+- **Nothing here is deployed** (Spark plan). Deploy order and secrets: `SECURITY.md`.
+
+### Profiles and email
+- `users/{uid}` is readable by signed-in riders, so it holds no email. The address lives in owner-only `users/{uid}/private/account`; find-by-email is a keyed `get` on `emailLookup/{sha256(lowercased email)}` → `{uid}` (no `list`; a write needs the caller's own verified token email). A `users` list query is capped at 20 docs.
+- `config/app` (world-readable, console-written) carries `minBuild` for the forced-update gate.
+- Realtime Database is retired: `database.rules.json` denies everything.
 
 ---
 
 ## 6. Background Processing & Auto-Tracking
 
-1. **Foreground Service**:
-   - Background tracking uses `flutter_foreground_task` and `geolocator`'s native foreground service notification to prevent Android OEM OS battery killers from terminating the recording isolate.
+1. **Foreground Service** (one `flutter_foreground_task` service, two jobs):
+   - **Manual rides** (Android): `RideRecordingNotifier` hosts each active ride in the service (`AutoTrackingService.beginManualRide`, ended on pause/stop/discard/restore). The UI isolate still records; it sends a heartbeat every second. With no heartbeat for 20 s (UI engine destroyed), the task handler stores the ride's fixes in `ride_points` itself and advances the restore clock, so `restoreInterruptedRide` rebuilds the whole ride. A system-restarted service without "Allow all the time", or a service that dies under a live UI, posts "Recording stopped, tap to resume". `geolocator`'s own foreground notification is only the fallback when the service can't start (and iOS uses background location updates instead).
+   - **Permissions**: a manual ride needs while-in-use location only. "Allow all the time" is requested only when the rider turns auto-tracking on, after the Play disclosure (`ensureBackgroundLocationDisclosure`, shown until accepted once).
+   - **OEM battery killers**: after the first finished ride, Xiaomi/OPPO/vivo/realme phones get a one-time settings guide (`oem_guide_screen.dart`; vendor autostart screens through the `throttleiq/oem` channel in `MainActivity.kt`).
 2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](app/lib/core/services/auto_tracking_service.dart))**:
    - Operates an isolated background entry point (`autoTrackingTaskCallback`).
    - Listens for Activity Recognition transitions (e.g., `IN_VEHICLE` / `ON_BICYCLE`).
@@ -248,7 +266,7 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
   - [`navigation_progress.dart`](app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
   - [`navigation_session_provider.dart`](app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
   - **The dependency runs one way**: `routes` knows about the recorder; `RideRecordingNotifier` knows nothing about routes. Navigation stays out of the core loop, which is the part with no end-to-end test.
-  - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v20). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
+  - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v28). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
   - Guidance is drawn over the cockpit by `NavigationBanner`; there is no separate navigation screen to get out of sync with the recorder.
 
 ---
@@ -272,4 +290,4 @@ Read these before adding a screen; each replaced something that used to be a glo
 - **Design tokens ride on the theme, not on statics.** `AppColorPalette` and `AppShapeProfile` are `ThemeExtension`s registered by `AppTheme.build`; widgets read `context.palette` / `context.shape` (`core/theme/app_theme_context.dart`) **in `build`** (never `initState`, never cached in a field). `AppColors` and the `apply()` facades no longer exist, and `MaterialApp` is not keyed on the appearance — changing theme re-themes screens in place and keeps their state. In a dialog/sheet `builder:` use the builder's own context.
 - **Localization.** `context.l10n.key` (`core/i18n/l10n_context.dart`); ARBs in `app/lib/l10n/` (EN template + BN, Western digits, checked-in generated code, parity test). Code with no `BuildContext` uses `resolveL10n(locale)` / `savedL10n()` (`core/i18n/l10n_lookup.dart`) — a snapshot, not reactive. **Never localize data** (anything stored, sent to another rider, or compared against); domain enums keep English + persisted ids and are localized by id/kind in `presentation/` (`badge_l10n.dart`, `service_type_l10n.dart`, `turn_instruction_l10n.dart`, …). New Bangla keys go in `bn_pending_review.txt`.
 - **Analytics** (`core/analytics/analytics_service.dart`): screen views (route patterns) + a closed list of seven funnel events, one coarse parameter each, off in debug, rider opt-out in Settings. No code path can send an id, name, location or ride figure. `public/privacy.html` and the Data Safety notes must change with it.
-- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run.
+- **App Check** is activated at startup (`main.dart`), inert until enforced in the Firebase console; enforce only after a release containing it is what riders run. Runbook: `SECURITY.md`.

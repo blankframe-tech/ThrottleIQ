@@ -1,5 +1,19 @@
 # Realtime Database (live movement channel)
 
+> **Retired 2026-10-14 (critique `CrtiQue_Oct14.md` B9/§14).** Group-ride
+> positions were readable by any signed-in rider who knew the ride id.
+> - `database.rules.json` now denies every read and write.
+> - The group-ride RTDB client (`GroupRideLiveChannel`, the group map's
+>   realtime dots and its Live/Delayed badge) was removed from the app; the
+>   code is kept on branch `park/rtdb-group-ride`. Group rides use Firestore
+>   `memberLocations` only.
+> - Live share and chat typing still have RTDB code paths, but they run only
+>   when a database URL is compiled in (`RealtimeConfig.isEnabled`; release
+>   builds have none). With the deny-all rules they fall back to Firestore.
+>
+> What follows is the old design, kept for reference if RTDB returns behind a
+> membership mirror.
+
 Firestore stays the source of truth for everything structural: the live
 session (`liveSessions/{token}`: status, battery, `shareable`, `expiresAt`),
 the group ride (`groupRides/{id}`, its roster and membership arrays) and chat
@@ -9,7 +23,7 @@ throwaway movement data, over one WebSocket per client:
 | Feature | RTDB path | Writer cadence | Firestore it replaces |
 |---|---|---|---|
 | Partner live viewer | `/live_shares/{token}` | 1 Hz while sharing and riding | position fields of `liveSessions/{token}` (still written every 10 s as the fallback) |
-| Group rides | `/group_rides/{rideId}/locations/{uid}` | every 2 s when moved ≥ 5 m, 30 s heartbeat | `groupRides/{id}/memberLocations/{uid}` (demoted to a 2 min heartbeat while RTDB is healthy) |
+| Group rides (**client removed 2026-10-14**, see below) | `/group_rides/{rideId}/locations/{uid}` | every 2 s when moved ≥ 5 m, 30 s heartbeat | `groupRides/{id}/memberLocations/{uid}` (demoted to a 2 min heartbeat while RTDB is healthy) |
 | Chat typing | `/chat_presence/{chatId}/{uid}` | on keystroke, throttled to 1 per 3 s; `false` after 4 s idle | nothing (new) |
 
 Rules: `database.rules.json` (repo root). Emulator: port 9000

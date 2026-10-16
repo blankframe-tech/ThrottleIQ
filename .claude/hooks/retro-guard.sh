@@ -12,7 +12,7 @@ msg=""
 grep -q '"ponytail@ponytail"' "$cfg/plugins/installed_plugins.json" 2>/dev/null ||
   msg="$msg PROJECT RULE VIOLATED: ponytail plugin is not installed in $cfg. Tell the user to run: CLAUDE_CONFIG_DIR=$cfg claude plugin install ponytail@ponytail."
 grep -q 'caveman' "$cfg/settings.json" 2>/dev/null ||
-  msg="$msg PROJECT RULE VIOLATED: caveman hooks are missing in $cfg. Tell the user to run: python3 -I ~/Everything/dev/tools/ensure_caveman.py fix."
+  msg="$msg PROJECT RULE VIOLATED: caveman hooks are missing in $cfg. Tell the user to run: python3 -I ~/Everything/dev/systems/0_tools/ensure_caveman.py fix."
 
 grep -q '"mattpocock-skills@' "$cfg/plugins/installed_plugins.json" 2>/dev/null ||
   msg="$msg PROJECT RULE VIOLATED: the /retro skill (mattpocock-skills) is not installed in $cfg. Tell the user to run: CLAUDE_CONFIG_DIR=$cfg claude plugin install mattpocock-skills@claude-plugins-official."

@@ -9,51 +9,27 @@ import 'theme_style_provider.dart';
 class AppTheme {
   AppTheme._();
 
-  /// Builds the [ThemeData] for the given [AppAppearance]. Resolves the
-  /// matching [AppColorPalette] and [AppShapeProfile] and registers both as
-  /// [ThemeData.extensions], which is how every widget reads them
-  /// (`context.palette` / `context.shape`, see `app_theme_context.dart`).
-  /// Display/heading type uses IBM Plex Mono; body uses IBM Plex Sans.
-  ///
-  /// Shape is per-appearance, not shared: Curvy gets rounded corners and
-  /// roomier controls, Boxy keeps the sharp instrument-panel edges — see
-  /// [AppShapeProfile.forVibe]. Nothing about the layout hierarchy changes
-  /// with the appearance, only how the same widgets are drawn.
-  ///
-  /// Race (the Retro palette) remains the one color mode that is more than
-  /// shape and color: it
-  /// drops body type to monospace regardless of which shape/brightness it's
-  /// paired with, and its mustard accent always takes dark ink text rather
-  /// than the white/surface foreground every other mode's primary button
-  /// gets — matching the "Retro (Rawblock)" deck direction, where the accent
-  /// fill is light enough that white text would fail contrast. See
-  /// [AppColorPalette.retroLight]/[AppColorPalette.retroDark].
   /// Text/icon color drawn on a filled `primary` button for [palette].
   /// Pulled out of [build] so the WCAG contrast test can check every
-  /// palette against exactly what the button renders. Race/Retro is told
-  /// apart by its palette flag ([AppColorPalette.monoDisplay], which only the
-  /// Retro palettes set), so callers that only hold a palette get it right.
+  /// palette against exactly what the button renders.
   static Color primaryButtonForeground(AppColorPalette palette) =>
-      palette.monoDisplay
-          ? const Color(0xFF1A1A1A)
-          : (palette.isDark ? palette.surface : Colors.white);
+      palette.isDark ? palette.surface : Colors.white;
 
+  /// Builds the [ThemeData] for the given [AppAppearance]. Resolves the
+  /// matching [AppColorPalette] and the [AppShapeProfile] and registers both
+  /// as [ThemeData.extensions], which is how every widget reads them
+  /// (`context.palette` / `context.shape`, see `app_theme_context.dart`).
+  /// Display/heading type uses IBM Plex Mono; body uses IBM Plex Sans.
   static ThemeData build(AppAppearance appearance) {
     final isDark = appearance.brightness == Brightness.dark;
     final base = isDark
         ? ThemeData.dark(useMaterial3: true)
         : ThemeData.light(useMaterial3: true);
 
-    final palette =
-        AppColorPalette.forMode(appearance.colorMode, appearance.brightness);
-    final shape = AppShapeProfile.forVibe(appearance.shapeVibe);
+    final palette = AppColorPalette.forBrightness(appearance.brightness);
+    const shape = AppShapeProfile.curvy;
 
-    // Body in IBM Plex Sans — or IBM Plex Mono end-to-end on Race (Retro),
-    // where a proportional body face would break the illusion the rest of
-    // the direction is building.
-    final bodyText = palette.monoDisplay
-        ? GoogleFonts.ibmPlexMonoTextTheme(base.textTheme)
-        : GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
+    final bodyText = GoogleFonts.ibmPlexSansTextTheme(base.textTheme);
     final textTheme = bodyText
         .copyWith(
           displayLarge: GoogleFonts.ibmPlexMono(
@@ -169,8 +145,7 @@ class AppTheme {
         hintStyle: TextStyle(color: palette.textTertiary),
         labelStyle: TextStyle(color: palette.textSecondary),
       ),
-      // Primary action = accent pop (lime on Carbon Mono, blue on Editorial,
-      // and whatever the selected skin's `primary` is).
+      // Primary action = accent pop (sage on light, lime on dark).
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: palette.primary,

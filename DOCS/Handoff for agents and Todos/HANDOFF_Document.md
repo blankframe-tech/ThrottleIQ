@@ -1,13 +1,164 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-13 · Branches: `main` = `experimental` (e6c9a54), `indriyo` (e28d75c)_
+_Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-13 (latest): dependabot merged, stale docs moved, branches synced — pushed
+## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
+
+- **PRD (F6 closed):** `node scripts/ste_sentence_length.js DOCS/PRD.md` finds 0 sentences over the STE limits (longest: 20 words). 7 passive sentences and 4 non-approved words were fixed by hand; the record is PRD §13. Not done: a full check against the STE dictionary. Content not re-checked: AUT-7 and open item 3 still say nothing calls the purge, but F3 wired it in.
+- **Rules:** the compile warning ("Invalid type. Received one of [null]. Expected one of [map].", now line ~523, the `publicStatsValid` call) is gone: the call passes `{}` for a new profile, as its siblings do. Same behaviour. `scripts/test/rules/rules_compile.test.js` loads the rules into the emulator and fails on any compiler issue. **Rules not deployed.**
+- **Backfill (written, NOT run):** `scripts/backfill_users_visibility.js` sets `visibility: 'public'` on `users` docs with no (or null) `visibility`. Owner, to run it once:
+  ```bash
+  cd scripts && npm install
+  export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+  node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+  node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # type BACKFILL VISIBILITY
+  node backfill_users_visibility.js --project=throttleiqfb                         # should report 0
+  ```
+  `--project` is required and must match the key. Writes use a BulkWriter with a per-doc read-time precondition, so a rider who changes their setting mid-run is skipped, not overwritten. Tests: `npm test` and `npm run test:rules` (emulator). Details: `scripts/README.md`.
+
+## 2026-10-15 (live share): Firestore writes skipped while the rider barely moves — `main` pushed at `ce82025`
+
+- A 10 s live-share tick now writes `liveSessions/{token}` only on a new token, a status change, 100 m of movement or 15 s since the last write (`shouldWriteLiveSession` in `live_session_coordinator.dart`). A stopped rider writes every 20 s, inside the viewer's 30 s "updates delayed" warning. Saving is 0-50% by speed: the Spark ceiling moves from about 55 to at most about 111 live-share hours a day. Not in a release build yet.
+- RTDB rules deny everything on purpose (B9, `8872fef`). The relay is off: release builds have no `RTDB_URL` and the project has no RTDB instance. Rules unchanged.
+- **Owner, to do:**
+  1. **Decide the quota path.** (a) Revive the RTDB relay for live shares only: token-scoped rules (the old ones are in `8f8f774`), create the RTDB instance, add `RTDB_URL` to release builds in `scripts/deploy.sh`. RTDB doesn't count writes, so this is the real fix. (b) Move to Blaze (see "The Blaze decision has a dated consequence" below). (c) Keep this fix and delete the dormant `core/realtime` code (about 830 lines).
+  2. **Device test.** Ride in traffic with live share on and confirm the viewer never shows "updates delayed".
+
+## 2026-10-15 (load test): Spark quota simulation — fails at about 18 daily riders
+
+- Added `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota` in `scripts/`). It replays the app's Firestore shapes on the emulator and counts reads and writes. Report: `DOCS/load_test/load-test-2026-10-15.md`. Issues: `issues_open.md` §104. Not committed.
+- Biggest read costs: the nearby-places refetch every 5 km during rides, and group-ride fan-out (N² + N reads per 20 s tick).
+- Still to do: real usage numbers from Firebase console → Usage.
+
+## 2026-10-15 (release): `1.0.0-beta.4.7.0+28` shipped as tag `beta-v4.7.0`
+
+- Release notes and Play text: `DOCS/releases/beta-v4.7.0.md` (also the GitHub release body). `deploy.sh --skip-ios` passed the gate, pushed, built 4 APKs + AAB (all versionCode 28) and published the release. The iPhone build was installed and launched separately with `flutter run --release`.
+- Local: every APK deleted. The only AAB left is `app/build/app/outputs/bundle/release/app-release.aab` (98 MB). The GitHub release keeps its APKs, because the install page links `app-release.apk`.
+- Includes the Places full map, the compact shared-ride card + owner menu, History → Delete ride and the cockpit placement pill. None of it checked on a device beyond install + launch. Play upload not done.
+
+## 2026-10-15 (state check): `main` pushed at `1349db5`, gate green
+
+- Three sessions ran on one working tree at once (cockpit fix, shared-ride card, Places full map). One committed everything as `8bdb803`; `53fa993`/`686bc73` hold format + bare-catch fixes and repo-wide `dart format` churn; `1349db5` reverts the format-only files. The churn stays in history; the final tree is clean.
+- Verified on `1349db5`: `scripts/check.sh --force` passes (format, guards, analyze, 2221 tests). All `fix/oct14-tiq-*`, `fix/oct15-throttleiq`, `oct14-int`, `merge/oct15-origin-main` and `feat/crash-shadow-mode` are merged into `main`. Each feature is in the code: jam button above the speed panel, phone-placement pill in the cockpit (not on the Record screen), shared-ride card + owner menu, history Delete ride, Places full map.
+- **Superseded:** the "Record screen: collapsed `PhonePlacementSelector`" bullet below. The selector now lives only in the active-ride cockpit (top-left popup pill).
+- Still open: §103.2–103.4 in `issues_open.md`; nothing checked on a device; this code is after `beta-v4.6.0`, so it isn't released yet.
+- Rule for parallel sessions: one session commits. Never `git add -A`, `dart format lib` or `git checkout -- app` in a shared tree (see `.agents/rules/`).
+
+## 2026-10-15 (places): full-screen map
+
+- Places map has a fullscreen button (`places_full_map`, in the result row). `placesFullMapProvider` hides the AppBar, hub tabs, search, radar banner and result row; the category ribbon, filter button and carousel stay. Exit button `places_exit_full_map`; Android back exits full screen first.
+- Widget test in `places_hub_test.dart`. Not checked on a device; the E2E (`flutter drive`) needs a booted simulator. Not released; no version bump yet.
+
+## 2026-10-15 (release): `1.0.0-beta.4.6.0+27` shipped as tag `beta-v4.6.0` — `main` pushed
+
+- `scripts/deploy.sh --skip-ios` (gate green, 2 min of tests), then `flutter run --release` to the founder's iPhone separately (the script's iOS step stays attached to the app). GitHub release has the four APKs + AAB; local APKs deleted, local AAB kept at `app/build/app/outputs/bundle/release/app-release.aab` (93 MB). APKs stay on the release because the install page links `app-release.apk`.
+- Build number 26 was already used, hence +27. The tag is `beta-v4.6.0` (regex captures `4.6.0`).
+- Not checked: the build on the iPhone beyond install + launch, the Play upload, the `firestore.rules` / functions deploy order (`SECURITY.md`) before testers update.
+
+## 2026-10-15: local `main` fast-forwarded to `oct14-int` (`19a4c1c`); phone placement collapsible — since pushed; placement superseded (see state check)
+
+- `oct14-int` already held every `fix/oct14-tiq-*` branch and `fix/oct15-throttleiq`, merged with origin/main; its gate stamp matched that commit. Local `main` now equals it. Not pushed; follow the rules deploy order in `SECURITY.md`.
+- Record screen: `PhonePlacementSelector` is one collapsed row ("Phone: On a mount"); tap opens the chips. Ride tests pass; not run on a device, so the reported iPhone breakage is unconfirmed. Full gate not re-run after this edit.
+- Places ideas (offline cache, closed-place reports, live confirmations, route search, finer module toggles) were given to the founder; nothing built. Home-screen widget update was requested but unspecified.
+
+## 2026-10-15: `origin/main` merged into the oct14/oct15 fix round — branch `merge/oct15-origin-main`, not pushed, not deployed, not on a device
+
+- **Schema v29.** Both sides shipped a v28: ours (`updated_at` + touch triggers, UTC ride times) and main's (`impact_events`, `rides.phone_placement`/`imu_rate_hz`). v28 stays ours; v29 adds main's table and columns and, for a phone that is on main's v28, re-runs our (re-runnable) v28 step. Paths tested in `schema_v29_merge_test.dart`: 27 → 29, our 28 → 29, main's 28 → 29.
+- **Crash gate:** main renamed `impactDetectorLiveEnabled` to `crashAlertsEnabled`; the B11 gates (notification, crash overlay, `crash_copy_test`) now read it. Shadow mode raises nothing.
+- **Ride tracking off** also stops `startRide` and the Places "Record this ride?" prompt, so nothing (foreground service, permission ask) reads location. `BikeDao.delete` now removes the bike's rides' impact rows.
+- **privacy.html:** our deletion, background-location and contact text plus main's modules text; §1, §2, §4, §7, §8 and §9 now describe impact records, the 12 s sensor window and the opt-in research copy (which carries the uid and the exact time).
+- **Deploy order:** main deployed its `firestore.rules` and indexes. The next rules or indexes deploy must come from this merge, or the `crashEvents`/`impactEvents` rules and overrides go away.
+- Owner decisions: see the merge report (cloud impact copies outlive a ride delete; `crashEvents.createdAt` is exact).
+
+## 2026-10-15: shadow-mode crash detection — merged to `main`; rules and indexes deployed
+
+- Built phases 1–3 of the crash-detection plan that followed the founder's 14 Oct crash: a tiered `ImpactDetector`,
+  50 Hz sensors, `impact_events` (schema v28) with sensor windows, phone-placement chips, the after-ride
+  "Did you fall?" card and "Report a crash", private `impactEvents` sync, and opt-in `crashEvents`. Live alarm
+  still **off**. Details in features.md ("Shadow-mode crash detection"); open items in issues_open.md §78.1.
+- **Needed before release:** update the privacy policy and store data-safety forms for the opt-in, and measure
+  the battery cost of 50 Hz on a device. `firestore.rules` and `firestore.indexes.json` are deployed.
+- Built in its own worktree (`feat/crash-shadow-mode`), then merged with the modular-ThrottleIQ commits below.
+  The parallel `oct14` fix branches (`fix/oct14-tiq-*`) were not merged yet; expect conflicts in
+  `ride_recording_provider.dart`, `firestore.rules` and the ARB files when they land.
+- Crash report: `DOCS/CRASH TESTING/` (full analysis, exports, phone DB, iOS log extract) and a public write-up
+  at blankframe.tech/throttleiq/crash/1 (landing-page repo, `throttle-iq/crash/1/`).
+
+## 2026-10-15: re-critique fixes (N1-N5) — branch `fix/oct15-throttleiq`, not pushed, not deployed, not on a device
+
+From `CrtiQue_Oct15.md` §3.
+- **N1 version codes:** every Android artifact carries the pubspec build number. `build.gradle.kts` resets Flutter's split codes (`abi * 1000 + build`); `deploy.sh` checks each APK with `aapt2` and stops on a mismatch. Bump the build number every release.
+- **N2 old builds:** the rules still refuse beta 4.5's profile write (it carries the email; letting it through would publish it again). `SECURITY.md` now gates the rules deploy on testers having moved to build 27+, sets `minBuild` first, and runs the email migration in the same hour.
+- **N3 email lookup:** `emailLookup` writes need `email_verified`. `AuthNotifier.completeEmailVerification` (app start and sign-in) sends the link once per unverified account and writes the lookup after the click. The migration writes lookups only for Auth-verified addresses.
+- **N4 install page:** the iPhone section is a mailto plus WhatsApp and says there is no iPhone build. No localStorage waitlist, no `console.log` tracking, no TestFlight or crash-alert claims (`hosting_repo_hygiene.test.js`). Needs a Hosting deploy.
+- **N5 permissions:** `AutoTrackingService.start()` asks for nothing unless `enable()` passes `askForMissingPermissions`, so pause and ride end no longer bring up the battery dialog. The switch reads off when activity recognition is revoked.
+- Not done: N6-N12 (Low), deletion without email (owner: Blaze or admin script).
+
+## 2026-10-15: modular ThrottleIQ — on `main` (`c90b2cd`), pushed; branch deleted
+
+- Merged to `main` by fast-forward; `modular-throttleiq` deleted locally and on origin. Gate green (2149 tests). With nothing turned off the app behaves as before.
+- Settings → **Your ThrottleIQ**: Community (Everything / Forums only / Off), Places & routes, Ride tracking. Details in `features.md` ("Your ThrottleIQ — app modules").
+- Feature tour follows the modules too (follow-up commit): steps for an off module are left out, the forums-only rider gets a Forums step, garage/profile/record steps drop callouts about off modules, and the tour's mini nav shows the rider's real tabs (Forums, Maintenance). `kOnboardingManifestVersion` not bumped: the all-on tour is unchanged.
+- Not done: forum-reply notifications are not separated from social ones (bell hidden in forums-only); module choice is device-local, not synced; Bangla strings drafted, listed in `bn_pending_review.txt`; not run on a device.
+
+## 2026-10-15: ride recording fixes (B4, B5, B12) — branch `fix/oct14-tiq-ride`, merged with `oct14-int`, not pushed, not on a device
+
+From `CrtiQue_Oct14.md` §3, §4. Parallel agents: tiq-sync and tiq-themes (both already in `oct14-int`).
+- **B4 permissions:** a ride start asks for while-in-use location once (`ensureRideLocationPermission`): no "Allow all the time" upgrade, no trip to Settings. The Play disclosure (`ensureBackgroundLocationDisclosure`, `recording_gate.dart`) moved from the record, route and group-ride starts to the auto-tracking switch; shown until accepted once (`background_location_disclosure_accepted`). Copy (EN/BN) now describes automatic detection. Play notes in `DOCS/General/store_listing/data_safety_and_permissions.md` and `privacy.html` §3 say only auto-tracking asks for background location.
+- **B5 kill mid-ride:** on Android the ride is hosted in the `flutter_foreground_task` service (`AutoTrackingService.beginManualRide`/`endManualRide`); geolocator's own notification is only the fallback. The UI beats every second; after 20 s of silence the handler writes the ride's fixes to `ride_points` and advances `ride_elapsed_s`, so the existing restore gets the whole ride. A system-restarted service without "Allow all the time", or a service that dies under a live UI, posts "Recording stopped, tap to resume". Channel renamed "Ride recording" (same id).
+- **OEM guide:** after the first finished ride, Xiaomi/Redmi/POCO, OPPO, realme and vivo/iQOO get a one-time guide (`oem_guide_screen.dart`, channel `throttleiq/oem` in `MainActivity.kt`, `<queries>` for the vendor apps). No new dependency.
+- **B12:** `RideDao.setStatus`; a dismissed crash alert changes the status only.
+- **GPS drops:** per-ride kept/dropped counts for the 25 m gate in `GpsDropLog` (last 20 rides), included in the bug-report JSON. Threshold unchanged.
+- **Pocket rides:** the cockpit's IMU g bar is hidden until `AccelAxisCalibrator` is calibrated. Lean and the summary g peaks are not hidden: they come from GPS (`CorneringEstimator`), not the mount.
+- QA: `scripts/check.sh` (see the branch report); `flutter build apk --debug` (arm64) compiles the Kotlin. **Not run:** any device. Device test: start a ride, swipe the app from recents, ride 2 min, reopen: the restored ride includes those 2 min. Then the same on a Xiaomi or realme with default settings.
+
+## 2026-10-14: two themes, not 28 — branch `fix/oct14-tiq-themes`, merged into `oct14-int`, not pushed, not on a device
+
+From `CrtiQue_Oct14.md` §6/§14. Parallel agents: tiq-ride (recording) and tiq-sync (models/sync) on their own branches.
+- **Themes:** one light (**Calming**: cream/sage, the default since 2026-08-27) and one dark (**Carbon Mono**: carbon/lime, whose accent stays visible over OSM tiles at night). Curvy shape only. Settings › Appearance is System / Dark / Light. Gone: the 7 ride-mode color families, the Boxy/Curvy Vibe, the color picker (`appearance_picker.dart`), the Retro-only hard shadow and mono type, 14 theme/vibe/color l10n keys, and `ti_theme_mode` for the home widgets.
+- **Migration:** riders keep their saved brightness (`brightness` key), which picks the nearest theme; color/shape-only riders were on light and stay light; legacy `theme_style` skins map by brightness (`theme_style_provider_test.dart`).
+- **Record screen:** the slide-to-start track only existed on Boxy and is deleted; the hold ring is the start control. Tour copy no longer mentions boxy styles (manifest version unchanged: copy only).
+- **Cut:** the 28-combination UI tour and PDF generator (`integration_test/ui_tour_test.dart`, `app/scripts/ui_tour/`), and the two `live_UI_screenshots/` folders of removed looks. The Bangla overflow walk (`TOUR_LOCALE=bn`) went with the tour; restore it from git history if wanted. `DOCS/General/screenshots_ui/` is untouched (owner decides on history removal).
+- **Visual check:** headless widget-test shots at 375x812 (system fonts standing in for IBM Plex/Space Grotesk) of Settings, Maintenance, the feature tour and the start ring + cards, in both themes: all readable.
+- QA: `scripts/check.sh` passed (analyze clean, 2047 flutter tests). Not run: device, Android/iOS builds (one unread Kotlin and one Swift constant removed).
+
+## 2026-10-14 (latest): multi-device sync and UTC ride times — branch `fix/oct14-tiq-sync`, not merged, not pushed, not on a device
+
+From `CrtiQue_Oct14.md` B10, B13 and the "Sync conflicts" / "Clock skew" rows. **Founder decision C4 is made: last-writer-wins.**
+- **Schema v28:** `updated_at` (UTC) on `rides`, `bikes`, `maintenance_logs`, backfilled from the best existing time; `*_touch_updated_at` triggers stamp every UPDATE that leaves a row unsynced, so new DAO methods (e.g. a ride `setStatus`) need nothing extra. Ride `start_time`/`end_time`/`created_at` rewritten to UTC ISO-8601 in place (legacy strings read as device-local); no row is dropped or re-uploaded.
+- **Sync:** a newer cloud copy replaces a synced local row on download; uploads (SyncManager and the outbox's maintenance and fuel deliveries) are read-then-write transactions that never overwrite a newer copy. Fuel logs use the `updated_at` they already had. Docs from older builds (no `updated_at`) count as oldest. One full pull per rider after the upgrade. Rules unchanged (rides, bikes and maintenance have no field validation; fuel already allowed `updated_at`). Details and limits: `arch.md` §5, "Multi-device conflicts".
+- **Mixed versions:** beta 4.4/4.5 keep syncing rides and bikes (they drop the unknown column) but skip maintenance logs written by v28 builds until they update, and they show v28 rides' times in UTC. **Owner:** set `config/app.minBuild` to the v28 build once it is released.
+- **Not covered:** deletions (tombstones, unchanged); a wrong phone clock still decides conflicts and "today"; bike totals are whole-row LWW (two phones riding one bike between syncs keep one phone's increment).
+- QA: `scripts/check.sh` passed (analyze clean, 2145 flutter tests, rules emulator 288/288, functions 12/12). Not run: device, two-device sync against real Firestore (the transaction path has no unit test, as `CloudRepository` binds `FirebaseFirestore.instance`).
+
+## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
+
+From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another branch (tiq-rules).
+- **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console.
+- **B1 copy:** delete dialog (EN/BN) and `privacy.html` §9 say cloud data is deleted by hand within 30 days of an email to hello@blankframe.tech; the page now uses that address throughout (was a personal Gmail), effective date 14 Oct 2026. Owner runbook: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
+- **B11:** crash overlay and crash notification show only with `impactDetectorLiveEnabled`; EN/BN copy no longer promises contact delivery. **B14:** OSM User-Agent contact is hello@blankframe.tech.
+- **Claims:** README analytics line (on by default, opt-out); store listing and `iDEA_PITCH_SUBMISSION.md` no longer claim crash detection or emergency alerts; `gov-pitch/` carries a "superseded, do not submit" banner (not rewritten). Data-safety CSV now declares App interactions (collected, optional = opt-out, Analytics) and Analytics as a Device ID purpose; v1/v2 posters with crash/SOS claims deleted.
+- **iOS:** `app/ios/Runner/PrivacyInfo.xcprivacy` added to the Runner target. `flutter build ios --no-codesign` passes; `Podfile.lock` from that build committed (identical to the main checkout's copy: home_widget moved to SPM). Widget extension has no manifest yet.
+- **deploy.sh:** also builds and attaches the three `--split-per-abi` APKs (universal APK kept; the install page links it). 2026-10-15 (CrtiQue_Oct15 N1): Flutter gave splits `abi * 1000 + build` (2026 for arm64), which slipped past `minBuild` and blocked a later universal or Play install as a downgrade. `build.gradle.kts` now resets every split to the pubspec build number and `deploy.sh` checks each APK with `aapt2` (verified on a profile build: 26 on all three; 2026 without the reset).
+- **Cuts:** challenges (B6), top-speed badge family, badge rarity UI (B7), RTDB group-ride client (parked on branch `park/rtdb-group-ride`), `storage.rules`, `posters.py` / `posters_v2.py` / `illus.py`. Speed ids `ton_up`, `speed_140`, `speed_demon` stay in `firestore.rules` and `badge-catalog.ts` on purpose (old builds still award them); the parity test treats them as retired.
+- **Not cut:** `seed_police_checkposts.js` / `_v2.js`. They are not superseded: v1, v2 and v3 seed three different batches (30 + 25 + 35 places). Delete only if the 55 v1/v2 places are confirmed in production and never need re-seeding.
+- QA: `scripts/check.sh` passed (analyze clean, 2113 flutter tests; rules and functions unchanged on this branch, so skipped). `flutter build ios --no-codesign` passes. Not run: device, Android release build, rules emulator.
+
+## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, merged into `oct14-int`, not deployed
+
+- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only; writes need a verified email since 2026-10-15). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
+- **B3:** chat create/update, notifications and follow create refuse writes across a block.
+- **B1 groundwork:** `onUserAccountDeleted` now also deletes chats and the email lookup, and reads Cloudinary credentials from secrets. The `userId` and `track.syncedAt` collection-group overrides are in `firestore.indexes.json`. New `purgeOldGpsTracks` (12-month raw-track retention). Nothing deployed: Blaze needed.
+- **B9:** `database.rules.json` denies everything; the delivery suite and `verify_realtime.js` are gone. `config/{doc}` is world-readable, never client-written (`minBuild`).
+- **Deploy order and the App Check runbook:** `SECURITY.md`.
+
+
+## 2026-10-13: dependabot merged, stale docs moved, branches synced — pushed
 
 - **Dependencies:** merged all five dependabot PRs (#8 firebase-admin 14.5.0, #12 dio 5.11.1, #13 flutter_launcher_icons 0.14.4, #15 @types/node 22.20.5, #16 home_widget 0.10.0) into `main` as one tested set. `scripts/check.sh` green (analyze, 2131 flutter tests, functions 12/12, `tsc` build). No dependabot PR is open and no dependabot branch remains on the remote. **Not checked on a device:** the home-screen widgets under `home_widget` 0.10 (0.x minor jump).
 - **Branches:** `experimental` fast-forwarded to `main`. `indriyo` merged `main` (was 272 behind); the Indriyo HUD wiring in `active_ride_screen.dart` now uses `context.palette` and a narrow `rideRecordingProvider` speed select instead of the removed `AppColors`/`speedKmh`. Gate green; HUD not run on a device. Local-only branch `test` (unmerged 2026-08-31 commit `9f44168`) is kept, safe to delete.
 - **Docs:** stale material moved to `DOCS/old/` (see its README): `scripts/archive/`, `archives/`, `ANTIGRAVRITY_GRILL/`, `issues_solved.md`, `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`, `setup-android.*`. Live links updated; historical logs keep the old paths. The 2026-09-21 triage order is now in `DOCS/old/DEBT_FIX_PLAN.md`.
-- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (superseded by `_v3`, still wired in `scripts/package.json`).
+- **Still candidates, not moved:** `DOCS/General/screenshots_ui/` (2,433 generated screenshots, ~1.9 GB of docs, written by the since-deleted `app/scripts/ui_tour/build_docs.py`) and `seed_police_checkposts.js` / `_v2.js` (still wired in `scripts/package.json`; not superseded by `_v3`, see 2026-10-14).
 - **Gate note:** `check.sh`'s format check compares against `origin/main`, so touching a Dart file also requires it to be `dart format`-clean (it caught `auto_tracking_service.dart`).
 
 ## 2026-10-09: one quality gate + per-family analytics charts — `experimental`, not pushed
@@ -1319,13 +1470,9 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   the plugin's native schedule actually starts/stops GPS at the configured
   boundary, and whether editing the window while already running takes
   effect without a restart, on a real device.
-- [ ] **Nine (now seven) Appearance color families across a whole screen
-  each**, not just a swatch — only Carbon Mono has been seen rendering a
-  real screen past Record. Retro (recolored 2026-09-19 to a cream/mustard/
-  rust "Rawblock" palette with hard offset shadows on `AppCard`/`StatCard` —
-  see `features.md`'s Appearance section — has NOT yet been checked on a
-  real device past that swatch) and any `curvy` family on a screen with the
-  210px Record photo hero are the two highest-value checks.
+- [ ] **Both themes (Calming light, Carbon Mono dark) across a whole screen
+  on a real device**, especially the Record screen's 210px photo hero and the
+  live-ride map in dark (critique §6: the OSM tiles stay bright).
 - [ ] **Ride with friends** — needs two real accounts on two devices: invite,
   accept, confirm both riders appear on each other's live map and stale
   positions grey out. The deployed `groupRides` rules have never been
@@ -1801,7 +1948,7 @@ group first matters more than speed.
 | Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
 | DB schema | **v11** (`is_auto`/`bike_confidence` on `rides`, plus `auto_detections`/`auto_fixes` for auto-tracking, added 2026-08-16 — `auto_tracking_plan.md`). v10 added `outbox`, the offline write queue (`issues_fixed.md` §25); v9 added `rides.moving_s`; v7 added `custom_label` on `maintenance_logs` |
 | Offline writes | Anything the rider explicitly asked for that needs the cloud goes through `core/cloud/outbox_service.dart`, **not** a bare `await` on Firestore. An awaited Firestore write with no connection never completes — it doesn't throw — so a direct `await` on a user-facing path hangs the app. `SyncManager` drains the queue on connectivity change, login, and its 5-minute timer. Optional telemetry uses `_bestEffortWrite()` (same idea, just a timeout, no durability) |
-| UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in all 28 appearance combinations (7 colors × Curvy/Boxy × Light/Dark), with one walkthrough PDF per combination, captured 2026-09-19 on the `rider@example.com` test account. Regenerate after UI changes with `app/scripts/ui_tour/run_tour.sh` then `build_docs.py`; the commands are in that folder's README. The tour is `app/integration_test/ui_tour_test.dart`. It is launched directly on the simulator rather than through `flutter test`, because reinstalls reset the location permission and the prompt would cover the screenshots |
+| UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in the 28 appearance combinations that existed until 2026-10-14, captured 2026-09-19. Stale: the app now has two themes, and the tour and PDF generator that wrote this set were deleted 2026-10-14 (critique §14). The owner decides whether to move it out of the repo and its history. |
 
 ---
 

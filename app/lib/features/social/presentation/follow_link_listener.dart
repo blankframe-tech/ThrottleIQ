@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/i18n/l10n_lookup.dart';
+import '../../../core/services/app_modules.dart';
 import '../../../core/i18n/locale_provider.dart';
 import '../../../core/router/app_router.dart';
 import '../../../shared/widgets/root_messenger.dart';
@@ -77,8 +78,9 @@ class FollowLinkListener {
   Future<void> _onLink(Uri uri) async {
     final uid = parseFollowUri(uri);
     // Not a follow link (e.g. a home-widget throttleiq://startride, which
-    // home_widget handles) — leave it alone.
-    if (uid == null) return;
+    // home_widget handles) — leave it alone. Follow links are ignored while
+    // the rider has social turned off (Settings → Your ThrottleIQ).
+    if (uid == null || !_ref.read(appModulesProvider).social) return;
     _pendingUid = uid;
     try {
       await _ref.read(followLinkStoreProvider).savePendingFollow(uid);

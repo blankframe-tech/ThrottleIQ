@@ -15,6 +15,10 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`update_places_google_ratings.js`](#update_places_google_ratingsjs--enrich-places-with-google-maps-ratings) | Enriches commercial places (fuel, garage, parts) with Google Maps ratings (`x`) alongside ThrottleIQ ratings (`y`) | Yes — re-running updates fields |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
+| [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
+| [`backfill_users_visibility.js`](#backfill_users_visibilityjs--stamp-visibility-public-on-legacy-profiles) | One-off: sets `visibility: 'public'` on `users` docs that lack it, so legacy riders show up in search again. Takes a required `--project=<id>` | Yes — the field can be deleted again; single-doc reads already treated a missing field as public |
+| [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
+| [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
@@ -70,30 +74,57 @@ npm run test:rtdb:ci     # same, JAVA_HOME from the environment (CI)
 
 Runs, against the RTDB emulator (port 9000):
 
-- `test/rtdb/rtdb_rules.test.js` — `database.rules.json`, allow + deny for
-  `live_shares`, `group_rides`, `chat_presence`.
-- `test/rtdb/rtdb_delivery.test.js` — two real SDK clients, each on its own
-  WebSocket: ordered gap-free `seq` delivery with a p95 latency bound,
-  `.info/connected` across `goOffline()`/`goOnline()`, `onDisconnect()`
-  cleanup, offline-queued writes, and permission errors surfacing to a
-  refused listener. Also pins one non-obvious behaviour the viewer relies
-  on: deleting a `live_shares` node **cancels** an attached viewer's listen
-  with `permission_denied` rather than delivering `null`.
+- `test/rtdb/rtdb_rules.test.js` — `database.rules.json`, which denies every
+  read and write since 2026-10-14 (B9: RTDB is retired). Each test is a
+  read or write the app or the live viewer used to make, now refused. The
+  two-client delivery suite went with the per-path rules; both are in git
+  history.
 - `test/live_viewer_core.test.js` — the pure merge/staleness/seq logic in
   `public/live-viewer-core.js` (no emulator needed; also picked up by
   `npm test`).
 
-`verify_realtime.js` is the production smoke test: an admin writer streams
-1 Hz updates to a throwaway `/live_shares/{token}` and an unauthenticated
-client reads them back through the rules, then reports loss, ordering and
-p50/p95 latency and deletes the node.
+---
+
+# `migrate_emails_private.js` — move emails off public profiles
+
+One-off, for B2 in `CrtiQue_Oct14.md`. Run it once, by hand, **after** the B2
+`firestore.rules` are deployed (they stop any build from writing an email back
+onto the public profile). New builds also migrate each rider on sign-in; this
+covers riders who never open the app again.
 
 ```bash
-npm run verify:realtime:emulator                                   # emulator
-node verify_realtime.js --url=https://<instance>.firebasedatabase.app  # prod (ADC)
+cd scripts
+node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
+node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
 ```
 
-It refuses to run without `--emulator` or an explicit `--url`.
+It prints counts and uids, never an address, warns if one email sits on two
+profiles, and a second run reports 0. Unit tests: `npm test`
+(`test/migrate_emails_private.test.js`).
+
+---
+
+# `backfill_users_visibility.js` — stamp `visibility: 'public'` on legacy profiles
+
+One-off, for the A4/D9 rule that only lets a `users` list query return
+`visibility == 'public'` docs. A profile written before `visibility` existed
+drops out of search, suggestions and All People until its rider signs in
+again; this covers riders who don't. Single-doc reads already treat a missing
+field as public, so no rider's privacy changes.
+
+```bash
+cd scripts && npm install
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
+```
+
+`--project` is required and must match the key's `project_id`. Missing and
+`null` both count as "no visibility". Each write carries the doc's read time
+as a precondition, so a rider who changes their own setting mid-run is skipped,
+not overwritten; re-run to pick up anything skipped. A second run reports 0.
+Tests: `npm test` (`test/backfill_users_visibility.test.js`) and
+`npm run test:rules` (`test/rules/backfill_users_visibility.test.js`, emulator).
 
 ---
 

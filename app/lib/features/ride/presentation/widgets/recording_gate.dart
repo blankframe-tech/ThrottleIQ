@@ -1,27 +1,36 @@
 /// The checks and the rider-facing wording that every "start a ride" control
-/// has to go through, wherever it lives.
+/// has to go through, wherever it lives, plus the background-location
+/// disclosure that turning auto-tracking on goes through.
 ///
 /// This used to be three private helpers inside `record_screen.dart`, which
 /// was fine while the Record button was the only way to start recording.
-/// Following a saved route now starts one too (issues §78.21), and the Play
-/// background-location disclosure below is not optional for *that* entry
-/// point either — a second copy of it would be a policy violation waiting for
-/// someone to forget it.
+/// Following a saved route now starts one too (issues §78.21).
 library;
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../providers/ride_recording_provider.dart';
 
-/// Shown once, right before the OS location prompts, whenever the rider
-/// hasn't already granted "Allow all the time" — this is the in-app
-/// disclosure Play's background-location policy requires be distinct from
-/// the system dialog. Returns false (and shows nothing further) if the rider
-/// backs out here rather than proceeding to the OS prompts.
-Future<bool> ensureLocationDisclosure(BuildContext context) async {
+/// Set once the rider has accepted the background-location disclosure.
+const kBackgroundDisclosureAcceptedPref =
+    'background_location_disclosure_accepted';
+
+/// The in-app disclosure Play's background-location policy requires before
+/// the "Allow all the time" request. Only turning auto-tracking on makes that
+/// request; a manual ride needs while-in-use only (B4), so ride starts no
+/// longer come through here.
+///
+/// Shown until the rider accepts it once, then never again. Returns false
+/// if they back out ("Not now"), and the request is not made; the next tap
+/// on the auto-tracking switch shows it again, since that is the only way to
+/// grant it.
+Future<bool> ensureBackgroundLocationDisclosure(BuildContext context) async {
+  final prefs = await SharedPreferences.getInstance();
+  if (prefs.getBool(kBackgroundDisclosureAcceptedPref) ?? false) return true;
   if (await Geolocator.checkPermission() == LocationPermission.always) {
     return true;
   }
@@ -46,7 +55,9 @@ Future<bool> ensureLocationDisclosure(BuildContext context) async {
       ],
     ),
   );
-  return proceed ?? false;
+  if (proceed != true) return false;
+  await prefs.setBool(kBackgroundDisclosureAcceptedPref, true);
+  return true;
 }
 
 /// Puts the blocked-recording reason (GPS off / no permission) in front of
@@ -55,7 +66,8 @@ Future<bool> ensureLocationDisclosure(BuildContext context) async {
 /// the fold behind the hero/stat-strip/friends cards, so a rider who just
 /// slid the bar and got nothing back would otherwise have to scroll up to
 /// find out why.
-void showRecordingBlockedSnackBar(BuildContext context, RideRecordingState state) {
+void showRecordingBlockedSnackBar(
+    BuildContext context, RideRecordingState state) {
   if (state.error == null) return;
   final messenger = ScaffoldMessenger.of(context);
   messenger.hideCurrentSnackBar();

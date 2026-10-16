@@ -1,7 +1,7 @@
 name: throttleiq
 description: Motorcycle tracking, intelligence, and memory platform
 publish_to: 'none'
-version: 1.0.0-beta.4.5.0+26
+version: 1.0.0-beta.4.7.1+29
 
 environment:
   sdk: '>=3.3.0 <4.0.0'
@@ -114,6 +114,11 @@ dependencies:
   # Home-screen widgets (Android App Widget / iOS WidgetKit bridge)
   home_widget: ^0.10.0
 
+  # This build's number for the forced-update gate (core/services/
+  # app_update_gate.dart). Already compiled in as a dependency of
+  # wakelock_plus; listed here because the app now imports it.
+  package_info_plus: ^9.0.1
+
   # Storage
   shared_preferences: ^2.2.3
   path_provider: ^2.1.1
@@ -162,11 +167,13 @@ dependencies:
   firebase_analytics: ^11.6.0
   printing: ^5.15.1
   pdf: ^3.13.1
+  # SHA-256 for the emailLookup doc id (ProfileRepository's emailLookupId).
+  crypto: ^3.0.6
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  # Drives the automated UI screenshot tour (integration_test/ui_tour_test.dart).
+  # Runs integration_test/e2e_test.dart and realtime_emulator_test.dart.
   integration_test:
     sdk: flutter
   flutter_lints: ^3.0.0

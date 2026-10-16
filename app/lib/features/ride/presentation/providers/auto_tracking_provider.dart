@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter_activity_recognition/flutter_activity_recognition.dart'
+    as ar;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -60,7 +62,12 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
 
     final servicesOn = await Geolocator.isLocationServiceEnabled();
     final permission = await Geolocator.checkPermission();
-    final stillGranted = servicesOn && permission == LocationPermission.always;
+    // Activity recognition too: start() no longer re-asks for it outside
+    // enable() (CrtiQue_Oct15 N5), so a revoked grant must show as "off".
+    final stillGranted = servicesOn &&
+        permission == LocationPermission.always &&
+        await ar.FlutterActivityRecognition.instance.checkPermission() ==
+            ar.ActivityPermission.GRANTED;
     if (stillGranted) return true;
 
     await AutoTrackingService.setEnabled(false);
@@ -89,11 +96,10 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     }
 
     // "While in use" is not enough: the whole feature is about noticing a ride
-    // when the app is closed. The plugin's own request flow explains the
-    // upgrade better than a bare system dialog, so it is left to do the ask
-    // (see AutoTrackingService's backgroundPermissionRationale) — but if the
-    // rider has already refused Always outright, say so rather than silently
-    // enabling something that will never fire.
+    // when the app is closed. This is the only place the app asks for "Allow
+    // all the time"; the switch has already shown Play's disclosure
+    // (ensureBackgroundLocationDisclosure, B4). If the rider refuses, say so
+    // rather than silently enabling something that will never fire.
     if (permission == LocationPermission.whileInUse) {
       final upgraded = await Geolocator.requestPermission();
       if (upgraded != LocationPermission.always) {
@@ -106,7 +112,8 @@ class AutoTrackingNotifier extends AsyncNotifier<bool> {
     await NotificationService.instance.requestPermissions();
 
     await AutoTrackingService.setEnabled(true);
-    final started = await AutoTrackingService.instance.start();
+    final started = await AutoTrackingService.instance
+        .start(askForMissingPermissions: true);
     if (!started) {
       await AutoTrackingService.setEnabled(false);
       return AutoTrackingEnableFailure.startFailed;
@@ -143,8 +150,8 @@ class AutoTrackingSchedule {
 /// and change independently of whether tracking is currently on — a rider
 /// picking their commute hours before ever flipping the main switch on
 /// shouldn't be blocked from doing so.
-final autoTrackingScheduleProvider = AsyncNotifierProvider<
-    AutoTrackingScheduleNotifier, AutoTrackingSchedule>(
+final autoTrackingScheduleProvider =
+    AsyncNotifierProvider<AutoTrackingScheduleNotifier, AutoTrackingSchedule>(
   AutoTrackingScheduleNotifier.new,
 );
 
@@ -240,7 +247,8 @@ class RideAttribution {
         bikeType: bike.cc != null ? '${bike.cc}cc' : 'Motorcycle',
       );
     } catch (e) {
-      debugPrint('[RideAttribution] shared-post bike resync failed for $rideId: $e');
+      debugPrint(
+          '[RideAttribution] shared-post bike resync failed for $rideId: $e');
     }
   }
 }

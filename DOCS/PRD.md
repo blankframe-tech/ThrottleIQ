@@ -1,6 +1,6 @@
 # ThrottleIQ — Product Requirements Document
 
-_Version 1.0.0-beta.4.2.0+23 · Updated 2026-10-07 · Style: ASD-STE100 (Simplified Technical English)_
+_Version 1.0.0-beta.4.2.0+23 · Updated 2026-10-15 · Style: ASD-STE100 (Simplified Technical English), checked 2026-10-15 (§13)_
 
 **Status key:** ✅ Built · 🟡 Partly built · ⛔ Not live · 📱 Not checked on a device
 
@@ -21,7 +21,7 @@ It works without a network. It syncs when the network returns.
 | Riders do not know when a bike needs service. | Parts fail. Repairs cost more. |
 | Riders have no record of their rides. | They cannot see progress. |
 | Riders cannot find fuel, garages, or checkposts. | They lose time on the road. |
-| Rider advice is split across chat groups. | Good answers are lost. |
+| Riders give advice in many different chat groups. | Riders lose good answers. |
 | The network is weak on many roads. | Cloud-only apps fail. |
 
 | User | Need |
@@ -43,7 +43,7 @@ It works without a network. It syncs when the network returns.
 
 **Non-goals**
 
-- Crash alerts to emergency contacts (⛔ off in this release; see §6.6).
+- Crash alerts to emergency contacts (⛔ off in this release, see §6.6).
 - Street-by-street navigation. The app gives turn hints from the saved route only.
 - Paid features. The part-order button is a demo.
 - Platforms other than Android and iOS.
@@ -64,7 +64,7 @@ flowchart TD
   N --> T[Rides<br/>Stats · History]
   N --> F[Profile<br/>Garage · Settings]
   F --> M[Maintenance]
-  F --> ST[Settings<br/>Appearance · Language · SafeQR]
+  F --> ST[Settings<br/>Appearance · Language · Your ThrottleIQ · SafeQR]
   R --> AR[Active ride] --> SU[Ride summary]
   SU --> SH[Share]
   SU --> SR[Save as route]
@@ -83,7 +83,7 @@ stateDiagram-v2
   Paused --> Recording: Resume
   Recording --> Saved: End
   Recording --> Discarded: Discard
-  Recording --> Recording: App is killed, then reopened
+  Recording --> Recording: OS stops the app, rider opens it again
   Detected --> Summarised: Trip ends
   Saved --> Shared: Rider shares
   Saved --> Route: Rider saves as route
@@ -115,7 +115,7 @@ stateDiagram-v2
 | REC-4 | The app keeps a ride if the OS stops the app. The rider can resume it. | ✅ 📱 |
 | REC-5 | The app shows distance, duration, average speed, top speed, and time in traffic. | ✅ |
 | REC-6 | The app gives each ride a score out of 100. | ✅ |
-| REC-7 | The app flags hard brakes and rapid acceleration. | ✅ |
+| REC-7 | The app flags hard brakes and fast acceleration. | ✅ |
 | REC-8 | The rider can export a ride as GPX or JSON. | ✅ |
 | REC-9 | The rider can share live location through a link. The rider must turn it on. | ✅ |
 | REC-10 | The rider can end and share a ride while offline. The app sends it later. | ✅ 📱 |
@@ -179,12 +179,12 @@ flowchart LR
 |---|---|---|
 | SAF-1 | The rider can store emergency contacts. | ✅ |
 | SAF-2 | The rider can show a medical QR card (SafeQR) and print stickers. | ✅ |
-| SAF-3 | The app detects a suspected crash during a ride. | ⛔ Switch is off. Thresholds are not field-tested. |
+| SAF-3 | The app detects a suspected crash during a ride. | ⛔ The switch is off. Nobody has tested the thresholds on real roads. |
 | SAF-4 | The app alerts emergency contacts after a crash. | ⛔ The server function only writes a log. It sends no SMS or e-mail. |
 | SAF-5 | The rider can cancel a crash alert. | ⛔ Depends on SAF-3. |
 | SAF-6 | The history marks a ride with a crash signal. | ✅ |
 
-> **Rule:** The app must not say it will contact anyone until SAF-4 is built.
+> **Rule:** The app must not say that it will send a message to anyone. This rule applies until SAF-4 is complete.
 
 ### 6.7 Social
 
@@ -223,10 +223,11 @@ flowchart LR
 
 | ID | Requirement | Status |
 |---|---|---|
-| SET-1 | The rider can choose Vibe (Boxy, Curvy), Brightness, and one of 7 color families. | ✅ |
+| SET-1 | The rider can choose System, Dark or Light: one light theme (Calming) and one dark (Carbon Mono). | ✅ |
 | SET-2 | The rider can choose English or Bangla. Numbers stay 0–9. | ✅ |
 | SET-3 | The rider can turn usage statistics off. | ✅ |
 | SET-4 | Home-screen widgets: Start ride, Start auto-tracking, Ride stats, Next service. | ✅ Android · 🟡 iOS 📱 |
+| SET-5 | The rider can turn off parts of the app (Your ThrottleIQ). The parts are Community (everything, forums only, off), Places and routes, and Ride tracking. A part that is off loses its tab, entry points, and routes. The app deletes no data. With Ride tracking off, the app is maintenance-only, with a manual odometer and no location use. | ✅ 📱 |
 
 ---
 
@@ -269,7 +270,7 @@ flowchart LR
 | NFR-3 | The app must not block the screen on a network call. A network call must time out. |
 | NFR-4 | Background GPS must use little battery. The app must stop GPS when it does not need it. |
 | NFR-5 | Every screen must have English and Bangla text. |
-| NFR-6 | Every list must load lazily. |
+| NFR-6 | Every list must load its items only when they come into view. |
 | NFR-7 | Every user-facing error must use plain words. It must not show raw exceptions. |
 | NFR-8 | Every change must pass `flutter analyze` and `flutter test`. |
 | NFR-9 | Firestore rules must pass their own tests before deploy. |
@@ -288,7 +289,7 @@ flowchart LR
 
 ## 10. Success metrics
 
-Targets are **proposed**. The founder must confirm them.
+These targets are **proposals**. The founder must confirm them.
 
 | Metric | Why it matters | Proposed target |
 |---|---|---|
@@ -306,7 +307,7 @@ Targets are **proposed**. The founder must confirm them.
 |---|---|---|
 | 1 | Choose how crash alerts reach contacts (SMS, push, or e-mail). Then build SAF-3 to SAF-5. | Founder |
 | 2 | Replace the English-only word list with real moderation (TNS-2). | Developer |
-| 3 | Call the purge from the app (AUT-7). Decide whether to store totals before purge. | Developer |
+| 3 | Call the purge from the app (AUT-7). Decide if the app must store totals before the purge. | Developer |
 | 4 | Check all 📱 items on a real device. | Founder |
 | 5 | Confirm the metric targets in §10. | Founder |
 
@@ -322,3 +323,22 @@ Targets are **proposed**. The founder must confirm them.
 | Detection | One trip that auto-tracking found |
 | Visit | One trip to a mechanic, with one or more service items |
 | Baseline | The last known service km or date for one item |
+
+---
+
+## 13. Style check (ASD-STE100)
+
+Run on 2026-10-15. Run the length check again after each edit:
+
+```bash
+node scripts/ste_sentence_length.js DOCS/PRD.md
+```
+
+| Rule | Result |
+|---|---|
+| Sentence length (procedural 20 words or fewer, descriptive 25 or fewer) | The script found 0 long sentences. The longest sentence has 20 words. |
+| Active voice | The check found 7 passive sentences. They are now active. |
+| One instruction per sentence | The check found no sentence with two instructions. |
+| Approved words | "whether", "rapid", "contact" (verb), and "lazily" are now "if", "fast", "send a message to", and "when they come into view". |
+
+The approved-word check covers only the words above. Technical names (Firestore, GPX, outbox) are technical nouns, so the rule permits them. Some colons stay in table cells. Nobody has made a full check against the STE dictionary.

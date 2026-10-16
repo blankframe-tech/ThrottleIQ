@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../database/daos/bike_dao.dart';
 import '../database/daos/maintenance_dao.dart';
 import '../database/daos/fuel_log_dao.dart';
+import '../database/daos/impact_event_dao.dart';
 import '../database/daos/ride_dao.dart';
 import '../../features/garage/presentation/providers/garage_provider.dart';
 import '../../features/maintenance/presentation/providers/fuel_provider.dart';
@@ -207,6 +208,23 @@ class SyncManager {
     }
   }
 
+  /// One full pull of every collection after upgrading to schema v28
+  /// (last-writer-wins, C4). Before it, a download skipped every id already
+  /// held, so a newer edit another device made meanwhile was passed over and
+  /// the pull mark moved past it; a full pull picks those up once.
+  @visibleForTesting
+  static Future<void> resetPullMarksOnceForV28(String uid) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final flag = 'pull_reset_v28_$uid';
+      if (prefs.getBool(flag) == true) return;
+      await PullWatermark.clear(uid);
+      await prefs.setBool(flag, true);
+    } catch (e) {
+      debugPrint('[SyncManager] v28 pull mark reset skipped: $e');
+    }
+  }
+
   static Future<bool> _hasRows(String sql, List<Object?> args) async {
     final db = await DatabaseHelper.instance.database;
     return (await db.rawQuery(sql, args)).isNotEmpty;
@@ -316,6 +334,7 @@ class SyncManager {
       var pulledBikes = false;
       var pulledRides = false;
       if (!skipDownloads) {
+        await resetPullMarksOnceForV28(uid);
         pulledBikes = await _pull(
           uid,
           'bikes',
@@ -510,6 +529,12 @@ class SyncManager {
       if (unsyncedFuel.isNotEmpty) {
         await _cloudRepository.uploadFuelLogs(uid, unsyncedFuel);
       }
+
+      // Shadow-mode impacts and the rider's answers about them: after the
+      // rides they belong to, and last, so research data never holds up a
+      // rider's own backups.
+      await _cloudRepository.uploadImpactEvents(
+          uid, await ImpactEventDao().unsyncedForUser(uid));
 
       _status = SyncStatus.success;
       _consecutiveFailures = 0;

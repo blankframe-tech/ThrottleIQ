@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,6 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_colors.dart';
 import '../../../../core/i18n/greetings_l10n.dart';
-import '../../../../core/theme/app_shape_profile.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/notification_bell_button.dart';
@@ -20,6 +20,7 @@ import '../widgets/bike_picker_card.dart';
 import '../widgets/recording_gate.dart';
 import '../widgets/hold_to_start_button.dart';
 import '../widgets/rider_stat_strip.dart';
+import 'oem_guide_screen.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
 /// Picked once per app session (Riverpod `Provider`s are computed lazily and
@@ -55,7 +56,25 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // One-shot: this screen can be *built* while a ride is already running
     // (cold start onto Record, or a restored interrupted ride), and a
     // `ref.listen` only fires on a change, never on the current value.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _redirectIfRiding();
+      unawaited(_offerOemGuide());
+    });
+  }
+
+  /// The one-time Xiaomi/OPPO/vivo/realme battery-settings guide, offered
+  /// once the rider has a finished ride (B5). See `maybeOfferOemGuide`.
+  Future<void> _offerOemGuide() async {
+    try {
+      if (ref.read(rideRecordingProvider).status != RecordingStatus.idle) {
+        return;
+      }
+      final lastRideId = await ref.read(latestCompletedRideIdProvider.future);
+      if (!mounted) return;
+      await maybeOfferOemGuide(context, hasFinishedRide: lastRideId != null);
+    } catch (e) {
+      debugPrint('[RecordScreen] OEM guide offer failed: $e');
+    }
   }
 
   /// Sends the rider to the active-ride cockpit if a ride is under way.
@@ -89,7 +108,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
 
     final activeBike = ref.watch(activeBikeProvider);
     final rideState = ref.watch(rideRecordingProvider);
-    final quote = resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
+    final quote =
+        resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
     final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
     final accent = activeBike != null && bikeHasPhoto(activeBike)
         ? bikeAccentColor(activeBike)
@@ -102,7 +122,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     // visual authority as the control that actually starts a ride.
     //
     // The throttle is deliberately *outside* the scroll view rather than the
-    // last item in it: slide-to-start is the one control this screen exists
+    // last item in it: hold-to-start is the one control this screen exists
     // for, and it must be under the thumb at a fixed place every time —
     // never scrolled off, and never in a different spot depending on whether
     // an error card happens to be showing above it.
@@ -175,6 +195,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                       // friend picker or join-by-code, group-ride creation,
                       // invites, navigation.
                       const RideModeSelector(),
+                      const SizedBox(height: 16),
 
                       if (rideState.error != null) ...[
                         const SizedBox(height: 16),
@@ -186,7 +207,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                             children: [
                               Text(recordingErrorText(context.l10n, rideState),
                                   style: TextStyle(
-                                      color: context.palette.danger, fontSize: 13),
+                                      color: context.palette.danger,
+                                      fontSize: 13),
                                   textAlign: TextAlign.center),
                               if (rideState.blockKind !=
                                   RecordingBlockKind.none) ...[
@@ -226,23 +248,14 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                 ),
               ),
 
-              // 4. Start ride, pinned.
+              // 5. Start ride, pinned.
               Padding(
                 padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 8,
                     AppDimensions.paddingMd, AppDimensions.paddingMd),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Which control depends on the active skin's shape profile:
-                    // a slide track on the boxy/terminal skins, a press-and-hold
-                    // ring on the rounded ones. See StartControlStyle for why
-                    // this is the one place a skin swaps a widget rather than
-                    // just restyling it.
-                    if (context.shape.startControl ==
-                        StartControlStyle.holdRing)
-                      _HoldToStartControl(enabled: activeBike != null)
-                    else
-                      _SlideToStartButton(enabled: activeBike != null),
+                    _HoldToStartControl(enabled: activeBike != null),
                     const SizedBox(height: 12),
                     // Flavour text, demoted to a footer. It takes the line the
                     // "swipe right to start" hint used to own — the bar labels
@@ -288,7 +301,8 @@ class _NoBikeCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             context.l10n.addBikeRideThrottleiq,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
@@ -301,10 +315,8 @@ class _NoBikeCard extends StatelessWidget {
   }
 }
 
-/// Riverpod wrapper around [HoldToStartButton] — the rounded skins' start
-/// control. Owns exactly the same start/navigate/recover-from-failure flow as
-/// [_SlideToStartButtonState._triggerStart], so the two controls behave
-/// identically once the gesture completes; only the gesture differs.
+/// Riverpod wrapper around [HoldToStartButton], the Record screen's start
+/// control: owns the start/navigate/recover-from-failure flow.
 class _HoldToStartControl extends ConsumerWidget {
   final bool enabled;
   const _HoldToStartControl({required this.enabled});
@@ -317,13 +329,10 @@ class _HoldToStartControl extends ConsumerWidget {
       enabled: enabled,
       busy: status == RecordingStatus.starting,
       onStart: () async {
-        if (!await ensureLocationDisclosure(context)) return;
-        if (!context.mounted) return;
         await ref.read(rideRecordingProvider.notifier).startRide();
         if (!context.mounted) return;
         final result = ref.read(rideRecordingProvider);
-        // Same recovery contract as the slide control: only navigate if the
-        // ride actually went active. If it didn't, the button re-arms itself
+        // Only navigate if the ride actually went active. If it didn't, the button re-arms itself
         // (HoldToStartButton unwinds when `busy` drops back to false) and the
         // error card above explains why — echoed as a SnackBar too, since the
         // card can be scrolled out of view.
@@ -336,178 +345,3 @@ class _HoldToStartControl extends ConsumerWidget {
     );
   }
 }
-
-/// A "slide to start" gesture: drag anywhere on the button and the fill/
-/// thumb track your finger continuously from 0% to 100% of its width.
-/// Release past [_commitThreshold] (35% — kept low since gripping/dragging
-/// precisely with riding gloves on is hard) and the ride starts — the fill
-/// animates the rest of the way to 100% first as a "locked in" cue, you
-/// don't have to physically drag all the way to the end. Release short of
-/// the threshold and it snaps back to 0. The whole button is the drag
-/// target (not just the thumb) — more forgiving to grab one-handed, or
-/// with gloves on, than a small precise handle would be.
-class _SlideToStartButton extends ConsumerStatefulWidget {
-  final bool enabled;
-  const _SlideToStartButton({required this.enabled});
-
-  @override
-  ConsumerState<_SlideToStartButton> createState() =>
-      _SlideToStartButtonState();
-}
-
-class _SlideToStartButtonState extends ConsumerState<_SlideToStartButton>
-    with SingleTickerProviderStateMixin {
-  static const double _commitThreshold = 0.35;
-  static const double _trackHeight = 60;
-  static const double _thumbSize = 48;
-
-  late final AnimationController _ctrl;
-  double _trackWidth = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 220));
-  }
-
-  void _onPanUpdate(DragUpdateDetails details) {
-    if (_trackWidth <= 0) return;
-    // Setting .value directly (rather than animateTo) tracks the finger
-    // 1:1 with no easing lag, and implicitly stops any in-flight settle
-    // animation if the user grabs it again mid-snap-back.
-    _ctrl.value =
-        (_ctrl.value + details.delta.dx / _trackWidth).clamp(0.0, 1.0);
-  }
-
-  void _onPanEnd(DragEndDetails details) {
-    if (_ctrl.value >= _commitThreshold) {
-      _ctrl.animateTo(1.0, curve: Curves.easeOut).then((_) => _triggerStart());
-    } else {
-      _ctrl.animateTo(0.0, curve: Curves.easeOut);
-    }
-  }
-
-  void _onPanCancel() => _ctrl.animateTo(0.0, curve: Curves.easeOut);
-
-  void _triggerStart() async {
-    if (!await ensureLocationDisclosure(context)) {
-      _ctrl.animateTo(0.0, curve: Curves.easeOut);
-      return;
-    }
-    if (!mounted) return;
-    await ref.read(rideRecordingProvider.notifier).startRide();
-    if (!mounted) return;
-    final result = ref.read(rideRecordingProvider);
-    if (result.status == RecordingStatus.active) {
-      context.go('/ride/active');
-    } else {
-      // startRide() didn't actually go active (permission denied, no bike,
-      // GPS disabled, ...) — don't leave the bar stuck full; let the rider
-      // try again. rideState.error (rendered below this widget) explains why,
-      // echoed as a SnackBar since that card can be scrolled out of view.
-      _ctrl.animateTo(0.0, curve: Curves.easeOut);
-      showRecordingBlockedSnackBar(context, result);
-    }
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isStarting =
-        ref.watch(rideRecordingProvider).status == RecordingStatus.starting;
-    final enabled = widget.enabled && !isStarting;
-
-    // The track was hard-coded to `context.palette.ink` (near-black in both
-    // palettes). On Carbon Mono that's right — a black slab with a lime fill
-    // reads as instrument panel against the dark background. On Editorial it
-    // was the one black control on a cream page where every other action
-    // (buttons, links, active borders) is the blue primary, so it looked like
-    // it belonged to a different app. On the light palette the track is the
-    // primary itself and the drag fill deepens to `primaryDark`, which keeps
-    // the progress cue that the black/primary contrast used to provide.
-    // Brightness is the palette discriminator: Editorial builds a light
-    // ThemeData, Carbon Mono a dark one (see AppTheme.build).
-    final isLightPalette = Theme.of(context).brightness == Brightness.light;
-    final trackColor = enabled
-        ? (isLightPalette ? context.palette.primary : context.palette.ink)
-        : context.palette.textTertiary;
-    final fillColor =
-        isLightPalette ? context.palette.primaryDark : context.palette.primary;
-    final thumbIconColor = enabled
-        ? (isLightPalette ? context.palette.primary : context.palette.ink)
-        : context.palette.textTertiary;
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        _trackWidth =
-            (constraints.maxWidth - _thumbSize).clamp(1.0, double.infinity);
-
-        return GestureDetector(
-          onPanUpdate: enabled ? _onPanUpdate : null,
-          onPanEnd: enabled ? _onPanEnd : null,
-          onPanCancel: enabled ? _onPanCancel : null,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(context.shape.radiusLg),
-            child: SizedBox(
-              height: _trackHeight,
-              width: double.infinity,
-              child: AnimatedBuilder(
-                animation: _ctrl,
-                builder: (_, __) {
-                  final fraction = _ctrl.value;
-                  return Stack(
-                    children: [
-                      Container(color: trackColor),
-                      FractionallySizedBox(
-                        widthFactor: fraction,
-                        alignment: Alignment.centerLeft,
-                        child: Container(color: fillColor),
-                      ),
-                      Center(
-                        child: isStarting
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                    color: Colors.white, strokeWidth: 2.5))
-                            : Opacity(
-                                opacity: (1 - fraction * 2).clamp(0.0, 1.0),
-                                child: Text(context.l10n.slideStartRide,
-                                    style: display(context, 16,
-                                        color: context.palette.onInk,
-                                        letterSpacing: 0.2)),
-                              ),
-                      ),
-                      Positioned(
-                        left: fraction * _trackWidth,
-                        top: (_trackHeight - _thumbSize) / 2,
-                        child: Container(
-                          width: _thumbSize,
-                          height: _thumbSize,
-                          decoration: BoxDecoration(
-                            color: context.palette.onInk,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(Icons.arrow_forward,
-                              color: thumbIconColor, size: 22),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-

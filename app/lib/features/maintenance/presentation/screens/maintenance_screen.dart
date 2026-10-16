@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -16,6 +17,7 @@ import '../widgets/maintenance_format.dart';
 import '../widgets/maintenance_log_tile.dart';
 import '../widgets/maintenance_settings_section.dart';
 import '../widgets/money_card.dart';
+import '../widgets/odometer_sync_sheet.dart';
 import '../widgets/paperwork_card.dart';
 import '../widgets/precheck_sheet.dart';
 import '../widgets/up_next_card.dart';
@@ -127,6 +129,39 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
             children: [
               _buildHeader(bikes, activeBike, imperial),
               const SizedBox(height: 14),
+              // Maintenance-only riders (ride tracking off) have no rides
+              // moving the odometer, so the manual reading leads the page.
+              if (!ref.watch(appModulesProvider).rideTracking) ...[
+                EditorialCard(
+                  key: const Key('maintenanceManualOdometer'),
+                  radius: context.shape.radiusLg,
+                  padding: const EdgeInsets.all(14),
+                  onTap: () => OdometerSyncSheet.show(context, activeBike),
+                  child: Row(
+                    children: [
+                      Icon(Icons.speed, color: context.palette.primary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(context.l10n.maintSyncOdometer,
+                                style: display(context, 16, letterSpacing: 0)),
+                            const SizedBox(height: 2),
+                            Text(context.l10n.manualOdometerHint,
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: context.palette.textSecondary)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right,
+                          color: context.palette.textTertiary),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+              ],
               if (needsSetup) ...[
                 _SetupCard(bike: activeBike),
                 const SizedBox(height: 18),

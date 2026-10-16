@@ -63,7 +63,7 @@ class DatabaseHelper {
   /// Current schema version. One constant so the production open and the
   /// test schema builder can't drift apart when the next migration lands —
   /// bump this together with a new `if (oldVersion < N)` step in [_onUpgrade].
-  static const int schemaVersion = 27;
+  static const int schemaVersion = 29;
 
   bool _looksCorrupt(Object error) {
     final message = error.toString().toLowerCase();
@@ -361,6 +361,112 @@ class DatabaseHelper {
       await db.execute(_createFuelLogsIndexSql);
       await db.execute(_createDeletedFuelLogsSql);
     }
+    if (oldVersion < 28 && newVersion >= 28) {
+      await _migrateSyncStampsV28(db);
+    }
+    // Shadow-mode crash detection: the impacts the detector saw, with their
+    // sensor windows and the rider's answers, plus which pocket the phone
+    // rode in and the IMU rate the OS actually delivered. New table and
+    // nullable columns only, so a re-run or a skipped version is harmless.
+    // Shipped on main as v28 while the sync stamps above were also v28, so
+    // a phone at v28 has one of the two: v29 runs both (each re-runnable).
+    if (oldVersion < 29 && newVersion >= 29) {
+      await db.execute(_createImpactEventsSql);
+      await db.execute(_createImpactEventsIndexSql);
+      for (final col in _rideV29Columns) {
+        await _addColumnIfMissing(db, 'rides', col[0], col[1]);
+      }
+      if (oldVersion == 28) await _migrateSyncStampsV28(db);
+    }
+  }
+
+  /// A stored timestamp as UTC ISO-8601 (`…Z`). Strings without an offset
+  /// (everything written before v28) are read as device-local time, which
+  /// is what the phone wrote them as. Null or unparseable values pass
+  /// through unchanged.
+  static Object? toUtcIso(Object? value) {
+    final t = value is String ? DateTime.tryParse(value) : null;
+    return t == null ? value : t.toUtc().toIso8601String();
+  }
+
+  /// Tables synced last-writer-wins on `updated_at` (C4). `fuel_logs` has
+  /// had its own `updated_at` since v27 and sets it in FuelLogModel.
+  static const lwwTables = ['rides', 'bikes', 'maintenance_logs'];
+
+  /// Stamps `updated_at` (UTC, ms) on every UPDATE that leaves a row
+  /// waiting to upload (`synced = 0`) without setting `updated_at` itself:
+  /// every partial edit (finalize, bike reattribution, odometer, archive,
+  /// stats increments, a future DAO method) moves the row's edit time
+  /// without each call site having to remember it. Downloads write
+  /// `synced = 1`, so a pulled copy keeps the remote stamp.
+  static List<String> _touchTriggersSql() => [
+        for (final t in lwwTables)
+          '''
+          CREATE TRIGGER IF NOT EXISTS ${t}_touch_updated_at
+          AFTER UPDATE ON $t
+          WHEN NEW.synced = 0 AND NEW.updated_at IS OLD.updated_at
+          BEGIN
+            UPDATE $t SET updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+            WHERE id = NEW.id;
+          END
+          ''',
+      ];
+
+  /// v28: `updated_at` for last-writer-wins sync (C4, CrtiQue_Oct14 B10)
+  /// and ride times in UTC (B13). Rewrites values only, never drops a row;
+  /// re-runnable (UTC strings convert to themselves, a set stamp is kept).
+  Future<void> _migrateSyncStampsV28(Database db) async {
+    for (final t in lwwTables) {
+      await _addColumnIfMissing(db, t, 'updated_at', 'updated_at TEXT');
+      // A re-run must not stamp unsynced rows as edited now.
+      await db.execute('DROP TRIGGER IF EXISTS ${t}_touch_updated_at');
+    }
+    final batch = db.batch();
+    // Rides: times to UTC; last edit is best approximated by when the ride
+    // ended (finalize is its last write), else when it started.
+    for (final r in await db.query('rides', columns: [
+      'id',
+      'start_time',
+      'end_time',
+      'created_at',
+      'updated_at'
+    ])) {
+      final start = toUtcIso(r['start_time']);
+      final end = toUtcIso(r['end_time']);
+      batch.update(
+        'rides',
+        {
+          'start_time': start,
+          'end_time': end,
+          'created_at': toUtcIso(r['created_at']),
+          'updated_at': r['updated_at'] ?? end ?? start,
+        },
+        where: 'id = ?',
+        whereArgs: [r['id']],
+      );
+    }
+    // Bikes: the latest of when it was added, last ridden or archived.
+    for (final b in await db.query('bikes',
+        columns: ['id', 'created_at', 'last_ride_at', 'archived_at'],
+        where: 'updated_at IS NULL')) {
+      final latest = [b['created_at'], b['last_ride_at'], b['archived_at']]
+          .map((v) => v is String ? DateTime.tryParse(v) : null)
+          .whereType<DateTime>()
+          .fold<DateTime?>(null, (m, t) => m == null || t.isAfter(m) ? t : m);
+      batch.update('bikes', {'updated_at': latest?.toUtc().toIso8601String()},
+          where: 'id = ?', whereArgs: [b['id']]);
+    }
+    for (final m in await db.query('maintenance_logs',
+        columns: ['id', 'created_at'], where: 'updated_at IS NULL')) {
+      batch.update(
+          'maintenance_logs', {'updated_at': toUtcIso(m['created_at'])},
+          where: 'id = ?', whereArgs: [m['id']]);
+    }
+    await batch.commit(noResult: true);
+    // After the backfill, so rewriting unsynced rows above doesn't stamp them.
+    for (final sql in _touchTriggersSql()) {
+      await db.execute(sql);
+    }
   }
 
   /// The v26 ride columns, shared by the upgrade step and nothing else (the
@@ -373,6 +479,64 @@ class DatabaseHelper {
     ['elevation_gain_m', 'elevation_gain_m REAL'],
     ['elevation_loss_m', 'elevation_loss_m REAL'],
   ];
+
+  /// The v29 ride columns: where the phone rode (`PhonePlacement.name`, NULL
+  /// for rides from before the question existed) and the IMU sample rate
+  /// the OS delivered (NULL when the ride had no sensor stream).
+  static const List<List<String>> _rideV29Columns = [
+    ['phone_placement', 'phone_placement TEXT'],
+    ['imu_rate_hz', 'imu_rate_hz REAL'],
+  ];
+
+  /// Impacts seen by ImpactDetector (schema v29) — see ImpactEventDao.
+  ///
+  /// `tier` is 0 (impact), 1 (possible fall) or 2 (likely crash); -1 marks a
+  /// fall the rider reported that the detector missed. `features` is JSON
+  /// (ImpactCandidate.toFeatures), `imu` the gzip'd sensor window
+  /// (ImpactWindowRecorder), `label_detail` JSON from the after-ride card.
+  /// `consent_research` is copied from the setting at labelling time; it
+  /// decides whether sync also writes the de-identified `crashEvents` copy.
+  static const String _createImpactEventsSql = '''
+    CREATE TABLE IF NOT EXISTS impact_events (
+      id TEXT PRIMARY KEY,
+      ride_id TEXT NOT NULL,
+      user_id TEXT,
+      at TEXT NOT NULL,
+      tier INTEGER NOT NULL,
+      reason TEXT,
+      peak_user_g REAL,
+      peak_raw_g REAL,
+      freefall_ms INTEGER,
+      rotation_deg REAL,
+      orientation_change_deg REAL,
+      still_after INTEGER,
+      resumed_after INTEGER,
+      speed_before_ms REAL,
+      speed_after_ms REAL,
+      gps_gap_s REAL,
+      lat REAL,
+      lng REAL,
+      placement_declared TEXT,
+      app_foreground INTEGER,
+      charging INTEGER,
+      vibration_rms REAL,
+      sample_rate_hz REAL,
+      features TEXT,
+      imu BLOB,
+      label TEXT,
+      label_detail TEXT,
+      label_source TEXT,
+      labeled_at TEXT,
+      consent_research INTEGER NOT NULL DEFAULT 0,
+      synced INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL
+    )
+  ''';
+
+  static const String _createImpactEventsIndexSql = '''
+    CREATE INDEX IF NOT EXISTS idx_impact_events_ride
+      ON impact_events(ride_id)
+  ''';
 
   /// Fuel fill-ups (schema v27) — see FuelLogEntity. Money in ৳, volume in
   /// litres, distance in km. Both `total_cost` and `price_per_liter` are
@@ -828,7 +992,8 @@ class DatabaseHelper {
         synced INTEGER NOT NULL DEFAULT 0,
         created_at TEXT NOT NULL,
         is_ebike INTEGER NOT NULL DEFAULT 0,
-        archived_at TEXT
+        archived_at TEXT,
+        updated_at TEXT
       )
     ''');
 
@@ -860,9 +1025,12 @@ class DatabaseHelper {
         bike_confidence TEXT NOT NULL DEFAULT 'high',
         route_id TEXT,
         route_name TEXT,
+        phone_placement TEXT,
+        imu_rate_hz REAL,
         synced INTEGER NOT NULL DEFAULT 0,
         track_synced INTEGER NOT NULL DEFAULT 0,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        updated_at TEXT
       )
     ''');
 
@@ -928,7 +1096,8 @@ class DatabaseHelper {
         visit_total REAL,
         visit_label TEXT,
         part_brand TEXT,
-        part_grade TEXT
+        part_grade TEXT,
+        updated_at TEXT
       )
     ''');
 
@@ -966,6 +1135,11 @@ class DatabaseHelper {
     await db.execute(_createFuelLogsSql);
     await db.execute(_createFuelLogsIndexSql);
     await db.execute(_createDeletedFuelLogsSql);
+    await db.execute(_createImpactEventsSql);
+    await db.execute(_createImpactEventsIndexSql);
+    for (final sql in _touchTriggersSql()) {
+      await db.execute(sql);
+    }
   }
 
   /// Completely deletes all local database rows associated with [userId].
@@ -1015,10 +1189,14 @@ class DatabaseHelper {
       for (final ride in rides) {
         await txn.delete('ride_points',
             where: 'ride_id = ?', whereArgs: [ride['id']]);
+        await txn.delete('impact_events',
+            where: 'ride_id = ?', whereArgs: [ride['id']]);
       }
       await txn.delete('rides', where: 'user_id = ?', whereArgs: [userId]);
       await txn
           .delete('deleted_rides', where: 'user_id = ?', whereArgs: [userId]);
+      await txn
+          .delete('impact_events', where: 'user_id = ?', whereArgs: [userId]);
 
       final bikes = await txn.query('bikes',
           where: 'user_id = ?', whereArgs: [userId], columns: ['id']);

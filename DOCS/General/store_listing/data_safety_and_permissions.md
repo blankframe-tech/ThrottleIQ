@@ -18,7 +18,7 @@ Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. M
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
 - `ACTIVITY_RECOGNITION` (both the Android and the GMS variant): auto ride detection
 - `RECORD_AUDIO`: group-ride push-to-talk voice clips (`record` package). **Must be declared on the form. See "Audio" below.**
-- `USE_FULL_SCREEN_INTENT`: the crash-countdown alert over the lock screen (`NotificationService.showCrashAlert`). Since Android 14, Play only auto-grants this to calling/alarm apps, so expect a Play Console declaration for it (issues_open.md §69.O8)
+- `USE_FULL_SCREEN_INTENT`: the crash-countdown alert over the lock screen (`NotificationService.showCrashAlert`). Crash detection is off in every build and `showCrashAlert` now returns early while it is, so nothing uses this today; consider dropping the permission until the detector ships. Since Android 14, Play only auto-grants this to calling/alarm apps, so expect a Play Console declaration for it (issues_open.md §69.O8)
 - `AD_ID` is explicitly **removed** (`tools:node="remove"` in the manifest), so answer "No" to advertising ID
 - No `READ_CONTACTS`, `CAMERA`, or `SMS` permission — the app uses `image_picker` (system photo picker, no runtime permission needed on modern Android) and emergency contacts are typed in manually, not read from the phone's contact list.
 
@@ -30,7 +30,7 @@ Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. M
 ### Location
 | Type | Collected? | Shared? | Purpose |
 |---|---|---|---|
-| Precise location | Yes | Yes* | App functionality (ride recording, crash detection, nearby places) |
+| Precise location | Yes | Yes* | App functionality (ride recording, live share, nearby places) |
 
 \* Mark "Shared" — a live-share link exposes real-time location to whoever holds the link, and a shared/public ride can expose the route to other users. If you're not comfortable calling that "shared" in the Play sense, an alternative is to restrict this answer to "collected, not shared" only if you remove/disable the live-share and public-feed features before launch — but as shipped today, mark it shared.
 
@@ -79,7 +79,7 @@ page's own consistency rule (above) requires updating together.
 ### App activity → App interactions (added 2026-09-21, issues §83.27)
 | Type | Collected? | Shared? | Optional? | Purpose |
 |---|---|---|---|---|
-| App interactions | **Yes** | No | **Yes — the rider can switch it off** (Settings → Privacy & Safety) | Analytics |
+| App interactions | **Yes, on by default** | No | **Yes — opt-out:** the rider can switch it off (Settings → Privacy & Safety) | Analytics |
 
 Source: `app/lib/core/analytics/analytics_service.dart` (Firebase Analytics). Screen
 views (route *patterns*, never resolved ids) and a **closed list** of funnel events
@@ -93,8 +93,16 @@ ad-storage / ad-user-data defaults are set to `false` in the manifest and Info.p
 true until `firebase_analytics` was added. `public/privacy.html` was changed in the same
 pass (its "No behavioural analytics" bullet no longer exists); keep the two consistent.
 
+**On by default (2026-10-14):** `AnalyticsService.init` reads `analytics_enabled` with a
+default of `true`, so collection starts on first launch and stops only if the rider
+turns it off. Play counts an opt-out as "Users can choose whether this data is
+collected", so App interactions is declared collected, not ephemeral, optional, for
+Analytics. `throttleiq_data_safety.csv` now says exactly that (it had App interactions
+unticked), and adds Analytics as a purpose of Device or other IDs (Firebase Analytics
+keys events to the app-instance id).
+
 **Founder action:** the Play Console Data Safety form has to be updated to match this
-table before the next release that ships this code. The form is Console-only.
+table before the next release that ships this code. Import the CSV or set it by hand.
 
 **Firebase App Check** (issues §83.19) is not user data: it sends a Play Integrity /
 App Attest attestation. It is disclosed in `public/privacy.html`; nothing to declare on
@@ -110,7 +118,7 @@ Source: `app/lib/main.dart` wires `FlutterError.onError`, `PlatformDispatcher.in
 ### Device or other IDs
 | Type | Collected? | Shared? | Purpose |
 |---|---|---|---|
-| Device or other IDs | Yes | No | App functionality (Firebase installation ID, created by the Firebase SDKs) |
+| Device or other IDs | Yes | No | App functionality and Analytics (Firebase installation ID and the Analytics app-instance ID, created by the Firebase SDKs) |
 
 Note: `firebase_messaging` was declared in `pubspec.yaml` but nothing in `app/lib/` ever called it — removed 2026-09-19 (issues_fixed.md §69.O7) rather than left as dead weight. No FCM registration token is requested or stored today. Do not describe push tokens as collected unless the dependency is added back and actually wired up.
 
@@ -118,19 +126,15 @@ Note: `firebase_messaging` was declared in `pubspec.yaml` but nothing in `app/li
 **Yes** (Firebase/Cloudinary use HTTPS/TLS)
 
 ### Do you provide a way for users to request data deletion?
-**Yes, and in-app.** Settings → **Delete Account** (`AuthNotifier.deleteAccount()`)
-deletes the Firebase Auth user first, then wipes local SQLite. Cloud cleanup
-runs server-side in the `onUserAccountDeleted` Cloud Function
-(`functions/src/account-deletion.ts`), which recursively deletes
-`users/{uid}` and its subcollections plus the rider's shared rides, live
-sessions, crash notifications, follow edges and username claim.
-**That function has never been deployed** (issues_fixed.md §69.8). Until
-`firebase deploy --only functions` runs, an in-app deletion leaves the cloud
-records orphaned, and the form must not claim otherwise. Cloudinary assets
-and content posted in other people's spaces are still handled by the email
-route in §9 of `https://throttleiqfb.web.app/privacy.html` (issues_open.md §69.O2).
-Give that URL as the web deletion link, since Play requires one even when
-deletion is in-app.
+**Yes: in-app, plus a web/email route for cloud data.** Settings → **Delete Account**
+(`AuthNotifier.deleteAccount()`) deletes the Firebase Auth user and wipes local SQLite
+at once. It does not delete cloud data: the `onUserAccountDeleted` Cloud Function cannot
+deploy on Spark. Until it does, cloud data is deleted **by hand within 30 days** of an
+email to hello@blankframe.tech, following
+`DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`. The in-app dialog
+and §9 of `https://throttleiqfb.web.app/privacy.html` both say this (2026-10-14). Give
+that URL as the web deletion link; Play requires one even when deletion is in-app. Do not
+describe deletion as automatic on the form.
 
 ### Security practices
 - Data is encrypted in transit: Yes
@@ -141,14 +145,16 @@ deletion is in-app.
 
 ## Background location — required extra steps
 
-`ACCESS_BACKGROUND_LOCATION` is a **restricted permission**. Google requires, in addition to the Data Safety form:
+`ACCESS_BACKGROUND_LOCATION` is a **restricted permission**. Only one feature asks for it: **automatic ride detection** (Settings → "Detect rides automatically", off by default). A ride the rider starts by hand does not: it runs under a foreground service of type `location`, with a visible notification, and while-in-use location only. This split is the core of the declaration; Play rejects background-location requests that a foreground service already covers.
 
-1. **Prominent in-app disclosure** shown *before* requesting the permission, explaining what the app does with background location and that it happens even when the app isn't in use. (Worth double-checking this exists in the app's location-permission flow — Play reviewers check for it specifically.)
-2. **Permissions Declaration form** in Play Console (appears under App content once a background-location-using APK/AAB is detected): you'll need to explain, in your own words, why the app needs background location. Suggested answer:
+Google requires, in addition to the Data Safety form:
 
-> "Throttle IQ records motorcycle rides — GPS route, speed, and distance — which continue for the length of a ride even if the rider's screen locks or they switch to another app (e.g. a maps app) mid-ride. Background location access is required so ride recording and crash detection don't stop the moment the screen turns off, which is the normal riding condition on a motorcycle."
+1. **Prominent in-app disclosure** shown *before* the request. It exists: turning on "Detect rides automatically" shows the "Background location" dialog (`ensureBackgroundLocationDisclosure` in `app/lib/features/ride/presentation/widgets/recording_gate.dart`, copy `backgroundLocationRationale`). It names the data (location), the purpose (detect and record rides), says it happens "even when the app is closed or not in use", and comes before the system's "Allow all the time" prompt. "Not now" makes no request. Once accepted it is not shown again. Starting a ride by hand never shows it and never asks for "Allow all the time".
+2. **Permissions Declaration form** in Play Console (appears under App content once a background-location-using APK/AAB is detected): explain, in your own words, why the app needs background location. Suggested answer:
 
-3. A **short video or screenshots** may be requested showing the background-location feature in use — have a short screen recording of a ride being recorded with the screen locked/backgrounded ready, in case Play asks for it during review.
+> "ThrottleIQ has an optional, off-by-default feature, 'Detect rides automatically', that notices when the rider starts riding and records the ride without them opening the app or tapping Start, so service reminders based on distance ridden stay accurate. It uses the platform activity-recognition signal and turns GPS on only once vehicle motion is seen, which happens while the app is closed. That needs background location. Rides the rider starts by hand use a foreground service with while-in-use location and do not request background location."
+
+3. A **short video** is usually requested. Record: Settings → turn on "Detect rides automatically" → the disclosure dialog → Continue → the system prompt → "Allow all the time" → the "Watching for rides" notification → close the app → ride → the detected ride appearing afterwards. Separately, show that a manual ride start asks only for "While using the app".
 
 ---
 
