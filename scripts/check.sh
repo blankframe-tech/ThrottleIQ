@@ -121,9 +121,15 @@ rules_if_changed() {
   (cd scripts && npm run --silent test:rules); }
 
 functions_if_changed() {
-  if [ -z "$(changed 'functions/src/*' 'functions/test/*' functions/package.json)" ]; then
+  if [ -z "$(changed 'functions/src/*' 'functions/test/*' functions/package.json 'mayabi/test/fixtures/*')" ]; then
     echo "Functions unchanged; skipped."; return 0; fi
   (cd functions && npm run --silent build && npm test --silent); }
+
+# The Maya Ride kit (branch mayabi only): its own pure-Dart package.
+mayabi_kit() {
+  [ -d mayabi ] || { echo "No mayabi/ kit."; return 0; }
+  (cd mayabi && dart pub get >/dev/null && dart format --output=none --set-exit-if-changed lib/src/api lib/src/cost lib/src/ride lib/src/safety lib/throttleiq_mayabi.dart test \
+    && dart analyze --fatal-infos && dart test); }
 
 step "l10n generate" l10n
 step "format (changed files)" format_changed
@@ -132,6 +138,7 @@ step "guard: bare catch ratchet" guard_bare_catch
 step "guard: paid-only entitlements" guard_entitlements
 step "flutter analyze" analyze
 step "flutter test" tests
+step "mayabi kit" mayabi_kit
 if [ "$CI" = false ]; then
   step "rules tests (if changed)" rules_if_changed
   step "functions (if changed)" functions_if_changed

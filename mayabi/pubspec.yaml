@@ -1,0 +1,14 @@
+name: throttleiq_mayabi
+description: >-
+  ThrottleIQ for Maya Ride: real trip cost (pickup, trip, ride home), riding
+  score from phone sensors and Dhaka road data, live share, SOS and crash
+  checks. Pure Dart; works in any Flutter app.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0

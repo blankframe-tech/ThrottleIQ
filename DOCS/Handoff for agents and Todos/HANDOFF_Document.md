@@ -2,14 +2,40 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## Branch `mayabi`: Maya Ride build, never merged into `main`
+## Branch `mayabi`: Maya Ride integration kit, never merged into `main`
 
-- **What:** a standalone branch for Maya Ride's women riders ("Mayabi"). It is `main` plus the trip quote (Running costs sheet) and the in-ride SOS sheet (see features.md). The owner decided on 2026-10-17 that it is **never merged into `main`**. Don't open a PR for it and don't cherry-pick it into `main` without asking.
-- **Keeping it current:** `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Conflicts are most likely in `app_en.arb`/`app_bn.arb` and `active_ride_screen.dart`.
-- **Releasing from it:** off `main`, `scripts/deploy.sh` tags `<tag>-<branch>` and creates a `--prerelease --latest=false` release. That matters because the install page and the live viewer download `releases/latest`, which must stay a `main` build. Use a build number above every `main` build already shipped, or Android won't install over it.
-- **Pre-push in a worktree:** `.githooks/pre-push` on this branch unsets git's local env vars before running the gate. Without that, Flutter reports version 0.0.0-unknown and `pub get` fails. `main`'s hook still has the bug in linked worktrees.
-- **Not on `main`:** the `.gitignore` line for `DOCS/General/partnerships/` (partnership and pricing notes; the repo is public). On `main` the folder is kept out only by the owner's local `.git/info/exclude`.
-- **Unchecked:** SOS and trip quote on a real device, and the iOS multi-recipient `sms:` link. Bangla strings are pending review (`# batch: mayabi`).
+- **What:** the branch the Maya Ride founder hands to his developers. Mayabi don't install ThrottleIQ; Maya's own Flutter app integrates **`mayabi/`** (package `throttleiq_mayabi`, pure Dart). Start with `mayabi/README.md`; `API.md` is the HTTP contract, `PRIVACY.md` lists what is shared, with EN/BN consent text. The owner decided on 2026-10-17 that the branch is **never merged into `main`**: no PR, and no cherry-picks into `main` without asking.
+- **Kit (`mayabi/`):**
+  - `CostProfile`/`TripCost`: fuel, each maintenance item, depreciation, monthly fixed costs and commission, over the pickup, trip and ride-home legs.
+  - `RideRecorder`: ThrottleIQ's sensor pipeline, plus leg distances and crash/unusual-stop events.
+  - `SafetyCheck` ("Are you OK?" countdown), SOS links (SMS, 999), and `ThrottleIqClient` (rides, rider score, delete rider, live share, alerts).
+  - `lib/src/vendor/` holds **byte-identical copies** of app files (`event_detector`, `impact_detector`, `fix_kinematics`, calibrator, estimator, geohash, riding score…). `test/vendor_sync_test.dart` fails if they drift: fix in `app/lib`, then copy again (`mayabi/lib/src/vendor/README.md`). Never `dart format lib` in `mayabi/`.
+  - `scripts/check.sh` runs the kit (`mayabi kit` step: format, analyze `--fatal-infos`, 31 tests).
+- **Our side, not handed over (`functions/src/partner-api/`):** HTTPS function `partnerApi`, behind the Hosting rewrite `/api/partner/**`.
+  - Maya's segment speeds are written into the shared **`roadSpeedSamples`** pool in the app's shape plus `source: <partnerId>`. That is the "their data syncs with ours" part.
+  - Trigger `onRoadSpeedSampleCreated` keeps **`roadSegmentStats/{cell}`** (count/sum/sumSq overall, per Dhaka time band, and wet), so scoring reads one doc per cell.
+  - Score v1 = the app's event score − road-outlier penalty − overspeed penalty (`scoring.ts`, parity with `riding_score.dart`/`speed_baseline.dart`).
+  - Server-only collections: `partnerKeys`, `partners`, `partnerRides`, `partnerRiders`, `partnerAlerts`. The rules' final catch-all denies clients. Rider ids are stored only as a hash.
+  - Tests: `functions/test/partner-scoring.test.js` (pure, includes a contract check on `mayabi/test/fixtures/ride_upload.json`) and `functions/test/emulator/partner-api.test.js`.
+  - The live viewer (`public/live-viewer.html`) shows the new `sos` status in red.
+- **Owner, to go live (in order):**
+  1. Firebase **Blaze** (Cloud Functions and outbound webhooks need it).
+  2. From the `mayabi` checkout: `cd functions && npm run build && firebase deploy --only functions:partnerApi,functions:onRoadSpeedSampleCreated,hosting`. Hosting from this branch also ships the viewer change and the rewrite; `public/` is otherwise the same as `main` at the last rebase.
+  3. `node scripts/rebuild-road-segment-stats.js --project=throttleiqfb` (dry run), then add `--yes-i-really-mean-it`. Run it once, in a quiet hour, so pre-existing samples are counted.
+  4. `node scripts/create-partner.js --project=throttleiqfb --id=maya --name="Maya Ride" --webhook=<Maya's https URL> --yes-i-really-mean-it`. Send the printed key and webhook secret to Maya privately; they're not stored.
+  5. Revoke a key: `partnerKeys/{sha256}.active = false` (takes effect within 5 min, the per-instance cache).
+- **Keeping it current:** `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Conflicts are likely in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts`, `scripts/check.sh`. After a rebase that touches a vendored app file, re-copy it into `mayabi/lib/src/vendor/`.
+- **Also on the branch:** the trip quote (Running costs sheet) and the in-ride SOS sheet in the ThrottleIQ app itself (see features.md).
+- **Releasing the ThrottleIQ app from this branch:** off `main`, `scripts/deploy.sh` tags `<tag>-<branch>` and makes a `--prerelease --latest=false` release, so the public `releases/latest` stays a `main` build.
+- **Pre-push in a worktree:** `.githooks/pre-push` here unsets git's local env vars (otherwise Flutter reports 0.0.0-unknown). `main`'s hook still has that bug.
+- **Not on `main`:** the `.gitignore` line for `DOCS/General/partnerships/` (pricing notes; the repo is public). On `main` the folder is kept out only by the local `.git/info/exclude`.
+- **Unchecked / open:**
+  - Nothing has run on a real phone: sensor rates, background recording, battery at 50 Hz, the iOS multi-recipient `sms:` link.
+  - Score weights are a v1 heuristic.
+  - No per-key rate limit (`shortcut:` in `partner-api/index.ts`).
+  - The stats trigger can double-count on a rare retry (`shortcut:` in `core.ts`).
+  - The function runs in the default region (us-central1), like the others; latency from Dhaka is untested.
+  - Bangla strings need native review.
 
 ## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
 

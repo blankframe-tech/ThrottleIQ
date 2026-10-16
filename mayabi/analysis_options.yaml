@@ -1,0 +1,7 @@
+include: package:lints/recommended.yaml
+
+analyzer:
+  # Exact copies of ThrottleIQ app files (see lib/src/vendor/README.md);
+  # they are checked by the app's own analyzer, not restyled here.
+  exclude:
+    - lib/src/vendor/**
