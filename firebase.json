@@ -61,6 +61,10 @@
     ],
     "rewrites": [
       {
+        "source": "/api/partner/**",
+        "function": { "functionId": "partnerApi" }
+      },
+      {
         "source": "/live/**",
         "destination": "/live-viewer.html"
       },

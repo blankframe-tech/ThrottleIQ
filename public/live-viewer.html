@@ -111,7 +111,8 @@
       border: 2px solid #fbd38d;
     }
 
-    .status-crash {
+    /* sos: a partner rider (partner API /v1/alerts) asked for help. */
+    .status-crash, .status-sos {
       background: #fed7d7;
       color: #742a2a;
       border: 2px solid #fc8181;
@@ -874,7 +875,7 @@
       renderInstallCta('viewer');
 
       // Status banner. `status` is written by the app as one of
-      // riding/paused/crash/completed, but an older or partially-written doc
+      // riding/paused/crash/completed (sos from the partner API), but an older or partially-written doc
       // may not have it at all — .toUpperCase() on undefined would throw here
       // and kill the whole snapshot handler, leaving a blank page.
       const status = session.status || 'riding';
@@ -992,7 +993,7 @@
       }
 
       marker.setLatLng(here);
-      marker.setStyle({ fillColor: status === 'crash' ? '#e53e3e' : '#667eea' });
+      marker.setStyle({ fillColor: status === 'crash' || status === 'sos' ? '#e53e3e' : '#667eea' });
       // Both channels re-render with the same freshest fix (a Firestore
       // snapshot that loses the race to an RTDB fix repaints the RTDB one),
       // so only extend the trail when the point actually moved.
