@@ -46,7 +46,7 @@ the app was built with `RTDB_URL`.
 
 ## 3. Fix the E2E harness (pre-existing, `issues_open.md` §100)
 
-- [ ] `app/integration_test/e2e_test.dart` never calls `Firebase.initializeApp()` and crashes at
+- [x] (2026-10-16: already done; the test's `setUpAll` initializes Firebase. Not re-run on a simulator.) `app/integration_test/e2e_test.dart` never calls `Firebase.initializeApp()` and crashes at
       launch with `[core/no-app]`. Add a `setUpAll` that initializes Firebase with
       `DefaultFirebaseOptions.currentPlatform`, then re-run:
       `flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_test.dart -d <sim>`.
@@ -59,7 +59,7 @@ the app was built with `RTDB_URL`.
       Tighten `locations/.read` to require it. Needs a plan that can deploy functions.
 - [ ] **`meta` first-writer-wins (§99.3, LOW).** Covered by the same Cloud Function, which could
       write `meta` server-side.
-- [ ] **Orphaned `/live_shares` nodes (§99.4, LOW).** If the app is killed mid-share, the node
+- [x] (2026-10-16: first option built. `removeLiveShareNode` in `outbox_service.dart` runs inside the queued teardown, with its own socket lease; `test/core/cloud/live_share_teardown_test.dart`.) **Orphaned `/live_shares` nodes (§99.4, LOW).** If the app is killed mid-share, the node
       stays until `expiresAt`. Two options:
       - Add the RTDB remove to `OutboxService.enqueueLiveSessionTeardown`.
       - Or have a scheduled function sweep nodes where `expiresAt < now`.

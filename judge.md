@@ -67,3 +67,11 @@ Pushed `f2a770e`, `0d4806d`, `2da5af1` (plus this note); `check.sh` passed, noth
 - **Rules warning gone:** the line-455 (now ~523) `publicStatsValid(… null …)` call passes `{}`; same behaviour. A new emulator test fails on any compiler issue. Rules not deployed.
 - **Backfill written, not run:** `scripts/backfill_users_visibility.js` (dry run default, `--project` required, per-doc precondition). How to run: handoff, 2026-10-15 (agent round). Old-build search and All People still wait on the owner running it.
 Score unchanged at 45%.
+
+## Update 4 (2026-10-16, agent round)
+Proof, not verified: unit tests against the in-memory RTDB fake only; no device, no emulator, nothing deployed.
+- **§99.4 closed:** the queued live-share teardown now also removes `/live_shares/{token}` (`removeLiveShareNode`, socket lease held for the write; a timeout makes the outbox retry). A share the app was killed in no longer stays readable until its 24 h `expiresAt`. Review fixes: the RTDB remove now runs after the Firestore revoke and pointer clear, and a rules rejection (the B9 deny-all rules) is logged instead of thrown, so it can no longer park the whole teardown as dead; the doc comment no longer steals `OutboxService`'s. 4 tests (removed, timeout releases the lease, rejection releases the lease, RTDB off). Not tried on a device.
+- **E2E harness item was already done** (`setUpAll` initializes Firebase); the todo is ticked. Not re-run on a simulator.
+- **Left on purpose:** refreshing `expiresAt` for shares over 24 h (the todo says "if very long shares matter": a product call).
+Score unchanged at 45%.
+
