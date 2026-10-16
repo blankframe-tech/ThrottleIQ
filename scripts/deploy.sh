@@ -92,6 +92,16 @@ if [ -z "$RELEASE_TAG" ]; then
     RELEASE_TAG="v${PUBSPEC_VERSION%%+*}"
   fi
 fi
+# Off main (e.g. the never-merged `mayabi` customer branch), the release must
+# not become "Latest": the install page and live viewer download
+# releases/latest, so it would ship this build to every public user. The
+# branch suffix also keeps the tag clear of main's tag for the same version.
+DEPLOY_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+RELEASE_FLAGS=()
+if [ "$DEPLOY_BRANCH" != "main" ]; then
+  RELEASE_TAG="${RELEASE_TAG}-${DEPLOY_BRANCH}"
+  RELEASE_FLAGS=(--prerelease --latest=false)
+fi
 echo "🏷️ Target Release Tag: ${RELEASE_TAG}"
 
 # 2. Commit (before the gate, so the gate stamps the exact commit pushed)
@@ -286,7 +296,7 @@ EOF
   [ -f "$AAB_ATTACH" ] && ATTACHMENTS+=("$AAB_ATTACH")
 
   # Create tag and release via gh CLI
-  gh release create "${RELEASE_TAG}" "${ATTACHMENTS[@]}" \
+  gh release create "${RELEASE_TAG}" "${ATTACHMENTS[@]}" ${RELEASE_FLAGS[@]+"${RELEASE_FLAGS[@]}"} \
     --title "ThrottleIQ — ${RELEASE_TAG} (v${PUBSPEC_VERSION})" \
     --notes "${RELEASE_NOTES}"
 

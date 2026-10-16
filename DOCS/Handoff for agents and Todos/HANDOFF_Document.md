@@ -2,6 +2,15 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## Branch `mayabi`: Maya Ride build, never merged into `main`
+
+- **What:** a standalone branch for Maya Ride's women riders ("Mayabi"). It is `main` plus the trip quote (Running costs sheet) and the in-ride SOS sheet (see features.md). The owner decided on 2026-10-17 that it is **never merged into `main`**. Don't open a PR for it and don't cherry-pick it into `main` without asking.
+- **Keeping it current:** `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Conflicts are most likely in `app_en.arb`/`app_bn.arb` and `active_ride_screen.dart`.
+- **Releasing from it:** off `main`, `scripts/deploy.sh` tags `<tag>-<branch>` and creates a `--prerelease --latest=false` release. That matters because the install page and the live viewer download `releases/latest`, which must stay a `main` build. Use a build number above every `main` build already shipped, or Android won't install over it.
+- **Pre-push in a worktree:** `.githooks/pre-push` on this branch unsets git's local env vars before running the gate. Without that, Flutter reports version 0.0.0-unknown and `pub get` fails. `main`'s hook still has the bug in linked worktrees.
+- **Not on `main`:** the `.gitignore` line for `DOCS/General/partnerships/` (partnership and pricing notes; the repo is public). On `main` the folder is kept out only by the owner's local `.git/info/exclude`.
+- **Unchecked:** SOS and trip quote on a real device, and the iOS multi-recipient `sms:` link. Bangla strings are pending review (`# batch: mayabi`).
+
 ## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
 
 - **PRD (F6 closed):** `node scripts/ste_sentence_length.js DOCS/PRD.md` finds 0 sentences over the STE limits (longest: 20 words). 7 passive sentences and 4 non-approved words were fixed by hand; the record is PRD §13. Not done: a full check against the STE dictionary. Content not re-checked: AUT-7 and open item 3 still say nothing calls the purge, but F3 wired it in.

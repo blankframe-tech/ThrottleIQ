@@ -4,6 +4,10 @@
 # `git push --no-verify`.
 set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel)"
+# Git exports GIT_DIR to hooks; in a linked worktree it is absolute, and
+# Flutter's own SDK version lookup then reads this repo (Flutter 0.0.0-unknown,
+# pub get fails). The gate's git calls work from the cwd without it.
+unset $(git rev-parse --local-env-vars)
 ZERO=0000000000000000000000000000000000000000
 
 while read -r _local_ref local_sha _remote_ref _remote_sha; do
