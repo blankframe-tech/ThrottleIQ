@@ -6374,6 +6374,126 @@
       }
     }
   },
+  "tripQuoteTitle": "Trip quote",
+  "@tripQuoteTitle": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuoteHint": "Before you accept a ride: the distance to the pickup and back home costs you too.",
+  "@tripQuoteHint": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuotePickup": "To pickup",
+  "@tripQuotePickup": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuoteTrip": "Paid trip",
+  "@tripQuoteTrip": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuoteHome": "Back home",
+  "@tripQuoteHome": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuoteFare": "Fare (optional)",
+  "@tripQuoteFare": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi)."
+  },
+  "tripQuoteCost": "Costs you \u09f3{cost} for {distance} {unit}",
+  "@tripQuoteCost": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi).",
+    "placeholders": {
+      "cost": {
+        "type": "String"
+      },
+      "distance": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "tripQuoteUnpaid": "{percent}% of that distance is unpaid",
+  "@tripQuoteUnpaid": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi).",
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "tripQuoteProfit": "You keep \u09f3{amount}",
+  "@tripQuoteProfit": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tripQuoteLoss": "You lose \u09f3{amount} on this ride",
+  "@tripQuoteLoss": {
+    "description": "Trip quote: pickup + paid trip + ride home (Mayabi).",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "sosTooltip": "SOS",
+  "@sosTooltip": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosSheetTitle": "Need help?",
+  "@sosSheetTitle": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosTextContacts": "Text my emergency contacts",
+  "@sosTextContacts": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosTextContactsBody": "Opens your messages app with your live location filled in. You press Send.",
+  "@sosTextContactsBody": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosNoContacts": "No emergency contacts yet. Add them in Settings so this can text them.",
+  "@sosNoContacts": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosCallEmergency": "Call 999",
+  "@sosCallEmergency": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosCallEmergencyBody": "National emergency service: police, fire, ambulance.",
+  "@sosCallEmergencyBody": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosMessageIntro": "SOS: I need help. Sent from ThrottleIQ during my ride.",
+  "@sosMessageIntro": {
+    "description": "Active-ride SOS sheet."
+  },
+  "sosMessageLive": "Live location: {url}",
+  "@sosMessageLive": {
+    "description": "Active-ride SOS sheet.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "sosMessageMap": "Last known spot: {url}",
+  "@sosMessageMap": {
+    "description": "Active-ride SOS sheet.",
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "sosCouldNotOpen": "Couldn't open that app on this phone.",
+  "@sosCouldNotOpen": {
+    "description": "Active-ride SOS sheet."
+  },
   "partOrderButton": "Order",
   "@partOrderButton": {
     "description": "Maintenance part ordering (demo, cash on delivery)."

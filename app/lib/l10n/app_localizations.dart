@@ -8076,6 +8076,132 @@ abstract class AppLocalizations {
   /// **'Estimate · {distance} km at ৳{perKm}/km'**
   String rideCostEstimateNote(String distance, String perKm);
 
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Trip quote'**
+  String get tripQuoteTitle;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Before you accept a ride: the distance to the pickup and back home costs you too.'**
+  String get tripQuoteHint;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'To pickup'**
+  String get tripQuotePickup;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Paid trip'**
+  String get tripQuoteTrip;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Back home'**
+  String get tripQuoteHome;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Fare (optional)'**
+  String get tripQuoteFare;
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'Costs you ৳{cost} for {distance} {unit}'**
+  String tripQuoteCost(String cost, String distance, String unit);
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of that distance is unpaid'**
+  String tripQuoteUnpaid(String percent);
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'You keep ৳{amount}'**
+  String tripQuoteProfit(String amount);
+
+  /// Trip quote: pickup + paid trip + ride home (Mayabi).
+  ///
+  /// In en, this message translates to:
+  /// **'You lose ৳{amount} on this ride'**
+  String tripQuoteLoss(String amount);
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'SOS'**
+  String get sosTooltip;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Need help?'**
+  String get sosSheetTitle;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Text my emergency contacts'**
+  String get sosTextContacts;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens your messages app with your live location filled in. You press Send.'**
+  String get sosTextContactsBody;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'No emergency contacts yet. Add them in Settings so this can text them.'**
+  String get sosNoContacts;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Call 999'**
+  String get sosCallEmergency;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'National emergency service: police, fire, ambulance.'**
+  String get sosCallEmergencyBody;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'SOS: I need help. Sent from ThrottleIQ during my ride.'**
+  String get sosMessageIntro;
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Live location: {url}'**
+  String sosMessageLive(String url);
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Last known spot: {url}'**
+  String sosMessageMap(String url);
+
+  /// Active-ride SOS sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open that app on this phone.'**
+  String get sosCouldNotOpen;
+
   /// Maintenance part ordering (demo, cash on delivery).
   ///
   /// In en, this message translates to:

@@ -27,7 +27,8 @@ MaintenanceConfigEntity _cfg(ServiceType t, double interval,
 void main() {
   group('fuelCostPerKm', () {
     test('price per litre / km per litre', () {
-      expect(RideCostCalculator.fuelCostPerKm(pricePerLitre: 125, kmPerLitre: 50),
+      expect(
+          RideCostCalculator.fuelCostPerKm(pricePerLitre: 125, kmPerLitre: 50),
           closeTo(2.5, 1e-9));
     });
     test('null when either input missing or non-positive', () {
@@ -35,15 +36,16 @@ void main() {
       expect(RideCostCalculator.fuelCostPerKm(kmPerLitre: 40), isNull);
       expect(RideCostCalculator.fuelCostPerKm(pricePerLitre: 0, kmPerLitre: 40),
           isNull);
-      expect(RideCostCalculator.fuelCostPerKm(pricePerLitre: 125, kmPerLitre: 0),
+      expect(
+          RideCostCalculator.fuelCostPerKm(pricePerLitre: 125, kmPerLitre: 0),
           isNull);
     });
   });
 
   group('itemCostPerKm', () {
     test('falls back to typical cost / interval', () {
-      final r = RideCostCalculator.itemCostPerKm(
-          intervalKm: 1500, typicalCost: 900);
+      final r =
+          RideCostCalculator.itemCostPerKm(intervalKm: 1500, typicalCost: 900);
       expect(r!.costPerKm, closeTo(0.6, 1e-9));
       expect(r.source, CostSource.typical);
     });
@@ -66,8 +68,7 @@ void main() {
 
     test('null without any cost data or with a zero interval', () {
       expect(RideCostCalculator.itemCostPerKm(intervalKm: 1000), isNull);
-      expect(
-          RideCostCalculator.itemCostPerKm(intervalKm: 0, typicalCost: 500),
+      expect(RideCostCalculator.itemCostPerKm(intervalKm: 0, typicalCost: 500),
           isNull);
     });
   });
@@ -131,6 +132,38 @@ void main() {
         // The rate is still known — only the distance is zero.
         expect(b.costPerKm, closeTo(0.2, 1e-9));
       }
+    });
+  });
+
+  group('tripQuote', () {
+    test('pickup + trip + home at the rate, unpaid share and profit', () {
+      final q = RideCostCalculator.tripQuote(
+          costPerUnit: 6.5, pickup: 3, trip: 8, home: 6, fare: 150)!;
+      expect(q.totalDistance, 17);
+      expect(q.cost, closeTo(110.5, 1e-9));
+      expect(q.unpaidShare, closeTo(9 / 17, 1e-9));
+      expect(q.profit, closeTo(39.5, 1e-9));
+    });
+    test('no deadhead, no fare: zero unpaid share, null profit', () {
+      final q = RideCostCalculator.tripQuote(costPerUnit: 5, trip: 10)!;
+      expect(q.cost, 50);
+      expect(q.unpaidShare, 0);
+      expect(q.profit, isNull);
+    });
+    test('a fare below cost is a negative profit', () {
+      final q = RideCostCalculator.tripQuote(
+          costPerUnit: 7, pickup: 5, trip: 4, home: 5, fare: 60)!;
+      expect(q.profit, closeTo(-38, 1e-9));
+    });
+    test('null without a rate or paid trip, or on bad input', () {
+      expect(RideCostCalculator.tripQuote(costPerUnit: 0, trip: 5), isNull);
+      expect(RideCostCalculator.tripQuote(costPerUnit: 5, trip: 0), isNull);
+      expect(RideCostCalculator.tripQuote(costPerUnit: 5, trip: 5, pickup: -1),
+          isNull);
+      expect(RideCostCalculator.tripQuote(costPerUnit: double.nan, trip: 5),
+          isNull);
+      expect(RideCostCalculator.tripQuote(costPerUnit: 5, trip: 5, fare: -1),
+          isNull);
     });
   });
 

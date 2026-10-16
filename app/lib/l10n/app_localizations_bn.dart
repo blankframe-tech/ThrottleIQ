@@ -4586,6 +4586,86 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get tripQuoteTitle => 'ট্রিপের হিসাব';
+
+  @override
+  String get tripQuoteHint =>
+      'রাইড নেওয়ার আগে দেখে নিন: পিকআপ পর্যন্ত যাওয়া আর বাসায় ফেরার খরচও আপনার।';
+
+  @override
+  String get tripQuotePickup => 'পিকআপ পর্যন্ত';
+
+  @override
+  String get tripQuoteTrip => 'পেইড ট্রিপ';
+
+  @override
+  String get tripQuoteHome => 'বাসায় ফেরা';
+
+  @override
+  String get tripQuoteFare => 'ভাড়া (ঐচ্ছিক)';
+
+  @override
+  String tripQuoteCost(String cost, String distance, String unit) {
+    return '$distance $unit-এ খরচ ৳$cost';
+  }
+
+  @override
+  String tripQuoteUnpaid(String percent) {
+    return 'এই দূরত্বের $percent% এর ভাড়া পাবেন না';
+  }
+
+  @override
+  String tripQuoteProfit(String amount) {
+    return 'আপনার থাকবে ৳$amount';
+  }
+
+  @override
+  String tripQuoteLoss(String amount) {
+    return 'এই রাইডে আপনার ক্ষতি ৳$amount';
+  }
+
+  @override
+  String get sosTooltip => 'এসওএস';
+
+  @override
+  String get sosSheetTitle => 'সাহায্য দরকার?';
+
+  @override
+  String get sosTextContacts => 'জরুরি কন্টাক্টদের মেসেজ পাঠান';
+
+  @override
+  String get sosTextContactsBody =>
+      'আপনার লাইভ লোকেশনসহ মেসেজ অ্যাপ খুলবে। পাঠাতে আপনি Send চাপবেন।';
+
+  @override
+  String get sosNoContacts =>
+      'এখনও কোনো জরুরি কন্টাক্ট নেই। সেটিংসে যোগ করুন, তাহলে এখান থেকে মেসেজ পাঠানো যাবে।';
+
+  @override
+  String get sosCallEmergency => '999-এ কল করুন';
+
+  @override
+  String get sosCallEmergencyBody =>
+      'জাতীয় জরুরি সেবা: পুলিশ, ফায়ার সার্ভিস, অ্যাম্বুলেন্স।';
+
+  @override
+  String get sosMessageIntro =>
+      'এসওএস: আমার সাহায্য দরকার। রাইডের সময় ThrottleIQ থেকে পাঠানো।';
+
+  @override
+  String sosMessageLive(String url) {
+    return 'লাইভ লোকেশন: $url';
+  }
+
+  @override
+  String sosMessageMap(String url) {
+    return 'সর্বশেষ জানা অবস্থান: $url';
+  }
+
+  @override
+  String get sosCouldNotOpen => 'এই ফোনে অ্যাপটি খোলা যায়নি।';
+
+  @override
   String get partOrderButton => 'অর্ডার';
 
   @override

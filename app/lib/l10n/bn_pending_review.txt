@@ -1730,3 +1730,25 @@ deleteSharedPostBody
 deleteRideConfirmTitle
 deleteRideConfirmBody
 couldNotSaveChanges
+# batch: mayabi
+tripQuoteTitle
+tripQuoteHint
+tripQuotePickup
+tripQuoteTrip
+tripQuoteHome
+tripQuoteFare
+tripQuoteCost
+tripQuoteUnpaid
+tripQuoteProfit
+tripQuoteLoss
+sosTooltip
+sosSheetTitle
+sosTextContacts
+sosTextContactsBody
+sosNoContacts
+sosCallEmergency
+sosCallEmergencyBody
+sosMessageIntro
+sosMessageLive
+sosMessageMap
+sosCouldNotOpen

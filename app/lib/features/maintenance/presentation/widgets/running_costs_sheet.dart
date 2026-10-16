@@ -92,11 +92,13 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final imperial = ref.watch(maintenanceImperialProvider);
-    final running = ref.watch(bikeRunningCostProvider(widget.bikeId)).valueOrNull;
+    final running =
+        ref.watch(bikeRunningCostProvider(widget.bikeId)).valueOrNull;
     if (running != null) _seed(running, imperial);
     final configs =
         ref.watch(maintenanceConfigProvider(widget.bikeId)).valueOrNull ?? [];
-    final logs = ref.watch(maintenanceProvider(widget.bikeId)).valueOrNull ?? [];
+    final logs =
+        ref.watch(maintenanceProvider(widget.bikeId)).valueOrNull ?? [];
     final breakdown =
         ref.watch(rideCostProvider((bikeId: widget.bikeId, distanceKm: 1)));
     final tracked = configs
@@ -119,7 +121,9 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
             BorderRadius.vertical(top: Radius.circular(context.shape.radiusXl)),
         border: Border(top: BorderSide(color: context.palette.border)),
       ),
-      padding: EdgeInsets.fromLTRB(AppDimensions.paddingMd, 14,
+      padding: EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd,
+          14,
           AppDimensions.paddingMd,
           MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd),
       child: SingleChildScrollView(
@@ -197,7 +201,8 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
               alignment: Alignment.centerRight,
               child: ElevatedButton.icon(
                 onPressed: _saving ? null : () => _saveFuel(imperial),
-                icon: Icon(_saved ? Icons.check : Icons.save_outlined, size: 16),
+                icon:
+                    Icon(_saved ? Icons.check : Icons.save_outlined, size: 16),
                 label: Text(l10n.safeQrSaveAction),
               ),
             ),
@@ -232,9 +237,144 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
                   rate: rate,
                   imperial: imperial,
                 ),
+
+            // ── Trip quote ─────────────────────────────────────────────
+            if (breakdown != null && !breakdown.isEmpty) ...[
+              const SizedBox(height: 14),
+              _TripQuoteSection(
+                costPerUnit: rate(breakdown.costPerKm),
+                unit: unit,
+                numberFormatter: numberFormatter,
+              ),
+            ],
           ],
         ),
       ),
+    );
+  }
+}
+
+/// "Should I take this ride?" — the paid trip plus the unpaid legs to the
+/// pickup and back home, at the bike's running cost. Nothing is saved.
+class _TripQuoteSection extends StatefulWidget {
+  final double costPerUnit;
+  final String unit;
+  final List<TextInputFormatter> numberFormatter;
+
+  const _TripQuoteSection({
+    required this.costPerUnit,
+    required this.unit,
+    required this.numberFormatter,
+  });
+
+  @override
+  State<_TripQuoteSection> createState() => _TripQuoteSectionState();
+}
+
+class _TripQuoteSectionState extends State<_TripQuoteSection> {
+  final _pickup = TextEditingController();
+  final _trip = TextEditingController();
+  final _home = TextEditingController();
+  final _fare = TextEditingController();
+
+  @override
+  void dispose() {
+    for (final c in [_pickup, _trip, _home, _fare]) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  double? _num(TextEditingController c) => parseLocalizedNumber(c.text.trim());
+
+  Widget _field(Key key, TextEditingController c, String label,
+      {String? suffix, String? prefix}) {
+    return Expanded(
+      child: TextField(
+        key: key,
+        controller: c,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: widget.numberFormatter,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          labelText: label,
+          suffixText: suffix,
+          prefixText: prefix,
+          filled: true,
+          fillColor: context.palette.surfaceVariant,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final quote = RideCostCalculator.tripQuote(
+      costPerUnit: widget.costPerUnit,
+      pickup: _num(_pickup) ?? 0,
+      trip: _num(_trip) ?? 0,
+      home: _num(_home) ?? 0,
+      fare: _num(_fare),
+    );
+    final profit = quote?.profit;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        EditorialLabel(l10n.tripQuoteTitle),
+        const SizedBox(height: 4),
+        Text(l10n.tripQuoteHint,
+            style:
+                TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+        const SizedBox(height: 8),
+        Row(children: [
+          _field(const Key('tripQuotePickup'), _pickup, l10n.tripQuotePickup,
+              suffix: widget.unit),
+          const SizedBox(width: 8),
+          _field(const Key('tripQuoteTrip'), _trip, l10n.tripQuoteTrip,
+              suffix: widget.unit),
+          const SizedBox(width: 8),
+          _field(const Key('tripQuoteHome'), _home, l10n.tripQuoteHome,
+              suffix: widget.unit),
+        ]),
+        const SizedBox(height: 8),
+        Row(children: [
+          _field(const Key('tripQuoteFare'), _fare, l10n.tripQuoteFare,
+              prefix: '৳ '),
+        ]),
+        if (quote != null) ...[
+          const SizedBox(height: 10),
+          Text(
+            l10n.tripQuoteCost(formatTaka(quote.cost),
+                quote.totalDistance.toStringAsFixed(1), widget.unit),
+            key: const Key('tripQuoteCost'),
+            style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: context.palette.textPrimary),
+          ),
+          if (quote.unpaidShare > 0)
+            Text(
+              l10n.tripQuoteUnpaid(
+                  (quote.unpaidShare * 100).round().toString()),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
+            ),
+          if (profit != null)
+            Text(
+              profit >= 0
+                  ? l10n.tripQuoteProfit(formatTaka(profit))
+                  : l10n.tripQuoteLoss(formatTaka(-profit)),
+              key: const Key('tripQuoteProfit'),
+              style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: profit >= 0
+                      ? context.palette.success
+                      : context.palette.danger),
+            ),
+        ],
+      ],
     );
   }
 }

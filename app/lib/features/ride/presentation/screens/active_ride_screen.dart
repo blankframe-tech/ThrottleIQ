@@ -16,6 +16,9 @@ import '../providers/jam_label_provider.dart';
 import '../widgets/phone_placement_selector.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../widgets/end_ride_sheet.dart';
+import '../widgets/sos_sheet.dart';
+import '../../domain/sos_message.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -258,6 +261,30 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     } finally {
       if (mounted) setState(() => _sharingLive = false);
     }
+  }
+
+  /// SOS: the sheet texts emergency contacts or calls 999. Turning live
+  /// sharing on is part of asking for help, so it happens here too; it gets
+  /// 5s, and the message falls back to the map pin without it.
+  void _openSos() {
+    final here = ref.read(rideRecordingProvider).currentPosition;
+    SosSheet.show(
+      context,
+      mapUrl: here == null ? null : sosMapLink(here.latitude, here.longitude),
+      liveUrl: () async {
+        try {
+          await ref
+              .read(rideRecordingProvider.notifier)
+              .enableLiveSharing()
+              .timeout(const Duration(seconds: 5));
+        } catch (e, st) {
+          reportNonFatal(e, st, reason: 'SOS live share');
+        }
+        if (!mounted) return null;
+        final token = ref.read(rideRecordingProvider).liveSessionToken;
+        return token == null ? null : '$_liveShareBaseUrl/$token';
+      },
+    );
   }
 
   /// Once sharing is on, the same button offers the way back out — §78.7.
@@ -536,6 +563,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                   const Spacer(),
                   const _RideClock(),
                   const SizedBox(width: 8),
+                  IconButton(
+                    key: const Key('sosButton'),
+                    onPressed: _openSos,
+                    icon: Icon(Icons.sos, color: context.palette.danger),
+                    tooltip: context.l10n.sosTooltip,
+                  ),
                   IconButton(
                     key: _shareButtonKey,
                     onPressed: _sharingLive ? null : _onLiveShareTap,

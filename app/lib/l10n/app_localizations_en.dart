@@ -4603,6 +4603,86 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tripQuoteTitle => 'Trip quote';
+
+  @override
+  String get tripQuoteHint =>
+      'Before you accept a ride: the distance to the pickup and back home costs you too.';
+
+  @override
+  String get tripQuotePickup => 'To pickup';
+
+  @override
+  String get tripQuoteTrip => 'Paid trip';
+
+  @override
+  String get tripQuoteHome => 'Back home';
+
+  @override
+  String get tripQuoteFare => 'Fare (optional)';
+
+  @override
+  String tripQuoteCost(String cost, String distance, String unit) {
+    return 'Costs you ৳$cost for $distance $unit';
+  }
+
+  @override
+  String tripQuoteUnpaid(String percent) {
+    return '$percent% of that distance is unpaid';
+  }
+
+  @override
+  String tripQuoteProfit(String amount) {
+    return 'You keep ৳$amount';
+  }
+
+  @override
+  String tripQuoteLoss(String amount) {
+    return 'You lose ৳$amount on this ride';
+  }
+
+  @override
+  String get sosTooltip => 'SOS';
+
+  @override
+  String get sosSheetTitle => 'Need help?';
+
+  @override
+  String get sosTextContacts => 'Text my emergency contacts';
+
+  @override
+  String get sosTextContactsBody =>
+      'Opens your messages app with your live location filled in. You press Send.';
+
+  @override
+  String get sosNoContacts =>
+      'No emergency contacts yet. Add them in Settings so this can text them.';
+
+  @override
+  String get sosCallEmergency => 'Call 999';
+
+  @override
+  String get sosCallEmergencyBody =>
+      'National emergency service: police, fire, ambulance.';
+
+  @override
+  String get sosMessageIntro =>
+      'SOS: I need help. Sent from ThrottleIQ during my ride.';
+
+  @override
+  String sosMessageLive(String url) {
+    return 'Live location: $url';
+  }
+
+  @override
+  String sosMessageMap(String url) {
+    return 'Last known spot: $url';
+  }
+
+  @override
+  String get sosCouldNotOpen => 'Couldn\'t open that app on this phone.';
+
+  @override
   String get partOrderButton => 'Order';
 
   @override

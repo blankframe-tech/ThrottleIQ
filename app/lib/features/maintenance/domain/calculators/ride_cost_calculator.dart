@@ -133,4 +133,34 @@ class RideCostCalculator {
     lines.sort((a, b) => b.costPerKm.compareTo(a.costPerKm));
     return RideCostBreakdown(distanceKm: distance, lines: lines);
   }
+
+  /// A hired trip's real cost: the paid [trip] plus the unpaid [pickup] leg
+  /// and the [home] leg after drop-off, all at [costPerUnit]. Unit-agnostic:
+  /// pass km with ৳/km or miles with ৳/mile. [profit] is `fare − cost`, null
+  /// without a fare. Null when there is no rate, no paid trip, or any input
+  /// is negative or not finite.
+  static ({
+    double totalDistance,
+    double cost,
+    double unpaidShare,
+    double? profit,
+  })? tripQuote({
+    required double costPerUnit,
+    required double trip,
+    double pickup = 0,
+    double home = 0,
+    double? fare,
+  }) {
+    final inputs = [costPerUnit, trip, pickup, home, if (fare != null) fare];
+    if (inputs.any((v) => !v.isFinite || v < 0)) return null;
+    if (costPerUnit == 0 || trip == 0) return null;
+    final total = pickup + trip + home;
+    final cost = total * costPerUnit;
+    return (
+      totalDistance: total,
+      cost: cost,
+      unpaidShare: (pickup + home) / total,
+      profit: fare == null ? null : fare - cost,
+    );
+  }
 }
