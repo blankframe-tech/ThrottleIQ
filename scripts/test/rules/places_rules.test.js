@@ -23,6 +23,8 @@ const {
 
 const { doc, setDoc, Timestamp } = require('firebase/firestore');
 
+const inHours = (h) => Timestamp.fromMillis(Date.now() + h * 3600 * 1000);
+
 const RULES = fs.readFileSync(
   path.join(__dirname, '..', '..', '..', 'firestore.rules'),
   'utf8'
@@ -102,5 +104,50 @@ test('no duplicate tags', async () => {
 test('the existing create constraints still hold alongside tags', async () => {
   await assertFails(
     setDoc(doc(aliceDb(), 'places', 'p6'), place({ tags: ['open24h'], verified: true }))
+  );
+});
+
+test('create with expiresAt timestamp on police is allowed', async () => {
+  await assertSucceeds(
+    setDoc(
+      doc(aliceDb(), 'places', 'p7'),
+      place({ category: 'police', expiresAt: inHours(24) })
+    )
+  );
+});
+
+test('create with expiresAt on non-police category is denied', async () => {
+  await assertFails(
+    setDoc(
+      doc(aliceDb(), 'places', 'p8'),
+      place({ category: 'fuel', expiresAt: inHours(24) })
+    )
+  );
+});
+
+test('create with non-timestamp expiresAt on police is denied', async () => {
+  await assertFails(
+    setDoc(
+      doc(aliceDb(), 'places', 'p9'),
+      place({ category: 'police', expiresAt: '2026-10-18T00:00:00Z' })
+    )
+  );
+});
+
+test('create with expiresAt in the past is denied', async () => {
+  await assertFails(
+    setDoc(
+      doc(aliceDb(), 'places', 'p10'),
+      place({ category: 'police', expiresAt: inHours(-1) })
+    )
+  );
+});
+
+test('create with expiresAt more than two days out is denied', async () => {
+  await assertFails(
+    setDoc(
+      doc(aliceDb(), 'places', 'p11'),
+      place({ category: 'police', expiresAt: inHours(24 * 365) })
+    )
   );
 });

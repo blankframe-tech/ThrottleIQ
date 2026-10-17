@@ -9104,5 +9104,97 @@
         "type": "Object"
       }
     }
+  },
+  "rideActionsTooltip": "Ride actions",
+  "@rideActionsTooltip": {
+    "description": "Tooltip for the more actions dropdown button on the active ride screen."
+  },
+  "copCheckpointHere": "Cop checkpoint here",
+  "@copCheckpointHere": {
+    "description": "Menu option to drop a police checkpoint place at the current location."
+  },
+  "parkingPinHere": "Parking pin",
+  "@parkingPinHere": {
+    "description": "Menu option to mark bike parking location and pause the ride."
+  },
+  "minimizeRide": "Minimize",
+  "@minimizeRide": {
+    "description": "Menu option to minimize the active ride screen to allow browsing other tabs."
+  },
+  "checkpointExpiresInDay": "Expires in 24 h",
+  "@checkpointExpiresInDay": {
+    "description": "Bottom sheet option for a temporary 24-hour cop checkpoint."
+  },
+  "checkpointPermanent": "Permanent",
+  "@checkpointPermanent": {
+    "description": "Bottom sheet option for a permanent cop checkpoint."
+  },
+  "checkpointSaved": "Checkpoint saved",
+  "@checkpointSaved": {
+    "description": "Snackbar shown when a cop checkpoint is successfully saved."
+  },
+  "checkpointSaveFailed": "Could not save checkpoint",
+  "@checkpointSaveFailed": {
+    "description": "Snackbar shown when saving a cop checkpoint fails."
+  },
+  "noGpsFixYet": "No GPS fix yet",
+  "@noGpsFixYet": {
+    "description": "Snackbar shown when trying to drop a pin or checkpoint without a GPS fix."
+  },
+  "rideRecordingBar": "Recording ride · {distance} · {duration}",
+  "@rideRecordingBar": {
+    "description": "Strip shown when a ride is recording while minimized.",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "12.4 km"
+      },
+      "duration": {
+        "type": "String",
+        "example": "0:32:10"
+      }
+    }
+  },
+  "ridePausedBar": "Ride paused · {distance} · {duration}",
+  "@ridePausedBar": {
+    "description": "Strip shown when a ride is paused while minimized.",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "12.4 km"
+      },
+      "duration": {
+        "type": "String",
+        "example": "0:32:10"
+      }
+    }
+  },
+  "directionsToBike": "Directions to bike",
+  "@directionsToBike": {
+    "description": "Button on the minimized ride bar to navigate to the parked bike."
+  },
+  "placeReportedAt": "Reported {time}",
+  "@placeReportedAt": {
+    "description": "When a temporary rider report (cop checkpoint) was made.",
+    "placeholders": {
+      "time": {
+        "type": "String",
+        "example": "2:14 PM"
+      }
+    }
+  },
+  "placeExpiresInHours": "expires in {hours} h",
+  "@placeExpiresInHours": {
+    "description": "Hours until a temporary cop checkpoint report expires.",
+    "placeholders": {
+      "hours": {
+        "type": "int",
+        "example": "23"
+      }
+    }
+  },
+  "placeReportExpired": "expired",
+  "@placeReportExpired": {
+    "description": "Shown after 'Reported …' once a temporary cop checkpoint has expired."
   }
 }

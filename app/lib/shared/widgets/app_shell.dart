@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/services/app_modules.dart';
 import '../../core/theme/app_theme_context.dart';
 import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
+import '../../features/ride/presentation/widgets/ride_in_progress_bar.dart';
 import '../../l10n/app_localizations.dart';
 
 /// Every bottom-nav destination with all modules on, in display order. The
@@ -111,25 +112,31 @@ class AppShell extends ConsumerWidget {
           ),
         ],
       ),
-      bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: context.palette.surface,
-          border:
-              Border(top: BorderSide(color: context.palette.border, width: 1)),
-        ),
-        child: BottomNavigationBar(
-          currentIndex: idx,
-          onTap: (i) => context.go(tabs[i]),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: context.palette.primary,
-          unselectedItemColor: context.palette.textTertiary,
-          selectedLabelStyle:
-              const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 11),
-          items: [for (final t in tabs) items[t]!],
-        ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const RideInProgressBar(),
+          Container(
+            decoration: BoxDecoration(
+              color: context.palette.surface,
+              border: Border(
+                  top: BorderSide(color: context.palette.border, width: 1)),
+            ),
+            child: BottomNavigationBar(
+              currentIndex: idx,
+              onTap: (i) => context.go(tabs[i]),
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: context.palette.primary,
+              unselectedItemColor: context.palette.textTertiary,
+              selectedLabelStyle:
+                  const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: const TextStyle(fontSize: 11),
+              items: [for (final t in tabs) items[t]!],
+            ),
+          ),
+        ],
       ),
     );
   }

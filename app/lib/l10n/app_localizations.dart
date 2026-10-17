@@ -11387,6 +11387,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save changes: {e}'**
   String couldNotSaveChanges(Object e);
+
+  /// Tooltip for the more actions dropdown button on the active ride screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride actions'**
+  String get rideActionsTooltip;
+
+  /// Menu option to drop a police checkpoint place at the current location.
+  ///
+  /// In en, this message translates to:
+  /// **'Cop checkpoint here'**
+  String get copCheckpointHere;
+
+  /// Menu option to mark bike parking location and pause the ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking pin'**
+  String get parkingPinHere;
+
+  /// Menu option to minimize the active ride screen to allow browsing other tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get minimizeRide;
+
+  /// Bottom sheet option for a temporary 24-hour cop checkpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in 24 h'**
+  String get checkpointExpiresInDay;
+
+  /// Bottom sheet option for a permanent cop checkpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent'**
+  String get checkpointPermanent;
+
+  /// Snackbar shown when a cop checkpoint is successfully saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkpoint saved'**
+  String get checkpointSaved;
+
+  /// Snackbar shown when saving a cop checkpoint fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save checkpoint'**
+  String get checkpointSaveFailed;
+
+  /// Snackbar shown when trying to drop a pin or checkpoint without a GPS fix.
+  ///
+  /// In en, this message translates to:
+  /// **'No GPS fix yet'**
+  String get noGpsFixYet;
+
+  /// Strip shown when a ride is recording while minimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording ride · {distance} · {duration}'**
+  String rideRecordingBar(String distance, String duration);
+
+  /// Strip shown when a ride is paused while minimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride paused · {distance} · {duration}'**
+  String ridePausedBar(String distance, String duration);
+
+  /// Button on the minimized ride bar to navigate to the parked bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions to bike'**
+  String get directionsToBike;
+
+  /// When a temporary rider report (cop checkpoint) was made.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported {time}'**
+  String placeReportedAt(String time);
+
+  /// Hours until a temporary cop checkpoint report expires.
+  ///
+  /// In en, this message translates to:
+  /// **'expires in {hours} h'**
+  String placeExpiresInHours(int hours);
+
+  /// Shown after 'Reported …' once a temporary cop checkpoint has expired.
+  ///
+  /// In en, this message translates to:
+  /// **'expired'**
+  String get placeReportExpired;
 }
 
 class _AppLocalizationsDelegate

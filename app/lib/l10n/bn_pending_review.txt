@@ -1730,3 +1730,19 @@ deleteSharedPostBody
 deleteRideConfirmTitle
 deleteRideConfirmBody
 couldNotSaveChanges
+# batch: ride actions menu, minimize, and ride in progress strip
+rideActionsTooltip
+copCheckpointHere
+parkingPinHere
+minimizeRide
+checkpointExpiresInDay
+checkpointPermanent
+checkpointSaved
+checkpointSaveFailed
+noGpsFixYet
+rideRecordingBar
+ridePausedBar
+directionsToBike
+placeReportedAt
+placeExpiresInHours
+placeReportExpired

@@ -6656,4 +6656,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String couldNotSaveChanges(Object e) {
     return 'Could not save changes: $e';
   }
+
+  @override
+  String get rideActionsTooltip => 'Ride actions';
+
+  @override
+  String get copCheckpointHere => 'Cop checkpoint here';
+
+  @override
+  String get parkingPinHere => 'Parking pin';
+
+  @override
+  String get minimizeRide => 'Minimize';
+
+  @override
+  String get checkpointExpiresInDay => 'Expires in 24 h';
+
+  @override
+  String get checkpointPermanent => 'Permanent';
+
+  @override
+  String get checkpointSaved => 'Checkpoint saved';
+
+  @override
+  String get checkpointSaveFailed => 'Could not save checkpoint';
+
+  @override
+  String get noGpsFixYet => 'No GPS fix yet';
+
+  @override
+  String rideRecordingBar(String distance, String duration) {
+    return 'Recording ride · $distance · $duration';
+  }
+
+  @override
+  String ridePausedBar(String distance, String duration) {
+    return 'Ride paused · $distance · $duration';
+  }
+
+  @override
+  String get directionsToBike => 'Directions to bike';
+
+  @override
+  String placeReportedAt(String time) {
+    return 'Reported $time';
+  }
+
+  @override
+  String placeExpiresInHours(int hours) {
+    return 'expires in $hours h';
+  }
+
+  @override
+  String get placeReportExpired => 'expired';
 }

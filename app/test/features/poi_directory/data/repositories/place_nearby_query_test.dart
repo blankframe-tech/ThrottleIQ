@@ -11,7 +11,7 @@ import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.d
 /// against an in-memory fake of the range read and check what it fetched.
 void main() {
   PlaceEntity place(String id, double lat, double lng,
-          {PlaceCategory category = PlaceCategory.fuel}) =>
+          {PlaceCategory category = PlaceCategory.fuel, DateTime? expiresAt}) =>
       PlaceEntity(
         id: id,
         name: id,
@@ -28,6 +28,7 @@ void main() {
         createdAt: DateTime.utc(2026),
         ratingSum: 0,
         ratingCount: 0,
+        expiresAt: expiresAt,
       );
 
   /// Mimics `where('geohash', >= prefix).where('geohash', < prefix + '~')`
@@ -40,7 +41,8 @@ void main() {
   }) fakeFirestore(List<PlaceEntity> all) {
     final fetchedIds = <String>{};
     final prefixes = <String>[];
-    Future<List<PlaceEntity>> fetch(String prefix, PlaceCategory? category) async {
+    Future<List<PlaceEntity>> fetch(
+        String prefix, PlaceCategory? category) async {
       prefixes.add(prefix);
       final hits = all
           .where((p) =>
@@ -141,6 +143,36 @@ void main() {
     );
     expect(result.map((p) => p.id), ['fuel']);
     expect(fake.fetchedIds, {'fuel'});
+  });
+
+  test(
+      'an expired place is dropped, while permanent and not-yet-expired places are kept',
+      () async {
+    final now = DateTime.utc(2026, 10, 17, 12);
+    final all = [
+      place('permanent', north(500), dhakaLng),
+      place(
+        'not-expired',
+        north(600),
+        dhakaLng,
+        expiresAt: now.add(const Duration(hours: 2)),
+      ),
+      place(
+        'expired',
+        north(700),
+        dhakaLng,
+        expiresAt: now.subtract(const Duration(minutes: 5)),
+      ),
+    ];
+    final fake = fakeFirestore(all);
+    final result = await PlaceRepository.nearbyViaGeohashRanges(
+      latitude: dhakaLat,
+      longitude: dhakaLng,
+      radiusKm: 5,
+      now: now,
+      fetchRange: fake.fetch,
+    );
+    expect(result.map((p) => p.id), ['permanent', 'not-expired']);
   });
 
   test('OSM imports get a deterministic, path-safe doc id', () {

@@ -1880,5 +1880,20 @@
   "deleteSharedPostBody": "এতে শুধু শেয়ার করা পোস্টটি মুছবে। আপনার রাইডের তথ্য ইতিহাসে থাকবে।\n\nরাইডটির সবকিছু মুছতে যান রাইড → ইতিহাস → সেই রাইড → মুছুন।",
   "deleteRideConfirmTitle": "এই রাইড মুছবেন?",
   "deleteRideConfirmBody": "এতে রাইড, তার রুট ও পরিসংখ্যান আপনার ইতিহাস থেকে স্থায়ীভাবে মুছে যাবে। শেয়ার করা পোস্ট থাকলে সেটিও সরে যাবে। এটি ফেরানো যাবে না।",
-  "couldNotSaveChanges": "পরিবর্তন সংরক্ষণ করা যায়নি: {e}"
+  "couldNotSaveChanges": "পরিবর্তন সংরক্ষণ করা যায়নি: {e}",
+  "rideActionsTooltip": "রাইড অ্যাকশন",
+  "copCheckpointHere": "এখানে পুলিশ চেকপয়েন্ট",
+  "parkingPinHere": "পার্কিং পিন",
+  "minimizeRide": "মিনিমাইজ",
+  "checkpointExpiresInDay": "24 ঘণ্টায় মেয়াদ শেষ",
+  "checkpointPermanent": "স্থায়ী",
+  "checkpointSaved": "চেকপয়েন্ট সংরক্ষিত হয়েছে",
+  "checkpointSaveFailed": "চেকপয়েন্ট সংরক্ষণ করা যায়নি",
+  "noGpsFixYet": "এখনও জিপিএস সংযোগ পাওয়া যায়নি",
+  "rideRecordingBar": "রাইড রেকর্ড হচ্ছে · {distance} · {duration}",
+  "ridePausedBar": "রাইড থামানো হয়েছে · {distance} · {duration}",
+  "directionsToBike": "বাইকে যাওয়ার দিকনির্দেশনা",
+  "placeReportedAt": "রিপোর্ট {time}",
+  "placeExpiresInHours": "{hours} ঘণ্টা পর মেয়াদ শেষ",
+  "placeReportExpired": "মেয়াদ শেষ"
 }

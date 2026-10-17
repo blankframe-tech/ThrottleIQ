@@ -26,6 +26,10 @@ class PlaceModel {
   /// read back as an empty list.
   final List<String> tags;
 
+  /// When this place ceases to be active (e.g. temporary cop checkpoints).
+  /// Null for permanent places.
+  final DateTime? expiresAt;
+
   const PlaceModel({
     required this.id,
     required this.name,
@@ -46,6 +50,7 @@ class PlaceModel {
     this.googleRatingCount = 0,
     this.osmId,
     this.tags = const [],
+    this.expiresAt,
   });
 
   PlaceEntity toEntity() {
@@ -69,6 +74,7 @@ class PlaceModel {
       googleRatingCount: googleRatingCount,
       osmId: osmId,
       tags: PlaceTag.parseAll(tags),
+      expiresAt: expiresAt,
     );
   }
 
@@ -92,7 +98,11 @@ class PlaceModel {
       googleRating: entity.googleRating,
       googleRatingCount: entity.googleRatingCount,
       osmId: entity.osmId,
-      tags: [for (final t in PlaceTag.values) if (entity.tags.contains(t)) t.name],
+      tags: [
+        for (final t in PlaceTag.values)
+          if (entity.tags.contains(t)) t.name
+      ],
+      expiresAt: entity.expiresAt,
     );
   }
 
@@ -121,6 +131,7 @@ class PlaceModel {
         for (final t in (data['tags'] as List?) ?? const [])
           if (t is String) t,
       ],
+      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
     );
   }
 
@@ -146,6 +157,7 @@ class PlaceModel {
       // Only written when there's something to say, so a tagless place (every
       // OSM import) keeps exactly the doc shape it had before tags existed.
       if (tags.isNotEmpty) 'tags': tags,
+      if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
     };
   }
 
@@ -169,6 +181,7 @@ class PlaceModel {
     int? googleRatingCount,
     String? osmId,
     List<String>? tags,
+    DateTime? expiresAt,
   }) {
     return PlaceModel(
       id: id ?? this.id,
@@ -190,6 +203,7 @@ class PlaceModel {
       googleRatingCount: googleRatingCount ?? this.googleRatingCount,
       osmId: osmId ?? this.osmId,
       tags: tags ?? this.tags,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 }

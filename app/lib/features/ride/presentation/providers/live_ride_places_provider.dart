@@ -5,7 +5,8 @@ import '../../../poi_directory/data/repositories/place_repository.dart';
 import '../../../poi_directory/domain/entities/place_entity.dart';
 import 'ride_recording_provider.dart';
 
-final liveRidePlacesProvider = StateNotifierProvider<LiveRidePlacesNotifier, List<PlaceEntity>>((ref) {
+final liveRidePlacesProvider =
+    StateNotifierProvider<LiveRidePlacesNotifier, List<PlaceEntity>>((ref) {
   return LiveRidePlacesNotifier(ref);
 });
 
@@ -15,12 +16,17 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
   LatLng? _lastFetchLocation;
 
   LiveRidePlacesNotifier(this._ref) : super([]) {
-    _ref.listen(rideRecordingProvider.select((s) => s.currentPosition), (previous, current) {
+    _ref.listen(rideRecordingProvider.select((s) => s.currentPosition),
+        (previous, current) {
       if (current != null) {
         _checkAndFetch(current);
       }
     }, fireImmediately: true);
   }
+
+  /// Shows a place the rider just reported without waiting for the next
+  /// 5 km refetch.
+  void add(PlaceEntity place) => state = [...state, place];
 
   Future<void> _checkAndFetch(LatLng current) async {
     // Fetch if we haven't fetched yet, or if we moved more than 5km
@@ -34,7 +40,8 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
         current.latitude,
         current.longitude,
       );
-      if (distance > 5000) { // 5km
+      if (distance > 5000) {
+        // 5km
         shouldFetch = true;
       }
     }

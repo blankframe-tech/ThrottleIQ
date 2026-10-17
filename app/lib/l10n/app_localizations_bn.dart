@@ -6621,4 +6621,57 @@ class AppLocalizationsBn extends AppLocalizations {
   String couldNotSaveChanges(Object e) {
     return 'পরিবর্তন সংরক্ষণ করা যায়নি: $e';
   }
+
+  @override
+  String get rideActionsTooltip => 'রাইড অ্যাকশন';
+
+  @override
+  String get copCheckpointHere => 'এখানে পুলিশ চেকপয়েন্ট';
+
+  @override
+  String get parkingPinHere => 'পার্কিং পিন';
+
+  @override
+  String get minimizeRide => 'মিনিমাইজ';
+
+  @override
+  String get checkpointExpiresInDay => '24 ঘণ্টায় মেয়াদ শেষ';
+
+  @override
+  String get checkpointPermanent => 'স্থায়ী';
+
+  @override
+  String get checkpointSaved => 'চেকপয়েন্ট সংরক্ষিত হয়েছে';
+
+  @override
+  String get checkpointSaveFailed => 'চেকপয়েন্ট সংরক্ষণ করা যায়নি';
+
+  @override
+  String get noGpsFixYet => 'এখনও জিপিএস সংযোগ পাওয়া যায়নি';
+
+  @override
+  String rideRecordingBar(String distance, String duration) {
+    return 'রাইড রেকর্ড হচ্ছে · $distance · $duration';
+  }
+
+  @override
+  String ridePausedBar(String distance, String duration) {
+    return 'রাইড থামানো হয়েছে · $distance · $duration';
+  }
+
+  @override
+  String get directionsToBike => 'বাইকে যাওয়ার দিকনির্দেশনা';
+
+  @override
+  String placeReportedAt(String time) {
+    return 'রিপোর্ট $time';
+  }
+
+  @override
+  String placeExpiresInHours(int hours) {
+    return '$hours ঘণ্টা পর মেয়াদ শেষ';
+  }
+
+  @override
+  String get placeReportExpired => 'মেয়াদ শেষ';
 }
