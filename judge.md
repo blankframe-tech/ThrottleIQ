@@ -12,7 +12,7 @@ Scored 2026-10-14 from the README, `DOCS/Handoff for agents and Todos/HANDOFF_Do
 - Backend: Firestore rules (274 emulator tests on 2026-10-09), Cloud Functions (12 tests, written but not deployable), Cloudinary for photos, Hosting.
 - Quality gate: `scripts/check.sh` runs l10n, format, CI guards, analyze, 2131 Flutter tests and the rules and functions suites; a pre-push hook and CI call it. Last green per the handoff: 2026-10-13 after the dependabot merge.
 - Release keystore and `secret/` are git-ignored (checked); `app/android/key.properties.example` is the only tracked key file.
-- Branches: `main`, `experimental` (same commit), `indriyo` (dash-cam hardware integration), local `test`.
+- Branches on 2026-10-14: `main`, `experimental` (same commit then; it has since diverged), `indriyo` (dash-cam hardware integration), local `test`.
 
 ## Gaps (ranked)
 
@@ -23,7 +23,7 @@ Scored 2026-10-14 from the README, `DOCS/Handoff for agents and Todos/HANDOFF_Do
 5. **No public listing.** Distribution is a GitHub Releases APK and a Play internal track. The iOS team `NJ4675FFUX` is a personal Apple team (no push, no Associated Domains).
 6. **Market validation:** how many real riders, how often they ride and whether they would keep using it are not recorded anywhere I read.
 7. **Security:** about 150 audit findings (§101) were triaged; most fixes are on a branch pass, and the `functions` emulator suite was not run for that pass. No human review of the rules or auth code.
-8. **Hygiene:** `SECURITY.md` is the GitHub template (wrong versions, no contact). `DOCS/General/screenshots_ui` is about 1.9 GB. `ios/Podfile.lock` is modified and uncommitted. Not workspace-standard: no `AGENTS.md` or `CODING_STANDARDS.md` (it has `CLAUDE.md` and `.agents/rules/`).
+8. **Hygiene:** `DOCS/General/screenshots_ui` is about 1.9 GB (2,433 tracked files). Fixed since: `SECURITY.md` is real and `AGENTS.md` and `CODING_STANDARDS.md` exist (Update 1); `ios/Podfile.lock` is committed (`6c64333`).
 
 ## Scores (0-10)
 
@@ -46,7 +46,7 @@ Scored 2026-10-14 from the README, `DOCS/Handoff for agents and Todos/HANDOFF_Do
 2. **You:** run the current build on a real phone through one real ride, a widget refresh and an account deletion.
 3. **You:** count the beta riders and ask five of them what they would miss if the app vanished.
 4. **You:** finish the Play and Apple declarations, analytics consent and the chat moderation policy.
-5. **Code:** replace `SECURITY.md`; commit or revert the `Podfile.lock` change; add the missing `AGENTS.md`.
+5. **Code:** done. `SECURITY.md` replaced and `AGENTS.md` added (Update 1); `Podfile.lock` committed (`6c64333`).
 6. **You:** get a human to review `firestore.rules` and the auth and moderation functions.
 7. Keep crash detection off until it is calibrated on real rides.
 
@@ -75,3 +75,41 @@ Proof, not verified: unit tests against the in-memory RTDB fake only; no device,
 - **Left on purpose:** refreshing `expiresAt` for shares over 24 h (the todo says "if very long shares matter": a product call).
 Score unchanged at 45%.
 
+## Update (2026-10-19, review round)
+
+Re-reviewed `main` at `76ed92a` (8 commits since `f464230`). Read-only: live GETs, the diffs and CI (green on `76ed92a`). Nothing deployed, no production writes, no device run.
+
+**Verified fixed**
+- **The update link in installed builds works again.** All three published builds (27, 28, 29) carry `https://blankframe.tech/ThrottleIQ/install`; the Hosting link at `app_update_gate.dart:27` is in no release yet. The old link now goes 301, 301, then a redirect page (landing-page `915ba51`, `throttle-iq/old-install-link.html`) to `throttleiqfb.web.app/install/`, whose APK link serves `beta-v4.7.1`. It works only through that redirect, so keep the page for as long as builds 27-29 exist.
+- **`minBuild = 29` is live**, not only in the docs: the public `config/app` doc reads 29 (set 2026-10-18 21:55 UTC). Builds 27 and 28 now see the update screen. Builds 26 and older have no gate and are not blocked.
+- **Hosting matches the repo.** The live install and privacy pages are byte-identical to `public/`. The date-triggered "live on Google Play" block is gone (`019a663c`), and the iOS copy says no iPhone build exists.
+
+**Bugs found in the new code and data**
+- **Medium, Google-sourced places are marked verified.** `scripts/import_google_places.js:169` writes `verified: true` on 717 scraped listings, so they get the Verified badge and pass the "verified only" filter. Nobody checked them.
+- **Medium, the 80 enriched places can't be cleanly undone.** The undo note covers the 717 creates (one query on `createdBy`). The 80 existing docs only gain a `googlePlaceId` (`:143`); which phone, hours, name or address values came from Google is not recorded. Separating them needs the raw export, which is "kept outside the repo" in a place nobody wrote down.
+- **Low, duplicate pins by design.** Matching is same-category only (`:129`), so a Google "Motorcycle shop" (parts) next to an OSM garage becomes a second pin. A Google place whose nearest doc was already claimed is created even if another unclaimed doc is within 60 m (`:139`).
+- **Low:** the `/cng/i` title rule (`:86`) files a CNG conversion workshop as a fuel station. Builds up to 29 still show "★ 0 (Not on Google)" on every place, including the 717 that came from Google. `issues_open.md` §105.1 says both "written to production" and "Nothing has been written to Firestore".
+
+**Legal: the Google Maps import.** The 717 new places and the 80 enrichments come from an Apify scrape of Google Maps, not from the Maps Platform API. Google's Maps end-user terms (Additional Terms of Service §2, modified 2026-01-27) forbid copying the content, mass downloads and bulk feeds, and using Google Maps "to create or augment any other mapping-related dataset (including a … business listings database)" for a substantially similar service. A fuel, garage and parts directory on a map is that kind of dataset. Dropping the ratings was right, but name, phone, hours and location are still Google Maps content. Attribution does not license it: there is no attribution that makes this allowed, and a "from Google Maps" label would only document the breach. The likely cost is not a lawsuit. It is a takedown or removal from Google Play (Google owns both), or a due-diligence problem with a grant or fleet partner. To fix it: delete the 717 `system:gmaps-seed-dhaka` docs, strip the Google-filled fields from the 80 enriched docs, and re-collect through riders or field visits. The other option is a written legal opinion before you keep the data. The Places API is no shortcut: its terms limit what you may store (the Place ID is the exception).
+
+**Gaps, ranked by what must happen first**
+1. **High, security:** rules and the email migration are still not deployed (SECURITY step 3), so emails stay on public profiles. `minBuild = 29` now unblocks this, once Analytics shows no active tester on build 26 or older.
+2. **High, legal:** the scraped Google Maps data is in production (above).
+3. **High, ops and cost:** Spark is still the plan and §104.1 (all places within 25 km re-read every 5 km, `live_ride_places_provider.dart:43,55`) now reads 2.4 times as many places. My estimate puts the read quota under 10 daily riders (not simulated). Functions are still not deployed.
+4. **High, legal:** account deletion is still an email to hello@blankframe.tech (`privacy.html:526`). That fails Apple 5.1.1(v) until Blaze and `onUserAccountDeleted` are live.
+5. **Critical, marketability:** there is no public listing (the Play URL returns 404). The install page labels Play "Recommended", but `scripts/deploy.sh` never uploads to Play, and the last Play build on record is `1.0.0-beta.1+3`, which has no gate.
+6. **Critical, profitability:** there is no revenue model and no measured demand. Nobody has recorded weekly active riders.
+7. **Medium, security:** the unsigned Cloudinary preset still ships (`cloudinary_upload_service.dart:63`), and its console limits can't be checked from here. The Apify token pasted in chat is not rotated. The service-account key still sits in the Drive-synced `secrets/`.
+8. **High, usability:** the rewritten recording path and the new detail screen have never been run on a phone.
+9. **High, UX:** riders hit an account wall before they get any value.
+10. **Medium, ops:** the update link of builds 27-29 depends on a Jekyll permalink in another repo, on a case-insensitive checkout. If someone deletes that page, the forced-update screen 404s again.
+
+**Next steps, in order**
+1. **You:** decide on the Google data. Either take it down (step 2) or get a written legal opinion first. Until then, do not market the places directory.
+2. **Agent:** write a revert script (dry run by default) that deletes the `gmaps-seed` docs and, using the saved export, clears the Google-filled fields on the 80 enriched docs. Also stop writing `verified: true` for imported data. **You** run it.
+3. **You:** do SECURITY step 3 (rules, indexes, then the email migration in the same hour) after checking Analytics for builds 26 and older.
+4. **Agent:** fix §104.1 (cache nearby places by area, and refetch only when the rider leaves it), with tests.
+5. **You:** upgrade to Blaze with a $5 budget alert and deploy `onUserAccountDeleted`. Set the Cloudinary preset limits, rotate the Apify token, and move the key out of `secrets/`.
+6. **You:** ship the next build (Hosting link, detail-screen fix), upload it to the Play closed track, and do one real ride, a swipe-away test and a deletion on a phone. Keep the landing-page redirect.
+
+**Score:** product works 6, quality 6, security 5, legal 3 → 2 (scraped Google data in production), market 1, deploy 4, claims 6. Weighted 45. **Cap 40:** rules and functions are still not live (deletion by email), production now holds Google Maps data the terms forbid, and nothing has run on a phone. Final **40%**.
