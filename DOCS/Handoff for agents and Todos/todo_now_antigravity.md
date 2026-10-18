@@ -103,7 +103,7 @@ Groups are independent (disjoint files) and can run as parallel agents. Rules: a
 
 ## 11. Apify data tools (2026-10-19) — details in `issues_open.md` §105
 
-- [ ] **Founder decision, Google ratings (§105.1):** choose one: remove the "G ★" rating from Places cards, use the paid Places API, or keep the current values. Do this before any rating work below.
-- [ ] **Google Maps Scraper** (`apify.com/compass/crawler-google-places`, about $0.004 per place, about $8 for Dhaka): run it once for Dhaka fuel, garage and parts businesses. Use the output to add businesses that OSM is missing and to name the 32 unnamed seeded places (keep name, location, phone, hours only). Store Google ratings only if the founder chooses to keep them. Use the dry-run, review, write flow from `scripts/README.md`.
-- [ ] **Facebook Groups Scraper** (`apify.com/apify/facebook-groups-scraper`, about $0.005 per post), idea: once a month, scrape 2-3 public traffic-alert groups (Traffic Alert BD, BikeBD) as checkpost candidates. A person reviews them before a seed like `seed_police_checkposts_v3.js`. Never store names or posts in Firestore.
+- [x] **Founder decision, Google ratings (§105.1):** chose to drop them (2026-10-19).
+- [ ] **Google Maps import** (scraped 2026-10-19, `scripts/import_google_places.js`, dry run done; write waits for founder OK). Originally: **Google Maps Scraper** (`apify.com/compass/crawler-google-places`, about $0.004 per place, about $8 for Dhaka): run it once for Dhaka fuel, garage and parts businesses. Use the output to add businesses that OSM is missing and to name the 32 unnamed seeded places (keep name, location, phone, hours only). Store Google ratings only if the founder chooses to keep them. Use the dry-run, review, write flow from `scripts/README.md`.
+- [x] ~~**Facebook Groups Scraper**~~ ran once on 2026-10-19; 1 enforcement report in 300 posts, idea dropped (§105.4).
 - [ ] **Facebook Posts Scraper** (`apify.com/apify/facebook-posts-scraper`), later, marketing only: watch the pages of motorcycle brands sold in Bangladesh and BikeBD for launch timing and content that gets engagement.
