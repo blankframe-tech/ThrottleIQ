@@ -10,7 +10,7 @@ _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`
 - **Read cost:** 2.4× more places makes §104.1 (nearby refetch every 5 km) worse. Fix it before launch.
 - **Apify (account `the-abraar`, free plan):** monthly limit used up ($5.13 / $5) until **2026-11-18**. The traffic-group checkpost idea was dropped (§105.4). Still open: scrape Bangladeshi bike maintenance/suggestion groups (Freewheelers Club BD etc.) into `DOCS/forum_ideas/`. Search for the group URLs first; web search finds only pages. The raw exports were in the session scratchpad, which is temporary; they are not in git (`traffic.json` contains Facebook users' posts).
 - **Security to-do for the founder:** rotate the Apify API token. It was pasted into the chat on 2026-10-19.
-- `public/install/index.html` was already modified before this session and is still uncommitted; it is not part of this work.
+- `public/install/index.html` was changed outside this session (since committed separately as `019a663c`).
 
 ## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
 
