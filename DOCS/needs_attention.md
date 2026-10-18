@@ -6,8 +6,10 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
 
 ## From the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`)
 
-- [ ] **Create `config/app` with `minBuild`** (an int) in Firestore once the public-read rule for it
+- [x] **Create `config/app` with `minBuild`** (an int) in Firestore once the public-read rule for it
       is deployed. Leave it at or below the oldest build you still support; raise it to force an update.
+      Done 2026-10-19: `minBuild = 29` (beta-v4.7.1), after the `/ThrottleIQ/install` redirect on
+      blankframe.tech and the hosting redeploy went live. Builds 27 and 28 now see the update screen.
 - [ ] **Check that hello@blankframe.tech reaches you.** `privacy.html` and the delete dialog now send
       every privacy and deletion request there (they used a personal Gmail before).
 - [ ] **Handle deletion requests by hand within 30 days**, with

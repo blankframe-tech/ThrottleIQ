@@ -144,7 +144,7 @@ From `CrtiQue_Oct14.md` B10, B13 and the "Sync conflicts" / "Clock skew" rows. *
 ## 2026-10-14: critique fixes (shell, claims, cuts) — branch `fix/oct14-tiq-shell`, merged into `oct14-int`, not pushed, not on a device
 
 From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another branch (tiq-rules).
-- **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console.
+- **Forced update:** `config/app.minBuild` gate with a blocking *Update required* screen (`core/services/app_update_gate.dart`, `shared/widgets/update_required_screen.dart`); build number from `package_info_plus` (already compiled in via wakelock_plus, now a direct dependency). Fails open offline, on timeout, denied or missing. **Needs** public read on `config/app` in `firestore.rules` (tiq-rules) and the doc created in the console. Doc created 2026-10-19 with `minBuild = 29`.
 - **B1 copy:** delete dialog (EN/BN) and `privacy.html` §9 say cloud data is deleted by hand within 30 days of an email to hello@blankframe.tech; the page now uses that address throughout (was a personal Gmail), effective date 14 Oct 2026. Owner runbook: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
 - **B11:** crash overlay and crash notification show only with `impactDetectorLiveEnabled`; EN/BN copy no longer promises contact delivery. **B14:** OSM User-Agent contact is hello@blankframe.tech.
 - **Claims:** README analytics line (on by default, opt-out); store listing and `iDEA_PITCH_SUBMISSION.md` no longer claim crash detection or emergency alerts; `gov-pitch/` carries a "superseded, do not submit" banner (not rewritten). Data-safety CSV now declares App interactions (collected, optional = opt-out, Analytics) and Analytics as a Device ID purpose; v1/v2 posters with crash/SOS claims deleted.
@@ -181,7 +181,7 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 
 - Merged four worktree branches: lean/g/elevation (schema v26), fuel log (v27), Spark-only badge counters, rounded widget chips. Details in `features.md` (telemetry / fuel / Spark-badges section).
 - Fixed CI on `main`: four raw `as double` casts in the analytics code, and this session's bare `catch (_)` (ratchet back to 66).
-- blankframe.tech (GitHub Pages, `blankframe-tech/landing-page` `824920e`): install page, 404 router for `/ThrottleIQ/install` and `/ThrottleIQ/u/<uid>`, `assetlinks.json` (Google-verified).
+- blankframe.tech (GitHub Pages, `blankframe-tech/landing-page` `915ba51`): install page, a real redirect page at `/ThrottleIQ/install/` to throttleiqfb.web.app/install/ (`throttle-iq/old-install-link.html`, for builds that have that link compiled in), 404 router for other casings and `/ThrottleIQ/u/<uid>`, `assetlinks.json` (Google-verified).
 - Firebase: project is on **Spark** — Cloud Functions can't deploy. Hosting deployed. `firestore:rules` NOT yet deployed (needed for badge counters and fuel sync). Use `npx firebase-tools@15`; the standalone binary's npm crashes in predeploy.
 - QA: analyze clean, `flutter test` 2118/2118, rules emulator 274/274, functions 12/12, debug APK builds. Not run: device, E2E.
 

@@ -53,6 +53,7 @@ Do these in order.
    least that build. Clients cannot write `config/*`. Every Android artifact
    carries the same number (split APKs too, see `scripts/deploy.sh`), so
    one value covers them all.
+   **Done 2026-10-19: `minBuild = 29`** (beta-v4.7.1). Step 3 is still open.
 3. **Rules and indexes, then the email migration in the same hour.** Until
    the migration runs, the old public profiles still hold their emails and
    the new rules only slow a scraper down (N9). Rules work on Spark:
