@@ -426,6 +426,8 @@ class _PlaceHeader extends StatelessWidget {
               ),
               child: Row(
                 children: [
+                  // Google ratings were dropped (issues_open §105); the column only shows if one is ever set again.
+                  if (place.hasGoogleRating) ...[
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -444,9 +446,7 @@ class _PlaceHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          place.hasGoogleRating
-                              ? '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})'
-                              : context.l10n.n0NotGoogle,
+                          '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})',
                           style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
@@ -461,6 +461,7 @@ class _PlaceHeader extends StatelessWidget {
                     color: context.palette.border,
                   ),
                   const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
