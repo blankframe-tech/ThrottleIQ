@@ -95,6 +95,18 @@ Do these in order.
    `public/privacy.html` first (raw trails older than 12 months are deleted,
    ride summaries kept):
    `firebase deploy --only functions:purgeOldGpsTracks --project throttleiqfb`
+7. **Cloudinary upload preset (open).** The app ships the cloud name and the
+   unsigned preset `throttleiq_unsigned`
+   (`app/lib/core/services/cloudinary_upload_service.dart`), so anyone can
+   upload to the account with a plain HTTP POST; checks in the app don't stop
+   that. Until uploads are signed, limit the damage in the Cloudinary console,
+   Settings, Upload, `throttleiq_unsigned`: allowed formats
+   `jpg,jpeg,png,webp,heic,aac,m4a`; max file size 5 MB; turn off
+   overwrite and "use filename"; set a usage alert. The real fix needs Blaze:
+   a callable function that checks `request.auth` and returns a signature
+   made with `CLOUDINARY_API_SECRET`, an app build that sends it, and then the
+   preset switched to signed (switching it before that build ships breaks
+   every upload).
 
 ### App Check enforcement
 

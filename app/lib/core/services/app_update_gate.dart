@@ -24,7 +24,7 @@ Future<int> currentBuildNumber() async {
 }
 
 /// Where riders get new builds (APK, Play beta and the iOS waitlist).
-const String kInstallUrl = 'https://blankframe.tech/ThrottleIQ/install';
+const String kInstallUrl = 'https://throttleiqfb.web.app/install';
 
 /// Whether [currentBuild] is older than [minBuild]. Fails open: an unknown
 /// build (0) or a `minBuild` that is missing or not a number never blocks.
