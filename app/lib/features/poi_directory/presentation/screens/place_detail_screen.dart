@@ -428,39 +428,40 @@ class _PlaceHeader extends StatelessWidget {
                 children: [
                   // Google ratings were dropped (issues_open §105); the column only shows if one is ever set again.
                   if (place.hasGoogleRating) ...[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.map_outlined,
-                                size: 13, color: context.palette.textSecondary),
-                            const SizedBox(width: 4),
-                            Text('Google Maps',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.palette.textSecondary)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})',
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: context.palette.textPrimary),
-                        ),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.map_outlined,
+                                  size: 13,
+                                  color: context.palette.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('Google Maps',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: context.palette.textPrimary),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 28,
-                    color: context.palette.border,
-                  ),
-                  const SizedBox(width: 12),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: context.palette.border,
+                    ),
+                    const SizedBox(width: 12),
                   ],
                   Expanded(
                     child: Column(
