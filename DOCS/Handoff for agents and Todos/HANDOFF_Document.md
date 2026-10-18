@@ -2,6 +2,16 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-19 (places): Google Maps gap-fill written to production; Google ratings dropped — `main` pushed at `074def1`
+
+- **Production data changed:** `places` went from 521 to 1,238 docs. 717 new Dhaka fuel/garage/parts places (`createdBy: 'system:gmaps-seed-dhaka'`, keyed by `googlePlaceId`), 80 existing places enriched (phone, hours, 5 renamed), all 69 hand-entered Google ratings set to 0. Undo the creates with one query on `createdBy`. The rating reset can't be undone. Details: `issues_open.md` §105, `features.md` §6.
+- **App:** `place_detail_screen.dart` hides the Google column when a place has no Google rating. `n0NotGoogle` is now unused in both ARB files (harmless; remove it in a later l10n pass). Not checked on a device; E2E not run (no simulator).
+- **Scripts:** `import_google_places.js` + 6 tests replace `update_places_google_ratings.js` (deleted).
+- **Read cost:** 2.4× more places makes §104.1 (nearby refetch every 5 km) worse. Fix it before launch.
+- **Apify (account `the-abraar`, free plan):** monthly limit used up ($5.13 / $5) until **2026-11-18**. The traffic-group checkpost idea was dropped (§105.4). Still open: scrape Bangladeshi bike maintenance/suggestion groups (Freewheelers Club BD etc.) into `DOCS/forum_ideas/`. Search for the group URLs first; web search finds only pages. The raw exports were in the session scratchpad, which is temporary; they are not in git (`traffic.json` contains Facebook users' posts).
+- **Security to-do for the founder:** rotate the Apify API token. It was pasted into the chat on 2026-10-19.
+- `public/install/index.html` was already modified before this session and is still uncommitted; it is not part of this work.
+
 ## 2026-10-15 (agent round): PRD style check, rules warning, visibility backfill script — `main`, nothing deployed
 
 - **PRD (F6 closed):** `node scripts/ste_sentence_length.js DOCS/PRD.md` finds 0 sentences over the STE limits (longest: 20 words). 7 passive sentences and 4 non-approved words were fixed by hand; the record is PRD §13. Not done: a full check against the STE dictionary. Content not re-checked: AUT-7 and open item 3 still say nothing calls the purge, but F3 wired it in.
