@@ -23,21 +23,19 @@ frameworks into one working playbook.
 ## Ground truth — read these before writing anything new
 
 This project already has real, checked-against-the-codebase marketing
-strategy in `docs/marketing/`. Treat these as source of truth; reconcile new
+strategy in `DOCS/Handoffs for Non Coding Agents/marketing/`. Treat these as source of truth; reconcile new
 work against them instead of re-deriving strategy from scratch:
 
-- **`docs/marketing/marketing.md`** — full BD go-to-market plan: segments,
-  channel phasing, growth-loop mapping, what to fix before spending on
-  acquisition, what to track.
-- **`docs/marketing/pitch_and_marketing_materials.md`** — pitch deck outline
-  and per-segment positioning statements + sample copy (EN/BN).
-- **`docs/marketing/hooked_throttleiq.md`** — retention/hook-model analysis
-  (the loop that keeps someone opening the app between rides).
-- **`docs/marketing/business_critique.md`** — honest critique of the
-  business model and differentiation claims.
+- **`marketing.md`** — full BD go-to-market plan: segments and per-segment
+  copy (EN/BN), channel phasing, growth loops, retention levers (§7, from the
+  Hooked analysis), what to track, honest risks (§10, the business critique).
+- **`marketing_kit.md`** — ready copy: outreach templates, social captions,
+  FAQ, press fact sheet, tester onboarding message, Play shot list, calendar.
+- **`pitch_deck.md`** — pitch deck outline. The iDEA grant submission is
+  `iDEA_PITCH_SUBMISSION.md`.
 
 If a task conflicts with these docs (e.g. implies a feature that isn't
-built, or promises something `hooked_throttleiq.md`/`issues_open.md` flags as not
+built, or promises something `marketing.md` §7/`issues_open.md` flags as not
 live), **fix the claim, don't ship the overclaim** — see the "no overclaim"
 rule below.
 
@@ -65,7 +63,7 @@ rule below.
 
 A commuter and an enthusiast respond to different proof points — diluting
 one asset to cover both weakens it for each. Full positioning statements and
-sample copy per segment are in `pitch_and_marketing_materials.md` Part 2;
+sample copy per segment are in `marketing.md` §2;
 reuse and extend those, don't rewrite positioning from zero.
 
 ## The no-overclaim rule (non-negotiable)
@@ -79,7 +77,7 @@ Never write copy — especially for the anxious-family segment — implying:
   in `marketing.md` §6 — don't announce it publicly before shipping the
   claim flow)
 
-Before publishing any new claim, grep the codebase or check `Features.md` /
+Before publishing any new claim, grep the codebase or check `features.md` /
 `issues_open.md` for whether it's actually live. If unverified, mark it as a
 placeholder in the draft rather than guessing.
 
@@ -135,7 +133,7 @@ Community-first, phased, matches `marketing.md` §5:
    ship.
 4. **Phase 3 (months 4-6, App Store public):** repeat Phase 1 channels in
    2-3 more BD cities. If DAU is still short of target, the problem is very
-   likely retention (`hooked_throttleiq.md`), not distribution — don't add
+   likely retention (`marketing.md` §7), not distribution — don't add
    channels to compensate for a leaky loop.
 
 Hold paid app-install ads until organic retention is already healthy —
@@ -161,14 +159,14 @@ retention problem rather than fix it.
   literal translation can accidentally overclaim even when the English
   original didn't.
 - Sample bilingual pairs per segment already exist in
-  `pitch_and_marketing_materials.md` Part 2 — match that tone (direct,
+  `marketing.md` §2 — match that tone (direct,
   concrete, no marketing-speak superlatives) rather than inventing a new
   voice per asset.
 
 ## MUST DO / MUST NOT DO
 
 ### MUST DO
-- Check `docs/marketing/*.md` and `Features.md`/`issues_open.md` before writing
+- Check `DOCS/Handoffs for Non Coding Agents/marketing/*.md` and `features.md`/`issues_open.md` before writing
   a new claim or campaign
 - Keep one asset per segment; write the positioning statement first, copy
   second
@@ -202,7 +200,7 @@ Keywords: motorcycle tracker, bike maintenance BD, ride log, crash
 **Segment campaign brief:**
 ```
 Segment: [commuter | enthusiast | family]
-Positioning statement: [one sentence, from pitch_and_marketing_materials.md]
+Positioning statement: [one sentence, from marketing.md §3]
 Key message (priority order): 1. ... 2. ... 3. ...
 Proof point (what's actually built, verified): ...
 Channel: [specific FB group / club / reviewer, not "social media"]
@@ -213,10 +211,9 @@ Overclaim check: [pass/fail against the no-overclaim rule]
 
 ## References
 
-- Internal (authoritative): `docs/marketing/marketing.md`,
-  `docs/marketing/pitch_and_marketing_materials.md`,
-  `docs/marketing/hooked_throttleiq.md`,
-  `docs/marketing/business_critique.md`, `docs/Features.md`, `issues_open.md`
+- Internal (authoritative): `DOCS/Handoffs for Non Coding Agents/marketing/marketing.md`,
+  `marketing_kit.md`, `pitch_deck.md` (same folder),
+  `DOCS/Handoff for agents and Todos/features.md`, `issues_open.md`
 - ASO: [Appfigures ASO Guide 2026](https://appfigures.com/resources/guides/app-store-optimization),
   [Appfigures ASO Checklist 2026](https://appfigures.com/resources/guides/app-store-optimization-checklist),
   [Moburst ASO Guide 2026](https://www.moburst.com/blog/app-store-optimization-guide/)

@@ -503,4 +503,4 @@ testWidgets('Manual ride records locally, syncs to Firestore offline', (tester) 
 - **Geolocator:** https://pub.dev/packages/geolocator
 - **Flutter Activity Recognition:** https://pub.dev/packages/flutter_activity_recognition
 - **Flutter Foreground Task:** https://pub.dev/packages/flutter_foreground_task
-- **ThrottleIQ Docs:** See `/docs/HANDOFF_Document.md` for full architecture notes
+- **ThrottleIQ Docs:** See `DOCS/Handoff for agents and Todos/HANDOFF_Document.md` for full architecture notes

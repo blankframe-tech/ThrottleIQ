@@ -1,108 +1,108 @@
 # Documentation map
 
-Every project doc that isn't code lives here. If you're picking this project
-up cold, read in this order:
+Every project doc that isn't code lives here, sorted by who reads it.
+Folder names contain spaces, so links URL-encode them (`%20`).
+
+**New here?** Read in this order:
 [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md)
 (current status) →
-[`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) (what's
-actually built) →
-[`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) (what's still broken or
-undecided). For the history behind a decision, see
-[`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md).
+[`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) (what is
+built) →
+[`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) (what
+is still broken or undecided). What only the founder can close (accounts,
+money, devices, decisions) is in
+[`needs_attention.md`](Handoff%20for%20agents%20and%20Todos/needs_attention.md).
 
-**Layout (2026-09-19):** the old lower-case `docs/` tree, plus the root-level
-`designs/`, `store_listing/`, `gov-pitch/`, `website_demo/` and `screenshots/`
-folders, were consolidated into three audience folders:
+**Layout (2026-10-22):** five folders.
 
 | Folder | For |
 |---|---|
-| `Handoff for agents and Todos/` | Living status, the bug record, the feature list, and working to-do/critique notes. The folder an agent or new contributor opens first. |
-| `For Devs and Contributors/` | Setup guide, architecture decisions, archived experiments. |
-| `General/` | Business, marketing, store listing, design references, website demo. |
+| [`Handoff for agents and Todos/`](Handoff%20for%20agents%20and%20Todos) | Coding agents and contributors: status, features, open and fixed issues, owner to-dos. Five living files, nothing else. |
+| [`Handoffs for Non Coding Agents/`](Handoffs%20for%20Non%20Coding%20Agents) | Marketing, pitch, posters and social art. |
+| [`For Devs and Contributors/`](For%20Devs%20and%20Contributors) | Architecture, how-to guides, load-test reports. |
+| [`General/`](General) | Store files (listing, data safety, moderation policy) and the crash-test evidence. |
+| [`old/`](old) | Frozen history. Not maintained; don't cite it as current. |
 
-## Ticket references in source comments
+## Handoff for agents and Todos
 
-Source comments cite two different numbering schemes. Both were normalised on
-2026-09-20 (issues_open.md §83.29) so that neither names a file path — paths
-move, section numbers don't.
-
-| In a comment | Means |
-|---|---|
-| `issues §N` | Section `## N.` of [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) if resolved, else [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md). Look in `issues_fixed.md` first; if it isn't there, or the section says part of it is still open, check `issues_open.md`. |
-| `grill §N` | The 2026-09-20 external-critique verification pass, written up in [`ANTIGRAVRITY_GRILL/claude_sol.md`](old/ANTIGRAVRITY_GRILL/claude_sol.md) (it was deleted from the repo root in commit `fc11e99` and later restored under `Handoff for agents and Todos/`). The resolved parts are recorded in issues §78. |
-
-Do not write a file path into a new code comment — write `issues §N`. Three
-earlier conventions all rotted: `docs/Issues.md §N` (the `docs/` tree was
-renamed `DOCS/` and `Issues.md` was split on 2026-09-19), `claude_sol.md §N`
-(deleted), and a 78-character `DOCS/Handoff for agents and Todos/issues_open.md
-or issues_fixed.md §N` that appeared in 28 files and could not decide which of
-the two files it meant.
-
-## Start here if you are picking up the active work
-
-Read [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) (newest entry on top), then
-[`needs_attention.md`](needs_attention.md) for what only the founder can close
-(release, accounts, devices, decisions). The old 2026-09-21 handoff
-(`BIGGG_JOBB.md`) and debt plan (`DEBT_FIX_PLAN.md`) are superseded and now live in [`old/`](old).
-
-## Living docs, kept up to date every session
+Update these in the same session as the change they describe.
 
 | File | What it's for |
 |---|---|
-| [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) | The single source of truth for project status: what's shipped, what's verified, the pre-launch to-do list, the feature backlog, and the Vehicle State Engine architecture. Update it whenever status changes. |
-| [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) | Every unresolved issue, plus follow-ups left over from fixed ones. New issues go here with the next free number — see that file's own header, which tracks it. Once fixed, a section moves to `issues_fixed.md` and keeps its number. |
-| [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The dated, numbered record of every resolved issue (§1–§88): root causes, fixes, verification. Other docs cite it by section (`§N`), so the numbers are stable. The latest full-repo reviews are §69 and §83. |
-| [`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) | What a signed-in user can actually do today, organized by the bottom-nav tabs. Update it whenever screens or flows change. |
+| [`HANDOFF_Document.md`](Handoff%20for%20agents%20and%20Todos/HANDOFF_Document.md) | Current status: branches, what is released and deployed, what has never run on a real phone, key facts, and a dated log of recent sessions (newest first). |
+| [`features.md`](Handoff%20for%20agents%20and%20Todos/features.md) | What a signed-in rider can do today, by bottom-nav tab, with the known gaps. |
+| [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md) | Every open issue in its numbered section. New issues go at the end with the next free number (the file's header tracks it). |
+| [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) | The record of every resolved issue: root cause, fix, verification. When an issue is fixed, its section moves here and keeps its number. |
+| [`needs_attention.md`](Handoff%20for%20agents%20and%20Todos/needs_attention.md) | Items only the founder can close. The full owner list, with steps, is `~/Everything/dev/housekeeping/owner_works_now.html` (outside the repo). |
 
-## Working notes
-
-| File | What it's for |
-|---|---|
-| [`todo_now_antigravity.md`](Handoff%20for%20agents%20and%20Todos/todo_now_antigravity.md) | Trust & Safety / messaging task checklist from another agent's session (all done). |
-| `bugs/` | Local bug-report screenshots. Gitignored on purpose. |
-
-## Stale, kept for history: [`old/`](old)
-
-Moved out of the live tree on 2026-10-13; see [`old/README.md`](old/README.md). It holds the Antigravity
-grill (`ANTIGRAVRITY_GRILL/`, `issues_solved.md`), `uiux_critique.md`, `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`,
-`archives/` (the abandoned `flutter_background_geolocation` experiment, early logo concepts),
-`scripts-archive/` (one-off patch scripts) and the Windows `setup-android.*` helpers. Older entries in
-`issues_fixed.md` and `issues_open.md` still cite these by their former paths.
-
-## For devs and contributors
-
-| File | What it's for |
-|---|---|
-| [`../arch.md`](../arch.md) | High-level system architecture: layers, state estimation pipeline, offline-first sync, safety invariants. |
-| [`guides/SETUP.md`](For%20Devs%20and%20Contributors/guides/SETUP.md) | Local dev setup: Firebase, Cloudinary, Android signing, iOS certificates, build commands. |
-| [`architecture/assumptions.md`](For%20Devs%20and%20Contributors/architecture/assumptions.md) | Every non-obvious judgement call made without asking, and why. |
-| [`architecture/auto_tracking_plan.md`](For%20Devs%20and%20Contributors/architecture/auto_tracking_plan.md) | Background auto-tracking design decisions and implementation status. |
-| [`architecture/backend_options.md`](For%20Devs%20and%20Contributors/architecture/backend_options.md) | Blaze billing vs. a surgical workaround vs. leaving Firebase, with a cost estimate. |
-
-Package-level READMEs live next to the code: `app/README.md`,
-`app/lib/**/README.md`, `app/test/**/README.md`, `functions/README.md`,
-`scripts/README.md`, `public/README.md`.
-
-## General: business, store, design
+## Handoffs for Non Coding Agents
 
 | Path | What it's for |
 |---|---|
-| [`store_listing/`](General/store_listing) | Play Store listing copy, the Data Safety form answers (`data_safety_and_permissions.md` plus the importable `throttleiq_data_safety.csv`), and store graphics. Must stay consistent with `public/privacy.html`. |
-| [`marketing/pitch_and_marketing_materials.md`](General/marketing/pitch_and_marketing_materials.md) | Pitch deck outline and per-segment marketing copy. |
-| [`marketing/marketing.md`](General/marketing/marketing.md) | Bangladesh go-to-market plan: channels, phased launch, growth loops, what to track. |
-| [`marketing/hooked_throttleiq.md`](General/marketing/hooked_throttleiq.md) | Retention analysis via the Hooked framework. |
-| [`marketing/business_critique.md`](General/marketing/business_critique.md) | A skeptic's read of the business case. |
-| [`marketing/marketing_lead_notes/`](General/marketing/marketing_lead_notes) | A marketing-lead working session: campaign copy, ASO notes, outreach templates, launch calendar. Start with its `NEEDS_YOUR_ATTENTION.md`. |
-| [`marketing/gov-pitch/`](General/marketing/gov-pitch) | The iDEA government-grant submission (deck, video script, defense FAQ). |
-| `designs/`, `website_demo/`, `*.html` | Standalone HTML design references (theme style directions, Carbon Mono / Editorial BW mockups, business card) and the marketing-site demo. Not kept in sync with the app. |
+| [`marketing/marketing.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/marketing.md) | Bangladesh go-to-market strategy: segments and copy, channels, growth loops, retention, what to track, honest risks, name candidates. |
+| [`marketing/marketing_kit.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/marketing_kit.md) | Ready-to-use copy: outreach templates, captions, FAQ, press fact sheet, tester onboarding message, Play shot list, launch calendar. |
+| [`marketing/pitch_deck.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/pitch_deck.md) | Pitch deck outline. |
+| [`marketing/iDEA_PITCH_SUBMISSION.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/iDEA_PITCH_SUBMISSION.md) | The iDEA government-grant submission (used by the `idea-pitch` skill). |
+| [`posters/`](Handoffs%20for%20Non%20Coding%20Agents/posters) | `batch_one/`: the 61 numbered posters as made. `batch_two/`: the posters that used an old colour scheme, redone in the current brand (same numbers). How they are made and the colour mapping: [`generator_helper_files/README.md`](Handoffs%20for%20Non%20Coding%20Agents/posters/generator_helper_files/README.md). |
+| [`social/facebook/`](Handoffs%20for%20Non%20Coding%20Agents/social/facebook) | Facebook page cover (`cover.html` is the source of `cover_photo.png`). |
 
-## Housekeeping
+## For Devs and Contributors
 
-- If you add a doc, put it in one of the three folders above and add a row
-  here with a path relative to `DOCS/`. Folder names contain spaces, so
-  URL-encode them in links (`%20`).
-- The 2026-08-28 renames (`Assumptions Made.md` → `assumptions.md`,
-  `AUTO_TRACKING_PLAN.md` → `auto_tracking_plan.md`, `aaaaa.md` →
-  `pitch_and_marketing_materials.md`, `dum.md` → `business_critique.md`)
-  still apply. The deleted `pitch.md`, `WHAT_TO_DO_NOW.md`, `tonight.md` and
-  `TODO next.md` were folded into `HANDOFF_Document.md` first.
+| Path | What it's for |
+|---|---|
+| [`architecture/arch.md`](For%20Devs%20and%20Contributors/architecture/arch.md) | System architecture: layers, the telemetry pipeline, offline-first sync, safety invariants. |
+| [`architecture/PRD.md`](For%20Devs%20and%20Contributors/architecture/PRD.md) | Product requirements, in Simplified Technical English. |
+| [`architecture/assumptions.md`](For%20Devs%20and%20Contributors/architecture/assumptions.md) | Judgement calls made without asking, and why. |
+| [`architecture/auto_tracking_plan.md`](For%20Devs%20and%20Contributors/architecture/auto_tracking_plan.md) | Background auto-tracking design and status. |
+| [`architecture/backend_options.md`](For%20Devs%20and%20Contributors/architecture/backend_options.md) | Blaze billing vs a workaround vs leaving Firebase, with costs. |
+| [`architecture/phone_vs_cloud_data.md`](For%20Devs%20and%20Contributors/architecture/phone_vs_cloud_data.md) | What the phone stores vs what the cloud stores, and the gaps. |
+| [`architecture/realtime-database.md`](For%20Devs%20and%20Contributors/architecture/realtime-database.md) | The parked Realtime Database design (no RTDB access on `main`). |
+| [`guides/SETUP.md`](For%20Devs%20and%20Contributors/guides/SETUP.md) | Local setup: Firebase, Cloudinary, signing, build commands. |
+| [`guides/account_deletion_runbook.md`](For%20Devs%20and%20Contributors/guides/account_deletion_runbook.md) | How to delete a rider's account and data by hand. |
+| [`guides/app_check.md`](For%20Devs%20and%20Contributors/guides/app_check.md) | App Check setup and enforcement runbook. |
+| [`load_test/`](For%20Devs%20and%20Contributors/load_test) | Spark-quota load test (2026-10-15) and the quota outage rehearsal (2026-10-21). |
+
+Package READMEs live next to the code: `app/README.md`, `functions/README.md`,
+`scripts/README.md`, `public/README.md`, and others under `app/lib/` and
+`app/test/`.
+
+## General
+
+| Path | What it's for |
+|---|---|
+| [`Files for Stores/store_listing/`](General/Files%20for%20Stores/store_listing) | Play listing copy (EN and the Bangla addendum), Data Safety answers (`data_safety_and_permissions.md` and the importable CSV), remaining App Content forms, store graphics. Must match `public/privacy.html`. |
+| [`Files for Stores/moderation_policy.md`](General/Files%20for%20Stores/moderation_policy.md) | Moderation policy: report handling, review times, retention. |
+| [`CRASH TESTING/`](General/CRASH%20TESTING) | The 2026-10-14 real crash: analysis, detection plan, log extract, screenshots. The raw GPS track and phone database stay off git (`.gitignore`). |
+| `partnerships/` | Local only, never tracked (`.git/info/exclude`): partner strategy and pricing. |
+
+## old/ (frozen)
+
+`apify/` (scrape notes and the 2026-10-21 Facebook bike-group research),
+`background_geolocation/` (the abandoned paid-plugin experiment),
+`ui_stuff/` (old theme mockups and Calming light screenshots, used as
+poster sources), `website_demo/` (the September marketing-site demo; its
+claims are out of date).
+
+## Labels in code comments
+
+Comments cite section labels, never file paths: paths move, numbers don't.
+
+| In a comment | Where to read it |
+|---|---|
+| `issues §N` | Section `N` of [`issues_fixed.md`](Handoff%20for%20agents%20and%20Todos/issues_fixed.md) if resolved, else [`issues_open.md`](Handoff%20for%20agents%20and%20Todos/issues_open.md). A section partly fixed appears in both. |
+| `grill §N` | The 2026-09-20 Antigravity grill verification, retired 2026-10-22: `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/grillings/claude_sol.md"`. Resolved parts are in issues §78; leftovers in issues §108. |
+| `CrtiQue_Oct14 B7`, `CrtiQue_Oct15 N3` | The 2026-10-14/15 critiques, retired 2026-10-22: `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/CrtiQue_Oct14.md"` (or `CrtiQue_Oct15.md`). Leftovers in issues §109. |
+
+Other notes retired on 2026-10-22 (`BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`,
+`uiux_critique.md`, `websockets_todo.md`, `plan_ride_minimize_menu.md`,
+`todo_now_antigravity.md`; leftovers in issues §107) and the old marketing
+notes (merged into `marketing.md` and `marketing_kit.md`) can be read the
+same way at `3ebbd21d`.
+
+Do not write a file path into a new code comment. Write `issues §N`.
+
+## Adding a doc
+
+Put it in the folder for its reader, add a row here, and link it with a path
+relative to the linking file. Prefer extending an existing doc over a new
+file.

@@ -1,815 +1,217 @@
 # Features
 
-_Last updated: 2026-10-14 · Branch: `fix/oct14-tiq-themes` · Source: `app/lib/features/**` + `app/lib/core/router/app_router.dart`_
+_Last updated: 2026-10-22 · Source: `app/lib/features/**` and `app/lib/core/router/app_router.dart` · Latest release: `beta-v4.7.1` (1.0.0-beta.4.7.1+29)_
 
-What a signed-in user can actually do in the app today, organized by the
-five-tab bottom nav. This is a living document — regenerate/update it
-whenever screens, routes, or user-facing flows change (see the doc-update
-hook in `.claude/settings.json`).
+What a signed-in rider can do in the app today, organised by the bottom nav. Update this file when screens, routes or user-facing flows change. History of fixes lives in `issues_fixed.md`; open work in `issues_open.md`; project state in `HANDOFF_Document.md`.
 
-> 📸 **Screenshots: mostly still TODO.** This pass was done by reading the
-> screen source (`app/lib/features/*/presentation/screens/*.dart`) and the
-> router, not by driving the iOS Simulator. As of 2026-08-11 the app booted
-> clean but stopped at sign-in, with no credentials or tap automation
-> available. **Update 2026-08-17**: the simulator used that session was
-> already signed in from prior manual use, so the Record tab *was* seen
-> rendered with real data (42 rides / 119 km stat strip) — see `issues_open.md`
-> §28/§29. Everything else below is still unverified visually. Capture
-> screenshots per section below next time the app is driven signed-in.
+**Verification status.** This file was written from the code and the tests, not from a device. Anything marked "not checked on a device" has passed `scripts/check.sh` only. The app has not been driven screen by screen on a simulator since 2026-08; the 2026-10-21 simulator E2E run covered launch and ride teardown only. Screenshots of every screen are still outstanding.
 
----
+**Facts that apply everywhere**
 
-## Your ThrottleIQ — app modules (Settings → Your ThrottleIQ)
+- Two themes: **Calming** light (default) and **Carbon Mono** dark, chosen in Settings as System / Dark / Light (`core/theme/`). One rounded shape profile. Nothing else is configurable.
+- Fully localised: English and Bangla (or follow the phone). Bangla strings are machine-drafted and wait for native review (`app/lib/l10n/bn_pending_review.txt`). Numerals stay 0-9 in Bangla on purpose.
+- Offline first: rides, bikes, maintenance and fuel live in SQLite (schema v29, `core/database/database_helper.dart`) and sync to Firestore through `SyncManager` and a durable outbox. When both devices edit one record, the later `updated_at` wins. Details: `DOCS/For Devs and Contributors/architecture/arch.md` §5.
+- Firebase is on the free Spark plan: no Cloud Functions run in production. Anything that needs one (SMS or email alerts, scheduled purges, push) is not live.
+- The Realtime Database is retired. Its rules deny every read and write and release builds carry no `RTDB_URL`. The client code in `core/realtime/` (live-share position, chat "typing…") stays but does nothing.
+- Crash detection runs in **shadow mode only**: it records and asks after the ride, and sends no alert to anyone. See "Shadow-mode crash detection" below.
 
-Settings → "Your ThrottleIQ" lets privacy-minded or minimalist riders turn parts of the app off. Model and rules: `app/lib/core/services/app_modules.dart` (`AppModules`, `appModulesProvider`, SharedPreferences `module_*`, device-local). Nothing is deleted; turning a module back on restores it.
+## Your ThrottleIQ: app modules (Settings → Your ThrottleIQ)
 
-- **Community:** Everything / Forums only / Off. Forums only: the first tab is labelled **Forums** and shows just the Forums page; ride feed, people, chat, follows, follow QR and links, notifications bell, group rides, ride sharing and other riders' profiles are hidden and their routes redirect. Off: the tab and every "share to forum" / "Ask owners" entry go too.
-- **Places & routes:** hides the Places tab, My places, routes, "save as route".
-- **Ride tracking:** off = maintenance-only app. Record and Rides tabs are replaced by a **Maintenance** tab; auto-tracking is switched off (refused mid-ride); maintenance shows a manual "Sync odometer" card first; bike detail hides ride history; route navigation is hidden.
-- Turning anything off asks first with a "Keep it on" default (mild discouragement). Nav updates live, no restart.
-- One gate for routes: `AppModules.redirectFor` inside `routerProvider`'s redirect (also re-run on module change), so deep links, widgets and notifications land on the home tab. Bottom nav: `AppModules.tabs` + `shellTabIndexForLocation(location, modules)`.
-- Feature tour: `onboardingSlides(l10n, modules: …)` leaves out steps for off modules (forums-only gets a Forums step) and drops callouts about them; the tour's mini nav shows `AppModules.tabs`.
-- Tests: `test/core/services/app_modules_test.dart`, `end_ride_sheet_test.dart`, `onboarding_manifest_test.dart` (every module mix), `onboarding_tour_test.dart`.
+Lets minimalist or privacy-minded riders turn parts of the app off. Device-local (SharedPreferences `module_*`); nothing is deleted. Model: `core/services/app_modules.dart`. Turning a module off asks first, and the nav updates live.
+
+- **Community:** Everything / Forums only / Off. Forums only: the first tab becomes **Forums**, and the ride feed, people, chat, follows, follow QR, notifications bell, group rides, ride sharing and other riders' profiles are hidden. Off: the tab and every "Share to forum" / "Ask owners" entry go too.
+- **Places & routes:** hides the Places tab, My places, routes and "Save as route".
+- **Ride tracking:** off makes a maintenance-only app. Record and Rides are replaced by a **Maintenance** tab, auto-tracking is refused, and the odometer is synced by hand.
+- One route gate: `AppModules.redirectFor` inside the router redirect, so deep links, widgets and notifications land on the home tab. The feature tour skips steps for modules that are off.
 
 ## UI hierarchy
 
 ```
-Splash → (auth redirect) → Login / Register → Onboarding (first sign-in only)
+Splash → Login / Register → Onboarding (first sign-in, until displayName is set)
 (any screen) → Update required (blocking, when this build < config/app.minBuild)
-                                                    │
-                                                    ▼
-                        ┌───────────────────────────────────────────────┐
-                        │              Bottom nav (AppShell)             │
-                        │  Social · Places · ●Record· Stats · Profile   │
-                        └───────────────────────────────────────────────┘
-Social  → Feed tab | Forums tab → forum thread → post detail
-                                → create forum
-Places  → place detail | add place | (header) my places, routes
-Stats   → stats/journey (rank, badges, chart, recent rides)
-Record  → active ride (live) → crash overlay (only with the detector flag on; off in every build) → ride summary
-                             → ride share → save as route
-Record  → ride with friends → friend picker → group ride live map
-Routes  → route detail → navigate (starts a ride; guidance rides on /ride/active)
-Profile → (header) settings, notifications, profile menu (profile,
-           my places, my shared rides) → bike detail → edit bike | add bike
-           → maintenance → add service log
+(Android release, not from Google Play) → Install-from-Play screen (App Check sideload gate)
 
-Full-screen (no bottom nav): Settings, Notifications, Profile,
-Edit Profile, User Profile (:uid), Ride Summary, Ride Share,
-Forum Thread/Post, Create Forum, Routes list/detail/navigate,
-Save Route, Group Ride map
+Bottom nav (AppShell): Social · Places · ●Record · Rides · Garage
+Social  → Rides | People | Forums tabs → forum thread → post detail; create forum; chats
+Places  → hub: Places | Routes | Saved → place detail, add place, my places
+Record  → active ride → ride summary → share → save as route
+Record  → group: invite friends / join with code → group ride map
+Rides   → analytics detail; all rides → ride summary
+Garage  → header (profile menu, notifications, settings) → bike detail → edit / add bike
+          → maintenance → add visit, part detail, setup, fuel log
+
+Full screen (no bottom nav): Settings, Notifications, Profile, Edit Profile, User Profile (:uid),
+Ride Summary, Ride Share, Forum Thread/Post, Create Forum, Routes, Save Route, Group Ride map, Chats
 ```
 
----
+While a ride runs, a **ride-in-progress strip** above the bottom nav ("Recording ride · km · time" or "Ride paused") returns to `/ride/active` from any shell tab. When paused with a parking pin it offers **Directions to bike**.
 
 ## 1. Auth & onboarding (`features/auth`)
 
-- **Splash screen** — routes to login or home based on auth state.
-- **Login** — email/password sign-in, "Continue with Google".
-- **Register** — create an account. **"Sign up with Google" added (2026-08-29)** — previously Google was reachable only from the login screen; since `signInWithCredential` already creates the account transparently on first use, an unregistered rider tapping "Continue with Google" there was never actually failing, but there was no matching affordance on Register, and no way to explicitly *start* with Google. `register_screen.dart` now has the same "Continue with Google" button as `login_screen.dart`, calling the same `signInWithGoogle()`.
-- **Onboarding** — shown once after first sign-in (until `displayName` is set), before the user reaches the main shell. Its first-bike step's Brand/Model fields got the same suggest-as-you-type `BrandModelAutocompleteField` as Add/Edit Bike (2026-08-29) — see Garage §4.
+- Splash routes by auth state. Login: email/password and "Continue with Google". Register: the same, plus "Continue with Google" (same `signInWithGoogle()`).
+- **Onboarding** after first sign-in: profile name, first bike (Brand/Model use the suggest-as-you-type `BrandModelAutocompleteField`), then the feature tour (`onboarding_manifest.dart`, `kOnboardingManifestVersion` 4: record, cockpit, auto-tracking, rides and badges, garage, maintenance, places, social, profile/QR). Bump the version when the slide list changes so finished riders see the new tour. The tour also runs from Settings.
+- **Forced update gate** (`core/services/app_update_gate.dart`): at start the app reads `config/app.minBuild` (now 29). A lower build shows a blocking screen that opens `https://blankframe.tech/ThrottleIQ/install`. Offline, slow (5 s), denied or missing all fail open.
+- **App Check sideload gate** (`core/services/app_check_gate.dart`, `d92f694e`): an Android release build that App Check rejects (not installed from Google Play) shows "Install from Google Play". iOS and debug-provider builds are never blocked. Runbook: `DOCS/For Devs and Contributors/guides/app_check.md`. Not released yet.
 
 ## 2. Record a ride (`features/ride`)
 
-- **Record screen** (center tab, default screen) — **redesigned 2026-08-11** as one instrument panel, top to bottom: **bike-photo hero (greeting overlaid) → stat strip → ride with friends**, with **hold-to-start pinned to the bottom** and the quote as a footer line under it. Shows an "Add a bike" card in the hero's place when no bike is selected.
-  - **No header chrome, 2026-08-17** — the Notifications bell and Settings gear that used to sit above the hero moved to the Profile tab's header (§4), so the rider's own recording surface carries only recording-related controls.
-  - **Why it changed**: the previous stack (2026-08-04) was four cards of roughly equal weight in a scroll view, which gave the greeting the same visual authority as the control that actually starts a ride.
-  - **The throttle is outside the scroll view**, not the last item in it — the start control is the one control the screen exists for, so it sits at a fixed place under the thumb every time, and doesn't move when an error card appears above it.
-  - **The start control is `HoldToStartButton`** — a circular press-and-hold ring whose progress arc sweeps from 12 o'clock over 900ms. The full-width slide-to-start track it replaced only survived on the Boxy shape, and went with it on 2026-10-14.
-    - Built on `Listener`, not `GestureDetector`: a tap recognizer doesn't report the press until it wins the gesture arena (100ms for a lone tap), which would leave the ring visibly dead under the finger for a tenth of a second. Covered by 8 widget tests, the important ones being "does not fire when released early" and "fires only once even if held past completion".
-  - **Hero** (`bike_picker_card.dart`) — the rider's own bike photo, full-bleed at 210px, under a three-stop scrim (the photo is theirs, so it can be a bright daylight shot or a night one; text laid straight on it is legible on neither). The greeting sits on top: the casual line carries the rider's name when the picked variant has a `{name}` slot, otherwise it becomes a small overline above the name.
-  - **Stat strip** (`rider_stat_strip.dart`) — rides / kilometres / **current day streak**, from `riderStatsProvider`. These are the rider-wide totals that moved to the Rides tab in 2026-08-04; the *history* rightly lives there, but these three are the reason to go out again, which is what this screen is for. Rendered as a flat strip, not cards, so they read as context for the hero rather than three things to tap. Zeros render while stats resolve — the layout is fixed-height either way and a spinner sliding into a row of numbers is more disruptive than a number that ticks up a moment later.
-    - `computeCurrentDayStreak` (new, `core/utils/badges.dart`) is deliberately **not** `computeLongestDayStreak`: a dashboard number labelled "streak" has to be the live one. Yesterday still counts so the number doesn't collapse to zero every morning; two days off ends it.
-  - **Casual, time-aware greeting** (`core/utils/greetings.dart`) — six buckets by hour (late night / early morning / morning / afternoon / evening / night), five variants each ("Late night runs, huh?", "Cold start, clear roads.", "Golden hour. Go."). Pure and unit-tested, with an injectable `Random`; rolled once per screen build so a provider tick doesn't reshuffle it.
-  - **The quote is a footer** (2026-08-04 → moved again 2026-08-11) — it was its own ink-block card, then a muted line inside the greeting card, and is now a small centred line *under* the start control. It also took over the line the "Swipe right to start recording" hint used to own: the bar labels its own gesture, so the hint was saying it twice. Open question still standing in `HANDOFF_Document.md`: whether the quote belongs on this screen at all, vs. an intermediate "here we go" screen between tapping start and recording beginning.
-  - **Rider-wide totals moved off this screen** (2026-08-04) — total km / ride count / days-since-last-ride used to live here as the *active bike's* figures; they're now on the Rides tab under "Your Journey", scoped to the whole rider rather than one bike.
-  - **Bike picker shows the rider's own bike photo** (2026-08-04) when one was added in Garage, with a fallback to the generic icon tile — see `BikePhoto` in §4. The photo can be cropped when it's added — see §4.
-  - **Bike switching happens in place** (2026-08-11) — it used to be a card whose whole surface navigated to `/home/profile` with a "Change" label, so switching bikes meant leaving the screen you were about to start a ride from, and the label named something the card didn't do. The hero now owns switching:
-    - **Two or more bikes** → tapping the hero opens a **picker sheet** with every bike and a check on the active one; picking one calls `setActiveBike` without navigating. A "CHANGE ⌄" affordance sits on the hero. (A sheet rather than the previous dropdown because the hero is a photo, and a menu anchored to a 210px image either covers the thing you're choosing or floats off it.)
-    - **One bike** → no switch affordance at all. A picker whose only option is the one already selected is a control that can't do anything.
-    - Sheet rows show **ride count**, not "Ready to ride" — every row would say "Ready to ride", which distinguishes nothing; ride count is what separates two similarly-named bikes.
-    - Garage is no longer reachable from this card at all. It's one tap away on the bottom nav, and that's where a rider adds the second bike that turns this into a picker.
-    - `test/features/ride/bike_picker_card_test.dart` still guards the original regression (picking a bike must switch it, not push a `MaterialPageRoute`).
-  - **Bike color tints the screen** (added 2026-08-28) — `BikeEntity.colorValue` (schema **v12**, `bikes.color_value`) is an optional paint color the rider picks in Add/Edit Bike (§4); `bikeAccentColor()` (`core/constants/bike_colors.dart`) falls back to a stable pick from a 12-swatch preset, keyed off the bike's id, when they never set one — so two bikes read as visually distinct even with no color chosen. The Record screen washes its background with a faint radial gradient of that color and the hero card's (`bike_picker_card.dart`) border/scrim tint toward it, so the dashboard reads as *that bike's* rather than a neutral shell that just names it. Switching bikes (§ above) updates the tint immediately since both derive from `activeBikeProvider`.
-    - **Only tints when there's an actual photo** — gated by `bikeHasPhoto()`, which checks `imagePath` is set *and* the file still exists on disk (not just non-null), since a colored wash next to the generic fallback icon (no photo, or a photo whose file went missing — see the note above about `image_picker`/cropper output living in an unstable location) read as a mismatch rather than "this bike's color".
-- ✅ **Ending and sharing a ride now work offline** (fixed 2026-08-14, `issues_fixed.md` §25) — reported from real use as *"I can't share rides or end when offline."* The cause was subtle enough to be worth stating plainly: **awaiting a Firestore write with no connection never returns.** It doesn't throw; the SDK queues it locally and the Future resolves only on server acknowledgement. So every `try`/`catch` around these writes was catching nothing, and `stopRide()` hung on `_clearLivePointer()` — which runs for *every* rider, not just those sharing their location — before it ever reached the local code that saves the ride.
-  - **Rider-initiated actions go through a durable outbox** (`core/cloud/outbox_service.dart`, `outbox` table, DB **v10**): sharing a ride and the end-of-ride live-share teardown are written to SQLite *before* any network attempt, so they survive the app being killed. `SyncManager` drains the queue on every connectivity change, on login, and on its 5-minute timer — ahead of the bulk ride/bike sync, since these are things the rider explicitly asked for. Exponential backoff (30s → 30min cap), and entries are keyed by ride/uid so re-sharing supersedes rather than double-posting.
-  - **Queued photo uploads resume rather than restart.** Cloudinary mints a new asset per call, so the share carries local file paths and folds each resulting URL back into its queue row as it lands — a retry picks up after the uploads instead of orphaning the first copies.
-  - **The composer says "Saved — we'll post it when you're back online"**, not an error, because it isn't one.
-  - **Optional telemetry got a bounded `_bestEffortWrite()`** instead (crash samples, live-session status pings) — same `try`/`catch`, now with a timeout so "best effort" means it. Three more instances of the original hang were found and fixed while here, including `dismissCrashAlert()`, which awaited a telemetry write *before* clearing the crash state: dismissing a false crash alarm in a dead spot left the ride stuck in the crash overlay.
-  - **Not yet verified on a device** — the fix is a timing property of the network SDK. Fly-mode a phone, confirm end/share/resume all complete promptly, then re-enable data and confirm the queue drains.
-- **Active ride screen** (`/ride/active`, full-screen) — live map + stats, pause/resume, end ride (with confirmation), **discard ride**, **share live location** (tapping the icon is the opt-in — nothing publishes before that, see the fixed note below — and generates a `/live/{token}` link via SMS/share sheet, hosted at `throttleiqfb.web.app`), and a full-screen **crash-detected "Are you OK?" overlay** with a dismiss countdown. Ending the ride during that countdown cancels it, so no emergency alert goes out (`issues_fixed.md` §69.3).
+- **Record screen** (center tab, default): bike-photo hero with a time-aware greeting, a stat strip (rides, km, current day streak), the Solo/Group selector, and a pinned **hold-to-start** ring (`HoldToStartButton`, 900 ms) with the quote as a footer. "Add a bike" card when no bike exists.
+  - With two or more bikes, tapping the hero opens a picker sheet; with one, there is no switch control. The background tints with the bike's colour when it has a photo.
+  - A blocked start (GPS off, permission denied) shows a persistent card and a snackbar with a "Turn on Location" / "Settings" action.
+  - Auto-tracking and the home-screen widgets only open Record; recording still needs the hold.
+- **Active ride** (`/ride/active`): live map (speed-coloured trail), timer, pause/resume, end ride, discard, share live location, alerts and phone placement.
+  - **End ride** opens a bottom sheet: hold-to-end (1.2 s), a share toggle, "Keep riding". **Discard** is a text button below; nothing of a discarded ride leaves the phone.
+  - Pausing stops GPS (Android tracking notification stops too) and dims the map only.
+  - **Cockpit alerts:** ease on the brakes, smooth on the throttle, watch your speed (one alert per excursion), time for a break (after 90 min, repeating every 15 min). All EN/BN. Cockpit text has a minimum size; text scaling is capped at 1.3×.
+  - **Share live location:** tapping the icon is the opt-in. It makes a `/live/{token}` link (viewer at `throttleiqfb.web.app`, with an install call-to-action). While live, the icon offers "Share link again" and "Stop sharing now". The permanent `/r/{username}` link works only when Settings → Privacy & Safety → "Public link (/r/@handle)" is on (default off). Ending the ride cancels the live session in the background through the outbox.
   - **SOS button** (branch `mayabi`, 2026-10-17): a red SOS icon next to the live-share button. It opens a sheet with two actions. **Text my emergency contacts** turns on live sharing (5 s limit) and opens the phone's messages app, with the live link and a Google Maps pin filled in. **Call 999** opens the dialler. The rider presses Send or Call, so nothing goes out on its own, and SMS works without data. With no contacts saved, the sheet says to add them in Settings. Code: `ride/domain/sos_message.dart`, `ride/presentation/widgets/sos_sheet.dart`. Not checked on a device; the iOS multi-recipient SMS link is unverified.
-  - **No status pill** (changed 2026-09-20, `issues_fixed.md` §81) — the red "RECORDING" / "PAUSED" pill that sat top-left of the header is removed at the owner's request. The header is now just the elapsed timer and the live-share icon. Paused state is still signalled by the glowing **Resume** button and the dark scrim over the map; there is no longer a dedicated "recording" indicator on this screen.
-  - ✅ **"End Ride" no longer feels frozen on a slow connection** (fixed 2026-09-19, `issues_fixed.md` §67) — `stopRide()` was awaiting the live-share teardown's Firestore write (up to 8s, serialized behind any other in-flight outbox operation) before returning, so every tap sat on network latency the rider read as "a lot of processing." The local durable enqueue still happens before the tap returns (nothing is lost if the app dies right after); the network confirmation now happens in the background via the normal outbox drain, same fix applied to `cancelRide()` and the app-launch resume path.
-  - **Discard ride** (added 2026-08-11, `issues_fixed.md` §20) — `cancelRide()` throws the ride away: local row and all its `ride_points` deleted, live session marked finished and the `/r/{username}` pointer cleared, buffered points dropped rather than flushed. Nothing about a discarded ride ever leaves the device — a ride that never reached `status = 'completed'` is invisible to every query *and* to the sync layer. The confirm dialog names what is lost (distance and duration) rather than asking a generic "are you sure?". Deliberately a **text button below** the pause/end pair, not a third equal-weight control: end-and-save is what almost every ride wants, and a delete-my-data action shouldn't look the same size and shape as the one next to it that keeps everything.
-  - **A ride survives the app being killed** (changed 2026-08-11, `issues_fixed.md` §18 — and §19 for the share-link leak found alongside it) — quitting mid-ride (swiping out of recents, OS jetsam, an OEM battery manager) used to be terminal in a quiet way: `recoverCrashRide` closed the ride out on next launch and filed it in history, so a rider who stopped for fuel and swiped the app away came back to two half-rides and no way to continue the first. `restoreInterruptedRide` now brings it back **paused** instead, with its distance, top speed, moving time, route and ride clock intact, and the rider chooses: **resume**, **end and save**, or **discard**. A "Ride kept from last time" banner explains why they're looking at a paused ride they never paused.
-    - **Recording now outlives the UI** (2026-10-15, critique B5, not checked on a device): on Android the ride is hosted in the `flutter_foreground_task` service. If the UI engine goes away mid-ride (swiped from recents), the service's handler keeps storing fixes after 20 s without a UI heartbeat, so the restore gets the whole ride, not just the part before the kill. When the phone kills everything, a "Recording stopped, tap to resume" notification is posted when the service restarts (or by the UI if only the service died). A one-time battery-settings guide is offered on Xiaomi, OPPO, vivo and realme after the first ride.
-    - Aggregates are rebuilt from the GPS fixes that reached disk (`ride_resume.dart`, unit-tested); **elapsed time** is the one thing not derivable from them (a ride that sat 40 minutes at a chai stall spans far more wall-clock than it recorded), so it is snapshotted to `SharedPreferences` every 10s, and forced on pause and on the app leaving the foreground.
-    - **Event counts restart at 0** on a resumed ride — hard-brake / rapid-accel / high-jerk come from `EventDetector`'s live thresholds over a continuous sample stream, which thinned stored points can't honestly reproduce. Narrow and documented rather than guessed at.
-    - ✅ **A ride killed in its first seconds is now kept too** (fixed 2026-08-14, `issues_fixed.md` §26). GPS fixes were batched 5-at-a-time, so until the first flush they existed only in memory — and `restoreInterruptedRide` *deletes* any ride with fewer than 2 stored points (no distance is derivable from one). An app killed in the opening seconds therefore lost the whole ride, by design. Every fix is now written through until the ride has 8 persisted points, after which normal batching resumes; a restored ride re-enters that window. `_flushPointBuffer()` also awaits its insert now instead of being fire-and-forget, and re-queues a failed batch rather than leaving a hole in the trace.
-    - The first fix after any resume **skips its distance/accel/jerk derivatives** (`_skipNextDistanceDelta`). Otherwise `MotionCalculator` measures straight across the gap: park the bike, pause, drive home in a van and resume, and the ride gains the whole van journey as one straight line. Now that a pause can span an app restart, that gap is unbounded and the guard stopped being optional.
-    - A ride already finalized (crash detection closed it, or `stopRide` wrote the row but died before clearing prefs) is **not** offered back — it's in history, and resuming it would duplicate it.
-  - The viewer page (`public/live-viewer.html`) carries an **install call-to-action**, added 2026-08-02 — it's the only page a non-user ever sees. It renders in both the live view and the expired-link state (a dead link is where it matters most). Store URLs live in one `APP_LINKS` block in that file and are null until the listings exist; until then it offers the GitHub beta APK. Set a store URL there and its button appears automatically.
-  - **Permanent per-rider link** (added 2026-08-04): `/r/{username}` — same page, new route. Resolves to whatever live session the rider currently has going (via `usernames/{handle}` → `livePointers/{uid}` → `liveSessions/{token}`, all keyed lookups, never a query — see `issues_fixed.md` §14), or shows a "not riding right now" panel that flips itself live the moment they start. A rider shares this link once instead of a fresh `/live/{token}` link every ride. **Requires `firestore.rules` and `firebase.json` to both be deployed** — see the "Now" checklist in `HANDOFF_Document.md`.
-  - ✅ **"Share live location" is now actually opt-in** (found 2026-08-12, fixed same day, `issues_fixed.md` §24.1 — code fixed, and the matching `firestore.rules` deployed 2026-08-14). Previously the share button only handed out a link; it did not control publishing — `_startLiveSessionPublishing()` ran unconditionally from `startRide()`, so every ride published a live session and pointed `/r/{username}` at it regardless of whether the rider ever tapped share. Tapping the icon is now the opt-in itself (`enableLiveSharing()`): nothing under `liveSessions`/`livePointers` is written for a ride until the rider does that, the icon reflects on/off state (filled vs. outlined), and `liveSessions` docs carry a `shareable: true` field the Firestore rule also requires — so a guessed handle no longer resolves to a live position unless that specific rider chose to share that specific ride.
-- **Ride summary screen** (`/ride/summary/:rideId`) — post-ride score (out of 100), map/route, **Share** (posts to the social feed), **Export JSON**, **Export GPX**, "Save & done".
-  - ✅ **Restyled to match the social shared-ride-detail screen, plus new telemetry** (added 2026-09-20, `issues_fixed.md` §77) — the 4-stat/jam/events rows are now icon+color `MetricCard` tiles (new shared widget, also used by the social screen) instead of plain divided `StatCell`s; the score is the shared gamified `RidingScoreBadge` instead of a flat number tile; the map is now interactive (pinch/zoom/pan, tap-to-expand, a FAB stack for zoom/recenter/fullscreen/**Save as Route** — reaching the existing `/routes/save/:rideId` form directly for the first time) while keeping this screen's own speed-banded polyline coloring rather than reverting to a flat line; a new **Route GPS Details** card (track-point count, start/end coordinates, full-screen explorer). New **Riding Pace** card. New **Speed Profile** and **Elevation Profile** mini charts (`RideLineChart`, reused from the Rides tab with a new `xLabels` override) — elevation is entirely new surfaced data (`ride_points.altitude_m` was recorded but never shown anywhere), gated by a new pure calculator (`domain/calculators/elevation_profile.dart`) that hides the whole section rather than showing a fabricated number when a device had no barometer fix or the trace is flat within noise. New **CSV telemetry export** (`ExportService.exportRideToCSV`) alongside JSON/GPX, dumping every raw per-point column the recorder captures (speed, acceleration, jerk, altitude, heading, accuracy, cornering flag). Fully localized EN/BN. Not yet visually verified — the build device disconnected mid-session; see §77.
-  - ✅ **Closing a ride opened from a list now returns to that list** (fixed 2026-08-27, `issues_fixed.md` §36) — this screen is reached both right after finishing a recording (`go`, no back stack) and by tapping a past ride from All Rides / Stats / a bike's page (`push`, on top of that list); the close (✕) and "Save & done" buttons used to always land on the Record screen regardless, which was wrong for the second case. Both now check `context.canPop()` and pop back to the list when there is one.
-  - **Blocked-recording errors on the Record screen are now impossible to miss** (fixed 2026-08-27, `issues_fixed.md` §37.1) — GPS-off/permission-denied used to only show in a card that could sit below the fold; a SnackBar with a one-tap "Turn on Location" / "Settings" action now fires the moment a start attempt is blocked, in addition to the persistent card.
-  - **Time in jam** (added 2026-08-12) — a second stat card, **moving** vs **in jam** (amber when > 0), under the existing distance/duration/avg/max row. This was the "surface the jam time back to the rider" idea from the proposed-features list below — the data (`movingSeconds`) was already being collected for the average-speed fix, so this is presentation plus one new persisted column, not new tracking. `jamSeconds()` (`domain/calculators/jam_time.dart`, unit-tested) is just the ride clock minus moving time, clamped to zero — deliberately not a second GPS-derived measurement, so it can never disagree with the moving-time average speed computed from the same data. `rides.moving_s` is a new nullable column (schema v9); older rides finalized before it existed show no jam card at all rather than a guessed zero — `RideEntity.jamSeconds` returns `null`, not `0`, when either input is missing. Also fixed a pre-existing mislabel in the first stat row: the duration cell said "moving" while actually showing total elapsed time; it now says "duration".
-  - **Beta: rider-labelled jam windows** (added 2026-10-06, committed, not checked on a device) — internal-only ground truth for tuning the jam algorithm above. Riders whose handle is in `BetaTesters.jamLabelling` (`core/constants/beta_testers.dart`, currently just `abraaraidev`) get an "I'm in a jam · BETA" button above Pause/End on the active ride screen; tapping flips it to "Jam released · mm:ss". Each window is written straight to Firestore (`users/{uid}/rides/{rideId}/jamLabels/{id}`, fire-and-forget, SDK offline queue — no SQLite/outbox) with start/end snapshots (time, ride clock, moving s, distance, speed, lat/lng) plus derived `labelledSeconds`, `detectedStoppedSeconds` (what jam_time.dart's moving/idle split counted inside the same window) and `distanceDuringM`. Saved open on start so an app kill keeps the start; auto-closed with `endReason` `paused`/`rideEnded` if the ride pauses/ends mid-jam (only `released` is true ground truth). Code: `jam_label_entity.dart`, `jam_label_repository.dart`, `jam_label_provider.dart`; tests `test/features/ride/jam_label_test.dart`. `firestore.rules` gained a `jamLabels` match under `users/{uid}/rides` — ✅ deployed 2026-10-06.
-  - **Route map is now speed-colored** (added 2026-08-27) — the polyline is split into runs colored by a 4-band speed bucket (idle/normal/brisk/hard, fixed km/h cutoffs, motorcycle-tuned — see `domain/calculators/speed_segments.dart`, unit-tested) instead of one flat accent-color line, with a small legend under the map. So a rider can look at the finished route and see *which road* they were doing *what speed on*, not just the overall max/avg numbers. Uses `speed_ms`, already stored per point in `ride_points` — no new tracking, no schema change. Colors are `AppColors` tokens (`textTertiary`/`success`/`warning`/`danger`), not literals, so this stays correct across every appearance skin, Retro included. Localized (English + Bengali, `speedBandIdleLabel` etc.). Falls back to the old single-color line if a ride's points somehow lack matching speed data rather than misdraw.
-  - **Per-road speed baseline + private outlier insight** (built 2026-08-28, `issues_fixed.md` §42) — the "everyone does 30-50 km/h on a road, one rider hits 80" idea from the day before, now shipped as a v1. After every ride, the app anonymously contributes each segment's average speed (day of week, hour, weather) to a shared pool, then privately checks whether *this* ride's fastest segment was a real statistical outlier (z-score **and** an absolute km/h floor, both required — see `domain/calculators/speed_baseline.dart`) against that segment's pooled history. If so, a small card appears on the ride summary — visible only to the rider it's about, never posted or shared — reading "Faster than usual here" with the rider's speed and the typical speed for that stretch (localized, English + Bengali).
-    - **"Road" is a geohash cell**, not a real road (`domain/calculators/segment_speed_aggregator.dart`, precision 7, ~150m), reusing the same `GeohashUtil` the POI directory already has. Not true map-matching — deliberately, to ship without a roads-API vendor/key decision.
-    - **Weather comes from Open-Meteo**, free and keyless (`core/services/weather_service.dart`) — its forecast endpoint with `past_days`, not the archive/reanalysis endpoint, which lags days behind and would have nothing for a ride that just finished. Best-effort; a failed fetch just means that ride's samples carry a null weather code, not a failed ride.
-    - **No Cloud Functions** — aggregation is a bounded client-side Firestore read (`CloudRepository.fetchRoadSpeedSamples`, capped at 200 docs per segment), sidestepping the Blaze-plan block that already stalls crash-alert delivery.
-    - **Pooled samples are anonymous by construction**: no uid, no rideId, no exact coordinates — only the coarse cell, speed, weekday, hour, weather code, enforced by a bounded `firestore.rules` shape check (13 rules tests, 57/57 total green via `npm run test:rules`). `public/privacy.html` §2 and §4 disclose this before it collects anything.
-    - ✅ **`firestore.rules` deployed 2026-08-28** — see `issues_fixed.md` §42 for the full verification/gap list (still open: no live device test yet, and at launch the outlier card will rarely fire since the pool starts empty and needs 5+ prior samples on the same cell).
-  - **"Change bike" correction, but only for the ride you just finished** (added 2026-09-19) — `ChangeBikeControl` (`presentation/widgets/change_bike_control.dart`) shows a "Logged to {bike} · CHANGE" row on the ride summary screen when this ride is `latestCompletedRideIdProvider`'s answer (the rider's single most-recently-started completed ride) and they own 2+ bikes, so picking the wrong bike on the Record screen's hero is a one-tap fix right after finishing — but *only* that one ride; anything further back in history is locked, since an older ride's bike may already be behind maintenance reminders someone acted on. Reuses the existing `RideAttribution.confirm()` service (previously reachable only via `BikeConfirmationCard` for unconfirmed auto-detected rides) — it already moves per-bike distance/ride-count stats and marks the row `synced = 0` for the next cloud sync, so no new persistence path was needed. Hidden when `BikeConfirmationCard` is already showing for the same ride, so the two controls never both appear. `RideDao.getMostRecentCompletedId()` and `latestCompletedRideIdProvider` are new; `RideAttribution.confirm()` now also invalidates `rideDetailProvider`/`riderStatsProvider`/`rideHistoryProvider` (old + new bike) so the summary screen and stats reflect the change immediately instead of only on next fetch.
+  - **⋮ menu** (`ride_actions_menu.dart`): **Cop checkpoint here** writes a public `police` place at the current fix, expiring in 24 h or permanent (name is fixed English text). **Parking pin** saves a device-only pin and pauses the ride. **Minimize** goes to Places (or Rides with Places off); recording continues, but turn guidance and alert flashes are not visible.
+  - **Phone placement** pill (top-left): On a mount / In a pocket / In a bag; read at impact time by the crash detector and remembered between rides.
+  - **Group talk** button opens the live group map; the Record screen shows an "Open push-to-talk" banner during a group ride.
+  - **Beta-only:** the handles in `BetaTesters.jamLabelling` (`core/constants/beta_testers.dart`) get an "I'm in a jam" button that writes labelled jam windows to `users/{uid}/rides/{id}/jamLabels` for tuning the jam algorithm.
+- **A ride survives the app being killed.** On next launch `restoreInterruptedRide` brings it back **paused** ("Ride kept from last time"): resume, end and save, or discard. Aggregates are rebuilt from stored fixes; elapsed time is snapshotted every 10 s; event counts restart at 0. Every fix is written through until 8 points are stored, so a ride killed in its first seconds is kept. A finished ride is never offered back. On Android the foreground service keeps storing fixes if the UI dies (after 20 s without a heartbeat) and posts "Recording stopped, tap to resume" if everything dies; Xiaomi, OPPO, vivo and realme riders get a one-time battery-settings guide. Not checked on a device.
+- **Ending and sharing work offline.** Share and live-share teardown go through the durable outbox (`core/cloud/outbox_service.dart`): written to SQLite first, drained on connectivity change, login and a 5-minute timer, with backoff 30 s to 30 min. Photo uploads resume instead of restarting. The composer says "Saved, we'll post it when you're back online". Not checked on a device (airplane-mode test pending).
+- **Ride summary** (`/ride/summary/:rideId`): riding score (0-100), interactive map with speed bands and a legend, 4-stat and jam cards (moving vs in jam), Riding Pace card, Speed and Elevation profile charts (elevation hidden when there is no barometer data or the trace is flat), Route GPS Details, **Ride cost** card (distance × Σ cost/km, with fuel price and mileage per bike), "Faster than usual here" card, share, **Save as Route**, export **JSON / GPX / CSV**, **Delete ride**, **Report a crash or fall**, and **Share to forum**.
+  - **Change bike:** "Logged to {bike} · CHANGE" appears only for the latest completed ride, with 2+ bikes. It also patches the shared post's bike fields.
+  - **Faster than usual here:** after each ride the app contributes anonymous per-segment speeds (geohash-7 cell, weekday, hour, weather code from Open-Meteo; no uid, ride id or coordinates) to a shared pool and privately checks for a statistical outlier (z-score and a km/h floor). Needs 5+ prior samples on a cell, so it rarely fires yet.
+  - Close and "Save & done" pop back to the list the ride was opened from.
+  - A ride that recorded a crash signal shows a "Suspected crash" badge in All rides.
+- **Auto-tracking** (Settings, `AutoTrackingTile`): an opt-in all-day detector (free stack, `auto_tracking_service.dart`). It re-checks the real OS "Always" permission each time it is shown, and has **Active hours** (a daily window). It stands down while a manual ride is running, paused included. Detected trips are not saved as rides: they merge into a **daily ride summary** (fragments within 20 min merge; km, ride time, time stopped) shown as a "Today" row, in "Daily ride summaries" (last 14 days) and in a 9 pm notification. Detected distance not covered by a recorded ride adds to the active bike's odometer. Not checked on a device.
+- **Route following:** see §6a. Directions from a place also starts a ride (§6).
 
-## 3. Rides / stats (`features/stats`) — bottom nav tab "Rides"
+## 3. Rides / stats (`features/stats`): bottom nav tab "Rides"
 
-- **"Your Journey"** header, followed directly by the rider-wide **total km / rides / days since last ride** chips (moved here from the Record screen 2026-08-04 — these are the rider's totals across every bike, not one bike's).
-- Rank/level card (New Rider → Weekend Rider → Steady Cruiser → Road Regular → Seasoned Rider → Veteran → Road Master, 500 km per level).
-- **Distance and average-speed line charts** — each now marks the **peak point with a dot** and labels the peak's **value on the y-axis**, plus the **first/last ride's date on the x-axis** (`RideLineChart`, changed 2026-08-04). Deliberately not a full axis ladder — a 20-point sparkline only needs "how big did it get" and "over what span."
-- **Badges**, moved below the charts (2026-08-04) — the trend changes every ride and badges move rarely, so burying the trend under a wall of icons made the rarely-changing thing the loudest. Now rendered as `BadgeGrid`: one tile per badge **family** (bronze/silver/gold/platinum/diamond-style tiers grouped under one icon), colored + the family icon when at least one tier is earned, gray otherwise. Tapping any tile opens a ladder sheet listing every tier with its own earned/locked state — earned rungs say what they mean, locked ones say what to do and how far off the rider is. See `HANDOFF_Document.md` for the open question on the "complete every badge → engine oil" reward, which has no claim flow built yet.
-- **Sortable rides list** (added 2026-08-03): chips for **Recent / Top speed / Distance / Duration / Best score**. The trailing figure on each row follows the active sort, so the list explains its own order.
-  - Ranking reads the **full** ride history and truncates afterwards — `recentRides` is capped at 10, so sorting *that* by top speed would show the fastest of your last ten while calling it your fastest. `RiderStatsSummary.allRides` exists for this.
-  - Ties break by recency (repeated commutes and 0.0 km test rides tie constantly; without it the list reshuffles between rebuilds). Missing values sort **last** — a ride with no recorded duration is a data gap, not the longest ride.
-  - The sort is **not persisted**: it's a momentary question, not a preference.
-- **"All rides" button** (added 2026-08-04) — the compact list only ever shows 10; this opens `/rides/all` on top of the current screen. Same sort chips, lazy infinite scroll over the full history (not paged navigation — the data's already in memory, only rendering needs bounding), full per-ride detail (distance/duration/avg/top/score/events), and the ride's **route thumbnail** where one was recorded.
-  - **A "Followed \<route\>" pill** (added 2026-09-21) on any ride recorded while following a saved route — see §6a.
-- Empty state for zero-ride accounts.
+- Rank/level card (New Rider to Road Master, 500 km per level), a slim level bar and a dense 4-stat strip.
+- **Analytics:** 16 stacked chart cards (distance, speeds, duration, moving vs stopped, jam time, riding score, hard brakes, rapid accel, overspeed alerts, riding-days heatmap and streaks, rides by hour and weekday, distance per bike, longest rides, max lean, peak g, elevation gain, fuel spend per month, km/L, cost per km, litres per month). A tap opens `AnalyticsDetailScreen`: range 7D to All, min/max/avg/total, trend against the previous period, per-ride table, CSV through the share sheet. Logic: `stats/domain/ride_analytics.dart`. Lean and g are GPS-kinematic estimates (about ±3-5° on long sweepers, under-read on tight turns); elevation comes from stored altitude.
+- **Badges** (`BadgeGrid`): one tile per family (rides, distance, long ride, streaks, and more in `core/utils/badges.dart`), with bronze-to-diamond tiers. A tap opens a ladder; a tier opens `BadgeDetailSheet` (earned date or progress, share). The top-speed family and the "X% of riders own this" and rarity figures are gone: riders can award themselves badges, so the counts meant nothing. The client still increments the `stats/badges` counters that the rules pair with each award.
+- **Sortable rides list:** Recent / Top speed / Distance / Duration / Best score; ranks the full history, ties by recency, missing values last, not persisted. **All rides** (`/rides/all`) has the same chips, infinite scroll, route thumbnails, a "Followed \<route\>" pill, and the "Suspected crash" badge.
+- Errors show a plain message with "Try again" (shared `ErrorView`). Empty state for zero rides.
 
-## 4. Garage (`features/garage`) — bottom nav tab "Garage" (route `/home/profile`)
+## 4. Garage (`features/garage`): bottom nav tab "Garage" (route `/home/profile`)
 
-**Tab renamed back to "Garage" 2026-10-08** (it was "Profile" from 2026-08-17 to then).
-**Tab renamed from "Garage" to "Profile" 2026-08-17.** `GarageScreen` is still
-the screen behind it (route path kept as `/home/profile` internally — the
-`features/garage` folder and `GarageScreen` class name are unchanged, scoped
-deliberately to keep the diff small), but it now leads with account-level
-chrome rather than the bike list alone:
+- **Header:** profile summary (menu: Profile, My Places, My Shared Rides), notifications bell with unread badge, and Settings gear.
+- **Your Bikes:** list with photo, **Add/Edit Bike** (`/home/profile/add`, `/:bikeId/edit`): brand/model suggestions from `core/constants/bike_catalog.dart` (Bangladesh market; Yamaha FZ-S generations converge on one `FZS`), a 12-swatch colour picker or Auto, and a photo with an in-app cropper (Free / 1:1 / 4:3 / 16:9, rotate; offered, not forced). Photos fall back to an icon when the file is missing, which is normal for a bike synced from another device.
+- **Bike detail** (`/home/profile/:bikeId`): info, Service & maintenance card, fuel card, **Discuss this bike** and **Ask owners** (forum), and removal.
+- **Removing a bike archives it** (`ArchiveBikeDialog`): four unticked options (shared rides, calculated miles, service logs, photos). After archiving, the rider gets the deletion date (90 days), *Download a local copy* (JSON), *Delete now* (type the name) and *Done*. The garage has a collapsible "Archived bikes" list ("Deleted in N days") with Unarchive. `BikeArchiveService.purgeExpired` runs on app start, so a bike is purged only once the app is opened after its deadline (Spark has no scheduled functions). Deletes are durable (tombstones; `SyncManager` removes the Firestore copy).
+- **Fuel log** (`/home/maintenance/fuel`, `/fuel/add`): fill-ups synced to `users/{uid}/fuelLogs`; km/L between full-tank fills.
 
-- **Header**: a **profile summary** (avatar, name, "View profile" — tap opens
-  the same menu as before: **Profile**, **My Places**, **My Shared Rides**),
-  and, moved here from the Record screen's header, a **Notifications bell**
-  (unread badge) and a **Settings** gear icon. Record's header is now chrome-free.
-- **"Your Bikes" section** underneath — the bike list, unchanged in
-  substance: **Add/Edit Bike screen** (`/home/profile/add`,
-  `/home/profile/:bikeId/edit`), empty state with "Add Bike" CTA.
-  - **Bike photos now render** on both the garage list and bike detail (fixed 2026-08-04, `issues_open.md`) — a photo added via Edit Bike previously only ever saved to the entity; every screen that should have shown it (garage card, bike detail, record screen) still drew the generic icon tile. All three now go through a shared `BikePhoto` widget, which also falls back to the icon when the saved path points at a file that no longer exists — the normal case for a bike synced down from another device, since image paths are local and don't travel with sync.
-  - **Brand/Model fields now suggest as you type** (added 2026-08-29) — both fields were plain free text; now `BrandModelAutocompleteField` (`shared/widgets/brand_model_field.dart`) wraps them in Flutter's `Autocomplete`, offering a dropdown of real Bangladesh-market brands/models from a new `core/constants/bike_catalog.dart` while staying free text underneath, so typing something not in the list ("custom") still works exactly as before. The Model field's suggestions are filtered live by whatever's currently typed in Brand. Same widget reused on onboarding's first-bike step. Yamaha's FZ-S/FZS line is suggested as a single canonical `FZS`, matching the forum-grouping rule below. Unit-tested (`test/core/constants/bike_catalog_test.dart`).
-  - **Bike color picker** (added 2026-08-28) — a 12-swatch grid plus an "Auto" tile (`_ColorSwatchPicker`) under the odometer field. Selecting a swatch or leaving it on Auto sets/clears `BikeEntity.colorValue`, which feeds the Record-screen tint above; cloud sync needed no changes since `CloudRepository.uploadBikes`/`downloadBikes` round-trip the whole bike map already.
-  - **Photos can be cropped** (added 2026-08-11). Picking a photo goes straight into an in-app cropper; once one is attached, **Crop** and **Replace** buttons sit under the preview, so re-framing a photo doesn't mean finding it in the library again.
-    - **The crop is offered, not forced** — cancelling out of the cropper keeps the photo as picked rather than discarding the whole selection. "Right photo, no crop needed" is the common case, and re-picking would be a punishment for tapping Cancel.
-    - **Built in-app, not `image_cropper`.** That plugin's screen is native chrome (UCrop / TOCropViewController), which would be the one screen in the app that ignores the skin the rider chose — wrong on eight of the nine — and it wants an Android manifest entry and a pod. This uses `package:image`, already a dependency for `ImageCompressionUtils`.
-    - **Interaction: the photo is fixed, the frame moves.** The Instagram model (fixed frame, pan/zoom photo) makes an unconstrained "Free" crop awkward to express. Here the photo is letterboxed to fit and the frame is dragged and resized over it, which makes Free the default and turns the aspect presets — **Free / 1:1 / 4:3 / 16:9**, plus rotate — into a constraint on the frame rather than a separate mode. No zoom: for framing a bike it isn't needed, and it doubles the interaction surface.
-    - **Free is the default deliberately.** One photo serves both a 44px square thumbnail and the 210px wide Record hero, so no single ratio is right for both; the display widgets keep using `BoxFit.cover` either way. The crop's job is to let the rider decide *what the subject is*, so both cover-crops centre on the bike rather than on whatever happened to be mid-frame.
-    - **Where the code lives, and why it's split three ways:** the geometry is pure and unit-tested (`core/utils/crop_geometry.dart`, 29 tests — frame clamping, ratio anchoring, display→source mapping); the pixel pipeline is separate and independently tested (`core/utils/image_crop_io.dart`, 10 tests); the screen (`shared/screens/image_crop_screen.dart`) is only the gesture surface. **The split is not tidiness** — `flutter_test` runs widget code in a fake-async zone where real file reads and image decodes never complete, so a pipeline buried in a `State` method can only be exercised by hand. Pulled out, it takes an injectable output directory and is tested against four-colour quadrant fixtures that prove the *right region* was cut, not merely the right dimensions.
-    - **EXIF orientation is baked in before measuring** (`img.bakeOrientation`). `ImagePicker` normally normalises it when re-encoding, but a crop applied to an image whose orientation tag hasn't been applied cuts the wrong region, sideways, with no error.
-    - **Cropped photos are written to the app documents directory**, not left beside the `ImagePicker` original in a cache dir the OS may reclaim — which is the documented reason `BikePhoto` needs a fallback for a non-null-but-stale path at all. Only cropped photos get this; a photo kept as-picked still carries a cache path.
-    - `ImageCropScreen.open(context, sourcePath:)` is generic and returns a path or null, so the other three pickers (profile avatar, place photo, ride photos) are one call away from the same treatment — **not wired up**, since only bike photos were asked for.
-- **Bike detail screen** (`/home/profile/:bikeId`) — bike info, delete (with confirmation), **"Discuss this bike"** deep link into the matching forum thread. Deleting a bike removes its rides, their GPS points and its maintenance logs; it silently deadlocked before 2026-08-01 (`issues_fixed.md` §7).
-  - **Delete is now actually durable** (fixed 2026-08-04, `issues_fixed.md` §12) — it previously only removed the local row, so the bike reappeared on the next sync (still selectable on the Record screen, still in its forum). Deletes now write a local tombstone in the same transaction and remove the Firestore copy (and its rides) via `SyncManager`.
+## 5. Maintenance (`features/maintenance`): reached from Garage / bike detail
 
-## 5. Maintenance (`features/maintenance`) — reached from Garage/bike detail
+Redesigned 2026-10-07 to answer "what does my bike need next, and when?". Not checked on a device. Open items: `issues_open.md` §95.
 
-**Redesigned 2026-10-07 (not yet checked on a device).** The page answers "what
-does my bike need next, and when?" instead of listing checks with progress bars.
-Proposal: "ThrottleIQ Maintenance Redesign Proposal" (claude.ai doc,
-2026-10-06). Open items: `issues_open.md` §95.
+- **Engine** (`domain/calculators/maintenance_forecast.dart`) is the only definition of "due": the page, part detail, bike detail, garage card, widget and notifications all use it.
+  - Km or time, whichever comes first (`interval_km`, optional `interval_days`). Default warning windows: 20% / last 150 km, and 15% of the days (clamped 3-30). Riders can set their own.
+  - Projected date = km left ÷ average daily km over 30 days (rides plus detected trips).
+  - Baselines: last log, else the rider's "last done", else the bike's add date (only if it had ≤ 500 km then). Otherwise the check is **unknown** ("Set last done"), never overdue by guesswork.
+  - **Riding adaptation** (`riding_conditions.dart`, switch "Adapt to my riding"): stop-and-go share (oil, filter, clutch × 0.8-0.9), 3+ hard brakes per 100 km (pads, rotors × 0.85), a "dusty, wet or broken roads" profile (air filter, chain × 0.7, chain slack × 0.8). Combined factor floor 0.7; time limits are never scaled.
+- **Setup** (`/home/maintenance/setup`): schedule template (Pulsar 150, Hornet 160, FZ, R15/MT-15, Gixxer, Apache 160 matched by brand/model, else generic ≤125 / 126-200 / >200 cc; each with its free-service schedule), roads, oil grade (mineral 1,500 km / 180 d, semi 2,500 / 240, full synthetic 3,500 / 365), last oil change, then notification permission. Intervals the rider set (`source = user`) are never retuned.
+- **Page** (`/home/maintenance?bikeId=`), top to bottom: setup card; **Up next** hero (Done it / Remind me later for 3 days; "All good until ~date" when nothing is due within 14 days); 60-day strip; checks grouped Needs attention / Coming up / All good / Not known yet; **Quick check** (6 MSF T-CLOCS tiles, nudge after 7 days, local only); **service history as visits**; **Running costs** (৳/km, 12-month spend, 6-month chart); **Papers** (tax token, insurance, fitness, registration, licence, reminders 30 days ahead); **settings card** (schedule, adapt, reminders, running costs, custom checks, sync odometer, reset log, **Export service record** PDF, km/mi).
+  - A row opens **part detail** (`/home/maintenance/check`): status, projected date, interval source, adaptation, history, cost trend, actions.
+  - **Odometer sync** is typed by the rider; the photo is only a reference.
+- **Log a visit** (`/home/maintenance/add?bikeId=&serviceType=&visitId=`): one entry per trip to the mechanic. Due items are pre-ticked; bundles for oil change, servicing, chain care, brakes and the next **Free service #n**; custom job; oil brand and grade; odometer; one bill; shop with remembered shops; notes; receipt photo (local only). Saving shows Undo; `visitId` edits a visit.
+- **Reminders** (`data/services/maintenance_alerts.dart`): a local notification once per item per status per service, after a ride, after a change, on cold start and resume; date-driven items and papers are scheduled for the day they enter their warning window (up to 12). Android channel "Maintenance". Fuel and unknown items never notify.
+- **Order a low part** is a demo (cash on delivery), shown only to `BetaTesters.partOrdering`. Nothing is sent or charged.
+- **Trip quote** (branch `mayabi`, 2026-10-17): at the end of the Running costs sheet. The rider enters km to the pickup, the paid trip, km back home and, optionally, the fare. The sheet shows the full cost at the bike's ৳/km, the share of km that is unpaid, and the profit or loss. Nothing is saved. Logic: `RideCostCalculator.tripQuote`. Built for ride-hailing riders (Maya Ride's "Mayabi").
+- Data: `maintenance_logs` carry a `visit_id`; `bike_maintenance_configs`, `bike_maintenance_profiles`, `bike_paperwork`, `precheck_issues`, tombstones and `detection_odometer_credits` hold the rest. Settings backup (`MaintenanceSettingsSync`) carries configs, profile and paperwork.
 
-### The engine
+## 6. Places (`features/poi_directory`): bottom nav tab "Places"
 
-- `domain/calculators/maintenance_forecast.dart` (`forecastChecks`, `upNext`) is
-  the only definition of "due". The page, part detail, bike detail, the garage
-  card, the home-screen widget (`nextServiceDue`) and notifications all use it.
-- **Km or time, whichever first.** Each check has `interval_km` and optional
-  `interval_days`, with default warning windows: 20% / last 150 km, and 15% of
-  the days, clamped to 3–30. Riders can set their own windows.
-- **Projected date:** km left ÷ average daily km over the last 30 days (rides
-  plus detected trips; `data/repositories/maintenance_usage_repository.dart`).
-  The earlier of the km and time dates wins.
-- **Honest baselines.** A check counts from its last log, else from the rider's
-  "last done" (`baseline_km` / `baseline_date`), else from when the bike was
-  added (only if it had ≤ 500 km then). Otherwise it is **unknown** and shows
-  "Set last done". It is never shown as overdue by guesswork.
-- **Riding adaptation** (`riding_conditions.dart`). Each factor shows on the row
-  as a reason chip. Settings has an "Adapt to my riding" switch. The factors:
-  - ride telemetry over the last 60 days (needs ≥ 100 km): stop-and-go share
-    → oil / oil filter / clutch × 0.8–0.9;
-  - ≥ 3 hard brakes per 100 km → pads and rotors × 0.85;
-  - the rider's "dusty, wet or broken roads" profile → air filter × 0.7,
-    chain × 0.7, chain slack × 0.8.
+- **Hub** (`places_list_screen.dart`): **Places | Routes | Saved** switcher.
+  - **Places:** live search (300 ms debounce), category ribbon with counts (Fuel / Garage / Parts / Recreation / All), filter sheet (radius 5-50 km remembered, sort, verified only, rider tags), **Map / List** toggle and a full-screen map mode. The map has category pins, grid clustering, radius ring and a card carousel.
+  - **Cards:** distance, Verified badge, rider ratings, **Rider Approved** (≥ 4.5 from ≥ 5 ThrottleIQ riders), up to three tags, one-tap Directions / Call / Save. No Google ratings are stored or shown any more (§105); unrated places say "No ratings yet".
+  - **Highway Radar:** AI cameras and police checkposts, counted in a dismissible banner; tapping paints them red on the map. Temporary cop checkpoints show "Reported 2:14 PM · expires in 23 h" and drop out after expiry.
+  - **Saved:** local SQLite bookmarks (works offline, wiped on account deletion) and the way into **Places I added**.
+  - **OpenStreetMap import** ("Scan OpenStreetMap", capped at 25 km). Location and network errors are typed (GPS off, denied, denied forever, offline).
+- **Place detail:** address, phone, hours, rating, reviews, photo, **Directions** and **Call**. Directions hands off to the rider's maps app by coordinates (`domain/place_directions.dart`) and also starts a ride first, silently skipping it when it cannot (no bike, no permission, ride active).
+- **Add place:** optional photo (Cloudinary), optional informal address with reverse-geocode autofill from the pin, a required map location, rider tags (24/7, octane 95, digital payment, EFI diagnostics, puncture repair, paddock stand, genuine parts, bike parking, restrooms; max 12). **My places** (`/places/mine`) lists the rider's own.
+- **Data:** Dhaka is seeded in production. 395 OSM places (2026-08-12, `createdBy: 'system:osm-seed-dhaka'`) plus 717 Google Maps gap-fill places (2026-10-19, `system:gmaps-seed-dhaka`), 1,238 `places` docs in all, all `verified: true`. OSM covers chain stations well and small independent garages and parts counters poorly. Seed and import scripts live in `scripts/oneoff/` (`scripts/README.md`). The Google import is not checked on a device. Open: §104.1 (nearby refetch cost), §105.
 
-  The combined factor never goes below 0.7, and time limits are never scaled.
+## 6a. Routes (`features/routes`): the Routes tab of the Places hub (also `/routes`)
 
-### Setup and schedules
+- **Routes list** (`/routes`): "My routes" and "Discover" (public routes from any rider); thumbnail, distance, "Ridden N×", private/public badge. A finished ride that followed one of the rider's own routes bumps its count (best effort; not queued).
+- **Save as route** (`/routes/save/:rideId`): name, description, private/public; the track is rebuilt from the ride's points. **Route detail** (`/routes/:routeId`, `?owner=<uid>` opens another rider's public route read-only): map, stats, toggle, delete, turn list, "Start navigation".
+- **Following a route records the ride.** `/routes/:routeId/navigate` is a pre-flight (name, length, manoeuvres, first instruction, "Start ride & guide me"); it starts or attaches to a real recording at `/ride/active`. Guidance is drawn over the cockpit by `NavigationBanner`: next manoeuvre and distance, distance remaining, ETA, an off-route warning past 100 m, and a close button that drops guidance while recording continues. The ride stores `route_id` / `route_name` (schema v17). Navigating without recording is not possible.
+- Guidance is geometric (`turn_instruction.dart`): no routing engine, no street names, no lane guidance, no rerouting. `test/features/routes/gpx_replay.dart` replays any GPX through the session. **Not checked on a device**: nobody has ridden a route with this (`issues_open.md` §78.21).
 
-- **Setup** (`/home/maintenance/setup`; a new bike's first-run link goes here
-  too). The rider picks:
-  - the schedule template;
-  - their roads (normal / severe);
-  - the oil grade;
-  - when the oil was last changed (km and date, or "don't know");
-  - optionally, "everything else was done then too".
+## 7. Social (`features/social`, `features/forums`, `features/chat`, `features/moderation`): bottom nav tab "Social"
 
-  It asks for notification permission at the end.
-- **Templates** (`domain/catalog/schedule_templates.dart`) are matched by
-  brand/model, then cc:
-  - Pulsar 150 (from the manual), Hornet 160, FZ, R15/MT-15, Gixxer and
-    Apache 160 (all approximate);
-  - generic ≤125cc, 126–200cc and >200cc.
-
-  Each template carries its free-service schedule. Intervals set by the rider
-  (`source = user`) are never retuned by a template or oil-grade change.
-- **Oil grade** decides the oil interval: mineral 1,500 km / 180 d,
-  semi-synthetic 2,500 / 240, full synthetic 3,500 / 365. Picking a grade
-  when logging oil retunes the next change.
-
-### The page (`/home/maintenance?bikeId=`), top to bottom
-
-1. A setup card, until the bike is set up (or if it was customised before
-   setup existed).
-2. **Up next** hero: "Oil change · in ~6 days", the limits ("410 km or 23 Oct,
-   whichever first"), and the last service (oil, km, ৳, shop). Buttons: **Done
-   it** (opens Log a visit with the item ticked) and **Remind me later** (hides
-   it for 3 days). When nothing is due within 14 days it shows a calm "All good
-   until ~date" instead. Fuel and unknown items never headline.
-3. **Coming up · next 60 days** strip: each item at its projected date, overdue
-   items pinned left of "today". Tapping an item opens its detail.
-4. Checks grouped by urgency:
-   - **Needs attention** (overdue, due soon, open quick-check issues);
-   - **Coming up** (due within 60 days);
-   - **All good** (collapsed);
-   - **Not known yet** (collapsed, with "Set last done").
-
-   A row shows what's left in the rider's units, the reason chips, a thin bar,
-   and a quick Log button. Tapping it opens **part detail**
-   (`/home/maintenance/check`): status, projected date, interval and where it
-   came from, the adaptation, its own history, the cost trend, and actions
-   (log, edit interval, set last done, remove a custom check).
-5. **Quick check** (MSF T-CLOCS, 6 tiles): nudges if not done for 7 days.
-   Failed tiles become "Needs attention" rows until marked fixed. Stored locally
-   only (`precheck_issues`).
-6. **Service history as visits** (`VisitTile`): date, km, shop, item chips,
-   bill and receipt thumbnail. Tap to edit; the menu deletes the whole visit.
-7. **Running costs** card: ৳/km all-in (servicing + fuel), the last 12 months'
-   spend, a 6-month bar chart, and the split between oil, parts and unitemised
-   servicing.
-8. **Papers**: tax token, insurance, fitness, registration and licence expiry,
-   with reminders 30 days before.
-9. **Maintenance settings**:
-   - Schedule & riding conditions (reopens setup)
-   - Adapt to my riding
-   - Maintenance reminders
-   - Running costs
-   - Customize checks (now with **your own checks**: name + km and/or days)
-   - Sync odometer
-   - Reset service log (one visit)
-   - **Export service record** (PDF of every visit plus receipts, share sheet)
-   - km/mi
-
-### Log a visit (`/home/maintenance/add?bikeId=&serviceType=&visitId=`)
-
-- One entry per trip to the mechanic. Due items are pre-ticked (or just the
-  item it was opened for).
-- Bundles: oil change, general servicing, chain care, brake service, and the
-  next **Free service #n** from the template.
-- "Show all items", and a one-off custom job.
-- Oil brand (with suggestions) and grade; odometer prefilled from rides; date;
-  one total bill; shop name (with remembered shops) and type (service centre /
-  local mechanic / self); notes; receipt photo (stored in app documents under
-  `receipts/`, local only).
-- Saving shows **Undo**. Opening with `visitId` edits the visit: kept items
-  are updated in place, unticked ones are tombstoned.
-
-### Data
-
-- `maintenance_logs` gained visit columns (v20). A visit is the rows sharing a
-  `visit_id`; older logs are visits of one.
-- `bike_maintenance_configs` gained `interval_days`, warning windows,
-  baselines, `source` and `custom_label`.
-  - A custom tracked check is keyed `custom:<id>` in `service_type`.
-  - The migration marks existing rows `source = user` and gives them their
-    type's default time limit.
-- New tables:
-  - `bike_maintenance_profiles` (template, roads, oil grade, adapt switch,
-    onboarded, last quick check);
-  - `bike_paperwork`;
-  - `precheck_issues`;
-  - `deleted_maintenance_logs` (tombstones);
-  - `detection_odometer_credits`.
-- **Deletes are durable** (§94.2): tombstone, queued upload dropped, Firestore
-  copy removed by `SyncManager`, downloads skip tombstoned ids.
-- **Settings backup** (`MaintenanceSettingsSync`) now also carries the new
-  config columns, the profile and paperwork.
-- **Detected trips add km** (§93.1): `DetectedOdometerCredit` adds the part of
-  each detection that no recorded ride covers, if it looks like riding, to the
-  active bike's `odometer_km`, once per detection.
-
-### Reminders outside the app (`data/services/maintenance_alerts.dart`)
-
-- A local notification when an item becomes due soon or overdue: once per item
-  per status per service, re-armed by logging it. Runs after a ride ends, after
-  any maintenance change, on cold start and on resume.
-- Date-driven items and paperwork are scheduled for the day they enter their
-  warning window (up to 12).
-- New Android channel "Maintenance". Tapping a notification opens that bike's
-  maintenance page.
-- Fuel and unknown items never notify.
-
-### Unchanged / kept
-
-- Service types: the 22-type catalogue (persisted by name).
-- Running-cost estimate on ride summaries (`RideCostCalculator`).
-- km/mi toggle and the bulk reset (now one visit).
-- **Order a low part — DEMO, cash on delivery** (added 2026-10-06). The
-  `OrderPartSheet` placeholder is unchanged, but the button now shows only for
-  riders in `BetaTesters.partOrdering` (on due rows and part detail). Nothing
-  is sent, stored or charged.
-- **Odometer sync** no longer pretends to scan. The photo is a reference and
-  the rider types the reading (§94.4).
-
-## 6. Places / POI directory (`features/poi_directory`) — bottom nav tab "Places"
-
-- **Places hub** (`places_list_screen.dart`, redesigned 2026-10-07, issues_fixed §96) — a segmented **Places | Routes | Saved** switcher replaces the old standalone "Browse routes" button.
-  - **Places:** live search (name, address, category, tags; 300 ms debounce), a horizontal category ribbon with per-chip counts (Fuel/Garage/Parts/Recreation/All), a filter sheet (radius 5/15/25/50 km — remembered, replaces the hard-coded 25 km; sort nearest/top rated; verified only; rider tags), and a **Map / List** toggle. The map (default) uses `AppTileLayer` with category-colored pins, grid clustering (`domain/marker_clustering.dart`, no new dependency), the radius ring, a pulsing "you" dot, locate-me, and a snapping card carousel kept in sync with the pins.
-  - **Cards** show distance + rough minutes, a Verified badge, clear dual ratings (`🏍 ★ 4.8 (24 riders)` / `G ★ 4.4 (110 Google)`, replacing `★ 4.2 + 4.8`), a **Rider Approved** badge (≥ 4.5 from ≥ 5 ThrottleIQ riders), up to three tags, and one-tap **Directions / Call / Save**.
-  - **Highway Radar:** AI cameras and police checkposts are no longer category chips. A dismissible banner counts them within the radius; tapping it switches to the map and paints them red; its list icon shows them nearest-first.
-  - **Saved:** local SQLite bookmarks (schema v21, `saved_places`, works offline, per rider, wiped by account deletion) plus the way in to **Places I added**.
-  - **OpenStreetMap import** moved out of the unexplained AppBar icon: an explained empty-state "Scan OpenStreetMap" action, and the overflow menu (with a confirm dialog). Capped at 25 km.
-  - **Location / network errors** are typed (`PlaceLocationException`): GPS off → location settings; denied → ask again; denied forever → app settings; offline → retry or open Saved. (GPS-off used to fall through to the generic error card, because its message never matched `isLocationServicesError`.)
-- **Place detail screen** — address, phone, hours, star rating, **submit a review**, and a photo when one was added.
-  - **"Directions" and "Call"** (added 2026-08-15) — a full-width filled **Directions** button under the details, with **Call** beside it when the place has a dialable number. For a petrol pump or a garage, getting there is the whole reason the screen was opened, so directions is the primary action rather than an app-bar icon.
-    - **It hands off to the rider's maps app; ThrottleIQ does not route.** This is deliberate. The in-app turn-by-turn (§6a) reads turns *geometrically* off a polyline the rider has already ridden — that works because the recorded trail already describes the road. Riding to a pump they've never visited is the opposite problem: no trail, so it needs a real routing engine with a road graph, one-ways, live traffic and rerouting on a missed turn. Google Maps does all of that, offline-capable, free, and is already on the handlebar mount. Routing it ourselves would cost an API key, a bill, a Data Safety disclosure, and still be worse.
-    - Uses the cross-platform `google.com/maps/dir/?api=1` form (not the legacy `comgooglemaps://` scheme) so it resolves to the Google Maps app when installed, the browser when not, and Apple's app on iOS via the user's default-app setting; falls back to `maps.apple.com` on iOS if that fails outright. `travelmode=driving` is the closest the URL API offers to a motorcycle — there is no motorcycle mode, and walking/cycling would happily route a bike down a footpath.
-    - **The place name is deliberately not in the URL.** `dir/?api=1` treats a text destination as a *search query*, so passing "Shell Petrol Pump" could resolve to a different branch than the one tapped. Coordinates are unambiguous, which beats a pretty pin label.
-    - URL building is pure and unit-tested (`domain/place_directions.dart`, 8 tests) — including that coordinates never stringify into exponent notation (`1e-7` is not a valid maps URL) and that a number with no digits hides the Call button rather than opening an empty dialler.
-    - Needed an Android `<queries>` entry: package visibility on API 30+ means that without it the launcher can see no app at all for these intents, so both buttons would throw on a modern phone while working on an old one.
-    - **Directions also starts a ride** (added 2026-08-17). The rider is about to go somewhere on the bike; ThrottleIQ starts recording before handing off to the external maps app, so a journey navigated externally still gets logged. The ride-start call happens *before* `launchUrl`, not after — once the external app takes over, ThrottleIQ is backgrounded and has no foreground window left for a location-permission prompt to appear in. Silent on failure by design (no bike added, permission missing, a ride already active/paused) — the primary promise of the button is directions, and a rider who only wanted those should never see an error from the ride the tap also tried to start.
-- **Add place screen** — a photo is now **optional** (added 2026-08-04, Cloudinary-backed like ride photos; a failed upload doesn't cost the rest of the submission). Address is also optional, with **reverse-geocode autofill** from the dropped map pin (`NominatimService`, OpenStreetMap — an explicit rider action, never triggered by panning, per Nominatim's rate policy) and a helper note that the address is meant to be informal ("beside XYZ school," not a formal street address).
-- **Add place: rider tags** (2026-10-07) — optional features per category (24/7, octane 95, digital payment, EFI diagnostics, puncture repair, paddock stand, genuine parts, bike parking, restrooms). Stored as `tags` (list of `PlaceTag` names, only written when non-empty); the `places` create rule caps it at 12 unique entries.
-- **My places screen** (`/places/mine`, reached from the Garage header menu, the Places overflow menu and the Saved tab) — places the current user added.
-- **Categories**: Fuel, Garage, Parts, and **Recreation** (added 2026-08-01 — biker cafes, restaurants and viewpoints; the Overpass import pulls `amenity=cafe`, `amenity=restaurant` and `tourism=viewpoint` for it).
-- **Dhaka is seeded by default** (tooling added 2026-08-12, `scripts/seed_dhaka_places.js`) — so a rider who opens Places in Dhaka sees a real directory on first launch rather than an empty list waiting for someone else to contribute. Same OpenStreetMap/Overpass source as the in-app import, but a whole-city bounding box run once from the Admin SDK instead of a radius around one rider.
-  - **Live as of 2026-08-12** — **395 places written to `throttleiqfb`: 256 fuel, 75 garages, 64 parts sellers** (32 of them unnamed in OSM, so they show as literally "Fuel"/"Garage"/"Parts"). The `places` collection went from 3 documents to 398; the 3 pre-existing rider-contributed places were untouched. Verified read-back: 0 malformed geohashes, 0 missing `osmId`s, and a re-run reports `395 already present, 0 new`. See `scripts/README.md` for the fetch → review → dry-run → write flow, and `HANDOFF_Document.md` for the two setup prerequisites that aren't obvious.
-  - Seeded places carry `createdBy: 'system:osm-seed-dhaka'` (a sentinel, so they never appear in any rider's **My places**, and so the whole batch is one query away for a re-seed or rollback), `verified: true` (they come from a structured source, not an unmoderated rider submission), and their real `osmId` — which is what stops a rider's later "Import nearby" tap in Dhaka from duplicating them.
-  - Two ways it reaches further than the in-app importer, both because of Dhaka specifically: it queries **ways and relations** as well as nodes (most of the city's petrol stations are mapped as building polygons, which a node-only query misses entirely), and it adds `shop=motorcycle_repair` / `shop=motorcycle_parts` to the app's three tags. Bangla names are kept in preference to `name:en`.
-  - **Coverage caveat**: OSM maps Dhaka's chain petrol stations well and its small independent garages and roadside parts counters much less so. This is the largest freely-available list, not a census.
-
-## 6a. Routes (`features/routes`) — the Routes tab of the Places hub (also `/routes`)
-
-Added 2026-08-01. Built on the route data layer that had existed with no UI.
-
-- **Routes list** (`/routes`) — "My routes" and "Discover" (public routes from any rider) tabs; cards show a map thumbnail, distance, times-ridden and a private/public badge.
-  - ✅ **"Ridden N×" is a real number now** (fixed 2026-09-21, `issues_fixed.md` §85) — the counter was written as `1` when a route was saved and never incremented by anything, so every card read "ridden 1×" forever. Finishing a ride that followed the route now bumps it: on *completion*, so abandoned attempts don't count, and never on a discarded ride. Only the rider's own routes move — `users/{uid}/routes/{id}` is owner-only write, so following a *discovered* route silently doesn't count against the owner's total. Best-effort: a bump made with no connection is lost rather than queued, which is the right trade for a cosmetic counter and the wrong one if Discover is ever ranked by it.
-- **Save as route** (`/routes/save/:rideId`) — reached from the end-of-ride share screen. Name + description, private/public switch; the track is re-derived from `RidePointDao`.
-- **Route detail** (`/routes/:routeId`) — full map, stats, public/private toggle, delete, the derived turn list, and "Start navigation".
-- ✅ **Following a route records the ride** (changed 2026-09-21, `issues_fixed.md` §78.21) — `/routes/:routeId/navigate` is now a **pre-flight**, not a navigation screen: route name, length, manoeuvre count, the first instruction, and one button ("Start ride & guide me", or "Guide me on this ride" when a ride is already running). It starts — or attaches to — a real recording and hands over to the cockpit at `/ride/active`.
-  - **Why it changed.** The old screen ran its *own* `Geolocator.getPositionStream`, permission checks, wakelock and progress maths, none of it known to `RideRecordingNotifier`. So the app's two core loops didn't compose: a rider could follow a saved route for two hours, hold two GPS subscriptions open the whole time, and end up with **no ride in their history**. Same reasoning as the Places "Directions also starts a ride" behaviour in §6 — a rider going somewhere on the bike should get that journey logged.
-  - **Guidance is drawn over the cockpit** by `NavigationBanner`: the next manoeuvre with distance to it, distance remaining, speed-based ETA, an off-route warning past 100 m, and a close button that drops guidance while the ride **keeps recording**. The followed route is drawn under the ride's own trail, dimmer — the route is the plan, the trail is what happened, and when they diverge the rider needs to see which line is which. The recorder's wakelock covers the screen; there is no second one.
-  - **One GPS stream.** `navigationSessionProvider` owns no location subscription — it listens to the recorder's state, selected down to position/speed/status so it recomputes at GPS-fix cadence rather than accelerometer cadence. The dependency runs one way: routes knows about the recorder, the recorder knows nothing about routes.
-  - **The ride remembers the route** — `route_id`/`route_name` on the ride record (schema v17), so history shows a **Followed \<route\>** pill (§3). The name is stored beside the id rather than looked up, because a discovered route lives under another rider's uid and a route can be renamed or deleted after the ride.
-  - **Trade-off worth knowing:** navigating *without* recording is no longer possible. That was the approved call, but a rider who only wants the line on screen now gets a ride they have to discard.
-  - **Offline and geometric.** Turns are derived from the route's own recorded polyline (`turn_instruction.dart`) — no routing engine, no API key, no recurring cost. The trade-off: no street names, no lane guidance, and it does **not** reroute — it tells the rider they're off route rather than inventing a new path. Street names would need map matching (Phase 3 in `HANDOFF_Document.md`).
-  - **Replayable without a bike.** `test/features/routes/gpx_replay.dart` reads any GPX and drives it through the same session the cockpit uses — turns firing in order, off-route raised and cleared, corners taken 45 m wide, one fix in twenty, pause, and ending mid-route (15 tests). Drop a real exported ride into `test/features/routes/fixtures/` and it reads that the same way; the checked-in fixture is synthetic and says so in its own metadata.
-  - **Still not verified on a device.** Replay stops at the session boundary: `Geolocator`, permissions, the foreground service, the wakelock, persistence and battery/thermal behaviour are all below it and can't be substituted (§83.13). Nobody has ridden a route with this. See `issues_open.md` §78.21.
-
-## 7. Social (`features/social`, `features/forums`) — bottom nav tab "Social"
-
-- ✅ **Offline/error states now read as customer-facing, not developer-facing** (fixed 2026-08-27, `issues_fixed.md` §37.4) — the Feed, both Forums lists, and a forum's thread view used to render a raw Firestore exception (e.g. the SDK's own `[cloud_firestore/unavailable] ... may be corrected by retrying with a backoff` message) straight into the screen whenever the device was offline. Now goes through `mapFirestoreError()` (`core/utils/firebase_error_mapper.dart`) into the new shared `ErrorView` widget (`shared/widgets/error_view.dart`) — a plain sentence ("You're offline. Check your internet connection and try again.", etc.) plus a "Try again" button that re-fetches.
-- ✅ **Compact shared-ride card + owner actions (2026-10-15)** — feed card shows `@username` (read from the rider's profile via `RiderHandle`; full-name fallback only if no username) where the bike model sat, bike name right-aligned where the full name was, "Motorcycle" bikeType label dropped, riding score moved into the stat row after max speed (tier-coloured). On your own shared ride (detail screen) the ⋮ menu is **Edit ride** (caption + up to 3 photos only, `EditSharedRideSheet`) / **Delete ride** (deletes the shared post only; dialog points to Rides → History → ride → Delete) / **See more** (opens `/ride/summary/:id`); other riders' posts keep **Report ride** only. Ride history screen (`RideSummaryScreen`) has a new **Delete ride** button after Report a crash: `RideDao.deleteWithTombstone` + best-effort shared-post delete. EN/BN strings (BN pending review). Not visually verified on device.
-- ✅ **Social redesign: Rides / People / Forums tabs (2026-09-27, `ANTIGRAVITY_GRILL/new_task`)** — the screen now matches the design mock's three-tab layout instead of the old two-tab Feed/Forums shell with an always-visible search box.
-  - **The search box moved to the AppBar's search icon**, opened as a `SearchDelegate` (`_SocialSearchDelegate`) rather than an inline field — the combined rider+forum search below is otherwise the same "Header search" behavior described just below, reached one tap away instead of always occupying the title bar.
-  - **New "People" tab** (`_PeopleTab`) — a rider-only search box (`_riderSearchProvider`, debounced 250 ms same as the AppBar search) and, when it's empty, the **Following** list: every rider the signed-in rider follows, hydrated with one `getProfile` per uid (`_followingProfilesProvider`, same `Future.wait` hydration shape `ride_share_repository.dart` already uses for feed votes — fine at follow-list scale, unlike the N+1 feed-vote pattern that matters at 60 rides). No "Discover"/suggested-riders section: there is no recommendation backend to power one, and the tab only shows what's real.
-  - **"RIDING NOW" strip** (`_LiveGroupRideCard`) — the feed tab's live-group-rides shelf, wired to a **real** query: `GroupRideRepository.watchActiveGroupRidesForUser()` (`groupRides` where `memberIds array-contains` the signed-in rider AND `status == 'active'`), exposed as `activeGroupRidesForUserProvider`. Each card's avatar initials and live count come from the same `groupRideMembersProvider` roster stream the group-ride map screen already watches — never fabricated. `firestore.rules`' `groupRides` `list` rule was extended to allow exactly this query shape (memberIds array-contains the caller's own uid), alongside the pre-existing creator-only `getUserGroupRides` shape; 3 new emulator tests cover the allowed query, a denied cross-uid query, and a denied unfiltered scan (`npm run test:rules`, 119/119 green). The strip hides entirely when the rider has no active group ride, rather than showing anything fake.
-  - **Deliberately NOT built**, and why: an initial pass at this redesign (left uncommitted in the working tree, caught during this fix) hardcoded the mock's literal sample data — "Rafi's Squad", "Nadia Rahman", and a "Chittagong Hill Tracts" location pill baked onto every feed card regardless of where the ride actually was — and shipped a bare `Center(child: Text('People'))` for the People tab, with the combined search silently disconconnected. All of that has been replaced with the real wiring described above. Two mock elements were deliberately left out rather than faked:
-    1. **Solo "riding now" cards for followed riders** (the mock's second card style, e.g. "Nadia Rahman · Solo · 8 km so far") — there is no backend capability for "who I follow is live right now" today. `liveSessions`/`livePointers` are deliberately token-keyed and non-enumerable (`firestore.rules` comments are explicit that this is a privacy boundary, not an oversight) — building this would mean a new public "is this rider live" signal visible to followers, which is a privacy-relevant product decision on its own and deserves a dedicated pass, not a rushed addition under a release deadline.
-    2. **The per-card location pill** (e.g. "Chittagong Hill Tracts") — `SharedRideEntity` has no place-name field at all; the only reverse-geocoding capability in the app (`poi_directory/data/services/nominatim_service.dart`) calls the OpenStreetMap Nominatim API live, which is explicitly against Nominatim's usage policy to call per-render for a whole feed (no caching, well above their rate limit) and would leak every rendered ride's start coordinate to a third party. Doing this properly needs a one-time reverse-geocode at share time with the result cached on the ride doc — real backend work, not a UI tweak — so the pill was removed rather than either faked or wired unsafely.
-- **Header search** (added 2026-08-04) — one box, riders and forums both, replacing the old standalone "Find riders" tile. A rider name or an email is routed to `searchByUsername`/`searchByEmail`; forums are matched in-memory over a bounded, most-followed page (`ForumRepository.searchForums`) since Firestore has no substring match. Debounced 250 ms so it isn't a query per keystroke. As of the redesign above, reached from the AppBar's search icon rather than an always-visible field.
-- **Feed tab** — shared rides with score, comment count, inline comments; empty state pointing users to share a ride from its summary screen.
-  - **Post photos have a hairline border** (2026-09-21) — the feed's `RideMediaCollage` and the ride-detail "Ride Photos" thumbnails are outlined in the palette's `border` colour at the shape profile's `outlineWidth`, painted over the photo (a pale photo on a pale card had no visible edge). Not yet checked on a device.
-  - **Sort/filter chips** (added 2026-08-04, `FeedSort`) sit where "Find riders" used to: **Hot** (net upvotes, ties break by recency), **Recent** (default), **Following** (only riders you follow — an empty following list shows an empty feed on purpose, rather than silently ignoring the chip).
-  - Each card renders the ride's **route map** (Strava-style). With photos, photos and map sit side by side; without any, the map spans the card.
-  - **Up to 3 photos per ride** (added 2026-08-04, `kMaxRidePhotos`) — rendered as a swipeable strip with a "2/3" counter and page dots once there's more than one; a single photo behaves exactly as before (no swipe, no counter).
-  - Rides carry an optional **caption**, written on the share screen.
-  - **Riding-score badge** (added 2026-09-19, `issues_fixed.md` §68) — a shared ride now carries its private per-ride **riding score** (0-100, `computeRidingScore()`) through to the feed card and detail screen as a tier-colored badge ("Smooth op." ≥80 / "Steady" ≥60 / "Aggressive" below, same thresholds as the private summary screen via the shared `ridingScoreTier()` helper; labels localized EN/BN since §69.11). Hidden entirely on any ride shared before this existed rather than showing a false 100 — `SharedRideEntity.ridingScore` is null unless the ride's hard-brake/rapid-accel/high-jerk counts all came through.
-  - A shared ride's `bikeId`/`bikeName`/`bikeType` are a **snapshot taken once at share time**, not a live reference — `RideShareRepository.shareRide()` resolves them from whatever bike was active when the rider tapped Share. ✅ **Correcting a ride's bike after sharing now reaches the post too** (fixed 2026-09-19, `issues_fixed.md` §76) — `RideAttribution.confirm()` (behind both §75's "Change bike" and the pre-existing auto-detected-ride confirmation) now best-effort-patches the shared doc's bike fields via the new `RideShareRepository.updateSharedRideBikeInfo()`, a no-op if the ride was never shared.
-- ✅ **Forums "Pit Wall" redesign (2026-10-07)** — the Forums tab is now two lenses behind a `Pulse | Hubs` segmented toggle (`forums_home_screen.dart`), replacing the 17-row ListTile directory and its duplicate in-page search:
-  - **Pulse** (`forums_pulse_view.dart`, `forumsPulseFeedProvider`): recent posts across garage + followed forums, merged hole-free by `mergeForumPostPages`. Read budget per page: ≤ `kPulseMaxSources` (8) forums × `kPulsePerSourceLimit` (10) posts, first page kept 2 min, source list 10 min. Filter chips All / My bikes / Help & fixes / DIY guides / Most voted are client-side (zero reads); **Saved** lists local SharedPreferences bookmarks (`forum_bookmarks_provider.dart`, zero reads).
-  - **Hubs** (`forums_hubs_view.dart`): "Your garage" hero cards (bike, odometer, thread count, follow, **Ask owners** → composer, **Browse board**), empty-garage banner → Garage; **Brand paddocks** carousel with livery accents; **Topic boards** bento (Wrench Bench, Spark Plug Corner, Apex Lab, Two-Stroke Smoke + 4 more — board names are presentation only, the stored topic slugs are unchanged, `forum_directory.dart`); **Rider clubs**. Directory stats are one `documentId in [...]` read (≤ 30 ids, no composite index), kept 10 min. The search shortcut opens the Social AppBar search, which now also offers "Open the "X" brand forum" (what the old in-page brand box did).
-  - **Post types & Solved** — posts carry `postType` (`troubleshoot`/`diyGuide`/`gearReview`/`general`), `isSolved`, `solutionReplyId`, `authorBike` (byline bike badge) and an optional `attachment` card. The author of a troubleshoot post can mark it solved / reopen it and accept a reply as the solution, pinned and highlighted in green on the post (`forum_solution.dart`). `firestore.rules`: new fields validated on create (never created solved), and only the author may write `isSolved`/`solutionReplyId`, only on a troubleshoot post, only naming an existing reply (`scripts/test/rules/forum_pitwall_rules.test.js`). Old posts read as unsolved `general`.
-  - **Garage/Rides integration** — bike detail has **Ask owners** next to "Discuss this bike"; ride summary (AppBar) and each maintenance visit (⋮ menu) have **Share to forum**, which picks a forum and opens its composer with a snapshot card (the record itself stays in the author's local DB; only the author can open it from the card).
-  - **Post photos (2026-10-07)** — the new-post sheet has **Add photos (n/4)** (camera or gallery, up to `kForumPostMaxImages` = 4). Photos upload to Cloudinary under `forumPhotos/<uid>/` (`ForumRepository.uploadPostPhoto`) and are stored as `imageUrls` on the post. They show on thread cards, Pulse cards and post detail (`forum_post_images.dart`), and tapping one opens the shared full-screen gallery. Rules (`forumImagesValid`) allow at most 4 URLs, each in the author's own folder.
-  - **Brand paddock counts (2026-10-07)** — a paddock card shows posts and riders summed over the brand forum **and** its model forums (`aggregateBrandPaddockStats`, `brandPaddockStatsProvider`: one capped `brand whereIn` read, kept 10 min). Before this it read only the brand doc, which is usually empty, so every brand said "0 riders" while its thread was full of model-forum posts.
-- **Forums tab** (`forums_home_screen.dart`) — (pre-2026-10-07 layout, superseded above) "Your bikes" forums, **Rider forums**, then **Find a forum** (search + Brands + Topics) → **forum thread screen** → **new post** (bottom sheet) → **post detail screen**.
-  - **"Your bikes" is model-level only** (changed 2026-08-11) — one forum per bike you own (Yamaha RXS 1154), and **not** the brand forum above it. It used to add both: owning one bike enrolled you in every thread about every Yamaha ever made, which buried the forum you actually cared about under a much noisier one you never asked for. Brand forums still exist and are still followable — they're opt-in via discovery now rather than assigned by ownership. A bike with no model recorded contributes nothing (its only slug *is* the brand forum). Guarded by `test/features/forums/garage_forums_test.dart`.
-  - **A brand forum now surfaces its model forums' posts too** (added 2026-08-27) — a post made in "Honda CB Shine 125" also shows up when viewing "Honda", tagged `from Honda CB Shine 125` so it's clear where it actually lives. Read-time merge only: the post still lives solely in its own model forum's `posts` subcollection and counts only toward that forum's `postCount`; voting/deleting a merged post from the brand-forum view still writes to its own forum, not the brand's. One-directional on purpose — a brand forum's own (general, non-model-specific) posts never leak down into a narrower model forum, which is the same noise the 2026-08-11 change above was written to avoid; this only merges the other way, model → brand, which is additive rather than noisy. Verified against live production data: `forums/honda`'s view now correctly picks up 4 posts across `Honda CB Shine 125`/`X-Blade 160`/`CB150R Streetfire`/`CBR250RR`. Pure filtering logic (`modelForumsToMergeInto`) is unit-tested in `test/features/forums/forum_repository_test.dart`.
-  - **Yamaha FZ-S/FZS generations converge on one forum** (added 2026-08-29) — `FZS`, `FZ-S V2`, `FZS-Fi V3`, `fzs v4`, etc. all resolve to a single `Yamaha FZS` forum (slug `yamaha__fzs`) instead of fragmenting into one near-empty forum per version. New `normalizeModelFamily()` in `core/utils/slugify.dart`, applied inside `bikeForumSlug` (so both the slug and, via `ForumRepository.getOrCreateForum`, the stored `model`/`displayName` agree) — hard-coded to this one model on purpose, not a general versioning scheme. Unit-tested in `test/core/utils/slugify_test.dart`. Mirrored in the QA seed script's JS port (`scripts/qa_seed_catalog.js`) so `cleanup_qa_test_riders.js`'s exhaustive forum-id set stays correct.
-  - **Topics moved under "Find a forum"** (2026-08-11) — Brands and Topics are the same act (finding a forum you don't own your way into), so they're two labelled groups in one discovery block rather than Topics being a top-level section of its own.
-  - The "Your bikes" list is cached in `SharedPreferences` keyed by a garage signature, so it no longer re-runs a Firestore transaction per bike on every visit. Dropping the brand slugs changes that signature, so existing installs re-resolve once and then serve the shorter list from cache.
-  - **Rider-created forums** (`/forums/create`): the creator becomes a maintainer and can appoint others (by UID — a beta shortcut). Maintainers and the creator can delete posts/replies; riders can always delete their own. The global admin (`the.abraar.rar@gmail.com`) can moderate anywhere. Enforced in `firestore.rules`, not just client-side.
-    - ✅ **"Riders can always delete their own reply" briefly wasn't true, and is fixed** (`issues_fixed.md` §24.11, rules deployed 2026-08-14). The `replyCount` decrement checked the *post* author instead of the *reply* author, so deleting your own reply on someone else's post failed outright. Found by the new emulator-backed rules tests (`npm run test:rules` in `scripts/`).
-    - ⚠️ **Commenting, replying and reply-deletion need the 2026-08-14 app build.** The deployed rules require the counter bump to carry `lastCommentId`/`lastReplyId`, which only that build sends — so on an older install all three fail. The Android APK exists (`HANDOFF_Document.md`); no iOS build of it has been made yet.
-  - Topics now include Engine Rebuild, Mileage Tips and Engine Oil Review.
-  - Deleting a bike from Garage no longer leaves it choosable from Record or its forum reachable — see `issues_fixed.md` §12; both were symptoms of the same delete-never-reached-the-cloud bug.
-  - **Post/reply author names in the post detail screen are now tappable** (fixed 2026-08-28) — `forum_thread_screen.dart`'s post list card already opened `/profile/:uid` on tap; `forum_post_detail_screen.dart`'s post header and reply rows didn't, so viewing a full post/replies was the one place you had to fall back to search to reach a writer's profile. Both now wrap the avatar/name in the same `GestureDetector` → `context.push('/profile/${...userId}')` pattern.
-- **Ride share screen** (`/ride/share/:rideId`) — caption, **up to 3 photos** (was 1, changed 2026-08-04), audience, and **Save as route**.
-- **My shared rides screen** (`/rides/mine`, reached from Garage header menu) — delete a shared ride.
-- **Notifications screen** (`/notifications`).
-- **User profile screen** (`/profile/:uid`) — public profile view, showing a rider's bikes.
+- **Tabs: Rides / People / Forums.** The AppBar search icon opens a combined rider and forum search (rider name or email; forums matched over a bounded most-followed page).
+- **Rides (feed):** shared rides with route map plus up to 3 photos in one collage (`ride_media_collage.dart`), caption, tier-coloured riding-score badge (hidden on rides shared before scores existed), vote, comments. Cards show `@username` and bike name. Sort chips **Hot / Recent / Following** (Following queries the people you follow); the feed pages as you scroll. Following someone updates the feed at once.
+  - **Own shared ride:** ⋮ **Edit ride** (caption and photos), **Delete ride** (the post only), **See more**. Other riders' posts: **Report ride**.
+  - **"RIDING NOW" strip:** the rider's own active group rides (`watchActiveGroupRidesForUser`); hidden when there are none. Rides idle for 4 hours drop out.
+- **People:** rider search, the **Following** list, and "All people" with "Load more". There is no Discover or "followed rider is live" section: that would need a new public live signal, which is a privacy decision (`liveSessions` stay token-keyed and non-enumerable). Blocking a rider also removes follows in both directions.
+- **Follow QR:** *My QR code* (`/profile/qr`, link `https://www.blankframe.tech/ThrottleIQ/u/<uid>`) and *Scan QR* (`/profile/scan`) follow a rider and open People. System-camera scans open the app by App Link / Universal Link / `throttleiq://u/<uid>`; pending follows survive sign-in. Web fallback: `public/follow.html`.
+- **Ride share** (`/ride/share/:rideId`): caption, up to 3 photos, audience (Everyone / "Anyone who follows you" / ...), a "How it will look" preview, Save as route. **My shared rides** (`/rides/mine`) deletes shared rides. Hidden-start radius uses a private per-rider seed. A shared ride's bike fields are a snapshot, patched when the rider corrects the bike.
+- **Forums "Pit Wall"** (`forums_home_screen.dart`): a **Pulse | Hubs** toggle.
+  - **Pulse:** recent posts across garage and followed forums (at most 8 forums × 10 posts a page; filters All / My bikes / Help & fixes / DIY guides / Most voted are client-side; **Saved** is local bookmarks).
+  - **Hubs:** "Your garage" cards (one forum per bike, model level only; **Ask owners**, **Browse board**), brand paddocks (counts sum the brand and its model forums), topic boards, rider clubs. A brand forum also shows its model forums' posts tagged "from <model>". Yamaha FZ-S generations share `yamaha__fzs`.
+  - **Posts:** types `troubleshoot` / `diyGuide` / `gearReview` / `general`, up to 4 photos (`kForumPostMaxImages`, Cloudinary `forumPhotos/<uid>/`), byline bike badge, optional attachment card (**Share to forum** from a ride summary or a maintenance visit). The author of a troubleshoot post can mark it solved and pin the accepted reply. Author names open the profile. Posts page 25 at a time.
+  - **Rider-created forums** (`/forums/create`): the creator is a maintainer and can appoint others by UID (beta shortcut). Maintainers and the creator delete posts and replies; riders delete their own; the global admin (`the.abraar.rar@gmail.com`) can moderate anywhere (enforced in `firestore.rules`).
+- **Chats** (`/chats`, `/chats/:chatId`): 1:1 messages (newest 50, "Load older messages"). The list hides blocked riders, a blocked chat shows a banner instead of the input, a failed send restores the text with Retry. The "typing…" line is inert (RTDB retired).
+- **Reporting and blocking** (`features/moderation`): report a ride, chat message, forum post or rider from a scrolling sheet; the report keeps the document path and a protected copy of the content for 90 days. Tapping the chat header opens the rider's profile (Report, Block). Blocked-users list in Settings. Policy: human review within 24 h, written rules at `public/community.html`, runbook in `DOCS/General/Files for Stores/moderation_policy.md`.
+- **Notifications** (`/notifications`; bell on the Garage header): follows, group-ride invites and "X joined your ride". All in-app; there is **no push**.
+- **User profile** (`/profile/:uid`): public view with the rider's bikes (visibility enforced in `firestore.rules`, `bikesVisibleTo`). Errors tell private, offline and other apart. Follow buttons share one widget (spinner, error, no duplicate notifications).
+- Not checked on a device: the compact shared-ride card and owner actions, the collage, the People tab.
 
 ## 7b. Ride with friends / group rides (`features/social`)
 
-Added 2026-08-01, on the group-ride data layer that had existed with no UI.
-
-- **Explicit Solo/Group choice** (`RideModeSelector`, replacing the old plain "Ride with friends" button, added 2026-08-28) — a 2-segment control under the bike picker on the Record screen: **Solo** (the default; does nothing on its own, since slide/hold-to-start already *is* the solo flow) and **Group**, which reveals two actions: **Invite friends** (the friend-picker flow below, unchanged) and **Join with a code** (new — see below). An up-front choice is more discoverable than a single button that only ever meant "group"; this is that choice made explicit as an inline control rather than a new screen, consistent with the Record screen's own design bias against adding screens between the rider and the throttle.
-- **Friend picker** — search riders by username, pick **1 to 10** (changed from 2-10 on 2026-08-04 — riding with a single friend is the commonest case, and forcing a third invitee to unlock the feature was pure friction; bounds enforced by a pure `validateGroupSelection`; live "n/10" counter, self excluded, duplicates collapsed, an 11th refused).
-- On confirm: the group ride is created (now also generating a 6-character **join code**, see below), invites go out, each invitee gets an **in-app notification**, and **the inviter's ride starts recording immediately** via the normal recording path.
-- **Join by code** (added 2026-08-28, `group_ride_join_code.dart`) — the door in for a rider nobody invited, e.g. someone met at a fuel stop mid-ride. Every group ride gets a random 6-character code (ambiguous characters `0/O/1/I/L` excluded) at creation, resolved through a top-level `groupRideJoinCodes/{code}` lookup doc. Typing a valid code into the new sheet joins an **active**, not-yet-full ride immediately — no Lead/creator approval step. Deliberately code-based, not GPS-radius "nearby rides" discovery: a discovery feed would need either a Cloud Function (Blaze-gated, same constraint as crash-alert escalation) or a Firestore rule letting any signed-in rider enumerate other riders' live locations before joining, neither of which is a small addition on top of the existing rules — see the `firestore.rules` comments on `groupRideJoinCodes` and the `groupRides` update clause 4 for the full security reasoning. 9 new emulator rules tests (`npm run test:rules`, 72/72 green). ✅ **`firestore.rules` redeployed 2026-08-28** with this change — joining by code should now work against production, still pending a real-device check.
-- **Share the code** (added 2026-09-27, `share_group_ride_code_sheet.dart`) — the join code above existed on every ride from day one but nothing ever showed it back to anyone; a rider could only receive a code verbally from someone who'd gone and read it out of the database by hand. A share icon on the shared map's AppBar (`GroupRideMapScreen`, shown only while the ride is `active` and has a code) opens a sheet with the code in large type, a **Copy** button (clipboard), and a **Share** button (`share_plus`, system share sheet). No QR — plain text only, per the simpler of the two options considered.
-- **"X joined your ride" notification** (added 2026-09-27, `NotificationRepository.notifyGroupRideJoined`) — closes the other half of the same gap: until now, joining a ride by code or accepting an invite wrote **no notification at all**, so a creator only found out by having the shared map open at the exact moment. Fired from the *joining* rider's device (same model as the invite notification below), at whoever's `creatorId` on the ride (for a code join) or whoever sent the original invite (for an accept — `inviteUsers` is creator-only, so the invite's `fromUid` is always the creator). Tapping the row opens the shared map directly, same as an invite. Best-effort on both paths: a failed write here never blocks or fails the join/accept itself. `firestore.rules`' notification-type allowlist (§33.4) extended to include `groupRideJoined`; 2 new emulator rules tests (`npm run test:rules`, 116/116 green). Not yet deployed to production `throttleiqfb` — see "Done, but NOT yet verified" in `HANDOFF_Document.md`.
-- **Accepting** — a group-ride invite in the notifications screen is tappable; tapping accepts and opens the shared map.
-- **Shared live map** (`/group-ride/:groupRideId`) — every member is a **different colour**, assigned from a uid-sorted index so a rider keeps the same colour across rebuilds. Own marker is ringed. Roster splits "Riding" from "Invited"; each member shows "live" or "last seen 42s ago", and markers older than 30 s wash out rather than silently reading as current. Positions broadcast every 5 s. Members who've never reported a position are listed but never drawn at (0,0).
-- **Push-to-talk voice notes** (added 2026-08-27) — a hold-to-talk mic bar at the bottom of the shared map: hold, speak, release to send; auto-plays for every other member currently on the screen, skipping anything from before they opened it so joining doesn't dump the ride's back-catalogue on them. Deliberately push-to-talk, not live/duplex calling — this project has no WebRTC/VoIP infra or a paid calling SDK account, so a full "Discord-style" group call was scoped down to this instead. Routed through `audio_session` so record/playback use a paired Bluetooth headset (helmet intercom, etc.) instead of the phone's own mic/speaker when one's connected — the session is only held active for the duration of each clip, not the whole ride, so it doesn't duck the rider's music for the ride's whole duration. Foreground-only by design: nothing records, uploads or plays while off this screen, and there's no push notification for a new clip (same in-app-only limitation as invites, above). Clips go through the same Cloudinary path avatars/ride-photos already use (`CloudinaryUploadService.uploadAudio`, hitting Cloudinary's `video/upload` endpoint under the existing unsigned preset — verified with a live test upload before wiring this in, no new account or billing needed), stored at `groupRides/{id}/voiceNotes/{noteId}`, create+read only (no edit/delete — enforced in `firestore.rules`, covered by 12 emulator tests in `scripts/test/rules/firestore_rules.test.js`). A clip under 800ms is treated as an accidental tap and silently discarded rather than sent. ⚠️ **Not yet verified on a real device with a real Bluetooth headset or motorcycle intercom (Sena/Cardo, etc.)** — mic capture needs a physical device (iOS Simulator has no mic input), and headset audio routing specifically needs field testing before this is trusted for a real ride.
-- ⚠️ **Invites — and now "joined" notifications — are in-app only; there is no push notification.** The recipient sees it next time they open the app. Real push needs the Cloud Function this repo documents as a stub. See `assumptions.md` #17.
-- The roster lives at `groupRides/{id}/members/{uid}` — one document per rider, not an array on the ride (changed 2026-08-02, see `issues_fixed.md` §10). Rides created before that keep a legacy inline array; reads merge both, the subcollection winning.
+- **Solo / Group selector** on Record. Group: **Invite friends** (pick 1-10 riders by username) or **Join with a code**.
+- Creating a group ride generates a 6-character join code (no `0/O/1/I/L`), sends in-app invites, and starts the creator's recording at once. Accepting an invite from Notifications opens the map. When the creator stops recording the ride ends; others leave theirs.
+- **Join by code:** a valid code joins an **active**, not-full ride with no approval. A rider the creator removed cannot rejoin. The code is shown (large, **Copy**, **Share**) from the map's share icon while the ride is active.
+- **Live map** (`/group-ride/:groupRideId`): one colour per member (uid-sorted), own marker ringed, roster Riding / Invited, "live" or "last seen". Positions are sent every 20 s, or sooner after 25 m, and at least every 2 min; a member is stale after 160 s. Positions use Firestore `memberLocations` only. A "Ride stats" button goes back to the ride.
+- **Push-to-talk voice notes:** hold the mic bar, release to send; clips play for members on the screen, skipping anything from before they opened it. Foreground only, no push; Cloudinary upload, `groupRides/{id}/voiceNotes/{noteId}` create/read only; clips under 800 ms are dropped. **Not verified with a real Bluetooth headset or helmet intercom.**
+- The roster is `groupRides/{id}/members/{uid}`; older rides keep a legacy inline array and reads merge both.
+- Invites and "joined" notifications are in-app only (no push, since Cloud Functions are not available on Spark). Assumption `#17` in `DOCS/For Devs and Contributors/architecture/assumptions.md`.
 
 ## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
 
-Added 2026-08-01, expanded to four widgets 2026-08-17. Styled Carbon Mono (carbon background, lime accent, monospace, sharp corners):
+Five Android widgets and an iOS WidgetKit extension (`app/ios/ThrottleIQWidget/`), themed to the app (`ti_theme_*` colours; Carbon Mono fallback):
 
-| Widget | Size | Shows |
-|---|---|---|
-| **Start ride** | 2×1 | A button that opens the app on the Record screen |
-| **Start Auto-Tracking** | 2×1 | A button that opens the app on Settings, where the auto-tracking switch lives |
-| **Ride stats** | 4×2 | Distance this week, total distance, ride count |
-| **Next service** | 4×1 | Active bike, the most urgent due service, km until due; flips lime → red when overdue |
+| Widget | Shows |
+|---|---|
+| Start ride | Opens Record (hold-to-start still required) |
+| Start Auto-Tracking | Opens Settings, where the switch lives |
+| Ride stats | Distance this week, total distance, ride count |
+| Next service | Active bike, most urgent due service, km until due; red when overdue |
+| Apex Hunter | Cornering telemetry (max lean, peak g) |
 
-- **Android is fully working** — no manual step. Widget picker labels and copy are localized (`values/strings.xml` + `values-bn/strings.xml`), resolved by the *device's* system locale rather than the in-app language toggle (App Widgets render through the launcher, outside the Flutter engine).
-- **iOS: the extension target is registered in `Runner.xcodeproj`** (`app/ios/ThrottleIQWidget/`) — as of 2026-08-17 this is no longer a manual Xcode step. It was wired programmatically with the `xcodeproj` Ruby gem (a hand-edited `project.pbxproj` was previously judged too risky to automate; scripting the same structure Xcode's "New Target" flow produces sidesteps that), verified with `flutter build ios --simulator` and `pluginkit -m -p com.apple.widgetkit-extension` listing the extension on the built app.
-  - **The App Group is real and confirmed on a physical device (2026-08-17, same day)** — `Runner.xcodeproj` had no `DEVELOPMENT_TEAM` set at all (simulator builds never need one), which blocked every device build until fixed; see `issues_fixed.md` §30 for the stale-provisioning-profile trap that would have shipped the widgets silently placeholder-only otherwise. Installed and launched on Abraar's iPhone via `xcrun devicectl`, confirmed running.
-- Data republishes on app start, after a ride is finalized, and after a service log is added.
-- The Start-ride and Start-Auto-Tracking widgets **navigate; neither acts on its own.** Start Ride opens Record (hold-to-start still required — a silent GPS recording from a home-screen tap would be surprising). Start Auto-Tracking opens Settings rather than flipping the switch itself, because enabling it can trigger a location-permission prompt and can fail, and neither has anywhere to surface from a bare widget tap.
+- Data republishes on app start, after a ride is finalised and after a service log. Labels follow the device locale, not the in-app language.
+- iOS: the extension and App Group were confirmed on a physical iPhone on 2026-08-17. The iOS widget code was not re-checked after the theme sync was added.
 
 ## 8. Profile & settings (`features/profile`)
 
-- **Settings screen** (`/settings`) — profile summary, **Appearance** (System / Dark / Light, see below), **Emergency Contacts** (add/delete; the description under this section is honest that delivery isn't live yet — see below), **Sign Out**.
-  - **Auto-tracking** (`AutoTrackingTile`) — the all-day ride-detection opt-in switch. The switch now re-verifies the real OS "Always" location permission every time it's shown (app foreground, screen mount), rather than trusting a stored on/off flag that could go stale if the rider revoked the permission from OS Settings — fixed 2026-08-27, `issues_fixed.md` §37.2.
-  - **Auto-tracking → Active hours** (`AutoTrackingScheduleTile`, added 2026-08-27) — shown under the switch only while auto-tracking is on. Restricts detection to a single daily time window (e.g. 7am–10pm) instead of watching all day. Originally used `flutter_background_geolocation`'s native `Config.schedule`/`startSchedule()` scheduler; since the 2026-08-28 swap to a free detection stack (`issues_fixed.md` §50), the window is instead read fresh from `SharedPreferences` at the moment each candidate trip starts (`auto_tracking_service.dart`) — still survives app kills and reboots via `flutter_foreground_task`'s `autoRunOnBoot`, but a trip already in progress when the window ends now finishes uncut rather than being cut off natively. Not localized yet (plain English only). ⚠️ **Not yet verified on a physical device** — see `issues_fixed.md` §37.3.
-  - ⚠️ **Emergency contacts are still never actually contacted** — this part is unchanged. `functions/src/crash-notifications.ts` is a mock end to end — `sendContactNotification` and `scheduleEscalation` only log; no SMS or email is sent, and the escalation timer doesn't exist. The Cloud Functions deploy is tracked under "Soon" in `HANDOFF_Document.md` (needs Blaze + real Twilio/SendGrid accounts and credentials — a human step, not a code fix).
-  - **SafeQR** (`/safe-qr`, added 2026-08-28) — a new tile in Settings opening a scannable medical-info QR card: blood group, allergies, conditions, current medications (all optional, editable inline with a live QR preview), plus the rider's first emergency contact folded in automatically so it isn't entered twice. A genuinely novel, no-account-needed safety feature with no prior ThrottleIQ equivalent. Deliberately **plain text, not a deep link** (`safe_qr_payload.dart`) — any phone camera reads it, no ThrottleIQ install or sign-in needed on the scanning end, which is the whole point for a bystander or traffic police. Deliberately **device-local, not synced** (`medical_info_provider.dart`, `SharedPreferences`, keyed per-uid) — no backend needed at all; the honest tradeoff, stated in the screen's own disclaimer, is that a reinstall or new device starts it blank again, same as any other locally-stored preference in this app.
-  - ✅ **The UI no longer claims otherwise, and the mock no longer logs contact PII** (fixed 2026-08-12, `issues_fixed.md` §24.8). The Settings screen's emergency-contacts description used to read "Notified if a crash is detected and you don't respond within 60 seconds" — flatly false, since nobody has ever actually been notified. It now reads "Logged if a crash is detected and you don't respond within 60 seconds. Automatic SMS/email alerts aren't live yet." Separately, the mock stopped logging `contact.phone`/`.email`, the crash's GPS coordinates, and the rendered SMS/email bodies to Cloud Logging, and stopped persisting phone/email into `users/{uid}/notificationLog` — only a `contactId` is kept there now. `functions/` also gained the `index.ts`/`package.json main` it was missing entirely, which is a separate finding worth knowing: without it, nothing in `functions/` — this fix included — could actually have been deployed. Two more build blockers turned up on 2026-08-14 and are also fixed (`typescript` was never a declared dependency, and `firebase.json` had no functions `predeploy` hook — `issues_fixed.md` §24.10). **All of it is still inert in production:** deploying any Cloud Function requires the Blaze plan, and `throttleiqfb` is on Spark.
-  - **Appearance → System / Dark / Light** (cut to two themes 2026-10-14, critique `CrtiQue_Oct14.md` §6/§14). One light theme, **Calming** (cream, sage, tan; the default for new installs), and one dark, **Carbon Mono** (carbon black, lime, magenta). One shape (the rounded profile, `AppShapeProfile.curvy`). `AppColorPalette.forBrightness` picks the palette; "System" follows the OS and flips live.
-    - **Why these two:** Calming Light is what every install since 2026-08-27 starts on; Carbon Mono's lime stays visible over the bright OSM tiles at night, where Calming's sage dark route nearly vanished.
-    - **Removed:** the 7 ride-mode color families (sport/rain/race/commute/tour/adv/city, ex Carbon Mono/Nocturne/Retro/Calming/Trail Social/Analyst Blue/Editorial), the Boxy/Curvy "Vibe" choice and the color picker. 28 combinations → 2.
-    - **Migration:** only the `brightness` key (`light`/`dark`/`system`) is read now. A rider on a removed family keeps their brightness, which picks the nearest remaining theme; a rider who only changed color or shape was on light and stays light; legacy single-key `theme_style` skins map by their brightness. The old `color_mode`/`shape_vibe` keys are left on disk, unread. Tested in `theme_style_provider_test.dart`.
-    - **Changing appearance does not restart the app's screens (2026-09-21).** Palette and shape ride on the theme (`context.palette` / `context.shape`), so switching brightness re-themes in place.
-- **The app is fully localized (2026-09-21, branch `i18n`).** Every screen, dialog, sheet, error message, notification, badge, rank, turn-by-turn banner and Record-screen greeting follows the Language setting (English / Bangla / follow phone). Bangla strings are machine-drafted and **pending native review**; not yet checked on a device. See `issues_open.md` §83.23 for the few English-only leftovers.
-- **SafeQR can print a sticker sheet (2026-09-21, §78.24)** — a new Print sticker button opens the system print dialog with six 50 mm QR stickers (English or Bangla text), for a helmet or bike where no phone is needed. Not yet scanned off real paper.
-- **Settings → Privacy & Safety has a "Share anonymous usage statistics" switch (2026-09-21, branch `job4-infra`)** — on by default, off in debug builds. Counts screen views and seven funnel steps (sign-up, login, ride started/ended/shared, bike added, route saved); never location, rides, messages or names; no advertising. See `issues_fixed.md` §83.27 for what still has to happen before release (Data Safety form; deploy the updated privacy policy with the release).
-- **Ride history shows a "Suspected crash" badge (2026-09-21, §78.30)** — a ride that recorded a crash signal leads with a red pill and border in the All rides list. Only live-recorded rides are flagged (see `issues_fixed.md` §78.30 caveat).
-- **Places rows show "No ratings yet" (2026-09-21)** for an unrated place instead of a lone `★ —`; official points (checkposts, cameras) show no rating row.
-  - **Language** (added 2026-08-02, directly below Appearance): System default / English / বাংলা, persisted like the theme. As of 2026-08-11 only the **settings screen itself** was translated, to prove the pipeline end to end. **2026-08-12:** the bottom nav, the Record screen's bike-picker hero + stat strip, and the full ride summary screen followed (34 more keys, real Bangla translations, `arb_parity_test.dart` still fully green — no partial/placeholder strings). The rest of the app — most screens under `features/*` — is still hardcoded English; see `HANDOFF_Document.md`'s Product checklist for the per-screen remaining-string breakdown.
-    - **Numerals stay Western (0-9) in Bangla**, deliberately — speed, distance and odometer are read at a glance through a visor, and BD speedometers, road signs and number plates all use 0-9. A test fails if a Bengali numeral ever appears in a Bangla string. See `core/i18n/numeric_locale.dart`.
-    - ~~⚠️ Font caveat~~ **FIXED 2026-08-12** — IBM Plex/Space Grotesk have no Bengali glyphs, so Bangla used to fall back to whichever face the platform substituted. Noto Sans Bengali (OFL-licensed, variable font) is now bundled as a real pubspec font asset — not fetched via `google_fonts` at runtime — and appended as `AppTypography.bengaliFallback` to every text style the app hands out, so it renders correctly offline from first launch. See `HANDOFF_Document.md`.
-    - To add a string: add the key to **both** `lib/l10n/app_en.arb` and `app_bn.arb`, run `flutter gen-l10n`, and **commit the regenerated `lib/l10n/app_localizations*.dart`** — it's generated-and-committed so a clean checkout analyzes without a codegen step.
-  - **2026-08-28:** the app mark was replaced (a monoline "Throttle IQ" crest — twin wheels, a handlebar/frame line, the name wrapping the ring) and is now **dark-only**, shown identically regardless of the in-app appearance. The old light/dark pair and the Appearance section's brightness-synced "app-mark preview" (added to make the swap visible, since the mark only ever appeared on the splash/sign-in screens — `issues_fixed.md` §8) are both retired along with it: there is nothing left to preview since the mark no longer changes. `AppLogo` (`shared/widgets/app_logo.dart`) is a plain `StatelessWidget` now, not appearance-aware. The OS app icon originally used this same crest — an Android adaptive icon (foreground inset to the safe-zone circle + a solid `#0B0D10` background) so it survives whichever mask shape a launcher theme applies, and — **redesigned same day, `issues_fixed.md` §43** — a squircle-boundary, stacked "THROTTLE / crest / IQ" version for iOS/legacy Android (the original flat rounded-square release drew a circular ring and tiny arced wordmark inside the squircle background, which read as clashing shapes with illegible text at real icon sizes), with the squircle border fixed to sit flush against the icon's actual outer edge rather than floating inset from it (`issues_fixed.md` §44).
-  - **2026-08-29 — OS app icon only, replaced again:** swapped from the crest to a "Speed Gauge" mark (a blue→green→orange arc with a glowing needle), picked after comparing candidates across icon shapes/sizes in a design-preview Artifact (`issues_fixed.md` §52). Same adaptive-icon/safe-zone-inset technique as before, `adaptive_icon_background` re-sampled to `#131317` to match the new artwork, both platforms regenerated via `flutter_launcher_icons` from `assets/images/app_icon.png` / `app_icon_adaptive_fg.png` (no vector source for this one — it started as a screenshot, processed with Pillow). **This is the OS launcher icon only** — the in-app sign-in/splash mark described above (`AppLogo`, `assets/icons/throttleiq-icon-dark.svg`) is untouched and still the crest. Marketing assets built from the old crest (`designs/social/facebook/profile.html`, the pitch doc's logo reference) are now stale and out of scope for this change.
-- **Profile screen** (`/profile`) — added 2026-08-01. A **read-only** view of your own profile: avatar, display name, @username, nickname, bio, join date, and your garage. A single **Edit** action opens the form. Same screen as `/profile/:uid` with the uid omitted, so viewing yourself and viewing another rider can't drift apart. (The garage menu entry now reads **"Profile"**, not "Edit Profile".)
-- **Edit profile screen** (`/profile/edit`) — profile fields + **audience/privacy picker** (Everyone / Mutuals / Only me) + **"Who can see my bikes"** (Everyone / My followers / Only me, added 2026-08-01). The theme switcher is deliberately **not** here — it lives in Settings only.
-  - Bike visibility is enforced in `firestore.rules` (`bikesVisibleTo`), not just in the UI, and mirrors the pure `canSeeBikes()` predicate. Accounts with no setting default to **public** — note that this *widened* read access, since the subcollection was previously owner-only; see `assumptions.md` #15.
+- **Settings** (`/settings`): profile summary, Appearance (System / Dark / Light), Language (System / English / বাংলা), Your ThrottleIQ (modules), Auto-tracking and Active hours, **Emergency Contacts**, **SafeQR**, Privacy & Safety, feature tour, Blocked users, Sync issues, Sign out, Delete account.
+  - **Emergency contacts are never contacted.** The list and a warning banner exist; the screen and a one-time acknowledgement say alerts are not sent automatically. `functions/src/crash-notifications.ts` is a mock that only logs, and Cloud Functions cannot deploy without the Blaze plan.
+  - **SafeQR** (`/safe-qr`): a medical-info QR (blood group, allergies, conditions, medications, first emergency contact), plain text so any camera reads it, device-local per uid (a new phone starts blank). Save or share the QR image, or **print a sticker sheet** (six 50 mm stickers, English or Bangla). Not scanned off real paper.
+  - **Privacy & Safety:** "Public link (/r/@handle)" (off by default); "Share anonymous usage statistics" (on by default, off in debug; screen views and seven funnel steps, no location, rides, messages or names); "Help improve crash detection" (off by default, see below).
+  - **Sync issues** appears only when outbox writes failed for good.
+  - **Delete account:** sign-in and phone data go at once; cloud data is deleted by hand within 30 days of an email to hello@blankframe.tech (no deletion function on Spark). Photos and voice notes are removed from Cloudinary once credentials are configured, names are stripped from forum posts, replies, comments and reviews, and the rider's side of chats is anonymised. Runbook: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
+- **Profile** (`/profile`): read-only view of your own profile (avatar, name, @username, nickname, bio, join date, garage), with **Edit** (`/profile/edit`): fields, audience (Everyone / Mutuals / Only me), "Who can see my bikes" (Everyone / My followers / Only me), My QR code, Scan QR.
+- **App mark:** a dark-only monoline crest on splash and sign-in; the OS launcher icon is the "Speed Gauge" mark.
+- Fonts: Noto Sans Bengali is bundled and appended to every text style, so Bangla renders offline.
+- To add a string: add the key to both `app/lib/l10n/app_en.arb` and `app_bn.arb`, run `flutter gen-l10n`, and commit the regenerated `app_localizations*.dart`.
 
----
+## Shadow-mode crash detection (2026-10-15, not checked on a device)
 
-## Changes from the grill fix pass (2026-09-20, on `main` as e351b6c)
+Built after the first real field crash (2026-10-14, a walking-pace fall at a rail crossing the app never saw). The live alarm is **off** (`SensorConstants.crashAlertsEnabled = false`): the crash overlay, its notification and any message to contacts never show, and nothing is sent to anyone. Everything below only records and asks.
 
-These come from the grill fix pass (`issues_fixed.md` §78). None of them has been checked on a device yet.
+- **Detector** (`impact_detector.dart`), three tiers: 0 an impact (logged), 1 a possible fall (asked after the ride), 2 a likely crash (the only tier that may alarm, behind the flag). Impacts open at 2.5 g, on a clipped run, or when a ≥ 100 ms free fall ends. Tier 2 needs ≥ 15 km/h before, ≥ 4 g or clipping, and 10 s of stillness or held rotation. A tip-over from a standstill is its own tier-1 rule. Speed before impact is read 10 s back; 5 s of GPS silence counts as stopped.
+- **Sensors:** 50 Hz on all three IMU streams; the raw accelerometer is on whenever shadow mode is.
+- **Saved:** `impact_events` (schema v29) with a 12 s, 9-channel gzip sensor window (`impact_window_recorder.dart`). Caps: 20 events and 5 windows per ride. Rides gain `phone_placement` and `imu_rate_hz`; rows go with their ride in every delete path.
+- **After the ride:** a "Possible fall at 9:28 PM, did you fall?" card on the summary (yes / phone fell / bump / braked hard / not sure; "yes" asks injury and road surface), plus **Report a crash or fall** for falls the detector missed, so recall can be measured.
+- **Cloud:** `users/{uid}/impactEvents/{id}` (private). With the opt-in **Help improve crash detection** (`CrashResearchConsent`), answered events also go to `crashEvents/{id}`, de-identified (geohash-6, no position, no free text, never client-readable).
+- **Scripts:** `scripts/crash_stats.js` (detected crashes, missed falls, recall, false questions) and `scripts/export_impact_events.js` (CSV plus windows for calibration, riders as salted hashes).
 
-- **Record a ride (§2):**
-  - Ending a ride uses a bottom sheet with a hold-to-end button (1.2 s), a share toggle, and "Keep riding".
-  - Pausing dims only the map, not the stats.
-  - Cockpit text has a minimum size (labels 14, values 20).
-  - During a live share, the share button offers "Share link again" and "Stop sharing now".
-  - The new crash detector is in the code but switched off (`impactDetectorLiveEnabled`).
-- **Ride summary:**
-  - Pace is replaced by average moving speed plus moving/stopped time.
-  - The map downloads the route from the cloud if it isn't on the phone, with loading and "Route not available" states.
-- **Garage (§4):**
-  - Removing a bike archives it by default.
-  - The garage has a collapsible "Archived bikes" section with Unarchive.
-  - Deleting a bike together with its rides requires typing the bike's name.
-  - Bike detail has a "Service & maintenance" card.
-  - Adding a bike returns to the garage with a "Set service intervals" action.
-- **Maintenance (§5):** the screen has a back button when opened from a bike.
-- **Places (§6):**
-  - "Directions" asks whether to record the ride.
-  - Add Place requires picking a location.
-  - "Browse routes →" is a button, not a filter chip.
-  - Nearby places come from a geohash query.
-- **Social and chat (§7):**
-  - The chat list hides blocked riders.
-  - A chat where either rider has blocked the other shows a banner instead of the input.
-  - A failed send restores the typed text and offers Retry.
-  - The profile screen tells apart private, offline and other errors.
-  - The notification bell is on the Social and Record screens.
-- **Profile and settings (§8):**
-  - Emergency Contacts shows a warning banner that alerts are not sent automatically yet, plus a one-time acknowledgement when the first contact is added.
-  - SafeQR has "Save or share QR image".
-  - Settings → "Sync issues" appears only when outbox writes have failed for good.
-- **Maps:** every map uses the shared cached `AppTileLayer` with an OSM attribution line.
-- **Theme:** the Calming Light primary color is now `#537D5C`, for contrast.
+## Firestore quota outage mode (2026-10-21, merged to `main` 2026-10-22 as `c751968e`, not checked on a device)
 
----
+- **What riders see:** when the Spark daily Firestore quota runs out, a strip above the bottom nav (`OverQuotaBar`, EN + BN) says the database is overloaded and their data is safe on the phone. `resource-exhausted` errors say the same. A comment or forum reply that fails to send stays in the text field.
+- **What the app does:** `SyncManager` asks Firestore with one `count()` (1 read) at most every 15 min. On `resource-exhausted`, sync and the outbox pause (`FirestoreQuota`), so no queued entry burns its 20 attempts and no duplicates pile up. The first answer after the reset resumes everything. Rides, tracks, bikes, maintenance and fuel stay in SQLite and upload then.
+- **Owner alert:** a Cloud Monitoring email at 80% of daily reads, writes or deletes, and again when reads or writes are used up (99%), live on `throttleiqfb` since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, steps in `scripts/README.md`).
+- **Rehearsed** on a throwaway Spark project (`DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`): once reads run out, only transactions and `count()` fail; gets and listeners keep working, and nothing is lost. Details and limits: `issues_open.md` §104.6.
 
-## Changes from the critique fix pass (2026-09-21, issues_fixed.md §83)
+## Known gaps
 
-User-facing changes only; the full list is in `issues_fixed.md` §81.
-
-**Onboarding**
-- The feature tour no longer claims the app detects crashes ("Crash Shield"),
-  shows a lean-angle gauge, or samples GPS at 10 Hz — **none of those exist**.
-  Replaced with features that do. `kOnboardingManifestVersion` 2 → 3, so
-  riders who already completed the tour are shown the corrected one.
-
-**Settings → Appearance**
-- **New "System" brightness option**, alongside Dark and Light. It follows the
-  phone's light/dark setting and flips live when the OS does. The app could
-  not do this at all before.
-
-**Social feed**
-- **Infinite scroll.** The feed was hard-capped at roughly 60 posts with no
-  way to load more; it now pages as you scroll, with a footer showing a
-  spinner, a retry on failure, or "You're all caught up" at the end.
-- **The "Following" chip actually works.** It used to filter the 20 most
-  recent *public* rides client-side, so a rider following 30 active people
-  could see an empty Following feed. It now queries rides by the people you
-  follow as its own source.
-- A paging failure no longer replaces the feed you're already reading.
-
-**Errors, across 15 screens**
-- Stats, All rides, Maintenance, Place detail, Reviews, Routes (list/detail/
-  navigation), Notifications, My shared rides, My places, Bike detail, Ride
-  summary, Blocked users, Sync issues and Garage used to show the raw
-  exception text in red — e.g. `[cloud_firestore/unavailable] Failed to get
-  document because the client is offline.` as the entire Stats tab. They now
-  show a plain-language message with a **Try again** button.
-
-**Active ride**
-- The four cockpit alerts ("Ease on the brakes", "Smooth on the throttle",
-  "Watch your speed", "Time for a break") and the live-share sheet are now
-  **translated into Bangla** (needs native-speaker review, like §78.28).
-- **Overspeed no longer strobes.** It fired on every GPS fix above the limit,
-  so the amber full-screen flash could repeat over the map at speed. One alert
-  per excursion now.
-- **"Time for a break" is no longer permanent.** After 90 minutes it used to
-  re-fire every 10 seconds forever with no way to dismiss it; it now repeats
-  every 15 minutes.
-
-**Accessibility**
-- 27 icon-only buttons (bell, share, vote arrows, send, close, back, delete…)
-  now have screen-reader labels.
-- Text size follows the OS setting up to 1.3×, instead of being unbounded and
-  overflowing the cockpit.
-
-**Privacy**
-- Deleting your account now also deletes your uploaded photos and voice notes
-  from Cloudinary (once credentials are configured — see issues_fixed.md
-  §83.15), and strips your name from forum posts, replies, comments and
-  reviews instead of leaving them identified.
-- The hidden radius around your ride's start and end is now seeded from a
-  private per-rider value rather than from your user id, which anyone reading
-  the feed could see.
-
----
-
-## Changes from the open55 pass (2026-10-01, committed on `main`, not pushed)
-
-- **Ride media collage:** the route map is now one tile in a single collage with the ride's photos (`social/presentation/widgets/ride_media_collage.dart`, which replaces `PhotoCollage`).
-  - **Layout:** the map is always the largest tile. 1 tile is full-bleed; 2 are side by side (map 60%); 3 is the map left with 2 photos stacked; 4 is the map on top with 3 photos in a row; 5+ fills a grid with a "+N" badge on the last tile. The photo cap is still 3 (`kMaxRidePhotos`).
-  - **Feed card:** the map and photos show as one collage. Tapping the map opens the ride detail and tapping a photo opens the swipeable gallery.
-  - **Share composer:** new "How it will look" preview.
-  - **Ride detail:** photos only, since the big interactive map already sits right above them.
-  - **Not verified on a device yet.**
-
-- **Group ride navigation:** the ride screen has a "Group talk" button that opens the live group map with push-to-talk. The group map has a "Ride stats" button back to the ride screen. The Record screen shows an "Open push-to-talk" banner while you're on a live group ride.
-- **Group ride lifecycle:** when you stop recording, rides you created end and you leave anyone else's ride. Riding Now hides rides with no activity for 4 hours (see `issues_fixed.md` §87).
-- **Feed:** following someone now updates the feed right away, with no restart.
-
-- **Maintenance settings section:** Units (km/mi, now remembered), Sync odometer, Customize checks, Reset service log and Running costs moved from the header to a card at the end of the maintenance page. The main action is one full-width "Log Service" button.
-- **Running costs and ride cost:** set a typical cost for each check (in its Edit sheet), plus fuel price and mileage for each bike. The ride summary shows a "Ride cost" card: distance × Σ(cost/km), broken down into Fuel, Engine oil, Chain and so on. Each check uses the average of its logged costs, or the typical cost when there are none. With no cost data the card shows a "Set up" hint instead. The settings are stored on the phone only.
-- **Trip quote** (branch `mayabi`, 2026-10-17): at the end of the Running costs sheet. The rider enters km to the pickup, the paid trip, km back home and, optionally, the fare. The sheet shows the full cost at the bike's ৳/km, the share of km that is unpaid, and the profit or loss. Nothing is saved. Logic: `RideCostCalculator.tripQuote`. Built for ride-hailing riders (Maya Ride's "Mayabi").
-
-## Changes from the §90 fix pass (2026-10-06, issues_fixed.md §90; commit `6264d72`, not checked on a device)
-
-- **Settings → Privacy & Safety → "Public link (/r/@handle)"** is a new switch,
-  off by default. The handle link only works while it's on. The per-ride
-  `/live/{token}` link is unchanged.
-- **Ride share audience:** "Followers" now reads **"Anyone who follows you"**. The
-  description says it includes people who follow you later.
-- **Blocking a rider** now also removes the follow in both directions. If it fails,
-  you see an error.
-- **Follow buttons** (search, suggestions, profile) are one shared widget. It shows
-  a spinner while the follow is saving, shows an error if it fails, and sends no
-  duplicate notifications.
-- **Social:**
-  - The Following list updates immediately.
-  - Suggestions skip blocked riders.
-  - Search runs after you stop typing.
-  - All People pages 30 at a time with "Load more".
-- **Lists:**
-  - Chat loads the newest 50 messages, with "Load older messages".
-  - Forum posts page 25 at a time, with "Load more".
-  - Ride comments show up to 30.
-  - Voice notes show the newest 20.
-- **Group ride map:** your position is sent every 20 s, or sooner after you move
-  25 m, and at least every 2 min. A member shows as stale after 160 s.
-- **Group ride join:** a rider removed by the creator can't rejoin with the code.
-  They see "joinRideRemoved".
-- **Recording:**
-  - Pause stops GPS (on Android the tracking notification stops while paused).
-  - Pause/Resume is disabled while it's changing.
-  - A failed start shows an error instead of getting stuck.
-  - The battery-optimization prompt appears only once.
-- **Auto-tracking:** it doesn't record while a manual ride is running. Opening the
-  app no longer cuts off a ride it's recording.
-- **iOS:** the camera and photo-library permission prompts now have text, and the
-  push-to-talk mic permission can be granted.
-
-## Changes from the auto-tracking / jam pass (2026-10-06, committed, not checked on a device)
-
-- **Beta jam labelling** for internal testers: see §2 "Beta: rider-labelled jam windows".
-- **Auto-tracking now fully stands down during a manual ride.** The §90 fix above only blocked
-  *opening* a detection. A detection already open when the rider tapped Start kept collecting fixes
-  for the whole manual ride, and the bit just before Start or just after Stop still became a
-  separate ride. Now every fix checks the recorder's `activeRideId` marker (at most every 15 s, plus
-  the 60 s service tick as a backstop). While a manual ride is active, including paused, the open
-  detection is closed and GPS is cancelled (`auto_tracking_service.dart`).
-- **Auto-detected trips are no longer saved as individual rides. You get a daily summary instead.**
-  Detections move to a new `summarized` status, and their raw fixes are kept.
-  `daily_ride_summary.dart` (pure, tested) works out the day's rides:
-  - Detected fragments separated by stops of up to `SensorConstants.autoRideMergeGap` (**20 min**)
-    merge into one ride, so one jam-split commute counts as one ride, not 3–5.
-  - They also merge into an adjacent manual ride. Two manual rides are never merged.
-  - The count covers recorded rides plus the ones the rider forgot to record. The summary also
-    shows km, ride time and time stopped in traffic.
-  - It shows in three places: a "Today" row on the auto-tracking tile, the history sheet (now
-    "Daily ride summaries", last 14 days), and the 9pm notification, which now has real numbers
-    instead of a fixed "Tap to see your day". That notification fires from the Android service tick
-    after 21:00, or when the app is opened after 21:00.
-  - Open follow-ups are in `issues_open.md` §93.
-
-## Changes from the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`, not checked on a device)
-
-- **Forced update:** at start the app reads `config/app.minBuild` (`core/services/app_update_gate.dart`). A build
-  with a lower build number (`package_info_plus`) shows a blocking *Update required* screen whose button opens
-  `https://blankframe.tech/ThrottleIQ/install`. Offline, slow (5 s), denied, missing or non-numeric all fail open.
-  Raise `minBuild` in the console (the doc needs public read in `firestore.rules`) before a rules change old
-  builds can't survive.
-- **Delete account:** the dialog now says sign-in and phone data go at once and cloud data is deleted by hand within
-  30 days of an email to hello@blankframe.tech (Spark: no deletion function). Runbook:
-  `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
-- **Crash copy:** the crash overlay and crash notification show only with `crashAlertsEnabled` on, and no
-  longer say contacts will be notified.
-- **Cut:** challenges (dead under the rules), the top-speed badge family (Ton-up / Quick / Speed demon), the badge
-  rarity UI, the RTDB group-ride channel.
-
-## Changes from the realtime pass (2026-10-07, commit `8f8f774`, inactive until RTDB is set up)
-
-Nothing below is visible until an RTDB instance exists and the app is built with `RTDB_URL` (`issues_open.md` §99.1). Without it, every feature behaves as before.
-
-- **Live share (partner viewer):** while sharing, the rider's position also goes to `/live_shares/{token}` once a second. The web viewer moves the marker from whichever source is newer (RTDB or the Firestore session). It shows a "Live" / "Updates every 10s" badge. The Firestore session is still what decides whether the link works. While RTDB carries position, the Firestore write drops from every 10 s to every 20 s.
-- ~~**Group ride map** over `/group_rides/{id}/locations`~~ — **removed 2026-10-14** (critique B9: positions readable without membership). Group rides use Firestore `memberLocations` only; the code is on branch `park/rtdb-group-ride`.
-- **Chat:** "typing…" under the other rider's name in 1:1 chats. It is not sent to or shown for a blocked rider, and it clears itself within 6 s if their app dies.
-- **Connection budget:** the app keeps the RTDB socket open only while sharing or in a chat room. It disconnects 30 s after the last of those closes (Spark plan cap: 100 connections).
-
-## Changes from the bike-archive pass (2026-10-08, in the working tree, not committed, not checked on a device)
-
-- **Bottom-nav tab "Profile" is now "Garage"** (label `navGarageLabel`, `Icons.two_wheeler`). Screen titles that
-  say "Profile" are unchanged; the route is still `/home/profile`.
-- **Removing a bike archives it.** The remove dialog (`ArchiveBikeDialog`) has four unticked options: shared
-  rides, calculated miles, service logs, photos. "Archive bike" keeps everything not ticked. Shared rides are
-  deleted from Firestore first; if that fails the bike is not archived. Miles resets the bike's own distance and
-  ride counters (rides stay in history). Service logs are deleted with tombstones. Photos clears the bike
-  picture and service receipts.
-- **After archiving** a notice gives the permanent-deletion date (90 days, `kArchiveRetention`) with *Download a
-  local copy* (JSON via the share sheet, `BikeArchiveService.shareExport`), *Delete now* (type-the-name check) and
-  *Done*. An archived bike's detail screen has unarchive and delete-now buttons; the garage's archived list shows
-  "Deleted in N days".
-- **Purge on app start.** `BikeArchiveService.purgeExpired` runs when the rider signs in/starts the app and deletes
-  archived bikes older than 90 days (and their shared rides, best effort). Spark has no scheduled functions, so
-  a bike is only purged once the app is opened after its deadline.
-- **Schema v24:** `bikes.archived_at`. Bikes already archived start their 90 days at the upgrade. The cloud
-  payload only carries `archived_at` for an archived bike.
-- **Dates read "8 Oct 2026" in Bangla too:** English month names and Western digits via `kNumericLocale`, in
-  the Bangla font. Covers chat, shared rides, auto-detection history, maintenance forecast and money chart.
-
-## Changes from the themes / analytics / badges / QR / tour pass (2026-10-09, in the working tree, not committed, not checked on a device)
-
-- ~~**Seven color modes are back**~~ (cut again 2026-10-14 to one light and one dark theme; see §8 Appearance), renamed: sport (carbonMono), rain (nocturne), race (retro, mono type), commute
-  (calming, default), tour (trailSocial), adv (analystBlue), city (editorial). Stored `daily`→commute,
-  `adventure`→adv; old family names map to the mode carrying the same palette. Picker is a 2-column grid.
-- **Home-screen widgets follow the app theme.** `HomeWidgetService.publishTheme` writes `ti_theme_*` hex colors +
-  brightness; `homeWidgetThemeSyncProvider` (watched in `app.dart`) republishes on theme/brightness change.
-  Android `WidgetTheme.kt` tints via RemoteViews; iOS `WidgetPalette` reads the App Group. Falls back to Carbon Mono.
-- **Rides tab (`/home/stats`):** slim level bar and one dense 4-stat strip; the Dist/Speed toggle is gone. 16
-  stacked chart cards (distance per ride/week, avg/top speed, duration, moving vs stopped, jam time, riding
-  score, hard brakes, rapid accel, overspeed alerts, riding-days heatmap + streaks, rides by hour/weekday,
-  distance per bike, longest rides). Tap → `AnalyticsDetailScreen`: range 7D–All, min/max/avg/total, trend vs
-  previous period, insight, per-ride/day table, CSV download via share sheet. Logic in `stats/domain/ride_analytics.dart`.
-- **Overspeed count persisted:** schema v25 `rides.overspeed_count` (NULL for legacy rides, skipped by the chart);
-  `EventDetector` counts episodes, not samples.
-- **Badge detail sheet:** tier rows in the badge ladder (and the single-tier First ride tile) open
-  `BadgeDetailSheet` — earned date (replayed from local rides) or progress bar, celebration + share. The
-  "X% of riders own this" figure and rarity tiers were **removed 2026-10-14** (critique B7: riders can award
-  themselves badges, so the counts mean nothing). The client still keeps the `stats/badges` counters the rules
-  pair with each award.
-- **Profile (`/profile`):** badge list removed. New *My QR code* (`/profile/qr`, link
-  `https://blankframe.tech/ThrottleIQ/u/<uid>`, cached per uid, share/save) and *Scan QR* (`/profile/scan`,
-  mobile_scanner) — follows via `FollowController` then opens `/home/social?tab=people`. System-camera scans open
-  the app via App Links / Universal Links / `throttleiq://u/<uid>` (`app_links`); pending follows survive sign-in.
-  Web fallback `public/follow.html` → install page `blankframe.tech/ThrottleIQ/install?c=follow_qr`.
-- **Feature tour v4** (onboarding + Settings demo): 9 steps on design tokens (record, cockpit, auto-tracking,
-  rides & badges, garage, maintenance, places, social, profile/QR), progress bar, mini bottom-nav preview,
-  "Show me" with a restyled floating banner whose Next returns to the tour. Old mockups file deleted.
-
-## Changes from the telemetry / fuel / Spark-badges pass (2026-10-09, on `experimental`, not pushed, not checked on a device)
-
-- **Schema v26 — per-ride lean, g and elevation:** `rides.max_lean_deg`, `peak_lateral_g`, `peak_accel_g`,
-  `peak_brake_g`, `elevation_gain_m`, `elevation_loss_m` (NULL for legacy). Lean/g come from GPS kinematics
-  (`ride/domain/calculators/cornering_estimator.dart`: a_lat = v·ω, lean = atan(a_lat/g), ≥15 km/h, 3-sample hold,
-  clamped) — an estimate, roughly ±3–5° on long sweepers, under-reads tight/short turns. Elevation is computed
-  once at ride stop; `ElevationBackfill` fills legacy rides from stored points once per app start. The home
-  lean widget now gets real values. New Rides charts: max lean, peak g, elevation gain.
-- **Schema v27 — fuel log:** `fuel_logs` + `deleted_fuel_logs`, synced to `users/{uid}/fuelLogs/{id}` via the
-  outbox. Fuel card on bike detail and "Fuel log" on the maintenance page (`/home/maintenance/fuel`,
-  `/home/maintenance/fuel/add?bikeId=&logId=`). km/L between full-tank fills (partials summed). Archive dialog
-  has a "Fuel logs" option; bike delete/purge and account deletion clear fill-ups. Rides charts: fuel spend per
-  month, km/L trend, cost per km, litres per month.
-- **Badge % on Spark (no Cloud Functions):** clients increment `stats/badges` in the same batch that creates a
-  rider profile or an earnedBadges doc, stamped with a one-way marker (`users/{uid}.badgeStatsCountedAt`,
-  `earnedBadges/{id}.countedAt`); rules allow exactly +1 per marker. Existing riders/badges self-count once on
-  app start. The % shows "—" until `totalRiders` ≥ 20. `functions/src/badge-stats.ts` is kept unexported (Blaze alternative).
-- **Widgets:** themed button and DUE chip keep their 2dp rounded corners again.
-- **Follow QR:** links now use `www.blankframe.tech` (served by the landing-page repo's 404 router).
-
-## Shadow-mode crash detection (2026-10-15, branch `feat/crash-shadow-mode`, not checked on a device)
-
-Built from the plan written after the first real field crash (14 Oct 2026, a walking-pace fall at a rail
-crossing that the app never saw). The live alarm is still **off**; everything here only records and asks.
-
-- **Detector** (`impact_detector.dart`): three tiers. 0 = an impact (logged). 1 = a possible fall (asked
-  after the ride). 2 = a likely crash (the only tier that may alarm, behind `SensorConstants.crashAlertsEnabled
-  = false`). The rules:
-  - speed before an impact is looked up 10 s back (was 5 s, and missed sparse walking-pace fixes);
-  - GPS silence of 5 s after an impact counts as stopped, and stays counted;
-  - falls from ≥ 1 m/s count (was 2 m/s);
-  - "didn't ride on for 20 s" settles an impact, beside stillness and rotation;
-  - a tip-over from a standstill (an impact, then the phone held turned ≥ 60° for 5 s) is its own tier-1 rule;
-  - impacts open at 2.5 g on either stream (motion-filtered or raw minus 1 g), on a clipped run, or when a
-    ≥ 100 ms free fall ends;
-  - tier 2 needs ≥ 15 km/h before, ≥ 4 g or clipping, and 10 s of stillness or a held rotation.
-  Every outcome carries features: both peaks, free fall, gyro rotation, orientation change, vibration RMS,
-  speeds, GPS gap.
-- **Sensors:** 50 Hz on all three IMU streams (`imuSamplingPeriod`). The brake/accel low-pass is now
-  time-based, so its time constant didn't change. The raw accelerometer is always on while shadow mode is.
-- **Saved:** `impact_events` (schema v29; v28 on `main` before the merge with the sync round) with a 12 s, 9-channel int16 gzip sensor window
-  (`impact_window_recorder.dart`, "TIQW" v1). Caps: at most 20 events and 5 windows per ride, a window
-  for every tier 1+ event and for 10% of tier 0. Rides gain `phone_placement` and `imu_rate_hz`. Rows go
-  with their ride in every delete path.
-- **Phone placement:** a pill at the top-left of the active-ride cockpit opens On a mount / In a pocket / In a bag
-  (2026-10-15; it was on the Record screen before). Switchable mid-ride, read at impact time, remembered between
-  rides (`PhonePlacementSetting`). Auto-detected rides record `unknown`. Ride analytics don't record changes yet.
-- **After the ride:** a "Possible fall at 9:28 PM — did you fall?" card on the ride summary for each answered
-  tier-1+ impact. Answers: yes / phone fell / bump / braked hard / not sure; "yes" asks injury and road surface.
-  Plus a **Report a crash or fall** button for falls the detector missed (tier -1, label `missed`), so recall
-  can be measured.
-- **Cloud:** `users/{uid}/impactEvents/{id}` (private, owner-only, with the window as a Blob). With the opt-in
-  Settings switch **Help improve crash detection** (off by default, `CrashResearchConsent`), answered events
-  also go to `crashEvents/{id}`. That copy is de-identified: a geohash-6 cell, no position, no free text,
-  never readable by clients. Rules in `firestore.rules`, 9 emulator tests in
-  `scripts/test/rules/crash_events_rules.test.js`. Index exemptions for the window, maps and
-  `track.points`.
-- **Scripts:** `scripts/crash_stats.js` (the plan's honest numbers: detected crashes, missed falls, recall,
-  false questions, breakdowns by area / placement / surface / bike class / speed) and
-  `scripts/export_impact_events.js` (CSV plus sensor windows for calibration, riders as salted hashes).
-- **Tests:** detector rules, the 14 Oct crash replayed from its real GPS fixes in five phone situations and
-  both timing readings (`crash_2026_10_14_replay_test.dart`), window format, DAO and migration, payloads,
-  the question card, sensor-constant invariants.
-
-## Multi-device sync (2026-10-14, branch `fix/oct14-tiq-sync`, not checked on a device)
-
-- **Schema v28 — edits move between devices:** a ride, bike, maintenance or fuel edit made on one phone now
-  reaches the rider's other phones; when both changed the same record, the later edit wins (`updated_at`,
-  founder decision C4). Deletions still go through tombstones. Ride times are stored in UTC, so "today" and
-  day ranges follow the zone the phone is in now. Details: `arch.md` §5.
-
-## Known UI gaps (as of this pass)
-
-- No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
-- Fuel log, documents wallet and curated "best roads nearby" from the competitor feature map in `HANDOFF_Document.md` Part 2 are not built. (Turn-by-turn navigation now IS — see §6a — though geometrically, not via a routing engine.)
-- ~~Discovered (public) routes can't be opened~~ **FIXED 2026-08-02** — the detail and navigate routes take an optional `?owner=<uid>`, so a public route from another rider opens read-only (Delete and the public/private toggle are hidden; navigation works, since following a track writes nothing). Omitting `owner` still means "mine", so existing links are unchanged.
-- iOS Simulator screenshots for every screen above are still outstanding — see the note at the top of this file.
-- **None of the 2026-08-01 feature work below has been exercised on a device** — it is verified by `flutter analyze`, the test suite (1,195 passing as of 2026-09-21), and a release build only. See "Done, but NOT yet verified" in `HANDOFF_Document.md`.
+- No screen shows the per-point `VehicleState` confidence, heading and cornering data the recorder captures (see `HANDOFF_Document.md`).
+- Not built: documents wallet, curated "best roads nearby", push notifications of any kind, SMS or email alerts to emergency contacts, street-name turn-by-turn.
+- Not checked on a device (they passed `scripts/check.sh` only): offline end and share, ride restore after a kill, route following, auto-tracking and its daily summary, the maintenance redesign, the feature tour, push-to-talk with a headset, crash shadow mode, quota outage mode, the Google Maps place import.
+- Bangla review is pending for every machine-drafted string, including `overQuotaBar` and `errTooManyRequests`.
