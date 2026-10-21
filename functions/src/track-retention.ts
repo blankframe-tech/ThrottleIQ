@@ -1,6 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { purgeOldReportSnapshots, REPORT_SNAPSHOT_RETENTION_DAYS } from "./report-retention";
 
 /**
  * Cloud retention for raw GPS trails (critique 2026-10-14, section 5): the
@@ -60,11 +61,28 @@ export async function purgeOldTrackChunks(
   return deleted;
 }
 
-/** Daily at 03:30 Dhaka time. A run that times out is finished by the next. */
+/**
+ * Daily at 03:30 Dhaka time. A run that times out is finished by the next.
+ * Also the report-evidence purge (report-retention.ts), so one scheduler job
+ * covers both; each half runs even if the other throws.
+ */
 export const purgeOldGpsTracks = onSchedule(
   { schedule: "30 3 * * *", timeZone: "Asia/Dhaka", timeoutSeconds: 540 },
   async () => {
-    const n = await purgeOldTrackChunks(getFirestore());
-    logger.info(`purgeOldGpsTracks: deleted ${n} track chunk(s) older than ${TRACK_RETENTION_MONTHS} months`);
+    const db = getFirestore();
+    const [tracks, reports] = await Promise.allSettled([
+      purgeOldTrackChunks(db),
+      purgeOldReportSnapshots(db),
+    ]);
+    if (tracks.status === "fulfilled") {
+      logger.info(`purgeOldGpsTracks: deleted ${tracks.value} track chunk(s) older than ${TRACK_RETENTION_MONTHS} months`);
+    } else logger.error("purgeOldGpsTracks: track purge failed", tracks.reason);
+    if (reports.status === "fulfilled") {
+      logger.info(`purgeOldGpsTracks: cleaned ${reports.value} report(s) (evidence older than ${REPORT_SNAPSHOT_RETENTION_DAYS} days after review, or a deleted rider's closed report)`);
+    } else logger.error("purgeOldGpsTracks: report purge failed", reports.reason);
+    // Rethrow so Cloud Scheduler records the run as failed.
+    if (tracks.status === "rejected" || reports.status === "rejected") {
+      throw new Error("purgeOldGpsTracks: a purge failed; see the log above");
+    }
   }
 );

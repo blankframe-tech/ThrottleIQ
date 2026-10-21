@@ -8,7 +8,7 @@ class ReportEntity {
   final String? additionalDetails;
   final DateTime createdAt;
   final String status; // 'pending', 'reviewed', 'actioned'
-  /// Chat reports: a copy of the reported message (see reportSnapshotOf).
+  /// Chat and post reports: a copy of the reported content (reportSnapshotOf).
   final Map<String, dynamic>? snapshot;
 
   const ReportEntity({

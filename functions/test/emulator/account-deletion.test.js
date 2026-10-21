@@ -116,11 +116,13 @@ async function seed() {
   set('chats/orphan', { participants: [DELETED_PARTICIPANT, UID] });
   set('chats/orphan/messages/o1', { senderId: UID, text: 'anyone?' });
   // The moderation report holding a copy of one of the rider's messages.
-  set('reports/auto_chat_1', { reportedId: UID, contentType: 'chat', originalText: 'you idiot', reporterId: 'system' });
+  set('reports/auto_chat_1', { reportedId: UID, contentType: 'chat', originalText: 'you idiot', reporterId: 'system', status: 'actioned' });
   set('reports/other', { reportedId: OTHER, contentType: 'chat', originalText: 'hm' });
-  // Rider reports with a message snapshot (2026-10-21): against the rider
-  // (evidence, kept) and by the rider (untouched).
-  set('reports/against', { reporterId: OTHER, reportedId: UID, contentType: 'chat', snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 } });
+  // Rider reports with a snapshot (2026-10-21): against the rider, pending
+  // (kept whole) and closed (uid anonymised, text kept until the retention
+  // purge), and one by the rider (untouched).
+  set('reports/against', { reporterId: OTHER, reportedId: UID, contentType: 'chat', status: 'pending', snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 } });
+  set('reports/againstClosed', { reporterId: OTHER, reportedId: UID, contentType: 'post', status: 'dismissed', snapshot: { title: 't', body: 'b', imageUrls: [], senderId: UID, sentAt: 3 } });
   set('reports/by', { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
   await batch.commit();
 
@@ -211,8 +213,13 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal(report.reportedId, '');
   assert.equal(report.originalText, '');
   assert.equal((await db.doc('reports/other').get()).get('originalText'), 'hm');
-  assert.deepEqual((await db.doc('reports/against').get()).get('snapshot'), { text: 'you idiot', senderId: UID, sentAt: 1 });
-  assert.equal((await db.doc('reports/against').get()).get('reportedId'), '');
+  assert.deepEqual((await db.doc('reports/against').get()).data(), {
+    reporterId: OTHER, reportedId: UID, contentType: 'chat', status: 'pending', reportedAccountDeleted: true,
+    snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 },
+  });
+  const closed = (await db.doc('reports/againstClosed').get()).data();
+  assert.equal(closed.reportedId, '');
+  assert.deepEqual(closed.snapshot, { title: 't', body: 'b', imageUrls: [], senderId: DELETED_PARTICIPANT, sentAt: 3 });
   assert.deepEqual((await db.doc('reports/by').get()).data(), { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
 
   // Forum follows: the rider's are gone, the other rider's stays, and the

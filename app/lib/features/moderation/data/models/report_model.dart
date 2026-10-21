@@ -15,15 +15,28 @@ class ReportModel extends ReportEntity {
     super.snapshot,
   });
 
-  /// The evidence copy of a reported chat message, from its stored fields as
-  /// read. firestore.rules (`chatSnapshotIsReal`) accepts it only if it equals
-  /// the stored message field for field, so `sentAt` must stay the raw
-  /// Timestamp, never a DateTime round trip.
-  static Map<String, dynamic> reportSnapshotOf(Map<String, dynamic> message) =>
-      {
-        'text': message['text'],
-        'senderId': message['senderId'],
-        'sentAt': message['createdAt'],
+  /// The evidence copy of a reported chat message or forum post, from its
+  /// stored fields as read. firestore.rules (`snapshotIsReal`) accepts it only
+  /// if it equals the stored document field for field, so `sentAt` must stay
+  /// the raw Timestamp, never a DateTime round trip. Null for other types.
+  static Map<String, dynamic>? reportSnapshotOf(
+    String contentType,
+    Map<String, dynamic> doc,
+  ) =>
+      switch (contentType) {
+        'chat' => {
+            'text': doc['text'],
+            'senderId': doc['senderId'],
+            'sentAt': doc['createdAt'],
+          },
+        'post' => {
+            'title': doc['title'],
+            'body': doc['body'],
+            'imageUrls': doc['imageUrls'] ?? const <String>[],
+            'senderId': doc['userId'],
+            'sentAt': doc['createdAt'],
+          },
+        _ => null,
       };
 
   factory ReportModel.fromFirestore(Map<String, dynamic> data, String id) {

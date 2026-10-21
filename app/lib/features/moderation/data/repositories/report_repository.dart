@@ -22,14 +22,18 @@ class ReportRepository {
     required String reason,
     String? additionalDetails,
   }) async {
-    // Chat reports keep a copy of the message as evidence (owner decision
-    // 2026-10-21). Read fresh so the rules' equality check sees the stored
-    // Timestamp. Without it the report still goes: a report beats none.
+    // Chat and post reports keep a copy of the content as evidence (owner
+    // decision 2026-10-21). Read fresh so the rules' equality check sees the
+    // stored Timestamp. Without it the report still goes: a report beats none.
+    // A bare id (old call sites) has no '/' and gets no copy.
     Map<String, dynamic>? snapshot;
-    if (contentType == 'chat' && contentId.startsWith('chats/')) {
+    if ((contentType == 'chat' || contentType == 'post') &&
+        contentId.contains('/')) {
       try {
-        final message = (await _firestore.doc(contentId).get()).data();
-        if (message != null) snapshot = ReportModel.reportSnapshotOf(message);
+        final stored = (await _firestore.doc(contentId).get()).data();
+        if (stored != null) {
+          snapshot = ReportModel.reportSnapshotOf(contentType, stored);
+        }
       } catch (e, st) {
         reportNonFatal(e, st, reason: 'report snapshot read');
       }

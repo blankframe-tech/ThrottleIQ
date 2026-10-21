@@ -109,12 +109,14 @@ Do these in order.
    preset switched to signed (switching it before that build ships breaks
    every upload).
 
-8. **Report evidence (2026-10-21).** The `reports` snapshot rule rides on
-   the step 3 rules deploy; until then the app files chat reports without
-   the copy (it retries without it). Deploy Hosting for the `privacy.html`
-   §8 text with step 3. Retention needs Blaze:
-   `firebase deploy --only functions:purgeReportSnapshots --project throttleiqfb`.
-   Until it runs, purge by hand (`DOCS/moderation_policy.md` §5).
+8. **Report evidence (2026-10-21).** The `reports` snapshot rule (chat and
+   forum-post copies) rides on the step 3 rules deploy; until then the app
+   files those reports without the copy (it retries without it). Deploy
+   Hosting for the `privacy.html` §1/§8/§9 text with step 3. Retention (90
+   days after review) and anonymising a deleted rider's closed reports run
+   in the existing daily `purgeOldGpsTracks` (step 6's deploy, Blaze).
+   Deploying it also starts GPS retention; until then, do both by hand
+   (`DOCS/moderation_policy.md` §5).
 
 ### App Check enforcement
 

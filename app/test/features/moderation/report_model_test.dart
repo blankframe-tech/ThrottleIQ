@@ -20,7 +20,7 @@ void main() {
 
   test('reportSnapshotOf copies text, sender and the raw sent Timestamp', () {
     final sent = Timestamp(1790000000, 123456000);
-    final snap = ReportModel.reportSnapshotOf({
+    final snap = ReportModel.reportSnapshotOf('chat', {
       'senderId': 'mallory',
       'text': 'you idiot',
       'createdAt': sent,
@@ -28,8 +28,39 @@ void main() {
       'isToxic': true,
     });
     expect(snap, {'text': 'you idiot', 'senderId': 'mallory', 'sentAt': sent});
-    expect(identical(snap['sentAt'], sent), isTrue);
+    expect(identical(snap!['sentAt'], sent), isTrue);
     expect(report(snapshot: snap).toFirestore()['snapshot'], snap);
+  });
+
+  test('reportSnapshotOf copies a post; no images becomes an empty list', () {
+    final sent = Timestamp(1790000000, 5000);
+    final post = {
+      'userId': 'mallory',
+      'userName': 'M',
+      'title': 'Selling',
+      'body': 'DM me',
+      'createdAt': sent,
+      'upvotes': 3,
+    };
+    expect(ReportModel.reportSnapshotOf('post', post), {
+      'title': 'Selling',
+      'body': 'DM me',
+      'imageUrls': <String>[],
+      'senderId': 'mallory',
+      'sentAt': sent,
+    });
+    expect(
+      ReportModel.reportSnapshotOf('post', {
+        ...post,
+        'imageUrls': ['https://res.cloudinary.com/x.jpg'],
+      })!['imageUrls'],
+      ['https://res.cloudinary.com/x.jpg'],
+    );
+  });
+
+  test('rides and profiles get no snapshot', () {
+    expect(ReportModel.reportSnapshotOf('ride', {'userId': 'm'}), isNull);
+    expect(ReportModel.reportSnapshotOf('user', {}), isNull);
   });
 
   test('a report without a snapshot sends no snapshot key', () {

@@ -73,7 +73,7 @@ tombstone the function writes), or delete the doc if the email asks for it:
 | Collection group `comments` (ride comments) | `userId == uid` |
 | `reviews` | `userId == uid` → set `userId: ""` |
 | `places` | `createdBy == uid` → set `createdBy: ""` |
-| `reports` | `reportedId == uid` and `contentType == "chat"` → set `reportedId: ""`, `originalText: ""`; **keep `snapshot`** even if the rider asked for deletion: evidence, removed 180 days after review (owner decision 2026-10-21, `DOCS/moderation_policy.md` §5). Other reports about the rider: keep |
+| `reports` | `reportedId == uid` (any `contentType`). Still `pending` (or no `status`): change nothing but set `reportedAccountDeleted: true`, even if the rider asked for deletion: evidence, kept until review. Closed (`actioned`/`dismissed`): set `reportedId: ""`, `originalText: ""`, `snapshot.senderId: "deleted-rider"`; the copied text goes 90 days after review (owner decision 2026-10-21, `DOCS/moderation_policy.md` §5) |
 | `chats` | `participants` array-contains `uid` → in `participants` and `lastMessage.senderId` replace `uid` with `deleted-rider`; remove `participantNames.<uid>` / `participantPhotos.<uid>`; in `messages` where `senderId == uid` set `senderId: "deleted-rider"`, `text: ""`. If no real uid is left in `participants`, delete the chat (recursive). Owner decision 2026-10-21: the other rider keeps the thread; the rider's text is always deleted (privacy.html §9), even without a request |
 
 The three collection-group queries need a COLLECTION_GROUP single-field

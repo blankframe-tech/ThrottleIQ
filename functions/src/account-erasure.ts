@@ -3,6 +3,7 @@ import { getDatabase, type Database } from "firebase-admin/database";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "node:crypto";
 import { isOwnedPublicId } from "./cloudinary-ownership";
+import { anonymizedReportPatch, isPendingReport } from "./report-retention";
 
 /**
  * The body of `onUserAccountDeleted` (account-deletion.ts), split out so the
@@ -347,18 +348,6 @@ export async function deleteUserData(
       { userId: "" },
     ],
     [
-      // chat-moderation.ts copies a hidden message's text into its report.
-      // A rider's report keeps its `snapshot` of the reported message on
-      // purpose (owner decision 2026-10-21): evidence, removed by
-      // report-retention.ts 180 days after review. Reports the deleted rider
-      // filed stay untouched, as before.
-      "chat reports",
-      db.collection("reports")
-        .where("reportedId", "==", uid)
-        .where("contentType", "==", "chat"),
-      { reportedId: "", originalText: "" },
-    ],
-    [
       "places contributed",
       db.collection("places").where("createdBy", "==", uid),
       { createdBy: "" },
@@ -382,6 +371,28 @@ export async function deleteUserData(
       }
     });
   }
+
+  // Reports about the rider (owner decision 2026-10-21). A pending one is
+  // kept whole, uid and evidence copy (`snapshot`, chat-moderation's
+  // `originalText`) included, so it can still be reviewed; it is flagged, and
+  // report-retention.ts anonymises it once it is closed. A closed one loses
+  // the uid now; its copied text goes 90 days after review. Reports the
+  // deleted rider filed stay untouched, as before.
+  await step("anonymize reports", async () => {
+    const snap = await db.collection("reports").where("reportedId", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += ANONYMIZE_BATCH) {
+      const batch = db.batch();
+      for (const doc of snap.docs.slice(i, i + ANONYMIZE_BATCH)) {
+        batch.update(
+          doc.ref,
+          isPendingReport(doc.data())
+            ? { reportedAccountDeleted: true }
+            : anonymizedReportPatch(doc.data())
+        );
+      }
+      await batch.commit();
+    }
+  });
 
   // Cloudinary media. MUST run before the profile is recursively deleted —
   // the ledger it reads lives at users/{uid}/cloudinaryAssets.

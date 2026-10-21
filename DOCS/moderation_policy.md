@@ -41,7 +41,8 @@ written by the app (`ReportModel.toFirestore`):
 | `additionalDetails` | Optional free text, up to 2000 characters |
 | `createdAt` | Server time; the 24-hour clock starts here |
 | `status` | Always `pending` when filed |
-| `snapshot` | `chat` only, builds from 2026-10-21 on: `{text, senderId, sentAt}`, a copy of the reported message. The rules accept it only if it equals the stored message and the reporter is in that chat, so it is not the reporter's word. It stays when the sender's message or account goes. Missing on old builds, or if the copy couldn't be read. |
+| `snapshot` | `chat` and `post`, builds from 2026-10-21 on. Chat: `{text, senderId, sentAt}`; post: `{title, body, imageUrls, senderId, sentAt}`. A copy of the reported content: the rules accept it only if it equals the stored document, names its author as `reportedId`, and (chat) the reporter is in that chat, so it is not the reporter's word. It stays when the author edits or deletes the content or the account. `imageUrls` are links only: the images themselves can still be deleted from Cloudinary. Missing on old builds, rides, profiles, or if the copy couldn't be read. |
+| `reportedAccountDeleted` | Set by account deletion on a report still `pending` (§5) |
 
 `functions/src/chat-moderation.ts` (`onMessageCreate`, **not deployed**) also
 files `system` reports with `chatId`, `contentPath` and `originalText`. Before
@@ -62,8 +63,8 @@ only for the app; the console works with your Google login.
 
 ### 2. Review
 
-1. For a chat report, read `snapshot` first: it is what the message said
-   when it was reported. Then open the content by `contentId` (paste the path
+1. For a chat or post report, read `snapshot` first: it is what the message
+   or post said when it was reported. Then open the content by `contentId` (paste the path
    into the console's path bar). For an old-build `chat` report with a bare message id, the chat id is
    the two uids sorted and joined with `_` (`ChatRepository.dmId`), so
    `chats/{smallerUid}_{largerUid}/messages/{messageId}`.
@@ -101,20 +102,32 @@ The app ignores these fields. They are the audit trail if a store reviewer or
 an appeal asks what happened. Keep resolved reports; the time between
 `createdAt` and `reviewedAt` is the response-time record.
 
-### 5. Retention of the message copy
+### 5. Retention of the evidence copy, and deleted accounts
 
-Default **180 days after review** (`reviewedAt`), set 2026-10-21; the owner
-can change it. Then `snapshot` is removed and the rest of the report stays
-as the audit trail. A report still `pending` keeps it. Account deletion does
-not remove the snapshot from reports about the deleted rider (evidence);
-it blanks `reportedId` and `originalText` as before
-(`functions/src/account-erasure.ts`). Reports the rider filed: the function
-leaves them, the manual runbook deletes them (open owner decision).
+**90 days after review** (`reviewedAt`, a timestamp): then `snapshot` and
+`originalText` are removed and the rest of the report stays as the audit
+trail. A report still `pending` keeps them. Set 2026-10-21 (task default;
+the docs named no period). Legitimate purpose: reviewing the report, an
+appeal, and a store reviewer's question about what was done.
 
-`purgeReportSnapshots` (`functions/src/report-retention.ts`) does this daily
-once deployed (Blaze). Until then, do it by hand monthly: filter `reviewedAt`
-`<` 180 days ago, delete the `snapshot` field. To change the period, change
-`REPORT_SNAPSHOT_RETENTION_DAYS`, this section and `public/privacy.html` §8.
+When the reported rider deletes their account (`account-erasure.ts`, and the
+manual runbook):
+- **Pending report:** kept whole, uid and copy included, so it can still be
+  reviewed; `reportedAccountDeleted: true` is set.
+- **Closed report** (at deletion, or the day after you close a flagged one):
+  `reportedId` and `originalText` blanked, `snapshot.senderId` becomes
+  `deleted-rider`. The copied text stays until the 90 days above run out.
+- Reports the rider filed: the function leaves them, the manual runbook
+  deletes them (open owner decision).
+
+The daily cleanup `purgeOldGpsTracks` (`functions/src/track-retention.ts`
+calls `purgeOldReportSnapshots` in `report-retention.ts`) does both once
+deployed (Blaze). Until then, by hand, monthly: filter `reviewedAt` `<` 90
+days ago and delete `snapshot` and `originalText`; filter
+`reportedAccountDeleted == true` and, for each closed one, apply the closed
+rule above and delete the flag. To change the period, change
+`REPORT_SNAPSHOT_RETENTION_DAYS`, this section and `public/privacy.html` §8
+(EN and BN).
 
 ### 6. Appeals
 
@@ -128,7 +141,7 @@ note, answer within 7 days, and record the result in the same report's
   `reports/{id}` that emails hello@blankframe.tech; needs Blaze and a mail
   provider secret (none in the repo today).
 - No dedupe: one rider can file many reports on the same thing.
-- Only chat reports carry a message copy. Forum posts, rides and profiles
-  are reviewed from the live document, so their author's edit or deletion
-  still removes the evidence.
+- Only chat and forum-post reports carry a copy. Replies, rides and
+  profiles are reviewed from the live document, so their author's edit or
+  deletion still removes the evidence.
 - Reporting does not block. Riders do both from the profile menu.

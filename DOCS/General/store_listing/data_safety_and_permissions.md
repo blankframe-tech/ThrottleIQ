@@ -72,6 +72,15 @@ On account deletion (owner decision 2026-10-21) the rider's message texts are
 deleted and their side of each chat is anonymised ("Deleted rider"); the other
 rider keeps their own messages. This still counts as deleting the user's data.
 
+Reported content (2026-10-21): a report on a message or forum post keeps a
+copy (text, post title and image links, author uid, time) for moderation,
+readable only by the admin, deleted 90 days after review. A pending report
+keeps it even if the author deletes their account; the uid is removed once
+the report is closed. This is retention for a safety purpose ("fraud
+prevention, security, and compliance" on the Play form) and is stated in
+`public/privacy.html` §8; the data type stays "Other in-app messages" /
+"Other user-generated content", collected, not shared.
+
 Source: `app/lib/features/chat/` — real, live one-to-one chat, message text
 stored in Firestore (`firestore.rules`' `/chats/{chatId}/messages`, readable
 only by the two participants). Mark "Shared: No" — unlike forum posts,
