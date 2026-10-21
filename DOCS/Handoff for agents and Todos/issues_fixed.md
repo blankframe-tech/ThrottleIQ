@@ -501,6 +501,12 @@ Covered by 5 new real-SQLite tests (13 total in
 
 ---
 
+## 13. QA report — empty placeholder, retired (2026-10-22)
+
+`issues_open.md` §13 was a "QA report: not started" placeholder that never got a
+write-up. QA passes got their own numbers instead (§46, §90, §101). Moved here on
+2026-10-22 so the number stays taken.
+
 ---
 
 ## 13a. Stop hook blocked every session end, unconditionally (2026-08-02)
@@ -2048,7 +2054,7 @@ caveat as every other rules/Functions change in this file; deploy still
 needs `firebase deploy --only firestore:rules` (and eventually `storage`)
 before any of the rules fixes protect a real rider.
 
-> Still open from this section: 33.5, 33.6. Those parts are in `issues_open.md` under §33.
+> Still open from this section: 33.5. That part is in `issues_open.md` under §33. The rest of 33.6 is obsolete (end of this section).
 
 ### 33.1 Signing out doesn't clear local data — next user on a shared device can upload the previous rider's data to their own account — CRITICAL
 
@@ -2357,6 +2363,14 @@ scripts (`set_admin_claim.js`, `seed_dhaka_places.js`) — came back clean:
 properly gated, no hardcoded secrets, no SQL/NoSQL injection anywhere in the
 DAOs, and `public/live-viewer.html` uses `textContent` (not `innerHTML`) for
 all session-derived data.
+
+### 33.6 (rest). Storage rules audience mirroring — OBSOLETE (2026-10-22, moved from `issues_open.md`)
+
+The open half of 33.6 (mirror the ride's `audience` in `storage.rules` via
+`firestore.get()`, with an emulator test) no longer applies: `storage.rules` was deleted
+in `f58bd8e1` (2026-10-14/15). `firebase.json` never deployed Storage and the app has no
+`firebase_storage` dependency; photos and voice notes go through Cloudinary
+(`issues_open.md` §33.5). §62.11 was the same item.
 
 ---
 
@@ -3687,7 +3701,7 @@ covering §62.1/§62.2/§62.4/§62.5); `npm test` (scripts/) **33/33** passing;
 any of the rules/Functions fixes protect a real rider, same caveat as every
 other rules change in this file.
 
-> Still open from this section: 62.11, 62.12, 62.13. Those parts are in `issues_open.md` under §62.
+> Still open from this section: 62.12 and part of 62.13. Those parts are in `issues_open.md` under §62. 62.11 is obsolete (end of this section).
 
 ### 62.1 Shared-ride documents are fully client-writable after the anti-fraud counter checks pass — leaderboard/social-proof forgery — CRITICAL
 
@@ -4080,6 +4094,16 @@ already closed for rides/bikes/maintenance (just not for the four tables
 in §62.9). The `public/live-viewer.html` Firebase Web API key is the
 already-documented §1 non-issue, re-confirmed.
 
+### 62.11 / 62.13 (part). Closed 2026-10-22 (moved from `issues_open.md`)
+
+- **62.11 Storage rules ignore the ride's audience — OBSOLETE.** `storage.rules` was
+  deleted in `f58bd8e1`; see §33.6 (rest).
+- **62.13, two of the five architecture notes are done:** the counter-bump checks are
+  one `voteBumpValid` helper (`firestore.rules:316`; `likeBumpValid` went with likes,
+  §80), and the duplicate GPX/JSON export in `cloud_repository.dart` is gone
+  (`app/lib/core/cloud/export_service.dart` is the only one). The other three stay in
+  `issues_open.md` §62.13.
+
 ---
 
 ---
@@ -4263,7 +4287,7 @@ these fixes had unit-testable seams without deeper refactoring; verified
 by reasoning through the change plus analyze+full-suite-green, not by a
 regression test).
 
-> Still open from this section: 65.6. Those parts are in `issues_open.md` under §65.
+> Nothing from this section is still open: 65.6 was closed as a non-issue (end of this section).
 
 ### 65.0 Live-shared position was frozen from the moment sharing was turned on — CRITICAL, found while fixing §65.1/§65.2, FIXED
 
@@ -4405,6 +4429,21 @@ Firestore `WriteBatch` — these can exceed 500 writes in principle
 (unlikely at this app's scale, but not impossible for the group-ride case
 with `memberLocations`+`invitations`+`members`+`voiceNotes` combined), and
 parallel deletes have no such limit.
+
+### 65.6 Cold-resume freeze on a long interrupted ride — closed as a non-issue (2026-09-19; moved from `issues_open.md` 2026-10-22)
+
+`RideRecordingNotifier.restoreInterruptedRide` rebuilds aggregates
+(`ride_resume.dart`'s `rebuildRideAggregates`, two linear passes) and replays the
+polyline (`_appendToPolyline`, decimated to a 2000-point cap) on the main isolate at
+launch. Benchmarked 2026-09-19 against 36,000 synthetic fixes, a 4-hour ride at this
+app's `distanceFilter: 3`: **~10 ms** on dev hardware (aggregates ~8 ms, polyline
+~1.5 ms). A phone 3–5× slower stays under a visible frame drop, and a `compute()`
+isolate would spend more on spawning and serialising than it saves. No change.
+
+Ruled out in the same audit, so they aren't re-checked: the cockpit map
+(`const _RouteMap()`) skips the per-tick rebuild; `sensor_fusion_coordinator.dart`
+throttles UI pushes to 5 Hz against 20 Hz sampling; `ride_persistence_coordinator.dart`
+batches SQLite writes; the polyline outbox payload already uses the flat-array format.
 
 ---
 
@@ -4774,6 +4813,32 @@ Firestore read of the new batch (handle/name/bike/city per rider,
 forum-post distribution), not recomputed from the script's source — ground
 truth over inference. New account passwords landed in a fresh
 `scripts/qa_seed_passwords.<timestamp>.json`, gitignored and not committed.
+
+### 69 (rest). Open-list items closed 2026-10-22
+
+Moved from `issues_open.md` §69 after a check against `main` (`3ebbd21d`).
+
+- **69.O1 Microphone in the privacy policy:** the page is fixed and deployed (above).
+  The Play Console Data safety answer for audio is part of owner item #4; public
+  voice-note URLs are `issues_open.md` §33.5.
+- **69.O2 Account-deletion scope:** decided and built. `onUserAccountDeleted`
+  (`functions/src/account-erasure.ts`) keeps authored community content under a
+  deleted-rider byline, anonymises the rider's chats (`84dd97d6`) and sweeps their
+  Cloudinary assets. It runs once Cloud Functions can deploy (Blaze, owner items #3
+  and #31).
+- **69.O4, 69.O10:** fixed on `fix/grill-78` (§78.A–§78.C).
+- **69.O5 Localization coverage:** done by the localization pass (§83.23 (rest)).
+- **69.O6 Cloud Functions runtime:** done. `functions/package.json` pins Node 22 and
+  `firebase-functions` ^7.4.0; `firebase.json` sets `nodejs_22`.
+- **69.O8 `USE_FULL_SCREEN_INTENT`:** decided 2026-10-21 (owner item #8): keep it and
+  file its Play declaration with the first submission (owner item #4).
+- **69.O13 Design assets not carried into `DOCS/`:** dropped on purpose; they stay in
+  git history.
+- **69.O16 `docs/` vs `DOCS/` casing:** resolved in the 2026-09-19 reorg commit
+  (`git rm -r --cached docs && git add DOCS`). This disk has `core.ignorecase=true`;
+  watch for it on any case-only rename.
+- **Deploy:** the rules and Hosting deploys were done 2026-09-19. The functions deploy
+  stays open in `issues_open.md` §69.
 
 ---
 
@@ -5304,6 +5369,25 @@ Verified: `flutter analyze` clean, `flutter test` 1086/1086 (38 new).
 - SafeQR PNG sharing.
 - All the new sheets, banners and dialogs.
 
+### 78 (rest). Open-list items closed 2026-10-22
+
+Moved from `issues_open.md` §78 after a check against `main` (`3ebbd21d`).
+
+- **78.16 Tile provider:** chosen. Release builds use Thunderforest: `scripts/deploy.sh:139-145`
+  takes `TILE_*` from the environment or the git-ignored `secret/tiles.env` (`2f892e35`).
+  `public/privacy.html`'s map-tiles row still says OSM; owner item #2 covers that edit.
+- **78.18 CI:** `.github/workflows/ci.yml` runs on GitHub and is green. `main_ruleset`
+  still requires no status checks: owner item #16.
+- **78.25 The pitch:** `DOCS/Handoffs for Non Coding Agents/marketing/iDEA_PITCH_SUBMISSION.md`
+  now says crash detection is off and alert delivery isn't built (lines 7, 38, 54-55), and
+  `gov-pitch/` was deleted in the 2026-10-22 DOCS restructure. The team slide is part of
+  owner item #22.
+- **78.27 Chat-create rule vs old builds — OBSOLETE.** The rule went live with the
+  2026-09-21 rules deploy, so the "ship the app before the rules" order no longer
+  applies. Builds from before the fixed DM id can't start new chats.
+- **78.28 Bangla review** of the fix-pass strings waits with the rest in `issues_open.md`
+  §83.23 (owner item #12).
+
 ## 79. Places screen: "Browse routes →" button clashes visually with its neighbors — FIXED (2026-09-20)
 
 Surfaced by a user question ("why does the routes button look like a
@@ -5616,6 +5700,36 @@ Verification for the whole pass: `flutter analyze` clean, `flutter test`
   (verified: 0 occurrences in a full run). It still carries the app's
   User-Agent so the tile-policy header test stays meaningful.
 
+### 83 (rest). Open-list items closed 2026-10-22
+
+Moved from `issues_open.md` §83 after a check against `main` (`3ebbd21d`).
+
+- **83.16 (part) Cloudinary upload preset:** same finding as §33.5, tracked there.
+- **83.19 (part) App Check enforcement:** client activation is done (above). Console
+  registration and enforcement are owner items #17 and #32; `issues_open.md` §62.12
+  tracks it with rate limiting.
+- **83.23, three leftovers done:** logic-layer messages reach the UI as codes and are
+  localized there (`74ea4d03`, see "83.23 (part)" below); dates read "8 Oct 2026" in
+  Bangla too, English months with Western digits, by decision (`2f892e35`); the
+  onboarding mockup chrome went with the mockups (83.26).
+- **83.23 guidance, kept so nobody "fixes" it:** deliberately English are units (`km`,
+  `km/h`, `mi`, `°C`, `g`), brand/model names and hint examples, forum topic/brand
+  lookup lists, and every string that is data other people read (report reasons,
+  `Unknown Bike`, audience values, the SafeQR payload, SQL). Foreground-service and
+  notification text is a snapshot taken at ride start or send time
+  (`resolveL10n`/`savedL10n`), not reactive to a mid-ride language change.
+- **83.25 Information architecture:** decided 2026-09-20, leave the nav alone so beta
+  testers don't relearn it. No work pending. (`2f892e35` later renamed the Profile tab
+  to Garage.)
+- **83.26 `onboarding_ui_mockups.dart`:** deleted in `a8983e7c`.
+- **83.27 Analytics:** built (screen views and a fixed funnel, no ad SDK) and disclosed
+  in `public/privacy.html` (:260, :367) and
+  `DOCS/General/Files for Stores/store_listing/data_safety_and_permissions.md:95`. The
+  owner kept the disclosed opt-out on 2026-10-22 (owner item #14). The Play Console
+  form itself is part of owner item #4.
+- **83.31 Triage:** superseded. `needs_attention.md` and the owner page rank open
+  work, and the §32 safety finding it cited is closed (§32 (rest)).
+
 ## 74. Retro / Light: cards render near-black with unreadable text — FIXED (2026-09-21)
 
 Surfaced 2026-09-19 in the UI screenshot set: "Your bikes" forum cards, Places
@@ -5694,8 +5808,20 @@ the code and against current-build screenshots, not assumed:
 | `★ —` on zero-review places | **Really broken — fixed.** Official points (police, cameras) show no rating row; unrated places say "No ratings yet". |
 
 Also localized the two literal pill labels found on the way (`'Overdue'`, `'OK'`).
-The one item on the original list still open is Emergency Contacts being exposed
-in Settings while inert (see `issues_open.md` §32).
+The one item on the original list left open was Emergency Contacts being exposed
+in Settings while inert; closed 2026-10-22, below.
+
+### 32 (rest). Emergency Contacts in Settings — closed (2026-10-22, moved from `issues_open.md`)
+
+Settings still lists Emergency Contacts, but no longer reads as protection: a
+warning-coloured banner above the list says "ThrottleIQ does not yet alert these
+contacts automatically." (`app/lib/features/profile/presentation/screens/settings_screen.dart:262-288`,
+`cecdd049`, grill §3.6.3). The contacts are also used today: the first one goes on the
+SafeQR sticker (`safe_qr_screen.dart:169-172`). Crash alerts stay off (§78.1).
+
+The taste calls on the original list (slide-to-start friction, "In jam", chart axes,
+theme-picker previews, a low-contrast pass) are deliberately not being done. Don't
+re-raise them as bugs.
 
 ## 78.30 Crash badge in ride history (2026-09-21, branch `job3-ux`)
 
@@ -5857,7 +5983,24 @@ the instance: every column added to `rides` since has needed its own bespoke gua
 
 **Not verified:** anything that needs a phone on a bike. The maths is unit-tested and
 the cockpit builds, but nobody has ridden a route with this. The full suite, the
-analyzer and an Android debug build are clean. See `issues_open.md` §78.21 for what's left.
+analyzer and an Android debug build are clean. What was left is below.
+
+### 78.21 leftovers (moved from `issues_open.md` 2026-10-22)
+
+- **Nobody has ridden it.** The GPX replay harness (part 2, below) covers the session.
+  `Geolocator`, the permission prompts, the foreground service, the wakelock and
+  persistence are built inline by `RideRecordingNotifier` and can't be substituted
+  (§83.13), so a real ride is the only check on them and on battery and heat. That ride
+  is in the device-check follow-up at the top of `issues_open.md` (owner item #5).
+- **Known limits, deliberate:** a ride restored at launch keeps its `route_id` but not
+  its guidance, because the navigation session is in memory; the rider re-opens the
+  route to get the banner back (the alternative is fetching a route during launch
+  recovery). Navigating without recording is no longer possible; a rider who only
+  wants the line on screen gets a ride to discard. Watch beta feedback for both.
+- **Pre-v17 installs, accepted:** a ride that followed a route won't download onto a
+  build from before 2026-09-21 (schema v17). Those builds predate the forced-update gate
+  (`aaf4ef3a`, 2026-10-14), so nothing can push them; it fades as testers update.
+- **`timesRidden`** counts since 2026-09-21 (§85).
 
 ---
 
@@ -5884,6 +6027,17 @@ than at the write.
 The comments tally on `5a905c0a-…` went 3 → 0. A second dry run reports nothing left to
 do, which is the documented verification. No fabricated engagement remains on a real
 rider's post.
+
+### The original §79 finding (moved from `issues_open.md` 2026-10-22)
+
+On 2026-09-20, on request, 14 likes and 3 comments were written by hand onto the
+founder's public shared ride `5a905c0a-a468-46a0-823c-b43ae3573c82` ("Saturday state of
+mind") from 14 of the 30 `qaSeed` rider accounts, with the post's tallies set to match.
+Every document carried `qaSeed: true`. The gap: `cleanup_qa_test_riders.js` deletes
+seeded users, usernames, shared rides and forum posts, but not likes or comments a
+seeded account left on someone else's post. `scripts/oneoff/cleanup_qa_engagement.js`
+closed it (above). Fabricated engagement on a founder post must never be used as
+traction evidence in the pitch or the store listing (§72).
 
 ---
 
@@ -6040,6 +6194,47 @@ guidance without ending the ride.
 
 ---
 
+## 86. Social redesign left half-wired with fake data — FIXED (2026-09-27); deploy and iOS run closed (moved from `issues_open.md` 2026-10-22)
+
+An uncommitted first pass at the Rides/People/Forums mock (`ANTIGRAVITY_GRILL/new_task`,
+deleted, §91.6) had disconnected the AppBar search, left the People tab a bare
+`Center(child: Text('People'))`, and hardcoded the mock's sample text ("Rafi's Squad",
+"Nadia Rahman", "Chittagong Hill Tracts") into the "Riding Now" strip and every feed
+card's location pill. Scratch `clean_up*.py`/`fix_social.py`/`rewrite_social_screen.py`
+scripts and `tmp_*`/`.bak` files sat in the repo root.
+
+**Fixed:** search is a `SearchDelegate` off the AppBar icon; People has real rider
+search and a real Following list; "Riding Now" reads
+`GroupRideRepository.watchActiveGroupRidesForUser()` and hides itself when the rider has
+no active group ride; the location pill was removed rather than faked. The
+`groupRides` `list` rule was extended for that query (119/119 emulator tests) and went
+live with the 2026-10-06 rules deploy (§93.6). Scratch files deleted. Detail in
+features.md §7.
+
+**iOS release run on the founder's iPhone (2026-09-28 to 2026-10-05).** Three blockers,
+cleared in order:
+- "no XCFramework found" pointing at the repo's pre-move path: 10 stale
+  `~/Library/Developer/Xcode/DerivedData/Runner-*` caches carried the old absolute
+  path. Fixed by deleting them and `app/build/ios/SourcePackages` and letting Xcode
+  re-resolve. A machine cache issue, no source change.
+- No Apple ID in Xcode, so codesigning failed. Signed in 2026-09-28.
+- First launch refused ("invalid code signature … not explicitly trusted by the user").
+  Fixed on the phone: Settings → General → VPN & Device Management → Trust. The app
+  launched in release mode on 2026-10-05.
+
+Carry forward: `flutter run --release` still fails at its own install step even though
+the Xcode build succeeds. Let the build finish, then
+`xcrun devicectl device install app --device <udid> build/ios/iphoneos/Runner.app` and
+`xcrun devicectl device process launch --device <udid> com.bft.throttleiq`. The profile
+is a free personal team (`Apple Development: abraar.rar@icloud.com`, team
+`NJ4675FFUX`); free profiles expire after 7 days (this one on 2026-10-12) and need a
+re-sign. The paid Apple Developer Program is owner item #21.
+
+Two follow-ups (solo "riding now" cards, a per-card location label) stay open in
+`issues_open.md` §86.
+
+---
+
 ## 87. Founder-reported social bugs — FIXED in code (2026-10-01), not yet verified on a device
 
 The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all 1347 tests pass.
@@ -6068,7 +6263,65 @@ The fixes are uncommitted in the open55 pass. `flutter analyze` is clean and all
   - **Fix:** Switched `RideShareRepository.getRidesByAuthors` to issue one query per author. Because the query pins `userId == author`, `firestore.rules` can statically prove the `exists()` checks against the live `follows` graph during validation. `RideFeedNotifier` now queries `getFollowersAmong` to know which authors follow the rider back, enabling it to safely query for `mutual` posts without hitting permission denials.
   - **Rules:** `rideVisibleTo` updated to check the live `follows` graph (via `exists()`), while retaining the `allowedUserIds` fallback for old clients.
 
+### 88.2–88.4 (moved from `issues_open.md` 2026-10-22)
 
+- **88.2** Fixed in code, not device-checked: each bike's maintenance settings (tracked checks with typical cost, fuel price, mileage) back up via the outbox to the owner-only `users/{uid}/private/maintenanceSettings_{bikeId}` and restore on a reinstall or a new device, filling empty tables only. See `app/lib/core/cloud/maintenance_settings_sync.dart`.
+- **88.3** The device check of the open55 changes (the §87 checklist, the maintenance layout and ride-cost card, the collage visuals, the SQLite v17→18 upgrade on a real install) moved to the device-check follow-up at the top of `issues_open.md` (owner item #5).
+- **88.4** The open55 Bangla strings wait with the rest of the Bangla review in `issues_open.md` §83.23 (owner item #12).
+
+---
+
+## 89. No JDK on the machine — Android release builds (APK/AAB) could not run — FIXED (2026-10-05)
+
+_Moved from `issues_open.md` on 2026-10-22. The Gradle 8.14 warning below is still open there, under "Follow-ups on fixed issues"._
+
+- **Symptom:** `flutter build apk --release` and `flutter build appbundle --release`
+  both fail immediately at `Running Gradle task 'assembleRelease'` with
+  `The operation couldn't be completed. Unable to locate a Java Runtime.`
+  (exit 1, ~30ms — Gradle never starts). `flutter doctor` reports
+  `[!] Android toolchain ... ✗ Could not determine java version`.
+- **Cause:** there is no JDK installed anywhere on this Mac. `JAVA_HOME` is
+  unset, `/usr/libexec/java_home` finds nothing, Android Studio is not
+  installed (so there's no bundled JBR to fall back on), and there is no
+  Homebrew/SDKMAN JDK. The Android *SDK* (37.0.0) is present — only the Java
+  runtime is missing. Note the release build was verified on the
+  Pixel_10_Pro emulator on 2026-08-28, so a JDK existed then and has since
+  gone away.
+- **Fix (APPLIED 2026-10-05):** installed JDK 21 via the Homebrew *formula*
+  `brew install openjdk@21` (→ `/opt/homebrew/Cellar/openjdk@21/21.0.12.1`).
+  Used the formula rather than the `temurin` cask because the cask installs
+  into `/Library/Java/JavaVirtualMachines` and needs an interactive `sudo`
+  password; the formula installs under `/opt/homebrew` with no sudo. It also
+  upgraded 7 existing brew deps (libpng, pcre2, glib, xorgproto, cairo,
+  harfbuzz, xz). `openjdk@21` is **keg-only**, so it is NOT auto-linked and
+  needs an explicit PATH entry — added to `~/.zshrc`:
+  `export JAVA_HOME="/opt/homebrew/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home"`
+  and `export PATH="$JAVA_HOME/bin:$PATH"`. Flutter was also pointed at it
+  independently of the shell with
+  `flutter config --jdk-dir "$JAVA_HOME"` so GUI editors work too.
+  `flutter doctor` now reports `[✓] Android toolchain` (was
+  `✗ Could not determine java version`).
+  **Use JDK 21, not the current `temurin`/`openjdk` (27).** This project is Gradle
+  8.13 + AGP 8.11.1 compiling to Java 17 target
+  (`sourceCompatibility`/`jvmTarget` = 17); JDK 21 is the supported LTS for
+  that combination, and 27 is likely to break the Gradle/AGP toolchain.
+- **Unblocks:** nothing in the app code is wrong — signing is already set up
+  correctly (`android/key.properties` present and wired into
+  `signingConfigs`, keystore file resolves, `google-services.json` in place),
+  so both builds should go through as soon as a JDK exists.
+- **Verified 2026-10-05:** both release builds now succeed.
+  `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk`
+  (85.2 MB) and `flutter build appbundle --release` →
+  `build/app/outputs/bundle/release/app-release.aab` (83.3 MB), both exit 0.
+  `apksigner verify` confirms the APK is signed with the **release** key
+  (`CN=ThrottleIQ, OU=BlankFrame Technologies`), APK Signature Scheme v2,
+  1 signer — not a debug key.
+- **Two non-blocking warnings seen during the build, both left alone:**
+  (a) `Flutter support for your project's Gradle version (8.13.0) will soon be
+  dropped. Please upgrade ... to at least 8.14.0` — worth doing before it
+  becomes an error; (b) `SDK processing. This version only understands SDK XML
+  versions up to 3 but an SDK XML file of version 4 was encountered` — harmless
+  cmdline-tools/SDK version skew.
 
 ---
 
