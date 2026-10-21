@@ -2,7 +2,10 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-21 (quota): Firestore outage mode — branch `feat/quota-outage` (worktree `.claude/worktrees/quota-outage`), not committed, not on a device
+## 2026-10-21 (quota): Firestore outage mode — branch `feat/quota-outage` (worktree `.claude/worktrees/quota-outage`), committed `fccd0ac4` and pushed, not merged into main, not on a device
+
+- **Gate:** `scripts/check.sh --base d92f694e` passed on `fccd0ac4`, including all 2294 tests. The base is this branch's fork point. The default base, `origin/main`, would also run the rules and functions suites for the other session's 7 unpushed `main` commits, and this machine can't run those (port 8080 is taken, and the worktree has no functions dependencies).
+- **Owner to-dos** are in `~/Everything/dev/housekeeping/owner_works_now.html`, ThrottleIQ items 25-29: check the alert emails, OK the merge, the release, the §106 E2E fix, and the Bangla review.
 
 - **App:** when the Spark daily quota runs out, sync and the outbox pause instead of burning retries, riders see `OverQuotaBar`, and sync resumes by itself after the reset. Details: `features.md` "Firestore quota outage mode", `issues_open.md` §104.6. Focused tests pass.
 - **Owner email (live on production since 2026-10-21):** the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml` emails blankframe.technologies@gmail.com at 80% of reads, writes or deletes, and when reads or writes are used up (99%).
