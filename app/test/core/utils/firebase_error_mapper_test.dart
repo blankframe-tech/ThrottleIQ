@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart' show FirebaseException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/utils/firebase_error_mapper.dart';
 import 'package:throttleiq/l10n/app_localizations_en.dart';
@@ -7,19 +8,22 @@ final _en = AppLocalizationsEn();
 void main() {
   group('mapLocationError', () {
     test('maps location services disabled to friendly prompt', () {
-      final msg = mapLocationError(Exception('Location services are disabled. Please enable GPS.'), _en);
+      final msg = mapLocationError(
+          Exception('Location services are disabled. Please enable GPS.'), _en);
       expect(msg, contains('Location is turned off'));
       expect(msg, contains('Enable GPS'));
     });
 
     test('maps permission denied to settings prompt', () {
-      final msg = mapLocationError(Exception('Location permission is denied by user'), _en);
+      final msg = mapLocationError(
+          Exception('Location permission is denied by user'), _en);
       expect(msg, contains('Location permission is needed'));
       expect(msg, contains('Settings'));
     });
 
     test('maps unknown location error to fallback message', () {
-      final msg = mapLocationError(Exception('Timeout fetching position fix'), _en);
+      final msg =
+          mapLocationError(Exception('Timeout fetching position fix'), _en);
       expect(msg, contains('Could not get your location'));
       expect(msg, contains('Check that GPS is on'));
     });
@@ -49,7 +53,8 @@ void main() {
         isTrue,
       );
       expect(
-        isLocationPermissionError(Exception('location permission denied forever')),
+        isLocationPermissionError(
+            Exception('location permission denied forever')),
         isTrue,
       );
       expect(
@@ -62,7 +67,8 @@ void main() {
   group('mapFirestoreError', () {
     test('maps network errors to offline message', () {
       expect(
-        mapFirestoreError(Exception('SocketException: OS Error: Connection refused'), _en),
+        mapFirestoreError(
+            Exception('SocketException: OS Error: Connection refused'), _en),
         contains("You're offline"),
       );
       expect(
@@ -77,11 +83,25 @@ void main() {
         equals('Something went wrong loading this. Please try again.'),
       );
     });
+
+    // §104: a spent daily quota lasts until the reset, so "in a moment"
+    // was wrong.
+    test('maps resource-exhausted to the database-overloaded message', () {
+      final msg = mapFirestoreError(
+        FirebaseException(
+            plugin: 'cloud_firestore', code: 'resource-exhausted'),
+        _en,
+      );
+      expect(msg, equals(_en.errTooManyRequests));
+      expect(msg, contains('overloaded'));
+      expect(msg, isNot(contains('in a moment')));
+    });
   });
 
   group('mapFirebaseAuthError', () {
     test('maps null to unknown error', () {
-      expect(mapFirebaseAuthError(null, _en), equals('An unknown error occurred'));
+      expect(
+          mapFirebaseAuthError(null, _en), equals('An unknown error occurred'));
     });
 
     test('maps network string to connection message', () {

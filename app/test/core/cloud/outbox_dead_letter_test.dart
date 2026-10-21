@@ -4,6 +4,7 @@ library;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:throttleiq/core/cloud/firestore_quota.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
 import 'package:throttleiq/core/database/daos/outbox_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
@@ -36,8 +37,7 @@ void main() {
 
   /// Makes every queued entry due again, standing in for the backoff
   /// elapsing between drains.
-  Future<void> makeAllDue() =>
-      db.update('outbox', {'next_attempt_at': null});
+  Future<void> makeAllDue() => db.update('outbox', {'next_attempt_at': null});
 
   FirebaseException rejected(String code) =>
       FirebaseException(plugin: 'cloud_firestore', code: code);
@@ -305,6 +305,72 @@ void main() {
       expect(entry.permanentFailures, 0);
       expect(entry.attempts, 7);
       expect(await dao.pendingCount(), 1);
+    });
+  });
+
+  /// §104: a quota outage lasts up to a day, longer than the 20 attempts an
+  /// entry gets. The outbox stops trying the moment one delivery hits the
+  /// quota, and carries on once SyncManager's probe resumes it.
+  group('quota pause', () {
+    test('one quota error stops the drain until resumed', () async {
+      final quota = FirestoreQuota();
+      var refuse = true;
+      final calls = <String>[];
+      final service = OutboxService(
+        dao: dao,
+        currentUid: () => 'alice',
+        quota: quota,
+        deliverOverride: (entry) async {
+          calls.add(entry.id);
+          if (refuse) throw rejected('resource-exhausted');
+          return OutboxDeliveryResult.delivered;
+        },
+      );
+      for (final id in ['fuel:1', 'fuel:2']) {
+        await dao.enqueue(
+            id: id, kind: OutboxKind.fuelLog, payload: {'uid': 'alice'});
+      }
+
+      await service.drain();
+      expect(quota.isPaused, isTrue);
+      expect(calls, hasLength(1));
+      final attempts = [for (final e in await dao.all()) e.attempts]..sort();
+      expect(attempts, [0, 1]);
+
+      // Still paused: due again, but nothing is tried or counted.
+      await makeAllDue();
+      await service.drain();
+      expect(calls, hasLength(1));
+
+      refuse = false;
+      quota.resume();
+      await makeAllDue();
+      await service.drain();
+      expect(await dao.all(), isEmpty);
+    });
+
+    test('while paused, an immediate attempt is skipped, not counted',
+        () async {
+      final quota = FirestoreQuota()..report(rejected('resource-exhausted'));
+      var calls = 0;
+      final service = OutboxService(
+        dao: dao,
+        currentUid: () => 'alice',
+        quota: quota,
+        deliverOverride: (_) async {
+          calls++;
+          return OutboxDeliveryResult.delivered;
+        },
+      );
+
+      final delivered =
+          await service.enqueueLiveSessionTeardown(uid: 'alice', token: 't1');
+
+      expect(delivered, isFalse);
+      expect(calls, 0);
+      final entry = (await dao.all()).single;
+      expect(entry.attempts, 0);
+      expect(entry.lastError, isNull);
     });
   });
 }

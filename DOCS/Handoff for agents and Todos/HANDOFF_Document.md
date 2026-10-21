@@ -2,6 +2,29 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-21 (quota): Firestore outage mode — branch `feat/quota-outage` (worktree `.claude/worktrees/quota-outage`), not committed, not on a device
+
+- **App:** when the Spark daily quota runs out, sync and the outbox pause instead of burning retries, riders see `OverQuotaBar`, and sync resumes by itself after the reset. Details: `features.md` "Firestore quota outage mode", `issues_open.md` §104.6. Focused tests pass.
+- **Owner email (live on production since 2026-10-21):** the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml` emails blankframe.technologies@gmail.com at 80% of reads, writes or deletes, and when reads or writes are used up (99%).
+  - IDs: `alertPolicies/13055223357814148266` and `notificationChannels/9574270854457855850`.
+  - Re-apply steps: `scripts/README.md` "Firestore daily quota".
+  - gcloud's default account is back on the Play-publisher SA; the owner account is used with `--account`.
+- **Rehearsal done:** `DOCS/load_test/quota-rehearsal-2026-10-21.md`, run on `throttleiq-quota-lab-20261021`.
+  - `count()` and transactions fail once reads run out, which is what triggers the app's pause.
+  - Gets and listeners keep working.
+  - Nothing is lost.
+  - Alerting works on Spark.
+  - Production usage is far from the limits: 3-14% of reads a day over the last week.
+- **Gate:** `scripts/check.sh` in the worktree is green for everything this branch touches: l10n, format, guards, analyze, and all 2294 Flutter tests.
+  - Its rules and functions steps still fail. They run because `main` has 7 unpushed commits that change functions and a rules test, not because of this branch.
+  - They fail for two local reasons: port 8080 is held by another app (`xerj`), so the Firestore emulator can't start; and the worktree has no `functions/node_modules`.
+- **Lab:** `throttleiq-quota-lab-20261021` was deleted on 2026-10-21 (undo possible for 30 days). The revised 5-condition policy opened all 4 expected incidents there (reads/writes 80% and 99%) before deletion.
+- **Left:**
+  - Commit and merge this branch after the 7 unpushed `main` commits, then re-run the gate.
+  - Release the app part.
+  - The E2E test fails on this branch and on plain `main` (`d92f694e`) the same way: a `StateError` in `RideRecordingNotifier.dispose`. It isn't caused by this branch. Cause and a 3-line fix: `issues_open.md` §106.
+  - Bangla review of `overQuotaBar` and `errTooManyRequests`.
+
 ## 2026-10-19 (places): Google Maps gap-fill written to production; Google ratings dropped — `main` pushed at `074def1`
 
 - **Production data changed:** `places` went from 521 to 1,238 docs. 717 new Dhaka fuel/garage/parts places (`createdBy: 'system:gmaps-seed-dhaka'`, keyed by `googlePlaceId`), 80 existing places enriched (phone, hours, 5 renamed), all 69 hand-entered Google ratings set to 0. Undo the creates with one query on `createdBy`. The rating reset can't be undone. Details: `issues_open.md` §105, `features.md` §6.

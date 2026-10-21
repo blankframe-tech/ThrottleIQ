@@ -3,22 +3,85 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/features/social/domain/entities/shared_ride_entity.dart';
 import 'package:throttleiq/features/social/presentation/screens/shared_ride_detail_screen.dart';
 import 'package:throttleiq/shared/widgets/full_screen_route_map_screen.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
 final Uint8List _kTransparentPng = Uint8List.fromList([
-  0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D,
-  0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
-  0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4, 0x89, 0x00, 0x00, 0x00,
-  0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-  0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49,
-  0x45, 0x4E, 0x44, 0xAE, 0x42, 0x60, 0x82,
+  0x89,
+  0x50,
+  0x4E,
+  0x47,
+  0x0D,
+  0x0A,
+  0x1A,
+  0x0A,
+  0x00,
+  0x00,
+  0x00,
+  0x0D,
+  0x49,
+  0x48,
+  0x44,
+  0x52,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x00,
+  0x01,
+  0x08,
+  0x06,
+  0x00,
+  0x00,
+  0x00,
+  0x1F,
+  0x15,
+  0xC4,
+  0x89,
+  0x00,
+  0x00,
+  0x00,
+  0x0A,
+  0x49,
+  0x44,
+  0x41,
+  0x54,
+  0x78,
+  0x9C,
+  0x63,
+  0x00,
+  0x01,
+  0x00,
+  0x00,
+  0x05,
+  0x00,
+  0x01,
+  0x0D,
+  0x0A,
+  0x2D,
+  0xB4,
+  0x00,
+  0x00,
+  0x00,
+  0x00,
+  0x49,
+  0x45,
+  0x4E,
+  0x44,
+  0xAE,
+  0x42,
+  0x60,
+  0x82,
 ]);
 
 class _TestHttpOverrides extends HttpOverrides {
@@ -39,15 +102,22 @@ class _FakeHttpClient implements HttpClient {
   String? userAgent;
 
   @override
-  void addCredentials(Uri url, String realm, HttpClientCredentials credentials) {}
+  void addCredentials(
+      Uri url, String realm, HttpClientCredentials credentials) {}
   @override
-  void addProxyCredentials(String host, int port, String realm, HttpClientCredentials credentials) {}
+  void addProxyCredentials(
+      String host, int port, String realm, HttpClientCredentials credentials) {}
   @override
-  set authenticate(Future<bool> Function(Uri url, String scheme, String? realm)? f) {}
+  set authenticate(
+      Future<bool> Function(Uri url, String scheme, String? realm)? f) {}
   @override
-  set authenticateProxy(Future<bool> Function(String host, int port, String scheme, String? realm)? f) {}
+  set authenticateProxy(
+      Future<bool> Function(
+              String host, int port, String scheme, String? realm)?
+          f) {}
   @override
-  set badCertificateCallback(bool Function(X509Certificate cert, String host, int port)? callback) {}
+  set badCertificateCallback(
+      bool Function(X509Certificate cert, String host, int port)? callback) {}
   @override
   void close({bool force = false}) {}
   @override
@@ -56,33 +126,46 @@ class _FakeHttpClient implements HttpClient {
   @override
   Future<HttpClientRequest> getUrl(Uri url) async => _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> openUrl(String method, Uri url) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> openUrl(String method, Uri url) async =>
+      _FakeHttpClientRequest();
   @override
   Future<HttpClientRequest> postUrl(Uri url) async => _FakeHttpClientRequest();
   @override
   Future<HttpClientRequest> putUrl(Uri url) async => _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> deleteUrl(Uri url) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> deleteUrl(Uri url) async =>
+      _FakeHttpClientRequest();
   @override
   Future<HttpClientRequest> patchUrl(Uri url) async => _FakeHttpClientRequest();
   @override
   Future<HttpClientRequest> headUrl(Uri url) async => _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> open(String method, String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> open(
+          String method, String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> get(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> get(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> post(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> post(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> put(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> put(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> delete(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> delete(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> patch(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> patch(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  Future<HttpClientRequest> head(String host, int port, String path) async => _FakeHttpClientRequest();
+  Future<HttpClientRequest> head(String host, int port, String path) async =>
+      _FakeHttpClientRequest();
   @override
-  set connectionFactory(Future<ConnectionTask<Socket>> Function(Uri url, String? proxyHost, int? proxyPort)? f) {}
+  set connectionFactory(
+      Future<ConnectionTask<Socket>> Function(
+              Uri url, String? proxyHost, int? proxyPort)?
+          f) {}
   @override
   set keyLog(Function(String line)? callback) {}
 }
@@ -136,7 +219,8 @@ class _FakeHttpClientRequest implements HttpClientRequest {
   void abort([Object? exception, StackTrace? stackTrace]) {}
 }
 
-class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientResponse {
+class _FakeHttpClientResponse extends Stream<List<int>>
+    implements HttpClientResponse {
   @override
   final HttpHeaders headers = _FakeHttpHeaders();
 
@@ -145,7 +229,8 @@ class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientRes
   @override
   int get contentLength => _kTransparentPng.length;
   @override
-  HttpClientResponseCompressionState get compressionState => HttpClientResponseCompressionState.notCompressed;
+  HttpClientResponseCompressionState get compressionState =>
+      HttpClientResponseCompressionState.notCompressed;
   @override
   HttpConnectionInfo? get connectionInfo => null;
   @override
@@ -175,7 +260,9 @@ class _FakeHttpClientResponse extends Stream<List<int>> implements HttpClientRes
   }
 
   @override
-  Future<HttpClientResponse> redirect([String? method, Uri? url, bool? followLoops]) async => this;
+  Future<HttpClientResponse> redirect(
+          [String? method, Uri? url, bool? followLoops]) async =>
+      this;
 }
 
 class _FakeHttpHeaders implements HttpHeaders {
@@ -215,6 +302,15 @@ class _FakeHttpHeaders implements HttpHeaders {
   bool persistentConnection = false;
   @override
   int? port;
+}
+
+class _FakeUser extends Fake implements User {
+  @override
+  String get uid => 'commenter_1';
+  @override
+  String? get displayName => 'Commenter';
+  @override
+  String? get photoURL => null;
 }
 
 void main() {
@@ -258,7 +354,8 @@ void main() {
     );
   }
 
-  testWidgets('SharedRideDetailScreen displays rider, bike, and telemetry info', (tester) async {
+  testWidgets('SharedRideDetailScreen displays rider, bike, and telemetry info',
+      (tester) async {
     await tester.pumpWidget(createWidgetUnderTest(testRide));
     await tester.pumpAndSettle();
 
@@ -282,7 +379,8 @@ void main() {
     expect(find.text('COMMENTS'), findsOneWidget);
   });
 
-  testWidgets('SharedRideDetailScreen handles empty polyline gracefully', (tester) async {
+  testWidgets('SharedRideDetailScreen handles empty polyline gracefully',
+      (tester) async {
     final emptyTrackRide = testRide.copyWith(polyline: const []);
     await tester.pumpWidget(createWidgetUnderTest(emptyTrackRide));
     await tester.pumpAndSettle();
@@ -290,7 +388,9 @@ void main() {
     expect(find.text('No GPS track available for this ride'), findsOneWidget);
   });
 
-  testWidgets('SharedRideDetailScreen provides zoom controls and route GPS details', (tester) async {
+  testWidgets(
+      'SharedRideDetailScreen provides zoom controls and route GPS details',
+      (tester) async {
     await tester.pumpWidget(createWidgetUnderTest(testRide));
     await tester.pumpAndSettle();
 
@@ -314,7 +414,9 @@ void main() {
     expect(find.textContaining('23.8200°'), findsOneWidget);
   });
 
-  testWidgets('Tapping fullscreen button opens FullScreenRouteMapScreen with interactive controls', (tester) async {
+  testWidgets(
+      'Tapping fullscreen button opens FullScreenRouteMapScreen with interactive controls',
+      (tester) async {
     await tester.pumpWidget(createWidgetUnderTest(testRide));
     await tester.pumpAndSettle();
 
@@ -329,7 +431,8 @@ void main() {
     expect(find.byKey(const Key('fullscreen_zoom_in_button')), findsOneWidget);
     expect(find.byKey(const Key('fullscreen_zoom_out_button')), findsOneWidget);
     expect(find.byKey(const Key('fullscreen_recenter_button')), findsOneWidget);
-    expect(find.text('3 GPS points • Tap route to inspect waypoints'), findsOneWidget);
+    expect(find.text('3 GPS points • Tap route to inspect waypoints'),
+        findsOneWidget);
 
     // Zoom in and out in fullscreen
     await tester.tap(find.byKey(const Key('fullscreen_zoom_in_button')));
@@ -344,5 +447,37 @@ void main() {
     // Back on detail screen
     expect(find.byType(FullScreenRouteMapScreen), findsNothing);
     expect(find.byType(SharedRideDetailScreen), findsOneWidget);
+  });
+
+  // §104: the field is cleared before sending, and a send refused while
+  // Firestore is over quota used to throw the rider's comment away.
+  testWidgets('a failed comment send puts the text back', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [currentUserProvider.overrideWithValue(_FakeUser())],
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: SharedRideDetailScreen(
+            rideId: testRide.id,
+            initialRide: testRide,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final field = find.ancestor(
+      of: find.text('Add a comment...'),
+      matching: find.byType(TextField),
+    );
+    await tester.ensureVisible(field);
+    await tester.enterText(field, 'Great ride!');
+    // No Firebase app in a widget test, so the send throws inside its try.
+    await tester.tap(find.byIcon(Icons.send));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Failed to post comment'), findsOneWidget);
+    expect(find.text('Great ride!'), findsOneWidget);
   });
 }

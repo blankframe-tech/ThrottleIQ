@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../../shared/widgets/full_screen_route_map_screen.dart';
@@ -156,8 +157,13 @@ class _SharedRideDetailScreenState
       await _loadComments();
     } catch (e) {
       if (!mounted) return;
+      // The field was cleared before sending: give the rider their words back.
+      if (_commentController.text.isEmpty) _commentController.text = text;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.failedPostComment(e))),
+        SnackBar(
+          content: Text(context.l10n
+              .failedPostComment(mapFirestoreError(e, context.l10n))),
+        ),
       );
     }
   }

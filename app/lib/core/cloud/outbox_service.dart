@@ -12,6 +12,7 @@ import '../database/daos/maintenance_dao.dart';
 import '../database/daos/outbox_dao.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'firestore_quota.dart';
 import 'last_writer_wins.dart';
 import 'maintenance_settings_sync.dart';
 import '../../features/maintenance/data/models/fuel_log_model.dart';
@@ -198,7 +199,9 @@ class OutboxService {
     String? Function()? currentUid,
     Future<OutboxDeliveryResult> Function(OutboxEntry entry)? deliverOverride,
     RealtimeServices? realtime,
+    FirestoreQuota? quota,
   })  : _dao = dao ?? OutboxDao(),
+        _quota = quota ?? FirestoreQuota.instance,
         _realtime = realtime,
         _explicitShareRepository = shareRepository,
         _explicitFirestore = firestore,
@@ -207,6 +210,10 @@ class OutboxService {
         _deliverOverride = deliverOverride;
 
   final OutboxDao _dao;
+
+  /// While Firestore is over its daily quota nothing is attempted, so an
+  /// outage of up to a day costs no retries (§104).
+  final FirestoreQuota _quota;
 
   /// RTDB wiring for the live-share teardown; null (as in most tests) skips it.
   final RealtimeServices? _realtime;
@@ -441,6 +448,9 @@ class OutboxService {
       if (owner != null && owner != _currentUid()) {
         return OutboxDeliveryResult.deferred;
       }
+      // Checked here, inside the chain, so a pause set by a drain that ran
+      // just before is seen. Not a failed attempt: nothing is recorded.
+      if (_quota.isPaused) return OutboxDeliveryResult.deferred;
       return _deliver(entry);
     });
   }
@@ -465,6 +475,9 @@ class OutboxService {
         final due = await _dao.due();
         final uid = _currentUid();
         for (final entry in due) {
+          // Stops mid-drain too: once one delivery hits the quota, the rest
+          // would only collect a failed attempt each.
+          if (_quota.isPaused) break;
           final owner = outboxEntryOwner(entry);
           if (owner != null && owner != uid) continue;
           await _deliver(entry);
@@ -510,6 +523,7 @@ class OutboxService {
       // to [kOutboxMaxPermanentFailures] times for a rejection retrying
       // can't fix, after which the entry is parked for the rider (§69.O4)
       // instead of retried every 30 minutes for the life of the install.
+      _quota.report(e);
       debugPrint('[Outbox] ${entry.kind} ${entry.id} failed: $e');
       await _recordFailure(
         entry,

@@ -6546,11 +6546,17 @@ abstract class AppLocalizations {
   /// **'That could not be found — it may have been removed.'**
   String get errNotFound;
 
-  /// Error: rate limit / quota exhausted.
+  /// Error shown when Firestore refuses a request because the project's daily quota is used up (resets the next day). Used for any failed load or send, so it must not promise that anything was saved.
   ///
   /// In en, this message translates to:
-  /// **'Too many requests right now. Please try again in a moment.'**
+  /// **'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Please try again later.'**
   String get errTooManyRequests;
+
+  /// Strip above the bottom navigation while Firestore is over its daily quota and background sync is paused.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day.'**
+  String get overQuotaBar;
 
   /// Error: a required database index is missing or still building.
   ///

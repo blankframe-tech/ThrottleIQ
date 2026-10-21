@@ -19,6 +19,8 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`backfill_users_visibility.js`](#backfill_users_visibilityjs--stamp-visibility-public-on-legacy-profiles) | One-off: sets `visibility: 'public'` on `users` docs that lack it, so legacy riders show up in search again. Takes a required `--project=<id>` | Yes — the field can be deleted again; single-doc reads already treated a missing field as public |
 | [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
 | [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
+| [`monitoring/firestore-quota-alert.yaml`](#monitoringfirestore-quota-alertyaml--the-quota-email-alert) | Cloud Monitoring alert: emails the owner at 80% of a daily Firestore limit and when requests start being refused (§104) | Yes — `gcloud monitoring policies delete` |
+| [`loadtest/quota_rehearsal.js`](#loadtestquota_rehearsaljs--rehearse-a-quota-outage) | Spends a **throwaway** Spark project's daily Firestore quota and records how the SDK reports it (§104). Refuses any project id without `quota-lab` | n/a — the lab project is deleted afterwards |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
@@ -82,6 +84,76 @@ Runs, against the RTDB emulator (port 9000):
 - `test/live_viewer_core.test.js` — the pure merge/staleness/seq logic in
   `public/live-viewer-core.js` (no emulator needed; also picked up by
   `npm test`).
+
+## Firestore daily quota (§104)
+
+`throttleiqfb` is on Spark. Once a daily limit is used up (50,000 reads,
+20,000 writes or 20,000 deletes), Firestore refuses that kind of request for
+every rider until the reset around midnight Pacific (13:00 Dhaka in summer,
+14:00 in winter). The app then pauses its sync and shows a strip
+(`app/lib/core/cloud/firestore_quota.dart`).
+
+Both items below need the owner's Google account. The Play-publisher service
+account that gcloud uses on this Mac can't read Cloud Monitoring.
+
+```bash
+gcloud auth login blankframe.technologies@gmail.com   # the owner; opens a browser
+# Put the default back, or scripts/publish_release.sh uses the wrong account:
+gcloud config set account id-throttleiq-play-publisher@throttle-iq-gcc1.iam.gserviceaccount.com
+OWNER=blankframe.technologies@gmail.com
+```
+
+### `monitoring/firestore-quota-alert.yaml` — the quota email alert
+
+One policy, five conditions, each emailing the owner on its own: reads, writes
+or deletes above 80% of the daily limit, and reads or writes "used up" (99%).
+All use a rolling 24 h window. Refused requests never reach
+`api/request_count`, so there is no "requests refused" condition
+(`DOCS/load_test/quota-rehearsal-2026-10-21.md`). Emails arrive about 6-7
+minutes after a threshold is crossed. **Live on `throttleiqfb` since
+2026-10-21** (`alertPolicies/13055223357814148266`, channel
+`notificationChannels/9574270854457855850`). Apply it once per project
+(`PROJECT=throttleiqfb`):
+
+```bash
+TOKEN=$(gcloud auth print-access-token --account=$OWNER)
+# 1. The email channel (once). Note the "name" it returns.
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  "https://monitoring.googleapis.com/v3/projects/$PROJECT/notificationChannels" \
+  -d '{"type":"email","displayName":"Owner email","labels":{"email_address":"blankframe.technologies@gmail.com"}}'
+# 2. The policy.
+gcloud monitoring policies create --project=$PROJECT --account=$OWNER \
+  --policy-from-file=monitoring/firestore-quota-alert.yaml \
+  --notification-channels=projects/$PROJECT/notificationChannels/<id>
+```
+
+To change it, edit the YAML, delete the old policy
+(`gcloud monitoring policies list` / `policies delete`) and create it again.
+
+### `loadtest/quota_rehearsal.js` — rehearse a quota outage
+
+Spends a **throwaway** project's daily quota on purpose and prints, as markdown
+tables, how the client SDK answers before and after: `count()` (the app's
+probe), query and doc `get`, a listener, a plain `set`, a `set` behind a rules
+`get()`, and a transaction. It refuses any project id that doesn't contain
+`quota-lab`. Never run it against `throttleiqfb`: it would lock every rider out
+until the reset.
+
+```bash
+LAB=throttleiq-quota-lab-$(date +%Y%m%d)
+firebase projects:create $LAB
+firebase firestore:databases:create "(default)" --location=asia-south1 --project=$LAB
+firebase apps:create WEB quota-lab --project=$LAB
+firebase apps:sdkconfig WEB --project=$LAB          # gives apiKey and appId
+# Lab rules through a firebase.json outside the repo, so nothing can reach throttleiqfb:
+LABDIR=$(mktemp -d) && cp loadtest/quota_lab.rules $LABDIR/firestore.rules
+echo '{"firestore":{"rules":"firestore.rules"}}' > $LABDIR/firebase.json
+(cd $LABDIR && firebase deploy --only firestore:rules --project=$LAB)
+# Optional: the alert above with PROJECT=$LAB, to see the emails arrive.
+npm run loadtest:rehearsal -- --project=$LAB --api-key=<apiKey> --app-id=<appId>
+# Record the tables under DOCS/load_test/, then:
+gcloud projects delete $LAB --account=$OWNER   # can be undone for 30 days
+```
 
 ---
 

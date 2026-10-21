@@ -1,0 +1,26 @@
+rules_version = '2';
+
+// Rules for the THROWAWAY quota-lab project used by quota_rehearsal.js
+// (issues §104). Deliberately open: the project lives for one rehearsal and
+// is then deleted. Never deploy these to throttleiqfb.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /open/{id} {
+      allow read, write: if true;
+    }
+
+    // Same path and read rule the app's quota probe counts.
+    match /config/{id} {
+      allow read, write: if true;
+    }
+
+    // A write whose rule reads another document, like many in
+    // firestore.rules. The rehearsal checks what Firestore answers for it
+    // once the read quota is gone: refused for good (data loss for queued
+    // writes) or retried until the reset.
+    match /guarded/{id} {
+      allow read: if true;
+      allow write: if get(/databases/$(database)/documents/open/gate).data.ok == true;
+    }
+  }
+}

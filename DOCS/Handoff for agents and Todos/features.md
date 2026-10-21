@@ -808,6 +808,23 @@ crossing that the app never saw). The live alarm is still **off**; everything he
   founder decision C4). Deletions still go through tombstones. Ride times are stored in UTC, so "today" and
   day ranges follow the zone the phone is in now. Details: `arch.md` §5.
 
+## Firestore quota outage mode (2026-10-21, branch `feat/quota-outage`, not checked on a device)
+
+- **What riders see:** when the Spark plan's daily Firestore quota runs out, a strip above the bottom nav says
+  the database is overloaded and their data is safe on the phone (`OverQuotaBar`, EN + BN). Error messages for
+  `resource-exhausted` say the same instead of "try again in a moment". A comment or forum reply that fails
+  to send stays in the text field.
+- **What the app does:** `SyncManager` asks Firestore with one `count()` (1 read) at most every 15 min. If it
+  answers `resource-exhausted`, sync and the outbox pause (`FirestoreQuota`), so no queued entry burns its
+  20 attempts and no duplicate writes pile up. The first answer after the reset resumes everything. Rides,
+  tracks, bikes, maintenance and fuel stay in SQLite and upload then.
+- **What the owner gets:** a Cloud Monitoring email at 80% of the daily reads, writes or deletes, and again when
+  reads or writes are used up (99%), about 6-7 min after the threshold. Live on `throttleiqfb` since 2026-10-21
+  (`scripts/monitoring/firestore-quota-alert.yaml`, steps in `scripts/README.md`).
+- **Rehearsed** on a throwaway Spark project (`DOCS/load_test/quota-rehearsal-2026-10-21.md`). The probe works,
+  and nothing is lost. Once reads run out, only transactions and `count()` fail; gets and listeners kept working.
+- Details and limits: `issues_open.md` §104.6.
+
 ## Known UI gaps (as of this pass)
 
 - No dedicated screen shows `VehicleState` confidence/heading/cornering data captured per-point (Phase 1 of the vehicle-state engine persists it; nothing renders it yet — see `HANDOFF_Document.md`).
