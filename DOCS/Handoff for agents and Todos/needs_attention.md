@@ -1,108 +1,94 @@
 # Needs Attention
 
-_Rewritten 2026-09-21 (evening) against the real state of `main` @ `0222f03`. Earlier versions
-listed things that have since been done (keystore, route navigation, print sticker, rules deploy).
-What is left needs the founder: an account, a real device, a decision, or the Blaze plan._
+_Rewritten 2026-10-22 against `main`. Only what the founder must do: an account, money, a real
+device, a decision, or a deploy. Steps for each item are on the owner page,
+`~/Everything/dev/housekeeping/owner_works_now.html` (ThrottleIQ block); `#N` below is its item
+number. Done items are deleted, not ticked; git history keeps them._
 
-## From the 2026-10-21 quota work (branch `feat/quota-outage`)
+## Release and deploy
 
-- [ ] **Check that the Firestore quota alert emails reach you.** The rehearsal sent 6 to
-      blankframe.technologies@gmail.com (21 Oct, about 18:42 and 18:47 Dhaka). If they are in Spam,
-      mark them Not spam, or the real alerts will land there too.
-- [ ] **OK merging `feat/quota-outage` into `main`.** It is pushed and green on CI; the agent merges,
-      re-runs `scripts/check.sh` and pushes.
-- [ ] **Ship it in the next release** (after the merge); the email alert works without one. Builds
-      from `main` also carry the App Check sideload gate, so read `DOCS/app_check.md` first.
-- [ ] **Bangla review** of `overQuotaBar` and `errTooManyRequests` (`app/lib/l10n/bn_pending_review.txt`,
-      batch "quota pause (2026-10-21)").
+- [ ] **Deploy in order (#30, #31):** Firestore rules and indexes, then Hosting (`privacy.html` §9,
+      the community rules page), then Cloud Functions once on Blaze. `main` holds the 2026-10-21
+      moderation, deletion and App Check work, none of it deployed.
+- [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
+      Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
+      (`For Devs and Contributors/guides/app_check.md`).
+- [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.
+      Enforcing early locks out every older build.
+- [ ] **Check that the Firestore quota alert emails reach you (#24).** The rehearsal sent 6 to
+      blankframe.technologies@gmail.com on 2026-10-21. If they are in Spam, mark them Not spam.
 
-## From the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`)
+## Google Play and stores
 
-- [x] **Create `config/app` with `minBuild`** (an int) in Firestore once the public-read rule for it
-      is deployed. Leave it at or below the oldest build you still support; raise it to force an update.
-      Done 2026-10-19: `minBuild = 29` (beta-v4.7.1), after the `/ThrottleIQ/install` redirect on
-      blankframe.tech and the hosting redeploy went live. Builds 27 and 28 now see the update screen.
-- [x] **Check that hello@blankframe.tech reaches you.** `privacy.html` and the delete dialog now send
-      every privacy and deletion request there (they used a personal Gmail before).
-      Done 2026-10-22: owner confirmed delivery (ticked in `owner_works_now.html`).
-- [ ] **Handle deletion requests by hand within 30 days**, with
-      `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function is
-      live on Blaze. Deploy `privacy.html` (hosting) so the new §9 is live.
-- [ ] **Update the Play Data Safety form** from `General/store_listing/throttleiq_data_safety.csv`
-      (App interactions now declared, on by default with opt-out). Decided 2026-10-22 (owner): keep
-      the disclosed opt-out (Settings → Privacy & Safety, `privacy.html`); no opt-in prompt, no native
-      default-off flags.
-- [ ] **`gov-pitch/`:** rewrite it from `iDEA_PITCH_SUBMISSION.md` or delete it. It still claims
-      crash detection and carries a "do not submit" banner.
-- [ ] **iOS widget extension privacy manifest** (`ThrottleIQWidget`, App Group UserDefaults) before
-      any App Store submission.
+- [ ] **Play Console (#4, #8):** internal then closed testing; add testers (the install page asks
+      for tester emails). Declarations: background location and the full-screen intent stay
+      (decided 2026-10-21).
+- [ ] **Data Safety form** from `General/Files for Stores/store_listing/throttleiq_data_safety.csv`:
+      app interactions (analytics on by default with a disclosed opt-out, decided 2026-10-22), audio,
+      precise location, crash logs. The drafts don't yet cover the opt-in crash research sharing;
+      an agent fixes the drafts first (issues §110.5).
+- [ ] **Terms of Service and a PDPO 2025 review by a lawyer (new 2026-10-22).** No terms exist in
+      `public/` or the app (issues §109.14).
+- [ ] **Before any App Store submission:** enrol in the Apple Developer Program (#21), then the
+      widget extension's privacy manifest and Sign in with Apple.
 
-## Release — the one thing everything else waits on
+## Accounts and security
 
-_Update 2026-10-07 (later):_ the current release is `beta-v4.2` (`1.0.0-beta.4.2.0+23`, AAB + APK
-on GitHub, tag on `ed8fd34`): the Places hub (§96), the Forums Pit Wall, and the two forum fixes
-(photos on posts, brand paddock counts; issues_fixed §97). The iOS release build of `ed8fd34` is
-installed and launched on the founder's iPhone 15, but photos on posts and the paddock counts have
-not been tried on the device yet. `app/pubspec.yaml` is already bumped to `1.0.0-beta.4.3.0+24` for
-the next release; that one is not tagged yet.
-
-_Earlier, 2026-10-07:_ `beta-v4.1` (`1.0.0-beta.4.1.0+22`): the maintenance redesign plus the
-auto-tracking daily summary. It has **not been tested on a device**. Device checks to do:
-`issues_open.md` §95.1. The follow-ups below still apply.
-
-- [x] **Publish the release.** Shipped as `beta-v4` (`1.0.0-beta.4.0.0+21`, 2026-09-27). It carries
-      two things nobody has checked on hardware (route navigation, Bangla) and the machine-drafted
-      Bangla keys.
-- [x] (Deployed 2026-10-08 by the founder, together with the Firestore rules and indexes; the rules compiler warned `[W] 427:46 Invalid type. Received one of [null]`, worth a look. Check the analytics build is out.) After it ships: **deploy hosting** (`firebase deploy --only hosting`) so `privacy.html`
-      describes the analytics the app now does — *not before*, the live policy would then describe
-      behaviour the installed app doesn't have.
-- [ ] After riders are on it: **turn on App Check enforcement** in the Firebase console (register
-      the Play Integrity provider and the debug token first). Enforcing early locks out every
-      older build.
-
-## Your accounts (a browser session as you can do most of these)
-
-- [ ] **CI + branch protection.** `.github/workflows/ci.yml` has never run on GitHub and `main`
-      has no required checks — the gates run on one laptop only. Make `flutter`, `rules`,
-      `functions` required after the first green run.
-- [ ] **Play Console:** Data Safety form (audio, precise location, crash logs, **and now app
-      interactions / analytics — "collected, optional, not shared"**), the full-screen intent
-      declaration (crash countdown), and add testers to the internal track (it has none).
-- [~] **Cloudinary:** (formats locked and verified 2026-10-08; size cap and usage alert remain) lock the `throttleiq_unsigned` preset — allowed formats, max size, locked
-      folder, usage alert.
-- [x] **Map tiles (done 2026-10-08):** Thunderforest `atlas` key is in git-ignored `secret/tiles.env`; `scripts/deploy.sh` sources it automatically. Free tier is 150k tiles/month, which is enough for the beta but not for ~100 daily riders; the app already has an on-disk tile cache. Original note: sign up for a provider (Thunderforest recommended), then export
-      `TILE_URL_TEMPLATE` / `TILE_API_KEY` / `TILE_ATTRIBUTION` before `scripts/deploy.sh`. Restrict
-      the key to `com.bft.throttleiq`. Without them, release builds hit OSM directly.
+- [ ] **SECURITY step 3 (#2):** deploy rules and indexes and run the email migration in the same
+      hour. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
+      `isAdmin()` can be removed (issues §109.6).
+- [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
+      Firebase API keys.
+- [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are
+      locked). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
+      the deletion sweep's ownership check skips every asset.
+- [ ] **CI (#16):** GitHub CI runs and passes, but `main` has no required checks. Make `flutter`,
+      `rules` and `functions` required; approve or close the Dependabot PRs.
+- [ ] **Deletion requests by hand within 30 days**, with
+      `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function
+      runs on Blaze.
 
 ## Needs a phone, a bike or a person
 
-- [ ] **Device test of everything on `main`.** Never run on real hardware: route navigation
-      recording (§78.21), the auto-tracking schedule (§37), the GPS-speed fallback (§49), the
-      gyro heading sign/axis (§78.12), SafeQR print scanning off real paper, App Check on a device.
-- [ ] **Profile the cockpit** for battery/frame time (§83.12 — fixed structurally, unmeasured).
-- [ ] **Bangla review:** a native reviewer for the ~1,100 keys in `app/lib/l10n/bn_pending_review.txt`,
-      then Bangla on a real device (simulator tour: 82 screens, 0 overflow, scale 1.0 only).
+- [ ] **Real-phone test (#5).** Nothing on `main` since the last release has run on hardware. The
+      checklist is the "Device checks" follow-up at the top of `issues_open.md` and the HANDOFF's
+      "Built but never run on a real phone" list (widgets and the ride ⋮ menu: issues §107.7;
+      battery with the 50 Hz shadow-mode crash detector).
+- [ ] **Crash calibration recordings (new 2026-10-22):** phyphox recordings on the bike, so the
+      shadow-mode thresholds rest on measurements (issues §78.1, §78.12).
+- [ ] **Bangla review (#12, #28):** a native reviewer for `app/lib/l10n/bn_pending_review.txt`
+      (includes the quota strings), the draft Bangla in `marketing_kit.md`, and the Bangla store
+      listing.
+- [ ] **Beta riders (#6):** count them and talk to five.
+- [ ] **A budget Android phone (new 2026-10-22):** one day of normal use on a 2-3 GB itel, Tecno
+      or Redmi: OEM battery managers, the all-day wakelock, low-RAM recovery (issues §96).
+- [ ] **Maintenance schedules (new 2026-10-22):** check the templates against Bangladesh service
+      booklets and 2-3 mechanics (issues §95.2-§95.4).
 
 ## Decisions
 
-- [x] **Deleting a bike:** archive by default — built 2026-10-08 (uncommitted), see issues_open §102.
-- [x] **Profile tab:** renamed to "Garage" — built, §102.
-- [x] **Dates in Bangla:** English-style dates in the Bangla font — built, §102.
-- [ ] **Blocking (§83.18) and Cloudinary uploads (§83.16):** how far to go on Spark — see
-      `DOCS/old/DEBT_FIX_PLAN.md` §6 and §7.
-- [ ] **Pitch Slide 9:** does the team on the slide exist? The deck still claims working crash
-      detection. Off-limits to agents unless you ask.
+- [ ] **Google Maps data in production (#1):** take it down or keep it.
+- [ ] **Blaze (#3)**, or how far to go on Spark. Blocked without Blaze: Firestore TTL policies
+      (`liveSessions.expiresAt`, and `places.expiresAt` for expired checkpoints, issues §107.4;
+      tried 2026-10-08: 403 billing disabled), real SMS and escalation, signed Cloudinary uploads,
+      account deletion (a Spark workaround is issues §109.12), rate limits. Cloud Functions Node 20
+      is decommissioned late October 2026; `functions/` already targets Node 22.
+- [ ] **Blocking and Cloudinary uploads on Spark** (issues §83.18, §83.16): the options are in
+      issues §107.3.
+- [ ] **Pitch (#22):** slide 9 (the team) and slide 10 (the ask). The iDEA submission names three
+      roles and an advisory panel; git shows one author.
+- [ ] **PRD success-metric targets (new 2026-10-22):** PRD §10 lists five proposals for you to
+      confirm.
+- [ ] **Smaller calls:** reports filed by a deleted rider (#29), report rate limit and retention
+      (#33), the public WhatsApp number on the install page (#34), ranking the forum ideas (#35, the
+      front-plate guide only helps before 15 Nov), the badge-tier prize promotion (new), the beta-only
+      order-parts button: keep it for a partner or remove it (new, issues §95.11).
 
-## Needs Blaze (decision: staying on Spark)
+## Settled, don't re-ask
 
-- Firestore TTL on `liveSessions.expiresAt` (tried 2026-10-08: 403 billing disabled), real SMS and escalation, signed Cloudinary uploads, full account deletion (the trigger has
-  never been deployed), adding new followers to old posts.
-- **Dated:** Cloud Functions Node 20 is decommissioned late October 2026. The `functions/` source
-  already targets Node 22 (`package.json` `engines`, `firebase.json` `runtime`; §69.O6), so this
-  only bites if a Node 20 build is what gets deployed. Deploying at all still needs Blaze.
-
-## Done — kept here so it isn't re-asked
-
-- ✅ Keystore backed up (2026-09-21). ✅ Route navigation records the ride. ✅ SafeQR print sticker.
-- ✅ Firestore rules (incl. the §80 `likes` removal, evening 2026-09-21) and indexes are live.
-- ✅ Crash detection stays off — settled, do not raise.
+- Keystore backed up (2026-09-21). Map tiles: Thunderforest. `config/app.minBuild = 29`.
+- hello@blankframe.tech delivery confirmed (2026-10-22). Analytics: on by default with a disclosed
+  opt-out (2026-10-22).
+- Crash detection runs in shadow mode only: nothing is sent to anyone.
+- Deleting a bike archives it; the Profile tab is "Garage"; Bangla dates use English-style digits
+  in the Bangla font.
