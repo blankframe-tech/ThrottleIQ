@@ -169,3 +169,6 @@ scripts/qa_seed_passwords.*.json
 # data (DOCS/CRASH TESTING/crash_analysis_2026-10-14.md). This repo is public.
 /DOCS/CRASH TESTING/phone_sqlite/
 /DOCS/CRASH TESTING/ride_*
+
+# UI screenshots: backed up outside git (owner, 2026-10-21); older commits still hold them
+DOCS/General/screenshots_ui/
