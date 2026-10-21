@@ -11,6 +11,15 @@
 >   when a database URL is compiled in (`RealtimeConfig.isEnabled`; release
 >   builds have none). With the deny-all rules they fall back to Firestore.
 >
+> - **Status on `main`, checked 2026-10-22: parked.** No RTDB instance exists in
+>   the project, no release script passes `RTDB_URL`, and the rules deny
+>   everything (`8872feff`). `scripts/verify_realtime.js` and the delivery
+>   test were deleted in `8872feff`, so "Production smoke" and test layer 2
+>   below no longer exist; `scripts/test/rtdb/rtdb_rules.test.js` (deny-all)
+>   is what remains. The go-live checklist `websockets_todo.md` was retired
+>   with it. To revive RTDB, start from the Setup section and add a
+>   membership mirror first (Blaze, Cloud Function).
+>
 > What follows is the old design, kept for reference if RTDB returns behind a
 > membership mirror.
 
