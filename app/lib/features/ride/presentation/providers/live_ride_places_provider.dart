@@ -14,6 +14,9 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
   final Ref _ref;
   final PlaceRepository _placeRepository = PlaceRepository();
   LatLng? _lastFetchLocation;
+  // Lives as long as this (app-wide) notifier, so later refetches in the
+  // same area, in this ride or the next, cost no reads (issues §104.1).
+  final NearbyCellCache _cellCache = NearbyCellCache();
 
   LiveRidePlacesNotifier(this._ref) : super([]) {
     _ref.listen(rideRecordingProvider.select((s) => s.currentPosition),
@@ -25,8 +28,11 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
   }
 
   /// Shows a place the rider just reported without waiting for the next
-  /// 5 km refetch.
-  void add(PlaceEntity place) => state = [...state, place];
+  /// 5 km refetch, and keeps it in the cache so that refetch shows it too.
+  void add(PlaceEntity place) {
+    _cellCache.add(place);
+    state = [...state, place];
+  }
 
   Future<void> _checkAndFetch(LatLng current) async {
     // Fetch if we haven't fetched yet, or if we moved more than 5km
@@ -54,6 +60,7 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
           longitude: current.longitude,
           radiusKm: 25, // 25km radius
           category: null,
+          cache: _cellCache,
         );
         if (mounted) {
           state = places;

@@ -210,6 +210,7 @@ class PlaceRepository {
     required double radiusKm,
     PlaceCategory? category,
     DateTime? now,
+    NearbyCellCache? cache,
   }) {
     return nearbyViaGeohashRanges(
       latitude: latitude,
@@ -218,6 +219,7 @@ class PlaceRepository {
       category: category,
       now: now,
       fetchRange: _fetchGeohashRange,
+      cache: cache,
     );
   }
 
@@ -240,7 +242,8 @@ class PlaceRepository {
 
   /// The query plan behind [getNearbyPlaces], with the Firestore read
   /// injected as [fetchRange] (every place whose geohash starts with the
-  /// given prefix) so tests can run it against an in-memory fake.
+  /// given prefix) so tests can run it against an in-memory fake. With a
+  /// [cache], cells it already holds cost no reads.
   @visibleForTesting
   static Future<List<PlaceEntity>> nearbyViaGeohashRanges({
     required double latitude,
@@ -252,17 +255,21 @@ class PlaceRepository {
       String prefix,
       PlaceCategory? category,
     ) fetchRange,
+    NearbyCellCache? cache,
   }) async {
-    final cells = GeohashUtil.coverCircle(latitude, longitude, radiusKm);
-    final batches =
-        await Future.wait(cells.map((cell) => fetchRange(cell, category)));
-
     final currentTime = now ?? DateTime.now();
+    final cells = GeohashUtil.coverCircle(latitude, longitude, radiusKm);
+    final batches = await Future.wait(cells.map((cell) => cache == null
+        ? fetchRange(cell, category)
+        : cache.fetch(cell, category, currentTime, fetchRange)));
+
     final seen = <String>{};
     final withDistance = <(PlaceEntity, double)>[];
     for (final place in batches.expand((batch) => batch)) {
       if (place.isExpiredAt(currentTime)) continue;
-      if (!seen.add(place.id)) continue;
+      // A place the rider just added has no id yet ('') until the server
+      // acks it, so only dedupe real ids.
+      if (place.id.isNotEmpty && !seen.add(place.id)) continue;
       final km = haversineMeters(
             latitude,
             longitude,
@@ -315,5 +322,51 @@ class PlaceRepository {
       'ratingSum': ratingSum,
       'ratingCount': ratingCount,
     });
+  }
+}
+
+/// Results of [PlaceRepository.getNearbyPlaces] kept per geohash cell, so a
+/// caller that asks again for an overlapping area reads only the cells it
+/// doesn't hold yet (issues §104.1: the live ride used to re-read every
+/// place within 25 km after each 5 km moved). Cells expire after [ttl] so
+/// places other riders add still show up.
+class NearbyCellCache {
+  NearbyCellCache({this.ttl = const Duration(hours: 6)});
+
+  final Duration ttl;
+  final Map<String, ({DateTime fetchedAt, List<PlaceEntity> places})> _cells =
+      {};
+
+  static String _key(String cell, PlaceCategory? category) =>
+      '${category?.name ?? '*'}|$cell';
+
+  Future<List<PlaceEntity>> fetch(
+    String cell,
+    PlaceCategory? category,
+    DateTime now,
+    Future<List<PlaceEntity>> Function(String, PlaceCategory?) fetchRange,
+  ) async {
+    final key = _key(cell, category);
+    final hit = _cells[key];
+    if (hit != null && now.difference(hit.fetchedAt) < ttl) return hit.places;
+    final places = await fetchRange(cell, category);
+    _cells[key] = (fetchedAt: now, places: places);
+    return places;
+  }
+
+  /// Puts a place this device just wrote into every cached cell it falls
+  /// in, so the next lookup keeps showing it without a re-read.
+  void add(PlaceEntity place) {
+    for (final key in _cells.keys.toList()) {
+      final sep = key.indexOf('|');
+      final category = key.substring(0, sep);
+      final cell = key.substring(sep + 1);
+      if (category != '*' && category != place.category.name) continue;
+      final hash = GeohashUtil.encode(place.latitude, place.longitude,
+          precision: cell.length);
+      if (hash != cell) continue;
+      final old = _cells[key]!;
+      _cells[key] = (fetchedAt: old.fetchedAt, places: [...old.places, place]);
+    }
   }
 }

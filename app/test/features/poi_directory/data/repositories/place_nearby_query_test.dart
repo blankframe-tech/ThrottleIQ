@@ -204,4 +204,86 @@ void main() {
       }
     });
   });
+
+  group('NearbyCellCache (§104.1)', () {
+    final all = [
+      place('a', north(1000), dhakaLng),
+      place('b', dhakaLat, east(10000)),
+      place('c', north(-15000), east(3000)),
+    ];
+    final t0 = DateTime.utc(2026, 10, 22, 8);
+
+    Future<List<PlaceEntity>> nearby(
+      Future<List<PlaceEntity>> Function(String, PlaceCategory?) fetch,
+      NearbyCellCache cache, {
+      required double lat,
+      required double lng,
+      required DateTime now,
+    }) =>
+        PlaceRepository.nearbyViaGeohashRanges(
+          latitude: lat,
+          longitude: lng,
+          radiusKm: 25,
+          now: now,
+          fetchRange: fetch,
+          cache: cache,
+        );
+
+    test('a 5 km move inside the same area reads nothing new', () async {
+      final fake = fakeFirestore(all);
+      final cache = NearbyCellCache();
+      final first = await nearby(fake.fetch, cache,
+          lat: dhakaLat, lng: dhakaLng, now: t0);
+      final queries = fake.prefixes.length;
+      expect(queries, greaterThan(0));
+
+      final second = await nearby(fake.fetch, cache,
+          lat: north(5000),
+          lng: dhakaLng,
+          now: t0.add(const Duration(minutes: 9)));
+      final newCells = GeohashUtil.coverCircle(north(5000), dhakaLng, 25)
+          .toSet()
+          .difference(GeohashUtil.coverCircle(dhakaLat, dhakaLng, 25).toSet());
+      // In Dhaka a 5 km move stays inside the same precision-4 cells.
+      expect(newCells, isEmpty);
+      expect(fake.prefixes.length, queries);
+      expect(second.map((p) => p.id).toSet(), first.map((p) => p.id).toSet());
+    });
+
+    test('cells are read again once the ttl runs out', () async {
+      final fake = fakeFirestore(all);
+      final cache = NearbyCellCache(ttl: const Duration(hours: 1));
+      await nearby(fake.fetch, cache, lat: dhakaLat, lng: dhakaLng, now: t0);
+      final queries = fake.prefixes.length;
+      await nearby(fake.fetch, cache,
+          lat: dhakaLat,
+          lng: dhakaLng,
+          now: t0.add(const Duration(minutes: 59)));
+      expect(fake.prefixes.length, queries);
+      await nearby(fake.fetch, cache,
+          lat: dhakaLat, lng: dhakaLng, now: t0.add(const Duration(hours: 1)));
+      expect(fake.prefixes.length, 2 * queries);
+    });
+
+    test('a place added on this device survives the next cached lookup',
+        () async {
+      final fake = fakeFirestore(all);
+      final cache = NearbyCellCache();
+      await nearby(fake.fetch, cache, lat: dhakaLat, lng: dhakaLng, now: t0);
+      // Two fresh checkpoints: no server id yet, so both have id ''.
+      cache.add(
+          place('', north(2000), dhakaLng, category: PlaceCategory.police));
+      cache.add(
+          place('', north(3000), dhakaLng, category: PlaceCategory.police));
+      // Outside every cached cell: ignored, never fetched.
+      cache.add(place('', 22.3569, 91.7832));
+      final queries = fake.prefixes.length;
+
+      final result = await nearby(fake.fetch, cache,
+          lat: dhakaLat, lng: dhakaLng, now: t0);
+      expect(fake.prefixes.length, queries);
+      expect(result.where((p) => p.id.isEmpty), hasLength(2));
+      expect(result.map((p) => p.id), containsAll(['a', 'b', 'c']));
+    });
+  });
 }
