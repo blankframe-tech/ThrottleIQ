@@ -12,6 +12,7 @@ import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Comments fetched per page by [RideShareRepository.getComments].
 const int kRideCommentsPageSize = 30;
@@ -166,11 +167,11 @@ class RideShareRepository {
   }) {
     final urls = normalizeRidePhotoUrls(photoUrls);
     final trimmed = caption?.trim() ?? '';
-    return _firestore.collection('rides').doc(rideId).update({
+    return ackOrQueued(_firestore.collection('rides').doc(rideId).update({
       'caption': trimmed.isEmpty ? null : trimmed,
       'photoUrls': urls,
       'photoUrl': urls.isEmpty ? null : urls.first,
-    });
+    }));
   }
 
   /// Gets a shared ride by ID.
@@ -535,12 +536,12 @@ class RideShareRepository {
     final likesFuture = docRef.collection('likes').get();
     final comments = await commentsFuture;
     final likes = await likesFuture;
-    await Future.wait([
+    await ackOrQueued(Future.wait([
       for (final comment in comments.docs) comment.reference.delete(),
       for (final like in likes.docs) like.reference.delete(),
-    ]);
+    ]));
 
     // Delete the ride
-    await docRef.delete();
+    await ackOrQueued(docRef.delete());
   }
 }

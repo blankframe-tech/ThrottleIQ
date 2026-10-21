@@ -7,6 +7,7 @@ import 'package:throttleiq/core/utils/geohash_util.dart';
 import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 class PlaceRepository {
   final FirebaseFirestore _firestore;
@@ -35,9 +36,10 @@ class PlaceRepository {
   /// Add a new place
   Future<String> addPlace(PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);
-    final docRef = await _firestore.collection(_collection).add(
-          model.toFirestore(),
-        );
+    // doc() + set() rather than add(): same auto id, but known before the
+    // ack, so a queued write can still return it.
+    final docRef = _firestore.collection(_collection).doc();
+    await ackOrQueued(docRef.set(model.toFirestore()));
     return docRef.id;
   }
 
@@ -74,7 +76,7 @@ class PlaceRepository {
             : collection.doc();
         batch.set(ref, PlaceModel.fromEntity(place).toFirestore());
       }
-      await batch.commit();
+      await ackOrQueued(batch.commit());
     }
   }
 
