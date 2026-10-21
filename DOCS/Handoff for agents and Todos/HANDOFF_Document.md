@@ -181,6 +181,15 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ## Recent sessions (newest first)
 
+### 2026-10-22: DOCS clean-up; branches retired and synced; no app change
+
+- **Layout:** `DOCS/` has five folders (map: `DOCS/README.md`). The handoff folder holds five living files: this one, `features.md`, `issues_open.md`, `issues_fixed.md`, `needs_attention.md`.
+- **Retired** (all items checked: done, obsolete, tracked, or moved): `BIGGG_JOBB.md`, `DEBT_FIX_PLAN.md`, `uiux_critique.md`, `websockets_todo.md`, `plan_ride_minimize_menu.md`, `todo_now_antigravity.md` (leftovers §107); `grillings/` and `issues_solved.md` (§108); `CrtiQue_Oct14.md`, `CrtiQue_Oct15.md` (§109); stale HANDOFF to-dos (§110). Old text: `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/<file>"`. Code comments keep their `grill §N` and `CrtiQue_Oct14 B7` labels.
+- **Pruned:** `issues_open.md` holds only open work (fixed and obsolete sections moved to `issues_fixed.md` with their numbers; next free §111). `features.md` and this file were rewritten to the current state. `needs_attention.md` lists only open owner items, numbered as on the owner page.
+- **Marketing:** the 13 lead notes, the critique, Hooked analysis and name list are merged into `marketing/marketing.md` and `marketing/marketing_kit.md`; the deck outline is `marketing/pitch_deck.md`. The Facebook cover now says Live Share, not Crash Detection.
+- **Posters:** `posters/batch_two/` holds 49 posters from `batch_one/` that used old skins, redone in Carbon Mono or Calming light (mapping in `posters/generator_helper_files/README.md`). The 12 already on brand are only in `batch_one/`.
+- **Branches:** `feat/quota-outage` merged (`c751968e`); it, `feat/crash-shadow-mode` and `data/apify-dhaka-places` deleted; `experimental` = `main`. `indriyo` and `mayabi` got the same `DOCS/` (a docs-only commit each; code not merged).
+
 ### 2026-10-21
 
 - **Scripts layout (`03a209b5`, committed 2026-10-22):** the one-off admin scripts are in `scripts/oneoff/`. Run them as `node oneoff/<name>.js` from `scripts/`; the `npm run` names are unchanged. `check.sh`, `deploy.sh`, `publish_release.sh`, `crash_stats.js`, `export_impact_events.js` and `ste_sentence_length.js` stay in `scripts/`.
