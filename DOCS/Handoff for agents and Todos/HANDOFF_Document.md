@@ -2,6 +2,12 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-21 (repo layout): one-off scripts moved to `scripts/oneoff/`; no app change, not committed
+
+- **Moved (`git mv`):** the seeds, the Google Places import and revert, the QA rider seed and cleanup, `qa_seed_catalog`, `cleanup_qa_engagement`, `migrate_emails_private`, `backfill_users_visibility`, `reset_beta_data`, `set_admin_claim`, `create_review_account`. Run them as `node oneoff/<name>.js` from `scripts/`; the `npm run` names are unchanged. Tests, `package.json`, `.gitignore` (`scripts/**/qa_seed_passwords.*.json`) and doc/comment paths follow.
+- **Stay in `scripts/`:** `check.sh`, `deploy.sh`, `publish_release.sh` (hooks, CI and the deploy skill call them by path), `crash_stats.js`, `export_impact_events.js`, `ste_sentence_length.js`. Root config files and `functions/` stay where they are: `firebase.json` and the rules tests read them by path.
+- **Gate note:** port 8080 was taken by another app on this Mac, so the rules tests ran with `CHECK_FIREBASE_CONFIG` pointing at a copy of `firebase.json` with the Firestore emulator on 8181. `check.sh` passed (315 rules tests, 91 script unit tests).
+
 ## 2026-10-21 (research): Facebook bike-group topics scraped, `DOCS/forum_ideas/` written; no code changed
 
 - **Done:** the forum-ideas scrape blocked in §105.3. The founder raised the Apify limit to $10. The run took 375 posts from Freewheelers, BikeBD and Motorcycle Valley and cost $2.65, so about $2.22 is left this month. Write-up and ranked product ideas: `DOCS/forum_ideas/2026-10-21_fb_bike_groups.md`. All five Apify datasets ever run (incl. the 10-19 Google Maps and traffic scrapes) are now in `DOCS/apify/` (gitignored except `README.md`, which records the lessons).
@@ -22,13 +28,13 @@ _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`
 
 - **PRD (F6 closed):** `node scripts/ste_sentence_length.js DOCS/PRD.md` finds 0 sentences over the STE limits (longest: 20 words). 7 passive sentences and 4 non-approved words were fixed by hand; the record is PRD §13. Not done: a full check against the STE dictionary. Content not re-checked: AUT-7 and open item 3 still say nothing calls the purge, but F3 wired it in.
 - **Rules:** the compile warning ("Invalid type. Received one of [null]. Expected one of [map].", now line ~523, the `publicStatsValid` call) is gone: the call passes `{}` for a new profile, as its siblings do. Same behaviour. `scripts/test/rules/rules_compile.test.js` loads the rules into the emulator and fails on any compiler issue. **Rules not deployed.**
-- **Backfill (written, NOT run):** `scripts/backfill_users_visibility.js` sets `visibility: 'public'` on `users` docs with no (or null) `visibility`. Owner, to run it once:
+- **Backfill (written, NOT run):** `scripts/oneoff/backfill_users_visibility.js` sets `visibility: 'public'` on `users` docs with no (or null) `visibility`. Owner, to run it once:
   ```bash
   cd scripts && npm install
   export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
-  node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
-  node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # type BACKFILL VISIBILITY
-  node backfill_users_visibility.js --project=throttleiqfb                         # should report 0
+  node oneoff/backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+  node oneoff/backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # type BACKFILL VISIBILITY
+  node oneoff/backfill_users_visibility.js --project=throttleiqfb                         # should report 0
   ```
   `--project` is required and must match the key. Writes use a BulkWriter with a per-doc read-time precondition, so a rider who changes their setting mid-run is skipped, not overwritten. Tests: `npm test` and `npm run test:rules` (emulator). Details: `scripts/README.md`.
 
@@ -162,7 +168,7 @@ From `CrtiQue_Oct14.md`. Parallel agents: rules and functions are on another bra
 
 ## 2026-10-14: rules and functions fixes from `CrtiQue_Oct14.md` — branch `fix/oct14-tiq-rules`, merged into `oct14-int`, not deployed
 
-- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only; writes need a verified email since 2026-10-15). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/migrate_emails_private.js` (not run).
+- **B2:** email is off the public profile. It lives in `users/{uid}/private/account`; find-by-email is `emailLookup/{sha256}` (get only; writes need a verified email since 2026-10-15). `/users` lists need `limit <= 20` (`getRecentUsers` pages). One-off `scripts/oneoff/migrate_emails_private.js` (not run).
 - **B3:** chat create/update, notifications and follow create refuse writes across a block.
 - **B1 groundwork:** `onUserAccountDeleted` now also deletes chats and the email lookup, and reads Cloudinary credentials from secrets. The `userId` and `track.syncedAt` collection-group overrides are in `firestore.indexes.json`. New `purgeOldGpsTracks` (12-month raw-track retention). Nothing deployed: Blaze needed.
 - **B9:** `database.rules.json` denies everything; the delivery suite and `verify_realtime.js` are gone. `config/{doc}` is world-readable, never client-written (`minBuild`).
@@ -1219,7 +1225,7 @@ Full technical detail and root causes for anything marked with a `§` live in
   swapped, a new Cute Analyst skin (later dropped, see 2026-08-23), and the
   second versioning reset described above.
 - **2026-08-12** — Per-skin shape (boxy/rounded/terminal) added alongside
-  palette; `scripts/seed_dhaka_places.js` (395 real places written to
+  palette; `scripts/oneoff/seed_dhaka_places.js` (395 real places written to
   production); Bengali font bundled offline; sensor-fusion axis calibration
   via GPS-paired least-squares; `flutter analyze` fixed to stop scanning
   `build/` (6,163 phantom errors → 0, §23).
@@ -1530,7 +1536,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   (`ApiException: 10`/`DEVELOPER_ERROR`) — registered via
   `firebase apps:android:sha:create`. Still open: a real-device run of the
   actual sign-in flow, not just the config check.
-- [x] ~~Run `scripts/seed_dhaka_places.js` against production~~ **DONE
+- [x] ~~Run `scripts/oneoff/seed_dhaka_places.js` against production~~ **DONE
   2026-08-12** — 395 places live in `throttleiqfb`. Still to check on a
   device: opening Places in Dhaka renders them, and "Import nearby" adds
   nothing (osmId dedup holds).
@@ -1599,7 +1605,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   either. **Still needs on-device re-verification** — see "Done, but NOT
   yet verified" below.
 - [x] [STALE] ~~Reseed the QA test riders~~ **DONE 2026-09-19.**
-  `scripts/seed_qa_test_riders.js`/`scripts/qa_seed_catalog.js` were updated
+  `scripts/oneoff/seed_qa_test_riders.js`/`scripts/oneoff/qa_seed_catalog.js` were updated
   2026-08-29 (`issues_fixed.md` §55) — all-male rider names, Banglish forum
   post copy, and a bike catalog restricted above 150cc to CFMoto/Royal
   Enfield only — but the 30 live accounts still reflected the old
@@ -1652,7 +1658,7 @@ the actual pre-launch QA punch list — ordered roughly by risk.
   §24.1–§24.9); all fixed and the rules deploy is live on `throttleiqfb`.
   Two loose ends: **Cloud Functions still can't deploy** (needs Blaze — see
   "Soon" below, blocks §24.8/§24.9's server-side pieces), and
-  `scripts/set_admin_claim.js` still needs a human to run it once with real
+  `scripts/oneoff/set_admin_claim.js` still needs a human to run it once with real
   credentials (the email-fallback admin check keeps working until then, so
   this isn't blocking).
 - [x] [STALE] ~~Second security/bug sweep~~ **16 of 18 FIXED, 2 DEFERRED, 2026-08-23**
@@ -1961,7 +1967,7 @@ group first matters more than speed.
 | Test suite | 1035/1035 green and `flutter analyze` reporting no issues, as of 2026-09-19 (`issues_fixed.md` §69.13). Plus Node tests in `scripts/` (`npm test`) for the seed scripts' pure logic, and `npm run test:rules` (Firestore emulator, 98/98 green; needs the Android Studio JBR, which the script sets via `JAVA_HOME`). DAOs run against real in-memory SQLite via `sqflite_common_ffi`. See `issues_fixed.md` §7 for why that mattered |
 | Privacy policy | `https://throttleiqfb.web.app/privacy.html` — live, needed by the Play listing |
 | Judgement calls | `assumptions.md` — every non-obvious decision from the backlog pass, with the file to change if you disagree |
-| Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
+| Admin account | `the.abraar.rar@gmail.com`, hardcoded in `forum_permissions.dart` (client-side, cosmetic only) AND, as of 2026-08-12, checked via the `admin` custom claim FIRST with this email as a fallback in `firestore.rules` (`issues_fixed.md` §24.9). Run `scripts/oneoff/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it` once (needs real Firebase Admin credentials) to actually grant the claim, then sign out/in on that account to pick up the new token — the email fallback can be deleted from `firestore.rules` once that's confirmed working |
 | DB schema | **v11** (`is_auto`/`bike_confidence` on `rides`, plus `auto_detections`/`auto_fixes` for auto-tracking, added 2026-08-16 — `auto_tracking_plan.md`). v10 added `outbox`, the offline write queue (`issues_fixed.md` §25); v9 added `rides.moving_s`; v7 added `custom_label` on `maintenance_logs` |
 | Offline writes | Anything the rider explicitly asked for that needs the cloud goes through `core/cloud/outbox_service.dart`, **not** a bare `await` on Firestore. An awaited Firestore write with no connection never completes — it doesn't throw — so a direct `await` on a user-facing path hangs the app. `SyncManager` drains the queue on connectivity change, login, and its 5-minute timer. Optional telemetry uses `_bestEffortWrite()` (same idea, just a timeout, no durability) |
 | UI screenshot set | `DOCS/General/screenshots_ui/`: every screen in the 28 appearance combinations that existed until 2026-10-14, captured 2026-09-19. Stale: the app now has two themes, and the tour and PDF generator that wrote this set were deleted 2026-10-14 (critique §14). The owner decides whether to move it out of the repo and its history. |

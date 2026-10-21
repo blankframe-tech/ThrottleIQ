@@ -1490,12 +1490,12 @@ but it is worth stating in safety terms rather than deployment terms.
   manual step still needed).** `isAdmin()` in `firestore.rules` now checks
   the `admin` custom claim (`request.auth.token.admin`) first, falling back
   to the email comparison only if that claim isn't set — so nothing broke
-  before the claim actually exists. `scripts/set_admin_claim.js` (new) grants
+  before the claim actually exists. `scripts/oneoff/set_admin_claim.js` (new) grants
   it, mirroring `reset_beta_data.js`'s safety posture (dry-run default,
   project-id guard, requires real `GOOGLE_APPLICATION_CREDENTIALS`) — this
   agent could not run it, since it needs this project's own service-account
   credentials. **Still to do:** run
-  `FIREBASE_PROJECT_ID=throttleiqfb node scripts/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it`,
+  `FIREBASE_PROJECT_ID=throttleiqfb node scripts/oneoff/set_admin_claim.js --email the.abraar.rar@gmail.com --yes-i-really-mean-it`,
   then sign out/in on that account to refresh its ID token. The email
   fallback in `firestore.rules` can be deleted once that's confirmed working.
 
@@ -3333,8 +3333,8 @@ Google option at all, so there was no explicit "sign up with Google" path.
 **Fixed:** added the same "Continue with Google" button (→
 `signInWithGoogle()`) to the register screen.
 
-**QA seed forum content (`scripts/seed_qa_test_riders.js`,
-`scripts/qa_seed_catalog.js`) read as generic and inauthentic.** The 30
+**QA seed forum content (`scripts/oneoff/seed_qa_test_riders.js`,
+`scripts/oneoff/qa_seed_catalog.js`) read as generic and inauthentic.** The 30
 fabricated QA/test riders' forum posts were formal English templates, the
 30 rider names were a roughly 50/50 male/female mix, and the bike catalog
 above 150cc included brands (KTM, Kawasaki, most Japanese 150-400cc
@@ -3991,7 +3991,7 @@ could "fix." `seed_police_checkposts.js`/`_v2`/`_v3` dedup remains
 out of scope (§62.13).
 
 Not a repo leak (all covered by `.gitignore`, confirmed untracked via
-`git ls-files`), but real operational risk: `scripts/create_review_account.js:65-66,246-249`
+`git ls-files`), but real operational risk: `scripts/oneoff/create_review_account.js:65-66,246-249`
 hardcodes `rider.admin@example.com` / `Test@123` for a permanent,
 never-cleaned-up Play Store review account in the **live production**
 project; `seed_qa_test_riders.js` uses one shared password (`QaSeed!2026`)
@@ -5863,11 +5863,11 @@ analyzer and an Android debug build are clean. See `issues_open.md` §78.21 for 
 
 ## 79 / 80. QA-seed engagement cleared from production (2026-09-21)
 
-`scripts/cleanup_qa_engagement.js` was **applied to `throttleiqfb`** — the step §79 had
+`scripts/oneoff/cleanup_qa_engagement.js` was **applied to `throttleiqfb`** — the step §79 had
 been waiting on since 2026-09-20, when the agent session that wrote the script was
 blocked by its environment from running the live write.
 
-    FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_engagement.js \
+    FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_engagement.js \
         --yes-i-really-mean-it --non-interactive
 
 `--non-interactive` is what the earlier session was missing: the typed-confirmation

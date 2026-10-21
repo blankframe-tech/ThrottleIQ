@@ -110,7 +110,7 @@ irreversible and requires Admin SDK credentials that aren't present.
 Running it blind would also have destroyed the project owner's own test
 data mid-session.
 
-**Taken:** `scripts/reset_beta_data.js`, which **defaults to a dry run**,
+**Taken:** `scripts/oneoff/reset_beta_data.js`, which **defaults to a dry run**,
 refuses to run without both an explicit `--yes-i-really-mean-it` flag and
 a `FIREBASE_PROJECT_ID` that matches, and prints per-collection counts
 first. See `scripts/README.md`.

@@ -204,7 +204,7 @@ expensive part is switching *paradigms*, not the specific vendor.
   updating.
   `auth_provider.dart`'s custom-claim handling (`isAdmin()`'s
   `request.auth.token.get('admin', false)`, set via
-  `scripts/set_admin_claim.js`) needs a Postgres/Supabase equivalent.
+  `scripts/oneoff/set_admin_claim.js`) needs a Postgres/Supabase equivalent.
 - **Edge Functions.** Supabase Edge Functions run Deno/TypeScript — closer
   to Cloud Functions than the Cloudflare/Vercel option above, so
   `functions/src/*.ts` ports with real but moderate effort.
