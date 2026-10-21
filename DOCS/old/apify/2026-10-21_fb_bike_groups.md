@@ -9,7 +9,7 @@ Source: Apify `apify/facebook-groups-scraper`, 375 newest posts from 30 Sep to 2
 | Motorcycle Valley (`groups/MotorcycleValley`) | 125 | Mostly ads and reels; ~100 posts have no text. Skip next time |
 | BD Biker Club, Gixxer Riders BD, Royal Enfield BD | 0 | Private, or the link is wrong |
 
-103 posts had no text (photo or video only). Counts below are approximate and come from reading the ~270 text posts. No names, posts or user data were kept in the repo. The raw export is at `DOCS/apify/2026-10-21_fb-bike-groups/items.json` (gitignored; all scrapes and lessons: `DOCS/apify/README.md`).
+103 posts had no text (photo or video only). Counts below are approximate and come from reading the ~270 text posts. No names, posts or user data were kept in the repo. The raw export is at `DOCS/old/apify/2026-10-21_fb-bike-groups/items.json` (gitignored; all scrapes and lessons: `DOCS/old/apify/README.md`).
 
 ## Topics, most discussed first
 

@@ -8,8 +8,8 @@ import 'package:package_info_plus/package_info_plus.dart';
 /// Sideload gate: an Android release build that App Check rejects (Play
 /// Integrity: not installed from Google Play) shows a blocking "Install from
 /// Google Play" screen instead of an app whose Firestore calls all fail once
-/// enforcement is on (DOCS/app_check.md). iOS and debug-provider builds are
-/// never blocked.
+/// enforcement is on (DOCS/For Devs and Contributors/guides/app_check.md). iOS and debug-provider builds
+/// are never blocked.
 
 /// `--dart-define=APP_CHECK_DEBUG=true` makes a release build use the App
 /// Check debug provider, so a development-signed `flutter run --release` can

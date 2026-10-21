@@ -1964,7 +1964,7 @@ service cloud.firestore {
       // readable by every signed-in rider anyway. Riders can't read or update
       // reports, so it can't be edited later. Shape: reportSnapshotOf() in
       // report_model.dart. Retention: 90 days after review
-      // (DOCS/moderation_policy.md, report-retention.ts).
+      // (DOCS/General/Files for Stores/moderation_policy.md, report-retention.ts).
       function snapshotIsReal(d) {
         let parts = d.contentId.split('/');
         return d.reportedId == d.snapshot.get('senderId', null) &&

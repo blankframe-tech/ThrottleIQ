@@ -53,7 +53,7 @@ You need your own Firebase project and Cloudinary account (photo uploads; Fireba
 - **App**: Flutter, Riverpod, go_router, Material 3, flutter_map. Feature-first layout under `app/lib/features/`.
 - **Local**: SQLite is the source of truth. Recording never needs internet; unsynced rows upload incrementally.
 - **Cloud**: Firestore + Auth (email and Google) + Cloudinary. Cloud Functions (`functions/`) are written for account cleanup, ride identity and chat moderation; deploying them needs the Blaze plan.
-- Deeper write-up: [`arch.md`](arch.md).
+- Deeper write-up: [`arch.md`](DOCS/For%20Devs%20and%20Contributors/architecture/arch.md).
 
 ## 🧪 Quality gate
 

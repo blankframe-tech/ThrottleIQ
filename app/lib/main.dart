@@ -32,7 +32,8 @@ import 'core/utils/bike_image_resolver.dart';
 /// ship-the-client-first rule as issues §78.27). Debug builds, and release
 /// builds with `--dart-define=APP_CHECK_DEBUG=true`, use the debug provider;
 /// its token is printed to the log and has to be registered in the console
-/// (DOCS/app_check.md). A failure here must never stop the app from launching.
+/// (DOCS/For Devs and Contributors/guides/app_check.md).
+/// A failure here must never stop the app from launching.
 Future<void> _activateAppCheck() async {
   try {
     await FirebaseAppCheck.instance.activate(

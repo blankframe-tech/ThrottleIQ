@@ -8,7 +8,7 @@ import '../../data/repositories/report_repository.dart';
 import '../../../../core/i18n/l10n_context.dart';
 
 /// Hosted copy of the moderation policy (public/community.html; the
-/// reviewer's runbook is DOCS/moderation_policy.md).
+/// reviewer's runbook is DOCS/General/Files for Stores/moderation_policy.md).
 final Uri kCommunityRulesUrl =
     Uri.parse('https://throttleiqfb.web.app/community.html');
 

@@ -118,7 +118,7 @@ The phone has the same 1,119 points as the cloud. What it adds is the columns th
 - **The heading swung by 63° (343° → 280°) across the 15-second gap.** That is what you'd expect if the phone had tumbled. Heading is unreliable while stopped, though, so this supports the timing but proves nothing by itself.
 - **Correction to the analysis above:** the ride's single `high_jerk` event was at **21:52:29**, at 48.7 km/h. That is 23 minutes after the crash, so it is **not** the crash.
 - **`jerk` and `acceleration` come from GPS speed, not the accelerometer.** `imu_quality` reads 100 at every point. Every jerk value in the crash window is under 1.5 m/s³.
-- **There is no raw accelerometer or gyro data on the phone either.** The impact force of this crash can't be recovered from anything the app stores. See `DOCS/gaps/phone_vs_cloud_data.md`.
+- **There is no raw accelerometer or gyro data on the phone either.** The impact force of this crash can't be recovered from anything the app stores. See `DOCS/For Devs and Contributors/architecture/phone_vs_cloud_data.md`.
 
 ## Data-quality notes
 

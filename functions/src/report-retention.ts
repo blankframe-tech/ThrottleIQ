@@ -5,7 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
  * report's `snapshot` (copy of the reported content, see firestore.rules
  * `snapshotIsReal`) and a system report's `originalText` are removed
  * REPORT_SNAPSHOT_RETENTION_DAYS after the admin closed the report
- * (`reviewedAt`, DOCS/moderation_policy.md step 4). The report itself stays
+ * (`reviewedAt`, DOCS/General/Files for Stores/moderation_policy.md step 4). The report itself stays
  * as the audit trail. privacy.html §8 and moderation_policy.md §5 state it.
  *
  * Account deletion (account-erasure.ts) keeps a PENDING report about the

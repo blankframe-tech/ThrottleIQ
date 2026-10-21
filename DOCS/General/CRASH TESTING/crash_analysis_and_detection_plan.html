@@ -1115,7 +1115,7 @@ That is the outcome we want: a walking-pace fall triggers no emergency alarm, bu
   </ul></li>
 <li><strong><code>crashEvents/{id}</code></strong> (central, with consent, de-identified): one row per labelled event, whether "yes", "no" or "missed". This feeds training and statistics.</li>
 <li><strong>A sensor summary on each ride row:</strong> the sample rate actually achieved, placement (declared and inferred), vibration level, and candidate counts.</li>
-<li><strong>Track v2:</strong> accuracy, heading, confidence, period and segment flags for every point. These come from <code>DOCS/gaps/phone_vs_cloud_data.md</code>, so a crash can still be reconstructed after a reinstall.</li>
+<li><strong>Track v2:</strong> accuracy, heading, confidence, period and segment flags for every point. These come from <code>DOCS/For Devs and Contributors/architecture/phone_vs_cloud_data.md</code>, so a crash can still be reconstructed after a reinstall.</li>
 <li><strong>Labels:</strong> the rider's answer, the details and the time.</li>
 </ol>
 <p><strong>Window format.</strong></p>
@@ -1247,7 +1247,7 @@ match /crashEvents/{id} {
   <li>phone drops from 0.5, 0.8 and 1.0 m onto foam and grass;</li>
   <li>sit, stand and walk with the phone in a pocket.</li>
   </ol>
-  Do three repeats of each.</td><td>CSV files in <code>DOCS/CRASH TESTING/phase0/</code>, named <code>&lt;date&gt;_&lt;placement&gt;_&lt;test&gt;_&lt;rep&gt;.csv</code>. These give real peak levels and vibration spectra for the thresholds</td></tr>
+  Do three repeats of each.</td><td>CSV files in <code>DOCS/General/CRASH TESTING/phase0/</code>, named <code>&lt;date&gt;_&lt;placement&gt;_&lt;test&gt;_&lt;rep&gt;.csv</code>. These give real peak levels and vibration spectra for the thresholds</td></tr>
 <tr><td><strong>1 · Shadow build</strong></td><td>Repeat a–g with the shadow-mode app. Check that every test creates the expected tier and window, and measure the battery cost of 50 Hz sampling</td><td>Replay files for regression tests</td></tr>
 <tr><td><strong>2 · Controlled falls</strong></td><td>
   <ul>
@@ -1297,7 +1297,7 @@ match /crashEvents/{id} {
 <tr><td>Rules, rules tests and index exemptions; deploy (works on Spark)</td><td><code>firestore.rules</code>, <code>scripts/test/rules/</code>, <code>firestore.indexes.json</code></td><td>S</td><td>Rules tests green</td></tr>
 <tr><td rowspan="2"><strong>3 · Placement and context</strong></td><td>Placement chip at ride start; log the inference features; per-ride sensor summary columns (synced only when not NULL, the same way as <code>ridePayload</code>)</td><td>Ride start UI, <code>ride_recording_provider.dart</code>, <code>cloud_repository.dart:168</code></td><td>M</td><td>Placement is on every ride and event</td></tr>
 <tr><td>Track v2, from the gaps report</td><td><code>ride_track_codec.dart</code></td><td>M</td><td>A crash can be reconstructed after a reinstall</td></tr>
-<tr><td rowspan="3"><strong>4 · Calibrate</strong></td><td>Phase 0 phyphox recordings</td><td><code>DOCS/CRASH TESTING/phase0/</code></td><td>S</td><td>Thresholds backed by measurements</td></tr>
+<tr><td rowspan="3"><strong>4 · Calibrate</strong></td><td>Phase 0 phyphox recordings</td><td><code>DOCS/General/CRASH TESTING/phase0/</code></td><td>S</td><td>Thresholds backed by measurements</td></tr>
 <tr><td>Export and statistics scripts</td><td><code>scripts/</code></td><td>M</td><td>CSV and summary produced</td></tr>
 <tr><td>Offline replay over the exported windows to tune thresholds, shipped by release or Remote Config</td><td>Test harness</td><td>M</td><td>Section 10 targets met</td></tr>
 <tr><td rowspan="2"><strong>5 · Live alarms</strong> (later)</td><td>Tier-2 alarm, bystander lock-screen card, 999 and contact buttons</td><td><code>crash_coordinator.dart</code>, notifications</td><td>M</td><td>Alarm beta passes</td></tr>

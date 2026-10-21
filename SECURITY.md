@@ -116,12 +116,12 @@ Do these in order.
    days after review) and anonymising a deleted rider's closed reports run
    in the existing daily `purgeOldGpsTracks` (step 6's deploy, Blaze).
    Deploying it also starts GPS retention; until then, do both by hand
-   (`DOCS/moderation_policy.md` §5).
+   (`DOCS/General/Files for Stores/moderation_policy.md` §5).
 
 ### App Check enforcement
 
 Decision 2026-10-21: enforce App Check on Cloud Firestore only. The runbook,
-in order, is `DOCS/app_check.md`: finish step 3 above first, switch the iOS
+in order, is `DOCS/For Devs and Contributors/guides/app_check.md`: finish step 3 above first, switch the iOS
 project to the paid team with App Attest set to `production`, register the
 apps (App Attest and DeviceCheck with the Team ID, Play Integrity with the
 Play app-signing SHA-256), ship the build through Google Play only, register

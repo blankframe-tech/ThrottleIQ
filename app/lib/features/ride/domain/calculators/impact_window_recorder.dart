@@ -5,7 +5,7 @@ import 'dart:typed_data';
 
 /// Keeps the last [keep] of raw sensor samples so an impact can be saved
 /// with the seconds before and after it — the calibration data that did not
-/// exist for the 14 Oct 2026 crash (DOCS/CRASH TESTING).
+/// exist for the 14 Oct 2026 crash (DOCS/General/CRASH TESTING).
 ///
 /// Three streams, each with its own timestamps: the accelerometer including
 /// gravity, the motion-filtered acceleration without it, and the gyroscope.

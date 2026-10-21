@@ -331,7 +331,7 @@ These targets are **proposals**. The founder must confirm them.
 Run on 2026-10-15. Run the length check again after each edit:
 
 ```bash
-node scripts/ste_sentence_length.js DOCS/PRD.md
+node scripts/ste_sentence_length.js "DOCS/For Devs and Contributors/architecture/PRD.md"
 ```
 
 | Rule | Result |

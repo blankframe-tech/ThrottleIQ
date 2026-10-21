@@ -12,7 +12,7 @@ Token: `~/.secrets/throttleiq/apify_token` (chmod 600). Never paste it into chat
 | `2026-10-19_fb-group-search-datahamster` | `datahamster/facebook-groups-search` | 4 | $0.03 | Found the two public traffic groups; nothing for bike maintenance |
 | `2026-10-19_fb-group-search-memo23-aborted` | `memo23/facebook-search-groups-scraper` | 0 | $0.005 | Aborted when the $5 free limit ran out |
 | `2026-10-19_fb-traffic-groups` | `apify/facebook-groups-scraper` | 300 | $1.50 | 1 enforcement report in 300 posts; checkpost idea dropped (§105.4) |
-| `2026-10-21_fb-bike-groups` | `apify/facebook-groups-scraper` | 378 (3 are errors) | $2.65 | `DOCS/forum_ideas/2026-10-21_fb_bike_groups.md` (§105.3) |
+| `2026-10-21_fb-bike-groups` | `apify/facebook-groups-scraper` | 378 (3 are errors) | $2.65 | `DOCS/old/apify/2026-10-21_fb_bike_groups.md` (§105.3) |
 
 Total: $7.78 of a $10 monthly limit (raised from the free $5 on 2026-10-21; the cycle resets on the 18th).
 

@@ -152,7 +152,7 @@
              is only the fallback when this service can't start) and the
              free-tier auto-tracking detector (auto_tracking_service.dart),
              which replaced the paid flutter_background_geolocation plugin on
-             2026-08-28 (DOCS/old/archives/flutter_background_geolocation-2026-08-28/).
+             2026-08-28 (DOCS/old/background_geolocation/flutter_background_geolocation-2026-08-28/).
              This plugin does NOT merge its own service declaration in; it
              must be declared here with the exact name below (per its install
              instructions, do not rename). foregroundServiceType="location"

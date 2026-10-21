@@ -661,7 +661,7 @@ test('S3 reports: unknown contentType, extra keys, oversize fields or a client c
   await assertFails(setDoc(ref(), report({ createdAt: Timestamp.now() })));
 });
 
-// Moderation policy 2026-10-21 (DOCS/moderation_policy.md): riders file
+// Moderation policy 2026-10-21 (DOCS/General/Files for Stores/moderation_policy.md): riders file
 // reports but never read, edit or withdraw them, not even their own; only the
 // admin (console) reviews. The chat sheet sends the full message path.
 test('reports: create-only for riders, no impersonation, no signed-out writes', async () => {

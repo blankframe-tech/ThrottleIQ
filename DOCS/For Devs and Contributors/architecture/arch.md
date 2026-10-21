@@ -92,7 +92,7 @@ graph TD
 
 ## 3. Directory Structure
 
-The project lives under [`app/lib/`](app/lib) following a modular, feature-oriented structure:
+The project lives under [`app/lib/`](../../../app/lib) following a modular, feature-oriented structure:
 
 ```
 app/lib/
@@ -148,23 +148,23 @@ app/lib/
 
 ## 4. Telemetry Pipeline & Vehicle State Engine
 
-The core computational logic lives in pure domain calculators under [`app/lib/features/ride/domain/calculators/`](app/lib/features/ride/domain/calculators).
+The core computational logic lives in pure domain calculators under [`app/lib/features/ride/domain/calculators/`](../../../app/lib/features/ride/domain/calculators).
 
 ### The 10-Layer Architecture
 1. **Sensor Collection**: Ingests GPS fixes via `geolocator` and accelerometer/gyroscope streams via `sensors_plus`.
-2. **Validation ([`SensorValidator`](app/lib/features/ride/domain/calculators/sensor_validator.dart))**: Filters out anomalies—rejects negative elapsed times, speed spikes exceeding physical bounds (>70 m/s), non-finite floats, and GPS accuracy circles $>25\,\text{m}$.
+2. **Validation ([`SensorValidator`](../../../app/lib/features/ride/domain/calculators/sensor_validator.dart))**: Filters out anomalies—rejects negative elapsed times, speed spikes exceeding physical bounds (>70 m/s), non-finite floats, and GPS accuracy circles $>25\,\text{m}$.
 3. **Time Synchronization**: Event-driven timestamping preserving device microsecond clocks across sensor types.
-4. **Sensor Fusion ([`VehicleStateEstimator`](app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart))**:
+4. **Sensor Fusion ([`VehicleStateEstimator`](../../../app/lib/features/ride/domain/calculators/vehicle_state_estimator.dart))**:
    - Complementary filter blending GPS course over ground with integrated gyroscope $z$-axis (yaw rate).
    - High-accuracy GPS updates ($\le 8\,\text{m}$) weight heading toward GPS ($70\%$), while degraded GPS leans on gyro dead-reckoning (GPS weight $30\%$).
 5. **Confidence Engine**: Dynamically calculates a $0-100$ heuristic score based on GPS horizontal dilution of precision and IMU jitter.
 6. **Motion Classification**: Derives instantaneous states (`isMoving`, `isStopped`, `isCornering`, `isBraking`, `isAccelerating`).
-7. **Event Detection ([`EventDetector`](app/lib/features/ride/domain/calculators/event_detector.dart))**:
+7. **Event Detection ([`EventDetector`](../../../app/lib/features/ride/domain/calculators/event_detector.dart))**:
    - **Crash Detection Rule** (legacy GPS-derived path, now only used by the `AutoRideReconciler` replay; the live path is the raw-IMU `ImpactDetector` at a provisional, uncalibrated $39\,\text{m/s}^2 \approx 4g$):
      $$\text{Accel Spike} > 80\,\text{m/s}^2 \;(\approx 8.2g) \;\land\; \text{Jerk} > 10\,\text{m/s}^3 \;\land\; \text{Speed Drop} \ge 2.0\,\text{m/s within } 2.0\,\text{s (to rest, or a proportional collapse)}$$
    - Crash signals require confidence validation to avoid triggering on phone drops or tunnel GPS dropouts.
    - Triggers an immediate maximum haptic pulse and initiates a **60-second cancellable countdown** on the UI.
-8. **Adaptive Recording ([`RecordingCadencePolicy`](app/lib/features/ride/domain/calculators/recording_cadence_policy.dart))**:
+8. **Adaptive Recording ([`RecordingCadencePolicy`](../../../app/lib/features/ride/domain/calculators/recording_cadence_policy.dart))**:
    - Thins points stored to SQLite during steady cruising (saves disk space and write I/O) (at most one point every $5\,\text{s}$ once confidence clears a floor) while keeping every fix during dynamic maneuvering (braking, cornering, accelerating) or low confidence.
 9. **Map Matching**: (Deferred / roadmap).
 10. **Analytics**: Post-ride calculations of average speed (excluding extended idle periods $>60\,\text{s}$), lean estimates, jam duration, and safety scores.
@@ -174,19 +174,19 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 ## 5. Storage & Cloud Synchronization Architecture
 
 ### Local Storage (SQLite)
-- Maintained by [`DatabaseHelper`](app/lib/core/database/database_helper.dart).
+- Maintained by [`DatabaseHelper`](../../../app/lib/core/database/database_helper.dart).
 - Migrations use `_addColumnIfMissing` to avoid `ALTER TABLE` lockouts and database recreation.
 - `ride_points` table stores full high-fidelity trajectories (`lat`, `lng`, `speed_ms`, `acceleration`, `jerk`, `heading_deg`, `confidence`, `imu_quality`, `is_cornering`).
 - **Times.** Ride `start_time`/`end_time`/`created_at` are stored as UTC ISO-8601 (`…Z`) since schema v28; older rows were device-local with no offset and were rewritten by the v28 step, and a ride doc from an older build is read in this phone's zone on download. `RideModel` hands the app local `DateTime`s; day-range queries (`RideDao.getCompletedBetween`) bind the local day's bounds as UTC. GPS point timestamps were already UTC. Bike, maintenance and fuel dates keep their old format.
 - **Adding a column to a synced table is a cross-version concern.** `CloudRepository.downloadRides` inserts cloud documents verbatim, so a field written by a newer build is an `INSERT` into a column an older one doesn't have — which throws and silently drops that ride. Two guards: the upload side omits a field when it is null (`ridePayload`, `bikePayload`), and since v17 the download side filters to the columns the local schema actually has (`knownRideColumnsOnly`). Maintenance logs have no such filter: a row a build can't store is skipped, and since v20 `downloadMaintenance` stops its pull watermark before that row so it is fetched again after the app updates. Deleted maintenance logs are tombstoned (`deleted_maintenance_logs`) like rides and bikes.
 
-### Outbox Pattern ([`OutboxService`](app/lib/core/cloud/outbox_service.dart))
+### Outbox Pattern ([`OutboxService`](../../../app/lib/core/cloud/outbox_service.dart))
 - Network writes are queued into the SQLite `outbox` table before the UI callback completes.
 - **Contract**: Once `enqueue()` returns, the operation is guaranteed to persist and eventually reach the cloud.
 - `kOutboxAttemptTimeout = Duration(seconds: 8)`: If Firestore does not acknowledge within 8 seconds, the write is treated as `deferred` rather than throwing, preventing UI freezes during offline usage.
 - Exponential backoff: $30\,\text{s} \to 1\,\text{m} \to 2\,\text{m} \dots \text{capped at } 30\,\text{m}$.
 
-### Cloud Sync Engine ([`SyncManager`](app/lib/core/cloud/sync_manager.dart))
+### Cloud Sync Engine ([`SyncManager`](../../../app/lib/core/cloud/sync_manager.dart))
 - Triggered on:
   1. App resume (`AppLifecycleState.resumed`).
   2. User authentication state changes.
@@ -206,12 +206,12 @@ The core computational logic lives in pure domain calculators under [`app/lib/fe
 - After the v28 upgrade each rider gets one full pull (`SyncManager.resetPullMarksOnceForV28`), so edits the old download skipped arrive once.
 - **Not covered:** deletions (tombstones decide them, as before); a phone with a wrong clock wins or loses conflicts by that error; bike totals (`total_distance_m`, `ride_count`) are whole-row LWW, so rides recorded on the same bike on two phones between syncs keep only one phone's increment in the totals (the rides themselves are kept).
 
-### Firestore Track Chunking ([`RideTrackCodec`](app/lib/core/cloud/ride_track_codec.dart))
+### Firestore Track Chunking ([`RideTrackCodec`](../../../app/lib/core/cloud/ride_track_codec.dart))
 - Long rides generate thousands of telemetry points. Writing one document per point exhausts read/write quotas; writing all points to one document breaches Firestore's 1 MiB limit.
 - **Chunking Strategy**: Points are grouped into 500-point chunks (`trackChunkSize`) and stored in subcollection documents `/users/{uid}/rides/{rideId}/track/{chunkIndex}` as one flat positional array with a stride of 5: `[lat, lng, tsMillis, speed, accel, lat, lng, …]`. Firestore rejects nested arrays, which is why it's flat. Heading/confidence/IMU fields stay local-only in `ride_points`.
 
 ### Media Uploads
-- Direct-to-storage architecture using **Cloudinary** ([`CloudinaryUploadService`](app/lib/core/services/cloudinary_upload_service.dart)) via unsigned REST requests. Bypasses Firebase Storage to avoid Blaze billing lock-in while preserving free-tier quotas.
+- Direct-to-storage architecture using **Cloudinary** ([`CloudinaryUploadService`](../../../app/lib/core/services/cloudinary_upload_service.dart)) via unsigned REST requests. Bypasses Firebase Storage to avoid Blaze billing lock-in while preserving free-tier quotas.
 
 ### Server side (`functions/`)
 Cloud Functions only backstop what the client can't be trusted with or can't do after the fact. See `functions/README.md`:
@@ -235,21 +235,21 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
    - **Manual rides** (Android): `RideRecordingNotifier` hosts each active ride in the service (`AutoTrackingService.beginManualRide`, ended on pause/stop/discard/restore). The UI isolate still records; it sends a heartbeat every second. With no heartbeat for 20 s (UI engine destroyed), the task handler stores the ride's fixes in `ride_points` itself and advances the restore clock, so `restoreInterruptedRide` rebuilds the whole ride. A system-restarted service without "Allow all the time", or a service that dies under a live UI, posts "Recording stopped, tap to resume". `geolocator`'s own foreground notification is only the fallback when the service can't start (and iOS uses background location updates instead).
    - **Permissions**: a manual ride needs while-in-use location only. "Allow all the time" is requested only when the rider turns auto-tracking on, after the Play disclosure (`ensureBackgroundLocationDisclosure`, shown until accepted once).
    - **OEM battery killers**: after the first finished ride, Xiaomi/OPPO/vivo/realme phones get a one-time settings guide (`oem_guide_screen.dart`; vendor autostart screens through the `throttleiq/oem` channel in `MainActivity.kt`).
-2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](app/lib/core/services/auto_tracking_service.dart))**:
+2. **Auto-Tracking Lifecycle ([`AutoTrackingService`](../../../app/lib/core/services/auto_tracking_service.dart))**:
    - Operates an isolated background entry point (`autoTrackingTaskCallback`).
    - Listens for Activity Recognition transitions (e.g., `IN_VEHICLE` / `ON_BICYCLE`).
    - Persists detected trip chunks to the `auto_detections` SQLite table.
-3. **Reconciliation ([`AutoRideReconcilerService`](app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart))**:
-   - On app foregrounding, re-evaluates pending detected rides using [`AutoRideReconciler`](app/lib/features/ride/domain/calculators/auto_ride_reconciler.dart).
+3. **Reconciliation ([`AutoRideReconcilerService`](../../../app/lib/features/ride/data/repositories/auto_ride_reconciler_service.dart))**:
+   - On app foregrounding, re-evaluates pending detected rides using [`AutoRideReconciler`](../../../app/lib/features/ride/domain/calculators/auto_ride_reconciler.dart).
    - Prompts the rider to categorize the journey or links it to their primary motorcycle.
 
 ---
 
 ## 7. Navigation & Routing Architecture
 
-- Routing is implemented via `GoRouter` in [`app_router.dart`](app/lib/core/router/app_router.dart).
+- Routing is implemented via `GoRouter` in [`app_router.dart`](../../../app/lib/core/router/app_router.dart).
 - **Core Navigation Structure**:
-  - `ShellRoute` with [`AppShell`](app/lib/shared/widgets/app_shell.dart) hosts the 5 primary tabs:
+  - `ShellRoute` with [`AppShell`](../../../app/lib/shared/widgets/app_shell.dart) hosts the 5 primary tabs:
     - **Social** (`/home/social`): Feed, ride sharing, group rides.
     - **Places** (`/home/places`): POI directory (garages, fuel, spare parts) with geohash queries.
     - **Record** (`/home/record`): Live recording dashboard.
@@ -263,8 +263,8 @@ Cloud Functions only backstop what the client can't be trusted with or can't do 
 - **Offline Geometric Turn-by-Turn**:
   - Operates without commercial routing APIs (Mapbox, GraphHopper). Computes turn maneuvers purely from polyline vector bearings and signed angular differences (classified into slight, normal, sharp, U-turn), grouping micro-bends to eliminate instruction noise.
 - **Following a route *is* recording a ride** (2026-09-21, issues §78.21). The two core loops compose rather than running side by side:
-  - [`navigation_progress.dart`](app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
-  - [`navigation_session_provider.dart`](app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
+  - [`navigation_progress.dart`](../../../app/lib/features/routes/domain/navigation_progress.dart) — pure progress/off-route/ETA/turn-advance maths, no Flutter and no I/O. A manoeuvre counts as done when the rider reaches it **or** has ridden past it along the line; proximity alone jams the banner on any corner taken wide.
+  - [`navigation_session_provider.dart`](../../../app/lib/features/routes/presentation/providers/navigation_session_provider.dart) — holds route + manoeuvres + progress and owns **no GPS**. It `ref.listen`s to `rideRecordingProvider`, selected down to `(currentPosition, currentSpeedMs, status)` so it recomputes at fix cadence, not at accelerometer cadence.
   - **The dependency runs one way**: `routes` knows about the recorder; `RideRecordingNotifier` knows nothing about routes. Navigation stays out of the core loop, which is the part with no end-to-end test.
   - The ride record carries `route_id`/`route_name` (added in schema **v17**; current schema is v28). The name is denormalized beside the id because a discovered route lives under another rider's uid, and a route can be renamed or deleted after the ride.
   - Guidance is drawn over the cockpit by `NavigationBanner`; there is no separate navigation screen to get out of sync with the recorder.

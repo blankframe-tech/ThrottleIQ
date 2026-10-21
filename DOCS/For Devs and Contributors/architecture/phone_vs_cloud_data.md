@@ -3,7 +3,7 @@
 **Written:** 2026-10-14.
 
 **Sources:**
-- a copy of the founder's iPhone database (`DOCS/CRASH TESTING/phone_sqlite/throttleiq_2026-10-14.db`, schema v27);
+- a copy of the founder's iPhone database (`DOCS/General/CRASH TESTING/phone_sqlite/throttleiq_2026-10-14.db`, schema v27);
 - the live Firestore project `throttleiqfb`, read with the Admin SDK;
 - the sync code in `app/lib/core/cloud/`.
 
