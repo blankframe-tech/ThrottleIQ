@@ -11,7 +11,7 @@ supports natively (Store presence → Translations → add Bengali) — it does
 keywords alongside the English one").
 
 Tone matches the existing Bangla sample copy in
-`pitch_and_marketing_materials.md` — direct, plain, no marketing-speak
+`marketing.md` §2 (`DOCS/Handoffs for Non Coding Agents/marketing/`) — direct, plain, no marketing-speak
 superlatives, checked against the no-overclaim rule (no automatic SMS/email
 alert claim, no precise data-point-per-second number).
 

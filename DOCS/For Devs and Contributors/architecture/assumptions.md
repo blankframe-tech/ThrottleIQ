@@ -81,7 +81,7 @@ Road"), can't reroute when the rider goes off-route (it only *tells* them
 they're off-route), and can't know about one-way streets or turn
 restrictions. It's a breadcrumb follower for a route you already rode,
 which is precisely the stated use case ("if I pick a route"). Street
-names need map matching — already scoped as Phase 3 in the handoff doc.
+names need map matching — already scoped as Phase 3 in `vehicle_state_engine.md`.
 
 ## Assumption 5 — iOS widgets ship as sources + instructions, not a wired target
 

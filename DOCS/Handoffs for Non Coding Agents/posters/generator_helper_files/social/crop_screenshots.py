@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Crops 6 app-screen cards out of the two UI-sheet demo images
-(`../../website_demo/assets/ui/{carbon-mono,editorial-bw}.png`, each a
+(`../../../../old/ui_stuff/{carbon-mono,editorial-bw}.png`, each a
 1000x6000 2-column grid of 7 stacked screen cards) into standalone PNGs
 for the social ad creatives.
 
@@ -82,7 +82,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-UI = os.path.join(HERE, "..", "..", "website_demo", "assets", "ui")
+UI = os.path.join(HERE, "..", "..", "..", "..", "old", "ui_stuff")
 OUT = os.path.join(HERE, "screenshots")
 
 CORNER_RADIUS = 30

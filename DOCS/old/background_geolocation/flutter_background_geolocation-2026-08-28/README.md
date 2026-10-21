@@ -9,7 +9,8 @@ still in `AndroidManifest.xml`, and every Android release build crashed on
 launch with a licensing error (`issues_fixed.md` §35). The product decision as
 of 2026-08-28: **stay on the free tier for roughly the next three months**
 rather than buy the key now. This archive exists so that decision is cheap to
-revisit — see `docs/HANDOFF_Document.md`'s backlog for the pros/cons that
+revisit — see `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`, "Reference: the paid
+background-location plugin", for the pros/cons that
 should drive the revisit, and `../auto_tracking_service.dart` in this repo
 (the live file) for what replaced it.
 
@@ -47,4 +48,4 @@ it was written: one paid, tested unit vs. reassembling platform activity
 recognition, iOS significant-location-change, an OEM-battery-killer-resistant
 foreground service, and a headless isolate out of separate free packages.
 That case doesn't go away just because the licence wasn't bought — see the
-pros/cons in `docs/HANDOFF_Document.md`.
+pros/cons in `DOCS/Handoff for agents and Todos/HANDOFF_Document.md`.

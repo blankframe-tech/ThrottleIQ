@@ -14,7 +14,7 @@ sentence of subhead, two flanking stat badges, the same footer. See
 Each creative puts a real, cropped app screenshot front and center (2026
 ASO best practice: show actual current UI, not mockups) rather than the
 posters' illustrated street scene. Screenshots are cropped from
-`../../website_demo/assets/ui/carbon-mono.png` and `editorial-bw.png`
+`../../../../old/ui_stuff/carbon-mono.png` and `editorial-bw.png`
 (the app's own theme-system demo sheets) via `crop_screenshots.py` and
 live in `screenshots/`.
 
@@ -27,8 +27,7 @@ part of the same brand system rather than a one-off.
 ## Distribution reality — why the CTA says APK, not a store badge
 
 Neither the Play Store nor the App Store listing is live yet (see
-`DOCS/Handoff for agents and Todos/HANDOFF_Document.md`, "Play Store &
-App Store — step by step", and the "Latest release" row: distribution
+`DOCS/Handoff for agents and Todos/HANDOFF_Document.md`, "Release": distribution
 today is a signed APK/AAB on GitHub Releases; the Play Console internal
 track is stale; no iOS build has gone to TestFlight). Putting a "Get it
 on Google Play" or "Download on the App Store" badge on these creatives
@@ -53,7 +52,7 @@ Update the footer copy in `social.py` the day a real store listing ships.
   acquisition claim — group rides still require the invitee to already
   have the app installed.
 - **"২০+ ডেটা পয়েন্ট/সেকেন্ড"** (03) reuses the already-verified enthusiast
-  positioning number from `../../marketing/marketing.md`, not a new claim.
+  positioning number from `../../../marketing/marketing.md`, not a new claim.
 - **None of the 20 new creatives (07-26) claim a shareable-outside-the-app
   ride link.** `marketing.md` §3 flags the public ride-summary page as
   *not built* — the in-app Save Ride/Share buttons are real UI, but the
@@ -112,7 +111,7 @@ Same recipe as the first six, deliberately extended two ways:
    headline — the same "test another angle on the same creative asset"
    practice any performance-marketing account runs, not a cosmetic
    duplicate. Every poster still carries exactly one segment's copy
-   (never blended, per `../../marketing/marketing.md`'s segment rule) and
+   (never blended, per `../../../marketing/marketing.md`'s segment rule) and
    its own campaign id, so installs from the reused-image versions
    attribute separately from the originals.
 
@@ -182,15 +181,16 @@ original six skins already were.
   `../lib.py` / `../bn.py` (HarfBuzz-shaped Bangla text, QR, skins) so
   headlines render with correct conjuncts. Run with the existing venv:
   ```bash
-  ../.venv/bin/python3 social.py            # writes ../batch_one/social/*.svg
+  ../.venv/bin/python3 social.py            # writes ../../batch_one/<N>_<name>.svg
+  ../.venv/bin/python3 social.py --batch-two   # writes ../../batch_two/ (current brand)
   ../.venv/bin/python3 -c "
   import cairosvg, glob, os
-  for f in glob.glob('../batch_one/social/*.svg'):
+  for f in glob.glob('../../batch_one/*.svg'):
       n = os.path.basename(f)[:-4]
       cairosvg.svg2png(url=f, write_to=f'{n}.png', output_width=1080, output_height=1350)
   "
   ```
-- `../batch_one/social/*.svg` — vector source (screenshot embedded as a base64
+- `../../batch_one/*.svg` and `../../batch_two/*.svg` — vector source (screenshot embedded as a base64
   `<image>`, so each SVG is self-contained). Render to 1080×1350 PNG (command
   above) for Meta/IG ads or organic posts; don't commit the PNGs.
 

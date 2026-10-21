@@ -5197,7 +5197,7 @@ code first. The new chat-create rule rejects chats from older builds
     phone tipping more than 45°.
   - **Live wiring is off:** `SensorConstants.impactDetectorLiveEnabled =
     false`. It stays off until the founder chooses how alerts are sent
-    (`DOCS/needs_attention.md` b) and the field and drop tests in
+    (`DOCS/Handoff for agents and Todos/needs_attention.md` b) and the field and drop tests in
     claude_sol §1.1.1 step 6 pass.
   - The GPS-accel crash branch is off the live path
     (`detect(detectCrash: false)`).
@@ -5349,7 +5349,7 @@ Verified: `flutter analyze` clean, `flutter test` 1086/1086 (38 new).
   - Tiles are cached on disk for 30 days (`flutter_map_cache` 2.1,
     `dio_cache_interceptor` 4, `http_cache_file_store` 2).
   - **Release builds without the `TILE_*` defines still hit OSM directly.**
-    A tile provider has to be picked (`DOCS/needs_attention.md`).
+    A tile provider has to be picked (`DOCS/Handoff for agents and Todos/needs_attention.md`).
 - **69.O6:** `functions` now runs on Node 22 with `firebase-functions` 7
   and `firebase-admin` 14.
   - Three functions moved to v2. `onUserAccountDeleted` stays on the v1
@@ -5901,7 +5901,7 @@ storage and ad user data disabled in the manifest/Info.plist and via consent cal
 No user id, name, email, location or ride figure can be sent — there is no code path
 for it, and 8 tests pin that. Same commit updated `public/privacy.html` (the "no
 behavioural analytics" bullet is gone; Firebase Analytics and App Check rows added;
-effective date 21 Sep 2026) and `DOCS/General/store_listing/data_safety_and_permissions.md`.
+effective date 21 Sep 2026) and `DOCS/General/Files for Stores/store_listing/data_safety_and_permissions.md`.
 **Founder actions:** (1) update the Play Console Data Safety form ("App interactions:
 collected, optional, not shared"); (2) **deploy hosting only with the release** that
 ships this — the policy now describes analytics the currently-live app does not do.
@@ -7526,7 +7526,7 @@ Paths are updated to the 2026-10-22 DOCS layout (`DOCS/old/apify/`).
   - **Update 2026-10-19 (branch `data/apify-dhaka-places`):** the founder chose to **drop** the Google rating. Done: `place_detail_screen.dart` hides the Google column when `!hasGoogleRating` (it used to say "★ 0 (Not on Google)"); the list badges already hid it. `update_places_google_ratings.js` (and its test) removed. Replaced by `scripts/oneoff/import_google_places.js` (dry run by default, 6 unit tests): it sets every Google rating to 0, enriches existing places within 60 m (phone, hours, generic name, address), and creates the rest as `createdBy: 'system:gmaps-seed-dhaka'` keyed by `googlePlaceId`. Dry run against production on 2026-10-19: 521 existing places, 69 ratings to reset, 80 places to enrich (5 renamed), 717 new (71 fuel, 394 garage, 252 parts). **Written to production 2026-10-19 with founder approval** (866 writes). A second dry run reports 0 left to do. `places` went from 521 to 1,238 docs. **Read-cost impact:** §104.1 (nearby places refetched every 5 km, reading every place within 25 km) now costs about 2.4× as many reads per fetch in Dhaka, so it hits the Spark read quota sooner. Fix §104.1 before launch. The Apify Google Maps run finished (897 Dhaka places, dataset `7tcKVfmd9vYe3nGnS`) and was downloaded on 2026-10-19 (kept outside the repo). Nothing has been written to Firestore. Not checked on a device.
   - **Pointer (2026-10-21):** the export behind the import is `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json` (a copy also sits in the gitignored `DOCS/old/apify/2026-10-19_gmaps-dhaka-places/items.json`). To take the import down, use `scripts/oneoff/revert_google_places.js` (dry run by default; how to run: `scripts/README.md`, revert section). Not run against production.
 - **105.2 Idea, not built:** the Apify Facebook Groups Scraper could replace the manual collection behind `seed_police_checkposts_v3.js` (Traffic Alert BD, BikeBD), with a person reviewing the output before seeding. Public groups only. Never store scraped names or posts in Firestore.
-- **105.3 Apify run status (2026-10-19):** the traffic-group scrape finished (300 posts from Dhaka Traffic Alert `groups/1711912042372401` and DHAKA News & Traffic Alert `groups/874833945893042`, dataset `hhA8ylkEkcMoV07Mf`). The largest group, Traffic Alert BD (450k members), is private and cannot be scraped. The search for bike maintenance and suggestion groups was aborted because the Apify account reached its monthly usage limit, so the forum-topic research (then `DOCS/forum_ideas/`, now `DOCS/old/apify/`) is blocked until the limit resets on 2026-11-18 ($5.13 of the free $5 used) or the plan is upgraded.
+- **105.3 Apify run status (2026-10-19):** the traffic-group scrape finished (300 posts from Dhaka Traffic Alert `groups/1711912042372401` and DHAKA News & Traffic Alert `groups/874833945893042`, dataset `hhA8ylkEkcMoV07Mf`). The largest group, Traffic Alert BD (450k members), is private and cannot be scraped. The search for bike maintenance and suggestion groups was aborted because the Apify account reached its monthly usage limit, so the forum-topic research (then `DOCS/old/apify/`, now `DOCS/old/apify/`) is blocked until the limit resets on 2026-11-18 ($5.13 of the free $5 used) or the plan is upgraded.
   - **Update 2026-10-21: done.** Limit raised to $10. Scraped 375 posts (Freewheelers `groups/fcb.zone`, BikeBD `groups/bikebdofficial`, Motorcycle Valley), cost $2.65. BD Biker Club, Gixxer Riders BD and Royal Enfield BD returned nothing (private or wrong URL). Topics and ideas: `DOCS/old/apify/2026-10-21_fb_bike_groups.md`. Raw data for every Apify run, plus lessons: `DOCS/old/apify/` (gitignored except `README.md`).
 - **105.4 Checkpost scrape result (2026-10-19): not worth a monthly run.** Of the 300 posts (2026-08-25 to 2026-10-18), 1 reported police enforcement: on 2026-10-15, police at every junction in Uttara's sectors were booking riders going the wrong way. That is a one-off crackdown, not a fixed checkpost, so nothing was seeded. These public groups post news, blockades and complaints; checkpost reports would be in the private Traffic Alert BD group, which cannot be scraped. Drop the monthly-run idea unless a public group that reports checkposts turns up.
 

@@ -36,7 +36,7 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 - [ ] **SECURITY step 3 (#2):** deploy rules and indexes and run the email migration in the same
       hour. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
-      `isAdmin()` can be removed (issues §109.6).
+      `isAdmin()` can be removed (issues §110.4).
 - [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
       Firebase API keys.
 - [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are

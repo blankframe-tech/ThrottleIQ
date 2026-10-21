@@ -6,8 +6,8 @@ Firebase plan (Spark/free) — confirmed in `issues_fixed.md` §24 and blocking 
 §33's findings (§33.5 Cloudinary signed uploads, half of §33.6 storage-rules
 audience mirroring) — so what are the actual alternatives to turning on
 Blaze billing? This is a decision doc, not a plan: nothing here has been
-built. See `HANDOFF_Document.md`'s "Soon (requires Blaze pay-as-you-go
-plan...)" section for where this was already flagged as a known blocker.
+built. The open Blaze decision and what it blocks are in `needs_attention.md`
+("Decisions", owner item #3).
 
 **Bottom line: enable Blaze.** It's pay-as-you-go with no base fee, the
 realistic bill at beta scale is single-digit-to-low-double-digit dollars a
