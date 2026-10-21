@@ -1,17 +1,101 @@
-> **2026-10-22: every poster is now one SVG in `batch_one/`** (`v1/`, `v2/`,
-> `v3/`, `social/`). The PNG exports in `print/`, `web/` and `social/png/` were
-> deleted as duplicates; render a PNG from the SVG when you need one (commands
-> below). Only exception: `batch_one/v1/25-ai-camera-flash-caricature@2x.png`
-> has no SVG, so the PNG is the only copy.
+# ThrottleIQ posters: layout, batches, regenerating
 
-> **2026-10-14: v1 and v2 are frozen.** `posters.py`, `posters_v2.py` and
-> `illus.py` were deleted (critique `CrtiQue_Oct14.md` §14); the last copy is on
-> branch `oct14-int`. Their rendered files stay as they are and can no longer be
-> regenerated. Posters that advertised crash detection, SOS or emergency
-> dispatch were removed too, because the detector is off in every build: v1 #05
-> (black box), #09 (resale passport, "crash spikes" row), #13 (family safety)
-> and v2 #05. `posters_v3.py` is the only live generator. The v1/v2 sections
-> below are kept as a record.
+`posters/` holds three things:
+
+- `batch_one/`: 61 posters, one SVG each, numbered 1-61 (`1_jam-time-counter.svg` ...
+  `61_jam-time-split.svg`). Read-only archive. Posters 1-31 are street posters,
+  32-56 are 1080x1350 social ads, 57-61 are the v3 street-ad series.
+- `batch_two/`: the same posters re-skinned in the current ThrottleIQ brand, 49 files,
+  **same file name as in batch_one** (poster N maps 1:1). Use these for new print and ads.
+- `generator_helper_files/`: this folder. `posters_v3.py` and `social/social.py` are the
+  live generators; `lib.py` and `bn.py` are shared drawing and Bangla shaping; `fonts/`.
+
+PNG exports were deleted as duplicates (2026-10-22). Render one from the SVG when
+you need it (see "Rendering" below). Never commit PNGs.
+
+**What the restructure dropped.** Some old posters were removed because they
+advertised crash detection, SOS or emergency dispatch (the detector is off in every
+build; critique `CrtiQue_Oct14.md` section 14): old v1 05 (black box), 09 (resale
+passport, "crash spikes" row), 13 (family safety) and v2 05. `social-25-enthusiast-badgeproof`
+is still in `social.py` but has no poster in either batch. The v1 and v2 generators
+(`posters.py`, `posters_v2.py`, `illus.py`) were deleted 2026-10-14; the last copy is on
+branch `oct14-int`. Posters 1-31 can only be changed by editing the SVG. The only copy of
+`25-ai-camera-flash-caricature@2x.png` (it had no SVG) is in git at
+`338a52c5:DOCS/General/posters/print/25-ai-camera-flash-caricature@2x.png`; it is not
+restored.
+
+## Batch two: the brand re-skin (2026-10-22)
+
+Many batch_one posters use skins the app no longer has (Genesis gold, Trail Social
+orange, Retro B/W, Nocturne lavender, Editorial dark and light, Calming dark, Analyst
+Blue). The app has two themes since 2026-10-15: Carbon Mono (dark) and Calming (light).
+Source of truth: `app/lib/core/theme/app_theme_style.dart`.
+
+**Already on brand in batch_one (not in batch_two):** Carbon Mono 1, 11, 17, 18, 25,
+38, 44, 46; Calming light 37, 39, 48, 56.
+
+**Colour mapping, role for role** (dark skins to Carbon Mono, light skins to Calming):
+
+| Role | Carbon Mono (dark) | Calming (light) |
+|---|---|---|
+| background / surface / surface variant / border | `#0D0D0D` / `#161616` / `#262626` / `#393939` | `#F8F5EF` / `#FEFBF8` / `#EEEBE5` / `#E1DDD8` |
+| text / secondary / tertiary | `#F4F4F4` / `#A8A8A8` / `#6F6F6F` | `#2B2823` / `#66635D` / `#898680` |
+| primary (the skin's accent) | lime `#C8FF3D` (dark `#9FCC1F`) | sage `#537D5C` (dark `#3D5E45`) |
+| secondary (a second accent) | magenta `#D633FF` | tan `#BD8D65` |
+| attention / danger | `#FF7A45` / `#FA4D56` | `#B88255` / `#C34F4B` |
+
+- Old skin to new: Genesis, Trail Social, Nocturne, Editorial dark, Calming dark and
+  Analyst Blue go to Carbon Mono; Editorial light and Retro go to Calming. The tables
+  of old hexes are in `lib.py` `SKINS`.
+- Lime on cream fails contrast, so light posters use sage as the accent. Retro's single
+  black (line, text, accent) becomes Calming ink `#2B2823`.
+- Social ads: lime headline outlined in the background colour (dark) or ink headline with
+  a tan outline (light); badges are lime with `#0D0D0D` text (dark) or tan with white text
+  (light). The footer bar is the surface colour (dark) or ink (light); its grey text is
+  `#A8A8A8` because the tertiary grey fails AA at 13 px.
+- Social screenshots: removed-theme crops are swapped for current-theme crops of the same
+  screen. `commuter-maintenance` to `maintenance-carbon`, `enthusiast-journey` to
+  `journey-carbon`, `family-spouse` to `family-parent`, `on-the-road-editorial` to
+  `enthusiast-telemetry`, `garage-editorial` to `garage-carbon`; poster 45 uses
+  `ridecomplete-calming.png`, a crop (x full width, y 230-2000, rounded corners) of
+  `DOCS/old/ui_stuff/daily_curvy_light/36_ride_summary_ride_summary.png`. The Carbon
+  crops are in git at `338a52c5:DOCS/General/posters/social/screenshots/`.
+- v3 street ads 57-61: the street scene and sky are unchanged. The headline fill
+  (`#FFE100`) is lime, badges, route line and map pins (`#F5642B`) are magenta, the
+  QR footer block uses the Carbon surface with a lime SCAN label, and the status dots
+  use the brand success, secondary-light and attention colours. The blue sky is
+  illustration, not brand: replace it with a Carbon night scene if you want a full match.
+- Not changed: copy, Bangla outlines, layout, QR codes, campaign ids.
+
+**Posters 1-31 (recolour of the SVG).** Replace each old hex with the mapped one,
+for example `#EAB532` to `#C8FF3D`, `#080811` to `#0D0D0D`. Done with a one-off script,
+not kept.
+
+**Posters 32-56 (regenerate).** From `generator_helper_files/social/`, with the
+screenshot crops in a folder `S` (see the commit above) plus `ridecomplete-calming.png`:
+
+```bash
+TIQ_SHOTS=S python3 social.py --batch-two OUT   # files named social-NN-<id>.svg
+```
+
+`social.py` without `--batch-two` rebuilds the batch_one look byte for byte (checked
+for poster 37). Output names are by id; rename to the numbered names: `social-01` to
+`social-24` become 32 to 55 in order, `social-26` becomes 56, `social-25` has none.
+
+**Posters 57-61.** `posters_v3.py` still holds the batch_one palette (it writes
+`v3-NN-*.svg` into `batch_one/v3`, a path that no longer exists, so point it
+elsewhere before running). batch_two was made by recolouring the batch_one SVGs.
+
+## Rendering
+
+```bash
+rsvg-convert -w 1080 -o 57.png batch_two/57_family-live-location.svg   # 1080 px wide
+# or, with a Python 3.11/3.12 venv: pip install cairosvg
+python3 -c "import cairosvg; cairosvg.svg2png(url='batch_two/5_rate-your-garage.svg', write_to='5.png', output_width=2000)"
+```
+
+Street posters are 1000x1500 (render 2000x3000 for A3/A2 print, 800x1200 for web); social and
+v3 are 1080x1350. Keep the PNGs out of git.
 
 ## V3 — street-ad ("Lalamove style"), 1080×1350
 
@@ -28,9 +112,9 @@ segment (never blends commuter/enthusiast/family copy in one asset, per
 |---|---|---|
 | `57_family-live-location` | Anxious family | আপনার বাইকার কোথায় আছে? — family sees the rider's live position once they turn Live Share on (opt-in, not automatic) |
 | `58_crew-live-map` | Enthusiast/crew | বন্ধু তুই কই এখন? — the whole crew on one live map once Group Beacon is on |
-| `v3-03-offline-record` | Daily commuter | সিগন্যাল না থাকলেও, রেকর্ড হতে থাকে। — GPS keeps recording with no tower, syncs itself once the net's back. Map card renders dimmed/grey with a steady (non-pulsing) marker and a "NO SIGNAL" pill instead of the live-green "LIVE" one — same `map_card()`, using its new `dim`/`dot_color`/`pulse` params |
-| `59_saved-crew-route` | Enthusiast/touring | রাস্তা সেভ থাকলে, কেউ হারায় না। — a route saved from a past ride, so the rest of the crew can navigate the same path turn-by-turn on their own; distinct from `v3-02`'s "where's everyone right now" live-position hook — this one's about a route planned *before* the ride, not live positions during it. Blue, non-pulsing "ROUTE" marker |
-| `60_family-return-eta` | Anxious family | আসতে আসতে কতদূর? — a spouse/family member waiting at home, not the "where's my rider right now" framing of `v3-01`; same strict opt-in-only Live Share language |
+| `v3-03-offline-record` (no poster in batch_one; dropped) | Daily commuter | সিগন্যাল না থাকলেও, রেকর্ড হতে থাকে। — GPS keeps recording with no tower, syncs itself once the net's back. Map card renders dimmed/grey with a steady (non-pulsing) marker and a "NO SIGNAL" pill instead of the live-green "LIVE" one — same `map_card()`, using its new `dim`/`dot_color`/`pulse` params |
+| `59_saved-crew-route` | Enthusiast/touring | রাস্তা সেভ থাকলে, কেউ হারায় না। — a route saved from a past ride, so the rest of the crew can navigate the same path turn-by-turn on their own; distinct from 58's "where's everyone right now" live-position hook — this one's about a route planned *before* the ride, not live positions during it. Blue, non-pulsing "ROUTE" marker |
+| `60_family-return-eta` | Anxious family | আসতে আসতে কতদূর? — a spouse/family member waiting at home, not the "where's my rider right now" framing of 57; same strict opt-in-only Live Share language |
 | `61_jam-time-split` | Daily commuter | আজও ৪৭ মিনিট জ্যামে দাঁড়িয়ে? — the ride summary's real moving-vs-jam split, recast in this series' street-ad grammar (v1's `1_jam-time-counter` concept). Amber, non-pulsing "IN JAM" marker. **The `47` is a placeholder shaped like real app output — swap for an actual aggregate before printing at volume**, same as v1 poster 01 |
 
 Segments deliberately not extended into v3 this pass: garage/resale-proof,
@@ -46,17 +130,12 @@ badge/reward physical-prize promotion — both are proposed-but-not-built per
 `marketing.md`, not shipped claims.
 
 ```bash
-.venv/bin/python3 posters_v3.py          # writes batch_one/v3/*.svg
-.venv/bin/python3 -c "
-import cairosvg, glob, os
-for f in glob.glob('batch_one/v3/*.svg'):
-    n = os.path.basename(f)[:-4]
-    cairosvg.svg2png(url=f, write_to=f'{n}@2x.png', output_width=2160, output_height=2700)
-    cairosvg.svg2png(url=f, write_to=f'{n}.png', output_width=1080, output_height=1350)
-"
+python3 posters_v3.py          # writes v3-NN-*.svg; batch_one keeps them as 57-61
 ```
 
-SVGs live in `batch_one/v3/`. The PNGs land in the current folder; don't commit them.
+The posters are `57`-`61` in `batch_one/` and `batch_two/` (the old `v3-NN` ids are
+listed in the table: v3-01 is 57, v3-02 is 58, v3-04 is 59, v3-05 is 60, v3-06 is 61).
+For PNGs see "Rendering" above.
 
 **QR campaigns:**
 
@@ -81,19 +160,8 @@ corner. No instrument panels, no stat rows — clickbait-y on purpose, meant to
 read from across the street. Same skin-per-poster and campaign IDs as v1
 (QR links get a `_v2` campaign suffix for separate attribution).
 
-```bash
-# posters_v2.py was deleted 2026-10-14; this is how the files were made
-.venv/bin/python3 posters_v2.py          # wrote svg/v2/*.svg, now in batch_one/v2/
-.venv/bin/python3 -c "
-import cairosvg, glob, os
-for f in glob.glob('batch_one/v2/*.svg'):
-    n = os.path.basename(f)[:-4]
-    cairosvg.svg2png(url=f, write_to=f'{n}@2x.png', output_width=2000, output_height=3000)
-    cairosvg.svg2png(url=f, write_to=f'{n}.png', output_width=800, output_height=1200)
-"
-```
-
-SVGs live in `batch_one/v2/`.
+`posters_v2.py` was deleted 2026-10-14. The v2 files are no longer separate: the
+restructure numbered them with the v1 posters (the `*-simplified` files in `batch_one/`).
 
 ---
 
@@ -112,11 +180,11 @@ rows and technical terms stay English, matching how the app itself reads.
 | 02 | `2_chain-lube-at-pump` | Fuel pumps, beside the nozzle | Genesis (gold) | ট্যাংক ফুল। চেইন শুকনা। — Tk 50 chain clean + lube now vs Tk 3,500 sprocket set later |
 | 03 | `4_resale-service-history` | Bike resale groups, garage walls | Trail Social (orange) | "বাইক সার্ভিসিং ঠিক ছিল?" — the buyer asks; the seller shows 2 years of logged services |
 | 04 | `5_rate-your-garage` | Garages + pumps (review driver) | Retro (brutalist B/W) | এই গ্যারেজ কেমন? — rate it in 30 seconds |
-| 05 | `05-black-box-safety` | Street level, signal islands | Analyst Blue (cyan) | আপনি পড়ে গেছেন। — the 32 seconds after |
+| 05 | removed | | | The black-box poster advertised crash detection; dropped 2026-10-14 |
 | 06 | `7_ride-with-crew` | Tea stalls, bike meets, parts markets | Nocturne (lavender) | একলা চালেন না। |
 | 07 | `9_real-top-speed` | Purbachal 300ft, Expressway toll plazas | Editorial Dark (cobalt) | চা স্টলে ১৩০। আসল টান কত ছিল? |
 | 08 | `10_ride-privacy` | Corporate parking, apartment basements | Calming Dark (sage) | রাইড ফেসবুকে দিলেন। বাসার গলিটাও সবাই চিনে গেল? |
-| 09 | `09-resale-passport` | Banglamotor, Bijoy Sarani used shops | Editorial Light (paper) | মিটার ঘুরানো যায়। আসল হিস্ট্রি ঘুরাবেন কেমনে? |
+| 09 | removed | | | The resale-passport poster had a "crash spikes" row; dropped 2026-10-14 |
 | 10 | `11_offline-recording` | Mountain trails, tour routes, dead zones | Carbon Mono (lime) | টাওয়ার নাই? ThrottleIQ-র নেট লাগে না। |
 | 11 | `12_fatigue-alert` | Highway dhabas, Comilla/Mawa rest stops | Trail Social (orange) | টানা দেড় ঘণ্টা সিটে। রিফ্লেক্স কিন্তু স্লো হয়ে গেছে। |
 | 12 | `14_group-beacon` | Friday 6 AM meet points, club hangouts | Nocturne (indigo) | “দোস্ত তুই কই?” — আর কত ফোন করবেন? |
@@ -135,9 +203,9 @@ rows and technical terms stay English, matching how the app itself reads.
 
 ## Files
 
-- `batch_one/v1/*.svg` — vector source (render at 2000×3000 for A3/A2 print, 800×1200 for web), scales to any size. All text is **converted to outlines**,
+- `batch_one/*.svg` and `batch_two/*.svg` — vector source (render at 2000×3000 for A3/A2 print, 800×1200 for web), scales to any size. All text is **converted to outlines**,
   so these open correctly anywhere with no fonts installed — hand them to a press as-is.
-- `lib.py`, `bn.py` — shared drawing and Bangla shaping, used by `posters_v3.py` and `social/social.py`. The v1 generator `posters.py` was deleted 2026-10-14.
+- `lib.py`, `bn.py` — shared drawing and Bangla shaping, used by `posters_v3.py` and `social/social.py`. The v1 generator `posters.py` was deleted 2026-10-14. The table above uses the old v1 row numbers; the file names are the batch_one names.
 - `fonts/` — Noto Sans Bengali (SIL OFL) and DejaVu Sans fonts.
 
 ## QR codes
@@ -183,10 +251,7 @@ The `/install` page automatically sniffs the device OS and presents:
 ```bash
 pip install qrcode cairosvg --break-system-packages
 python3 posters_v3.py                  # v1's posters.py was deleted 2026-10-14
-python3 -c "import cairosvg,glob,os
-for f in glob.glob('batch_one/v1/*.svg'):
-    n=os.path.basename(f)[:-4]
-    cairosvg.svg2png(url=f,write_to=f'{n}@2x.png',output_width=2000,output_height=3000)"
+python3 social/social.py               # batch_one look of 32-56; add --batch-two for the brand look
 ```
 
 The `47` in poster 01, the wear percentages in 02, and the service log in 03 are

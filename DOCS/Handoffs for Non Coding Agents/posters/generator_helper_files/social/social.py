@@ -36,6 +36,25 @@ BADGE_TEXT = {
     "nocturne": INK, "calmingDark": INK, "calmingLight": "#FFFFFF",
     "carbonMono": INK, "trailSocial": INK, "analystBlue": INK, "retro": "#FFFFFF",
 }
+# batch two (2026-10-22): old skin -> current brand skin, and removed-theme
+# screenshot -> current-theme crop of the same screen. `--batch-two` uses these.
+REBRAND = {
+    "genesis": "carbonMono", "trailSocial": "carbonMono", "nocturne": "carbonMono",
+    "editorialDark": "carbonMono", "calmingDark": "carbonMono", "analystBlue": "carbonMono",
+    "editorialLight": "calmingLight", "retro": "calmingLight",
+}
+SHOT_SWAP = {
+    "commuter-maintenance.png": "maintenance-carbon.png",
+    "enthusiast-journey.png": "journey-carbon.png",
+    "family-spouse.png": "family-parent.png",
+    "on-the-road-editorial.png": "enthusiast-telemetry.png",
+    "garage-editorial.png": "garage-carbon.png",
+    "start-ride-editorial.png": "start-ride-carbon.png",
+    # Calming light ride summary, cropped from DOCS/old/ui_stuff/daily_curvy_light/36_*.png
+    "ridecomplete-hero-editorial.png": "ridecomplete-calming.png",
+}
+SHOTS = os.environ.get("TIQ_SHOTS", os.path.join(HERE, "screenshots"))
+
 ACCENT_KEY = {
     "genesis": "pri", "editorialLight": "att", "editorialDark": "att",
     "nocturne": "pri", "calmingDark": "pri", "calmingLight": "sec",
@@ -101,19 +120,22 @@ def logo_mark(x, y, s=44):
     return "".join(o)
 
 
-def footer(campaign):
+def footer(campaign, brand=None):
+    # brand: None (batch one look) or dict(footer_bg, scan) for batch two
     y0 = H - 150
-    o = [rect(0, y0, W, 150, fill=FOOTER_BG)]
+    bg, scan, grey, grey3 = (FOOTER_BG, "#F5642B", "#8A8F98", "#6B7078") if not brand else (
+        brand["footer_bg"], brand["scan"], "#A8A8A8", "#A8A8A8")  # text-2 for both: tertiary fails AA at 13px
+    o = [rect(0, y0, W, 150, fill=bg)]
     o.append(qr_svg(f"{BASE}?c={campaign}", 44, y0 + 24, 104, dark="#000000",
                      light="#FFFFFF", uid=campaign))
-    o.append(txt(168, y0 + 54, "SCAN", 32, "#F5642B", COND, tracking=2))
+    o.append(txt(168, y0 + 54, "SCAN", 32, scan, COND, tracking=2))
     o.append(txt(168, y0 + 82, "ThrottleIQ APK ফ্রি ডাউনলোড", 21, "#F4F4F4", SANS))
     o.append(txt(168, y0 + 108, "FREE · OFFLINE-FIRST · ANDROID NOW · iOS শীঘ্রই", 14,
-                  "#8A8F98", MONO, tracking=0.5))
+                  grey, MONO, tracking=0.5))
     o.append(txt(W - 44, y0 + 58, "ThrottleIQ", 34, "#FFFFFF", SANS, anchor="end", tracking=-1))
-    o.append(txt(W - 44, y0 + 84, "MACHINE MEMORY FOR MOTORCYCLES", 13, "#6B7078", MONO,
+    o.append(txt(W - 44, y0 + 84, "MACHINE MEMORY FOR MOTORCYCLES", 13, grey3, MONO,
                   anchor="end", tracking=1.5))
-    o.append(txt(W - 44, y0 + 112, "ঢাকায় তৈরি, ঢাকার রাস্তার জন্য", 18, "#8A8F98", SANS, anchor="end"))
+    o.append(txt(W - 44, y0 + 112, "ঢাকায় তৈরি, ঢাকার রাস্তার জন্য", 18, grey, SANS, anchor="end"))
     return "".join(o)
 
 
@@ -428,13 +450,21 @@ POSTERS = [
 ]
 
 
-def build(p):
-    skin = SKINS[p["skin"]]
+def build(p, batch_two=False):
+    key = REBRAND.get(p["skin"], p["skin"]) if batch_two else p["skin"]
+    skin = SKINS[key]
     dark = skin["dark"]
-    accent = skin[ACCENT_KEY[p["skin"]]]
+    accent = skin[ACCENT_KEY[key]]
     body_text = skin["t1"]
     badge_fill = accent
-    badge_text = BADGE_TEXT[p["skin"]]
+    badge_text = BADGE_TEXT[key]
+    ink, yellow, brand = INK, YELLOW, None
+    if batch_two:
+        # Carbon Mono: lime headline outlined in the background colour; Calming: ink headline
+        ink, yellow = (skin["bg"], skin["pri"]) if dark else (skin["t1"], None)
+        badge_text = skin["bg"]
+        brand = dict(footer_bg=skin["surf"] if dark else skin["t1"],
+                     scan=skin["pri"] if dark else skin["sec"])
 
     o = []
     # soft glow behind where the card will sit
@@ -444,9 +474,9 @@ def build(p):
     o.append(txt(W - 92, 66, "ThrottleIQ", 28, body_text, SANS, anchor="end", tracking=-1))
 
     if dark:
-        head, used = stroke_headline(W / 2, 118, p["headline"], 82, YELLOW, INK)
+        head, used = stroke_headline(W / 2, 118, p["headline"], 82, yellow, ink)
     else:
-        head, used = stroke_headline(W / 2, 118, p["headline"], 82, INK, accent, sw=7)
+        head, used = stroke_headline(W / 2, 118, p["headline"], 82, ink, accent, sw=7)
     o.append(head)
     sub_size = 24
     sub_lines = wrap_lines(p["subhead"], 900, sub_size)
@@ -458,7 +488,8 @@ def build(p):
 
     card_top = sub_bottom + 46
     card_bottom = H - 190
-    shot_path = os.path.join(HERE, "screenshots", p["screenshot"])
+    shot = SHOT_SWAP.get(p["screenshot"], p["screenshot"]) if batch_two else p["screenshot"]
+    shot_path = os.path.join(SHOTS, shot)
     card_svg, (cx0, cy0, cw, ch) = phone_card(W / 2, card_top, card_bottom, shot_path)
     o.append(card_svg)
 
@@ -469,15 +500,19 @@ def build(p):
     o.append(badge(left_x, badge_y, badge_w, badge_h, p["badge_l"], badge_fill, badge_text))
     o.append(badge(right_x, badge_y, badge_w, badge_h, p["badge_r"], badge_fill, badge_text))
 
-    o.append(footer(p["campaign"]))
+    o.append(footer(p["campaign"], brand))
     return svg_doc("".join(o), skin["bg"])
 
 
 if __name__ == "__main__":
-    svg_dir = os.path.join(HERE, "..", "batch_one", "social")
+    # usage: social.py [--batch-two] [out dir]. Files are named by poster id;
+    # batch_one/batch_two use the numbered names (see ../README.md).
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    two = "--batch-two" in sys.argv
+    svg_dir = args[0] if args else os.path.join(HERE, "..", "..", "batch_two" if two else "batch_one")
     os.makedirs(svg_dir, exist_ok=True)
     for p in POSTERS:
-        doc = build(p)
+        doc = build(p, two)
         path = os.path.join(svg_dir, f'{p["id"]}.svg')
         with open(path, "w", encoding="utf-8") as f:
             f.write(doc)
