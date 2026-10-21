@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_theme.dart';
@@ -198,42 +199,49 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
-        title: Row(
-          children: [
-            UserAvatar(
-              photoUrl: resolvedOtherUser?.photoUrl,
-              name: peerDeleted
-                  ? context.l10n.deletedRider
-                  : resolvedOtherUser?.bestName ??
-                      context.l10n.riderFallbackName,
-              radius: 16,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    peerDeleted
-                        ? context.l10n.deletedRider
-                        : resolvedOtherUser?.bestName ?? context.l10n.chat,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  if (peerTyping)
-                    Text(
-                      context.l10n.chatTyping,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: context.palette.textSecondary,
-                      ),
-                    ),
-                ],
+        // Tapping the header opens the rider's profile, where Report and
+        // Block live (store UGC rules want both reachable from a chat).
+        title: InkWell(
+          onTap: profileLookupUid == null || peerDeleted
+              ? null
+              : () => context.push('/profile/$profileLookupUid'),
+          child: Row(
+            children: [
+              UserAvatar(
+                photoUrl: resolvedOtherUser?.photoUrl,
+                name: peerDeleted
+                    ? context.l10n.deletedRider
+                    : resolvedOtherUser?.bestName ??
+                        context.l10n.riderFallbackName,
+                radius: 16,
               ),
-            ),
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      peerDeleted
+                          ? context.l10n.deletedRider
+                          : resolvedOtherUser?.bestName ?? context.l10n.chat,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                    if (peerTyping)
+                      Text(
+                        context.l10n.chatTyping,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: context.palette.textSecondary,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
@@ -310,7 +318,10 @@ class _ChatRoomScreenState extends ConsumerState<ChatRoomScreen> {
                                     context,
                                     reportedId: msg.senderId,
                                     contentType: 'chat',
-                                    contentId: msg.id,
+                                    // Full path: a bare message id can't be
+                                    // found under chats/{chatId} by the reviewer.
+                                    contentId:
+                                        'chats/${widget.chatId}/messages/${msg.id}',
                                   );
                                 },
                           child: Container(

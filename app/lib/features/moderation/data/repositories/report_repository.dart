@@ -1,8 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import '../models/report_model.dart';
 
 class ReportRepository {
-  static final ReportRepository _instance = ReportRepository._internal();
+  static ReportRepository _instance = ReportRepository._internal();
+
+  @visibleForTesting
+  static set instanceForTest(ReportRepository fake) => _instance = fake;
+
   factory ReportRepository() => _instance;
   ReportRepository._internal();
 

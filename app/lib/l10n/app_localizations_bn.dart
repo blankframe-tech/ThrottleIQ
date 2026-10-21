@@ -1633,6 +1633,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get whyReportingThis => 'কেন এটি রিপোর্ট করছেন?';
 
   @override
+  String get reportReviewPromise =>
+      'প্রতিটি রিপোর্ট 24 ঘণ্টার মধ্যে একজন মানুষ পড়েন। আপনি যাকে রিপোর্ট করছেন, তিনি আপনার নাম দেখতে পান না।';
+
+  @override
+  String get communityRules => 'কমিউনিটি নিয়ম';
+
+  @override
   String get additionalDetailsOptional => 'অতিরিক্ত বিবরণ (ঐচ্ছিক)';
 
   @override

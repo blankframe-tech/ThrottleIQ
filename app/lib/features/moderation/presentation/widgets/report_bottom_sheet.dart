@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/report_repository.dart';
 import '../../../../core/i18n/l10n_context.dart';
+
+/// Hosted copy of the moderation policy (public/community.html; the
+/// reviewer's runbook is DOCS/moderation_policy.md).
+final Uri kCommunityRulesUrl =
+    Uri.parse('https://throttleiqfb.web.app/community.html');
 
 class ReportBottomSheet extends ConsumerStatefulWidget {
   final String reportedId;
@@ -29,10 +35,12 @@ class ReportBottomSheet extends ConsumerStatefulWidget {
       isScrollControlled: true,
       backgroundColor: context.palette.surface,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
+        borderRadius:
+            BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
       ),
       builder: (context) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding:
+            EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
         child: ReportBottomSheet(
           reportedId: reportedId,
           contentType: contentType,
@@ -80,7 +88,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
 
   Future<void> _submitReport() async {
     if (_selectedReason == null) return;
-    
+
     final myUid = ref.read(currentUserProvider)?.uid;
     if (myUid == null) return;
 
@@ -93,7 +101,9 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
         contentType: widget.contentType,
         contentId: widget.contentId,
         reason: _selectedReason!,
-        additionalDetails: _detailsController.text.trim().isEmpty ? null : _detailsController.text.trim(),
+        additionalDetails: _detailsController.text.trim().isEmpty
+            ? null
+            : _detailsController.text.trim(),
       );
 
       if (mounted) {
@@ -106,7 +116,9 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.couldNotSendReport), backgroundColor: context.palette.danger),
+          SnackBar(
+              content: Text(context.l10n.couldNotSendReport),
+              backgroundColor: context.palette.danger),
         );
       }
     }
@@ -114,7 +126,9 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    // Scrolls: six reasons plus the details field outgrow a small phone,
+    // more so with the keyboard up.
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(AppDimensions.paddingLg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -138,7 +152,21 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          Text(
+            context.l10n.reportReviewPromise,
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              style: TextButton.styleFrom(padding: EdgeInsets.zero),
+              onPressed: () => launchUrl(kCommunityRulesUrl,
+                  mode: LaunchMode.externalApplication),
+              child: Text(context.l10n.communityRules),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             context.l10n.whyReportingThis,
             style: TextStyle(
@@ -155,7 +183,9 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
               children: [
                 for (final reason in _reasons)
                   RadioListTile<String>(
-                    title: Text(_reasonLabel(reason), style: TextStyle(color: context.palette.textPrimary, fontSize: 14)),
+                    title: Text(_reasonLabel(reason),
+                        style: TextStyle(
+                            color: context.palette.textPrimary, fontSize: 14)),
                     value: reason,
                     fillColor: WidgetStatePropertyAll(context.palette.primary),
                     contentPadding: EdgeInsets.zero,
@@ -184,7 +214,8 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
           ),
           const SizedBox(height: 24),
           ElevatedButton(
-            onPressed: _selectedReason == null || _isSubmitting ? null : _submitReport,
+            onPressed:
+                _selectedReason == null || _isSubmitting ? null : _submitReport,
             style: ElevatedButton.styleFrom(
               backgroundColor: context.palette.danger,
               foregroundColor: Colors.white,
@@ -197,9 +228,12 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 ? const SizedBox(
                     height: 20,
                     width: 20,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    child: CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 2),
                   )
-                : Text(context.l10n.submitReport, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                : Text(context.l10n.submitReport,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600)),
           ),
         ],
       ),

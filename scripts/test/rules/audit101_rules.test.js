@@ -26,6 +26,7 @@ const {
 const {
   doc,
   collection,
+  getDoc,
   getDocs,
   setDoc,
   updateDoc,
@@ -658,4 +659,23 @@ test('S3 reports: unknown contentType, extra keys, oversize fields or a client c
   await assertFails(setDoc(ref(), report({ contentId: 'x'.repeat(201) })));
   await assertFails(setDoc(ref(), report({ reportedId: 'x'.repeat(129) })));
   await assertFails(setDoc(ref(), report({ createdAt: Timestamp.now() })));
+});
+
+// Moderation policy 2026-10-21 (DOCS/moderation_policy.md): riders file
+// reports but never read, edit or withdraw them, not even their own; only the
+// admin (console) reviews. The chat sheet sends the full message path.
+test('reports: create-only for riders, no impersonation, no signed-out writes', async () => {
+  const bob = dbFor(BOB);
+  const own = doc(bob, 'reports', 'bob-1');
+  await assertSucceeds(
+    setDoc(own, report({ contentId: `chats/${DM_ID}/messages/${'m'.repeat(20)}` }))
+  );
+  await assertFails(getDoc(own));
+  await assertFails(getDocs(collection(bob, 'reports')));
+  await assertFails(updateDoc(own, { status: 'dismissed' }));
+  await assertFails(deleteDoc(own));
+  await assertFails(getDoc(doc(dbFor(MALLORY), 'reports', 'bob-1')));
+  await assertFails(setDoc(doc(collection(bob, 'reports')), report({ reporterId: ALICE })));
+  const anon = testEnv.unauthenticatedContext().firestore();
+  await assertFails(setDoc(doc(collection(anon, 'reports')), report()));
 });

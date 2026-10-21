@@ -481,6 +481,8 @@
   "failedSubmitReport": "রিপোর্ট জমা দেওয়া যায়নি: {e}",
   "report": "রিপোর্ট",
   "whyReportingThis": "কেন এটি রিপোর্ট করছেন?",
+  "reportReviewPromise": "প্রতিটি রিপোর্ট 24 ঘণ্টার মধ্যে একজন মানুষ পড়েন। আপনি যাকে রিপোর্ট করছেন, তিনি আপনার নাম দেখতে পান না।",
+  "communityRules": "কমিউনিটি নিয়ম",
   "additionalDetailsOptional": "অতিরিক্ত বিবরণ (ঐচ্ছিক)",
   "submitReport": "রিপোর্ট জমা দিন",
   "audiencePublic": "পাবলিক",

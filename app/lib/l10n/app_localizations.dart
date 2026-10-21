@@ -2985,6 +2985,18 @@ abstract class AppLocalizations {
   /// **'Why are you reporting this?'**
   String get whyReportingThis;
 
+  /// Line in report_bottom_sheet under the title. The 24 hours is the moderation policy's first-review time (DOCS/moderation_policy.md).
+  ///
+  /// In en, this message translates to:
+  /// **'A person reads every report within 24 hours. Your name is not shown to the rider you report.'**
+  String get reportReviewPromise;
+
+  /// Link in report_bottom_sheet that opens the hosted community rules page (public/community.html).
+  ///
+  /// In en, this message translates to:
+  /// **'Community rules'**
+  String get communityRules;
+
   /// LabelText in report_bottom_sheet.
   ///
   /// In en, this message translates to:

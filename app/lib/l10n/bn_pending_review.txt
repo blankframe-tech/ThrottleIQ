@@ -1750,3 +1750,5 @@ placeReportExpired
 deletedRider
 chatPeerDeleted
 messageDeleted
+reportReviewPromise
+communityRules

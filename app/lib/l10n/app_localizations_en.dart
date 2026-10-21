@@ -1631,6 +1631,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get whyReportingThis => 'Why are you reporting this?';
 
   @override
+  String get reportReviewPromise =>
+      'A person reads every report within 24 hours. Your name is not shown to the rider you report.';
+
+  @override
+  String get communityRules => 'Community rules';
+
+  @override
   String get additionalDetailsOptional => 'Additional details (optional)';
 
   @override

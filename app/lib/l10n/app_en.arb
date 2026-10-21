@@ -2223,6 +2223,14 @@
   "@whyReportingThis": {
     "description": "Text in report_bottom_sheet."
   },
+  "reportReviewPromise": "A person reads every report within 24 hours. Your name is not shown to the rider you report.",
+  "@reportReviewPromise": {
+    "description": "Line in report_bottom_sheet under the title. The 24 hours is the moderation policy's first-review time (DOCS/moderation_policy.md)."
+  },
+  "communityRules": "Community rules",
+  "@communityRules": {
+    "description": "Link in report_bottom_sheet that opens the hosted community rules page (public/community.html)."
+  },
   "additionalDetailsOptional": "Additional details (optional)",
   "@additionalDetailsOptional": {
     "description": "LabelText in report_bottom_sheet."
