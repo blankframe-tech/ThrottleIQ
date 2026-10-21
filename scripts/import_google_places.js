@@ -24,7 +24,7 @@
  *   ... --from=gmaps.json --yes-i-really-mean-it
  *       Writes.
  *
- * Undo the creates: delete `places` where createdBy == SEED_AUTHOR.
+ * Undo: revert_google_places.js (export saved at ~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json).
  */
 
 const fs = require('fs');

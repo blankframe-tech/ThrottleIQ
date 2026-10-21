@@ -12,7 +12,8 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`seed_police_checkposts.js`](#seed_police_checkpostsjs--seed-frequent-police-checkposts) | Populates the `places` collection with Dhaka's 30 frequent police checkpost & citation hotspots | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed'` |
 | [`seed_police_checkposts_v2.js`](#seed_police_checkposts_v2js--seed-additional-police-checkposts) | Populates the `places` collection with 25 additional DMP police checkposts across outer/corridor zones | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v2'` |
 | [`seed_police_checkposts_v3.js`](#seed_police_checkposts_v3js--seed-crowdsourced-police-checkposts) | Populates the `places` collection with 35 crowdsourced checkposts from Facebook Traffic groups & Waze | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v3'` |
-| [`import_google_places.js`](import_google_places.js) | From an Apify Google Maps Scraper export: adds missing Dhaka fuel/garage/parts places, fills phone/hours/generic names on nearby existing ones, and sets every Google rating to 0 (§105). Facts only, no ratings stored. `--from=<export.json>` | Creates: yes, one query deletes `createdBy == 'system:gmaps-seed-dhaka'`. Rating reset: no |
+| [`import_google_places.js`](import_google_places.js) | From an Apify Google Maps Scraper export: adds missing Dhaka fuel/garage/parts places, fills phone/hours/generic names on nearby existing ones, and sets every Google rating to 0 (§105). Facts only, no ratings stored. `--from=<export.json>` (the 2026-10-19 export: `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`) | Creates and enrichments: yes, `revert_google_places.js`. Rating reset: no |
+| [`revert_google_places.js`](#revert_google_placesjs--take-the-google-maps-import-back-out) | Undoes `import_google_places.js`: deletes the `system:gmaps-seed-dhaka` places nobody has touched since (`--seeded-only`), and with `--from=<export.json>` also clears the Google-derived fields on the 80 enriched ones. Dry run by default; `--apply --backup=<file>` writes | Yes: `--restore=<backup> --apply`. Ratings set to 0 by the import: no |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 | [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
@@ -737,3 +738,75 @@ node --check cleanup_qa_test_riders.js
 node --check qa_seed_catalog.js
 ```
 
+---
+
+# `revert_google_places.js` — take the Google Maps import back out
+
+Written 2026-10-21, **not run against production** (only against the emulator).
+Undoes the 2026-10-19 import (`import_google_places.js`, issues_open.md §105).
+
+**Which places.** Only docs the import wrote. Every place it created has
+`createdBy == 'system:gmaps-seed-dhaka'` (717 on 2026-10-19, all
+`verified: true`); `googlePlaceId` is written by nothing else, so a place with
+another author that carries one is one of the 80 it enriched. No other verified
+place is touched.
+
+**Two modes; the owner picks one:**
+
+- **B, `--seeded-only`:** deletes the seeded places. Needs no export.
+- **A, `--from=<export>`:** B, plus puts the 80 enriched places back: removes
+  `googlePlaceId` and clears each field that still equals the Google value in the
+  export (`phone`/`hours` → `null`, `address` → `''`, a renamed place →
+  `Fuel`/`Garage`/`Parts`). The import only filled empty fields and generic
+  names, so that is the pre-import state, reconstructed from the export (there
+  is **no pre-import snapshot**: Spark has no backups). A value that was already
+  there and happens to equal Google's is cleared too: read the dry-run list.
+  A after B is fine (A is a superset).
+
+Both modes skip and list a seeded place changed since the import
+(`updatedAt`/`updatedBy` set, or a rider review: `ratingCount > 0`); deleting it
+would orphan the review. **Not undoable** either way: the 69 Google ratings set
+to 0 stay 0. Saved places live in each phone's SQLite, so a rider who saved a
+deleted place keeps a dead entry.
+
+**The export** (needed for A only): `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`
+(Apify dataset `7tcKVfmd9vYe3nGnS`, 897 rows, Google Maps content: never commit
+it). If the file is missing, download that dataset from Apify as JSON.
+
+```bash
+cd scripts
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+export FIREBASE_PROJECT_ID=throttleiqfb
+EXPORT="$HOME/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json"
+BACKUP="$HOME/.secrets/throttleiq/places-revert-$(date +%F-%H%M).json"
+
+node revert_google_places.js --seeded-only                 # B, dry run (reads only)
+node revert_google_places.js --from="$EXPORT"              # A, dry run (reads only)
+node revert_google_places.js --from="$EXPORT" --apply --backup="$BACKUP"   # writes (or --seeded-only)
+node revert_google_places.js --from="$EXPORT"              # again: 0 to delete, 0 to clear
+
+node revert_google_places.js --restore="$BACKUP"           # undo, dry run
+node revert_google_places.js --restore="$BACKUP" --apply   # undo
+```
+
+- Dry run is the default. `--apply` needs `--backup=<new file>`; it refuses an
+  existing file. Before the first write the backup gets every deleted doc
+  whole (timestamps kept) and the old value of every cleared field.
+  `--restore` recreates the deleted docs (one that exists again is skipped) and
+  writes the cleared fields back.
+- Each write carries the doc's read time as a precondition (BulkWriter, like
+  `backfill_users_visibility.js`), so a place a rider reviews mid-run is skipped,
+  not deleted. Re-run to pick up skips. Outside the emulator the key's
+  `project_id` must be `throttleiqfb`.
+- Cost: one read per place (about 1,240) per run, one write per change.
+
+**Tested** (2026-10-21): 6 unit tests in `test/revert_google_places.test.js`
+(import then revert gives the pre-import places back, edited seeds skipped,
+only Google-derived fields cleared, idempotent, `--seeded-only`, backup
+round trip). Emulator round trip with the real 897-row export: 40 pre-import
+places + the real import (767 created, 30 enriched) + one rider review; B
+`--apply` deleted 766 and kept the reviewed one; A then cleared 30; all 40
+pre-import places matched their pre-import data (6 ratings stay 0); re-runs had
+nothing to do; restoring both backups gave back the post-import collection
+exactly; a reused backup path and `--apply` without `--backup` were refused.
+Not tested: a precondition skip (a review landing mid-run).
