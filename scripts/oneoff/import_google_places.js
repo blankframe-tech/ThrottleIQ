@@ -166,7 +166,8 @@ function toPlaceDocument(c, createdAt) {
     phone: c.phone,
     hours: c.hours,
     photoUrls: [],
-    verified: true,
+    // Imported from a third-party export, not checked by anyone: never claim verification.
+    verified: false,
     createdBy: SEED_AUTHOR,
     createdAt,
     ratingSum: 0,
