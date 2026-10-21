@@ -1,3 +1,9 @@
+/// Stands in for the uid of a rider who deleted their account, in
+/// `participants`, `lastMessage.senderId` and their messages' `senderId`
+/// (DELETED_PARTICIPANT in functions/src/account-erasure.ts). Their messages
+/// keep the slot but have empty text.
+const kDeletedChatParticipant = 'deleted-rider';
+
 class ChatEntity {
   final String id;
   final List<String> participants;

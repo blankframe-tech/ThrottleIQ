@@ -68,6 +68,10 @@ submitting the form.
 |---|---|---|---|
 | Other in-app messages | Yes | No | App functionality (one-to-one direct messages between riders) |
 
+On account deletion (owner decision 2026-10-21) the rider's message texts are
+deleted and their side of each chat is anonymised ("Deleted rider"); the other
+rider keeps their own messages. This still counts as deleting the user's data.
+
 Source: `app/lib/features/chat/` — real, live one-to-one chat, message text
 stored in Firestore (`firestore.rules`' `/chats/{chatId}/messages`, readable
 only by the two participants). Mark "Shared: No" — unlike forum posts,

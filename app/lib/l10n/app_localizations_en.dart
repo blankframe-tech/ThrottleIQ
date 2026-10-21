@@ -1592,6 +1592,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cantMessageThisRider => 'You can\'t message this rider';
 
   @override
+  String get deletedRider => 'Deleted rider';
+
+  @override
+  String get chatPeerDeleted => 'This rider deleted their account';
+
+  @override
+  String get messageDeleted => 'Message deleted';
+
+  @override
   String get messageHint => 'Message...';
 
   @override

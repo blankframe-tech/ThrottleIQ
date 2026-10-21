@@ -1594,6 +1594,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get cantMessageThisRider => 'আপনি এই রাইডারকে মেসেজ করতে পারবেন না';
 
   @override
+  String get deletedRider => 'মুছে ফেলা রাইডার';
+
+  @override
+  String get chatPeerDeleted => 'এই রাইডার তার অ্যাকাউন্ট মুছে ফেলেছেন';
+
+  @override
+  String get messageDeleted => 'মেসেজ মুছে ফেলা হয়েছে';
+
+  @override
   String get messageHint => 'মেসেজ...';
 
   @override

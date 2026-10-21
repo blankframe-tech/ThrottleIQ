@@ -2170,6 +2170,18 @@
   "@cantMessageThisRider": {
     "description": "Text in chat_room_screen."
   },
+  "deletedRider": "Deleted rider",
+  "@deletedRider": {
+    "description": "Name shown in chats for a rider who deleted their account."
+  },
+  "chatPeerDeleted": "This rider deleted their account",
+  "@chatPeerDeleted": {
+    "description": "Banner in place of the message box when the other rider's account is deleted."
+  },
+  "messageDeleted": "Message deleted",
+  "@messageDeleted": {
+    "description": "Chat bubble text for a message whose author deleted their account."
+  },
   "messageHint": "Message...",
   "@messageHint": {
     "description": "HintText in chat_room_screen."

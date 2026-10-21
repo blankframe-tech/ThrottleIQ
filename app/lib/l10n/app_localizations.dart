@@ -2913,6 +2913,24 @@ abstract class AppLocalizations {
   /// **'You can\'t message this rider'**
   String get cantMessageThisRider;
 
+  /// Name shown in chats for a rider who deleted their account.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted rider'**
+  String get deletedRider;
+
+  /// Banner in place of the message box when the other rider's account is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This rider deleted their account'**
+  String get chatPeerDeleted;
+
+  /// Chat bubble text for a message whose author deleted their account.
+  ///
+  /// In en, this message translates to:
+  /// **'Message deleted'**
+  String get messageDeleted;
+
   /// HintText in chat_room_screen.
   ///
   /// In en, this message translates to:
