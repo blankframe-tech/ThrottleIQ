@@ -1,7 +1,10 @@
 # Play Store listing — Bangla addendum (draft, needs native-speaker review)
 
-Companion to `store_listing/store_listing.md` (English, source of truth for
-what's actually built). This draft adds the Bangla translation Play Console
+Companion to `store_listing.md` (English, source of truth for what's
+actually built). Updated 2026-10-22: crash detection and leaderboards removed
+(neither is live), a Live Share section added to match the English listing.
+The new Bangla lines in the Live Share section are not yet reviewed by a
+native speaker. This draft adds the Bangla translation Play Console
 supports natively (Store presence → Translations → add Bengali) — it does
 **not** replace the English listing, both should be live together per
 `marketing.md` §3 ("ship with a Bangla short description and Bangla
@@ -28,20 +31,20 @@ full Bangla name for a product name)
 Bangla conjuncts can count differently than the English budget)
 
 **Option A (commuter-first, matches segment-priority order in
-`marketing.md`):**
-> সিগন্যাল না থাকলেও রাইড রেকর্ড হয়। বাইকের মেইনটেন্যান্স, ক্র্যাশ অ্যালার্ট, সব একসাথে।
+`marketing.md` in `DOCS/Handoffs for Non Coding Agents/marketing/`):**
+> সিগন্যাল না থাকলেও রাইড রেকর্ড হয়। বাইকের মেইনটেন্যান্স, লাইভ শেয়ার, সব একসাথে।
 
-*(Rides record even without signal. Bike maintenance, crash alerts, all in
+*(Rides record even without signal. Bike maintenance, live share, all in
 one place.)*
 
 **Option B (feature-parity with the English short description):**
-> প্রতিটি রাইড ট্র্যাক করুন: গতি, রুট, ক্র্যাশ অ্যালার্ট, মেইনটেন্যান্স ও রাইডার কমিউনিটি।
+> প্রতিটি রাইড ট্র্যাক করুন: গতি, রুট, মেইনটেন্যান্স, লাইভ শেয়ার ও রাইডার কমিউনিটি।
 
-*(Track every ride: speed, route, crash alerts, maintenance, and rider
+*(Track every ride: speed, route, maintenance, live share, and rider
 community.)*
 
 Recommend **Option A** — it leads with the offline-first hook that
-`marketing.md` §4 identifies as the strongest, most locally-resonant
+`marketing.md` §3 identifies as the strongest, most locally-resonant
 commuter message, rather than a straight feature list.
 
 ## Long description (Bangla)
@@ -62,11 +65,11 @@ commuter message, rather than a straight feature list.
 > • চলমান সময় আর থেমে থাকা সময় আলাদা করে দেখায়
 > • যেকোনো রাইড JSON বা GPX ফরম্যাটে এক্সপোর্ট করে অন্য অ্যাপে ব্যবহার করা যায়
 >
-> **ক্র্যাশ ডিটেকশন**
-> • হঠাৎ ধাক্কা আর গতি হঠাৎ কমে যাওয়া থেকে সম্ভাব্য ক্র্যাশ শনাক্ত করে
-> • কাউন্টডাউন শুরু হয়, আপনি ঠিক থাকলে বাতিল করতে পারেন
-> • ইমার্জেন্সি কন্টাক্টের সাথে লাইভ লোকেশন লিংক শেয়ার করুন — তারা রিয়েল-টাইমে আপনার
->   অবস্থান, গতি ও ব্যাটারি দেখতে পাবেন
+> **লাইভ শেয়ার**
+> • লাইভ লিংক শেয়ার করুন — পরিবার বা বন্ধুরা রাইডের সময় রিয়েল-টাইমে আপনার অবস্থান, গতি
+>   ও ব্যাটারি দেখতে পাবেন
+> • কখন শুরু হবে সেটা আপনি ঠিক করেন, যেকোনো সময় বন্ধ করা যায়, আর ২৪ ঘণ্টা পরে লিংক নিজে
+>   থেকে কাজ করা বন্ধ করে দেয়
 >
 > **গ্যারেজ ও মেইনটেন্যান্স**
 > • একাধিক বাইক, তাদের ওডোমিটার আর সার্ভিস হিস্ট্রি ট্র্যাক করুন
@@ -89,18 +92,18 @@ commuter message, rather than a straight feature list.
 > • গুগল বা ইমেইল দিয়ে সাইন ইন করুন
 >
 > থ্রোটল আইকিউ এখনও সক্রিয়ভাবে তৈরি হচ্ছে — সামনে আরও ফিচার আসছে, যেমন বাঁকা রাস্তার
-> জন্য বিশেষ নেভিগেশন, ক্লাব ইভেন্ট, আর লিডারবোর্ড।
+> জন্য বিশেষ নেভিগেশন আর ক্লাব ইভেন্ট।
 
 ## Keywords (Bangla — for your own reference; Play derives search terms
 from description + category, same as the English listing notes)
 
-মোটরসাইকেল, বাইক ট্র্যাকার, জিপিএস ট্র্যাকার, ক্র্যাশ ডিটেকশন, বাইক মেইনটেন্যান্স,
+মোটরসাইকেল, বাইক ট্র্যাকার, জিপিএস ট্র্যাকার, লাইভ লোকেশন শেয়ার, বাইক মেইনটেন্যান্স,
 রাইডার কমিউনিটি, বাইক লগ, রাইড লগ, বাইক সার্ভিস রিমাইন্ডার
 
 ## What was deliberately kept out (mirrors the English listing's accuracy notes)
 
-- No claim of automatic SMS/email alerts — same reason as the English
-  listing: that escalation path is mocked, not deployed.
+- No crash detection or emergency-alert claim — same as the English
+  listing: the detector is off in every build and nothing is sent to anyone.
 - No specific data-point-per-second number.
 - "থ্রোটল আইকিউ" is used as the product name throughout rather than a fully
   localized invented Bangla name — the product is known by its English name

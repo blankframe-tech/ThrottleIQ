@@ -39,6 +39,7 @@ old path into Play Console.
 ## Files
 
 - `store_listing.md` — app name, short/full description, category, tags.
+- `store_listing_bn_addendum.md` — Bangla listing draft (Translations → Bengali); needs a native-speaker read before it goes live.
 - `data_safety_and_permissions.md` — Data Safety form answers and the
   background-location declaration.
 - `throttleiq_playstore_icon_512.png` — 512×512 store icon.

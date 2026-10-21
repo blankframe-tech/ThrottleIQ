@@ -4,7 +4,7 @@
 *Project:* **ThrottleIQ**  
 *Company:* **Blankframe Technologies** (`com.bft.throttleiq`)  
 *Tagline:* **Machine Memory for Motorcycles** (*রাইডের ডিজিটাল ব্ল্যাকবক্স ও সুরক্ষাকবচ*)  
-*Stage:* Pre-Launch Working Beta (`1.0.0-beta.4.5`), Internal Track Deployed; crash detection off, alert delivery not built  
+*Stage:* Pre-Launch Working Beta (`1.0.0-beta.4.7.1`), Internal Track Deployed; crash detection off, alert delivery not built  
 *Target Grant:* **Pre-Seed Grant (BDT 10,00,000 / 10 Lakh)**  
 
 ---
@@ -33,7 +33,7 @@
 
 In Bangladesh, over **4.5 million motorcycles** are registered with the BRTA, with more than **500,000 new two-wheelers** added every year. Motorcycles are the backbone of rapid urban transport and last-mile commerce. Yet, two-wheelers account for over **40% of all road crash fatalities in Bangladesh**. When an accident occurs on a national highway or isolated rural corridor, emergency assistance is delayed because no one knows a crash has occurred until it is too late. Furthermore, riders have no digital tool to monitor vehicle health, tracking maintenance with arbitrary guesswork that leads to mechanical failures and costly breakdowns.
 
-**ThrottleIQ** transforms any standard Android or iOS smartphone into an intelligent, hardware-less motorcycle telematics "black box." Using proprietary multi-sensor fusion algorithms (accelerometer, gyroscope, GPS velocity derivatives), ThrottleIQ records every ride, tracks maintenance against real kilometres, and lets a rider share a live location link with family. A crash detector (impact signature plus a 60-second cancellable countdown) is written but **switched off in every build**: it has not yet been calibrated on real falls, and nothing yet delivers an alert to anyone. Calibrating it and building alert delivery is what this grant would fund. Crucially, ThrottleIQ is built **100% offline-first**: all ride telematics, telemetry curves, and maintenance triggers operate reliably even in complete cellular dead zones, synchronizing seamlessly with cloud servers when network connectivity resumes.
+**ThrottleIQ** transforms any standard smartphone (Android today, iPhone in development) into an intelligent, hardware-less motorcycle telematics "black box." Using proprietary multi-sensor fusion algorithms (accelerometer, gyroscope, GPS velocity derivatives), ThrottleIQ records every ride, tracks maintenance against real kilometres, and lets a rider share a live location link with family. A crash detector (impact signature plus a 60-second cancellable countdown) is written but **switched off in every build**: it has not yet been calibrated on real falls, and nothing yet delivers an alert to anyone. Calibrating it and building alert delivery is what this grant would fund. Crucially, ThrottleIQ is built **100% offline-first**: all ride telematics, telemetry curves, and maintenance triggers operate reliably even in complete cellular dead zones, synchronizing seamlessly with cloud servers when network connectivity resumes.
 
 With a working beta app (2,100+ automated tests, 274 Firestore security-rule tests), a signed Android APK and a Play Console internal track, ThrottleIQ is seeking a **10 Lakh BDT Pre-Seed Grant** from the iDEA Project to calibrate crash detection in the field, build SMS/voice alert delivery (neither exists today), and onboard 50,000 riders in Bangladesh.
 
@@ -52,7 +52,7 @@ With a working beta app (2,100+ automated tests, 274 Firestore security-rule tes
 - **Company Name:** Blankframe Technologies (`com.bft.throttleiq`)
 - **Key Snapshot:**
   - **What we do:** Smartphone ride tracking and predictive maintenance for two-wheelers; crash detection in development (off until field-calibrated).
-  - **Status:** Working beta (`1.0.0-beta.4.5`), 2,100+ automated tests green, signed APK & Play Console internal track. Crash detection and alert delivery are not live.
+  - **Status:** Working beta (`1.0.0-beta.4.7.1`), 2,100+ automated tests green, signed APK & Play Console internal track. Crash detection and alert delivery are not live.
   - **Mission:** Data-driven vehicle longevity and safer riding for every rider in Bangladesh.
 - **Presenter Names:** Founder & Lead Architect / Core Management Team
 - **Contact:** hello@blankframe.tech | Dhaka, Bangladesh | https://github.com/blankframe-tech/ThrottleIQ
@@ -312,7 +312,7 @@ With a working beta app (2,100+ automated tests, 274 Firestore security-rule tes
 
 #### [2:25 – 3:00] Traction, Competition & The Ask
 **Speaker 1 (Founder/CEO):**
-> "Where do we stand today? We aren't an idea on a napkin. ThrottleIQ is a working beta. We have tagged version `1.0.0-beta.4.5`, backed by more than 2,100 automated tests, and our build is in internal testing on the Google Play Console.
+> "Where do we stand today? We aren't an idea on a napkin. ThrottleIQ is a working beta. We have tagged version `1.0.0-beta.4.7.1`, backed by more than 2,100 automated tests, and our build is in internal testing on the Google Play Console.
 >
 > While foreign apps like Strava or Rever exist, they charge 10 dollars a month, fail completely in network dead zones, and don't care about Bangladeshi road conditions. ThrottleIQ is 100% offline-first, fully bilingual in Bangla, and requires zero external hardware.
 >
