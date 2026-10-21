@@ -172,3 +172,7 @@ scripts/qa_seed_passwords.*.json
 
 # UI screenshots: backed up outside git (owner, 2026-10-21); older commits still hold them
 DOCS/General/screenshots_ui/
+
+# Apify scrape data (Facebook posts, Google Maps content); only the README with lessons is tracked
+DOCS/apify/*
+!DOCS/apify/README.md

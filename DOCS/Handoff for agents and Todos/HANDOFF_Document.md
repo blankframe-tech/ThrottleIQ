@@ -2,6 +2,12 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
+## 2026-10-21 (research): Facebook bike-group topics scraped, `DOCS/forum_ideas/` written; no code changed
+
+- **Done:** the forum-ideas scrape blocked in §105.3. The founder raised the Apify limit to $10. The run took 375 posts from Freewheelers, BikeBD and Motorcycle Valley and cost $2.65, so about $2.22 is left this month. Write-up and ranked product ideas: `DOCS/forum_ideas/2026-10-21_fb_bike_groups.md`. All five Apify datasets ever run (incl. the 10-19 Google Maps and traffic scrapes) are now in `DOCS/apify/` (gitignored except `README.md`, which records the lessons).
+- **Top finding:** the BRTA front number-plate rule (deadline **15 Nov 2026**) is by far the most discussed topic. A plate guide is the only idea with a time limit.
+- **Token:** now read from `~/.secrets/throttleiq/apify_token` (chmod 600). The new token was also typed into this chat via a `!` command; rotate it once the Apify work is done.
+
 ## 2026-10-19 (places): Google Maps gap-fill written to production; Google ratings dropped — `main` pushed at `074def1`
 
 - **Production data changed:** `places` went from 521 to 1,238 docs. 717 new Dhaka fuel/garage/parts places (`createdBy: 'system:gmaps-seed-dhaka'`, keyed by `googlePlaceId`), 80 existing places enriched (phone, hours, 5 renamed), all 69 hand-entered Google ratings set to 0. Undo the creates with one query on `createdBy`. The rating reset can't be undone. Details: `issues_open.md` §105, `features.md` §6.
