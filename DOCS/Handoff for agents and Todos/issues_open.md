@@ -2088,3 +2088,18 @@ Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.
 - **Cause:** `_liveCoordinator` is a `late final` that calls `_ref.read(realtimeServicesProvider)` on first use (`:304-305`). If nothing used it while the notifier was alive, `dispose()` creates it after the container is gone, and Riverpod throws.
 - **Fix:** keep the coordinator in a nullable field created on first use, and in `dispose()` call `_liveCoordinatorOrNull?.dispose()`.
 - **Resolution:** another session applied this fix on `main` in `4b914c10`, with the unit test `ride_recording_dispose_test.dart`; E2E on `main` then passed 4/4 (`judge.md`, 2026-10-21). `feat/quota-outage` gets it when it merges. With `4b914c10` applied on top of that branch, E2E also passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21).
+
+---
+
+## 108. Leftovers from the retired Antigravity grill (`grillings/`, `issues_solved.md`) (2026-10-22)
+
+The five grill files (2026-09-20 critique plus the `claude_sol.md` verification pass) and `issues_solved.md` were deleted. Fixed parts: `issues_fixed.md` §78. Still-open parts were already in §78 and §91. Code comments that say `grill §N` or `claude_sol §N` point into the deleted text; read it with `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/grillings/claude_sol.md"`. Only items checked against the code on 2026-10-22 and found neither fixed nor tracked are listed here. All LOW.
+
+- **108.1 Auto rides: no "Not a motorcycle ride" action.** `auto_ride_reconciler.dart` attributes a bus or car trip to the active bike and calls `incrementStats` at once, even at `bike_confidence='low'`. The daily prompt (`ride_dao.getUnconfirmedAutoRides`, `auto_tracking_provider.dart`) only asks which bike. Fix: add the action (delete the ride, reverse `incrementStats`); defer odometer and maintenance increments until confirmed or 48 h pass; add a bus-pattern and max-speed filter. Source: grill `claude_sol` §2 item 4.2.
+- **108.2 Forum create and reply transactions fail offline.** `app/lib/features/forums/data/repositories/forum_repository.dart` has about 8 `runTransaction` calls (lines 178, 208, 253, 419, 437, 723, 764). Plain writes queue offline, transactions don't. Fix: move counters to `FieldValue.increment` in a batch, or catch `unavailable` and show "You're offline"; don't `await` fire-and-forget writes in UI handlers. Source: `claude_sol` §2 item 2.2.
+- **108.3 Haversine is copied in about 7 files** beside `app/lib/core/utils/geo_math.dart` (`motion_calculator.dart`, `auto_ride_reconciler.dart`, `daily_ride_summary.dart`, `ride_resume.dart`, `privacy_zone_clipper.dart`, `live_session_coordinator.dart`, `turn_instruction.dart`). Fix: one shared function. Source: `codebase.md` item 6.1 (scoreboard #32).
+- **108.4 The shared-ride detail still shows runner pace.** `shared_ride_detail_screen.dart:358` builds `m'ss" /km`; the ride summary already shows average moving speed. Fix: show km/h there too. Source: `claude_sol` §3 item 3.4.
+- **108.5 No GPX import.** Export exists (`export_service.dart`); import doesn't. Feature idea, not a bug. Source: `other_gaps.md` item 3.4 (scoreboard #38).
+- **108.6 Profile stat cards may look tappable and aren't** (Rides, Routes). Not verified by the grill and not rechecked here. Fix: give them `onTap` (`/rides/all`, `/routes`) or restyle. Source: `claude_sol` §3 item 5.5.
+
+Dropped on purpose (no action): weather timezone skew (only wrong when the phone's timezone differs from the ride's; `weather_service.dart:56` notes it), unencrypted SQLite (`allowBackup=false`; rooted-device only), portrait lock (deliberate, `main.dart:66`), the crash-detector findings (shadow mode only, §78.1), and the claims `claude_sol` §6 marked false.
