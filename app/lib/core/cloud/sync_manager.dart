@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseFirestore;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart'
@@ -19,6 +20,7 @@ import '../../features/ride/presentation/providers/ride_recording_provider.dart'
 import '../../features/stats/presentation/providers/rider_stats_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'firestore_quota.dart';
 import 'maintenance_settings_sync.dart';
 import 'outbox_service.dart';
 import 'pull_watermark.dart';
@@ -40,16 +42,20 @@ class SyncManager {
   //
   // [connectivity] and [auth] default to the live plugins; tests inject
   // fakes (issues §101.C2) so the sync guard can be exercised without
-  // Firebase or a platform channel.
+  // Firebase or a platform channel. Same for [quota] and [quotaProbe].
   SyncManager({
     Ref? ref,
     OutboxService? outbox,
     Connectivity? connectivity,
     FirebaseAuth? auth,
+    FirestoreQuota? quota,
+    Future<void> Function()? quotaProbe,
   })  : _ref = ref,
         _outbox = outbox ?? OutboxService(),
         _connectivity = connectivity ?? Connectivity(),
-        _auth = auth ?? FirebaseAuth.instance {
+        _auth = auth ?? FirebaseAuth.instance,
+        _quota = quota ?? FirestoreQuota.instance,
+        _quotaProbe = quotaProbe ?? _countConfigDocs {
     _initConnectivityListener();
     _initAuthListener();
   }
@@ -65,6 +71,15 @@ class SyncManager {
   final OutboxService _outbox;
   final Connectivity _connectivity;
   final FirebaseAuth _auth;
+  final FirestoreQuota _quota;
+  final Future<void> Function() _quotaProbe;
+
+  /// When [_quotaPaused] last asked Firestore; null until the first pass.
+  DateTime? _lastQuotaProbeAt;
+
+  /// Spacing between quota probes. Each costs 1 read, so about 8 reads per
+  /// rider-day at the load test's 2 h of app time.
+  static const quotaProbeInterval = Duration(minutes: 15);
 
   Timer? _autoSyncTimer;
   bool _autoSyncEnabled = false;
@@ -230,6 +245,34 @@ class SyncManager {
     return (await db.rawQuery(sql, args)).isNotEmpty;
   }
 
+  /// The default quota probe: one `count()` on the world-readable `config`
+  /// collection, 1 read. Lazy, so building a SyncManager never touches
+  /// FirebaseFirestore.
+  static Future<void> _countConfigDocs() =>
+      FirebaseFirestore.instance.collection('config').count().get();
+
+  /// Whether Firestore is over its daily quota, asking it at most once per
+  /// [quotaProbeInterval]. `count()` is a direct server call, so it reports
+  /// `resource-exhausted` even when listeners have quietly fallen back to
+  /// cache as if offline. A success clears the pause; any other failure
+  /// (offline, timeout) says nothing about the quota and leaves it as is.
+  Future<bool> _quotaPaused() async {
+    final last = _lastQuotaProbeAt;
+    if (last != null && DateTime.now().difference(last) < quotaProbeInterval) {
+      return _quota.isPaused;
+    }
+    _lastQuotaProbeAt = DateTime.now();
+    try {
+      // Bounded: a probe that never answers must not hold `_isSyncing`
+      // for the session (§101.C2).
+      await _quotaProbe().timeout(kOutboxAttemptTimeout);
+      _quota.resume();
+    } catch (e, stack) {
+      _quota.report(e, stack);
+    }
+    return _quota.isPaused;
+  }
+
   /// Start automatic sync with 5-minute interval or adaptive backoff on failure
   void startAutoSync() {
     if (_autoSyncEnabled) return;
@@ -293,6 +336,17 @@ class SyncManager {
       // the no-network branch too.
       final connectivityResult = await _connectivity.checkConnectivity();
       if (!_hasNetwork(connectivityResult)) {
+        _status = SyncStatus.failure;
+        _consecutiveFailures++;
+        return;
+      }
+
+      // Firestore over its daily quota (§104): until the reset every request
+      // is refused, and each try costs an outbox retry or stacks a duplicate
+      // write in the SDK's queue. Skip the pass; the failure backoff (capped
+      // at 30 min) brings the next probe, and the first one that succeeds
+      // after the reset resumes everything.
+      if (await _quotaPaused()) {
         _status = SyncStatus.failure;
         _consecutiveFailures++;
         return;
@@ -541,6 +595,8 @@ class SyncManager {
     } catch (e, stack) {
       _status = SyncStatus.failure;
       _consecutiveFailures++;
+      // A pull or upload refused for quota pauses sync like a failed probe.
+      _quota.report(e, stack);
       // Was a bare print() with no stack and no tag, which is why the sync
       // gap above took a database dump to diagnose rather than a glance at
       // the console. Everything reachable from here is now per-item

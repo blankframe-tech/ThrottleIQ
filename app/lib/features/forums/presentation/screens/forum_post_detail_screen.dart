@@ -6,6 +6,7 @@ import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/error_reporter.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -154,8 +155,13 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      // The field was cleared before sending: give the rider their words back.
+      if (_replyController.text.isEmpty) _replyController.text = text;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.failedPostReply(e))),
+        SnackBar(
+          content: Text(
+              context.l10n.failedPostReply(mapFirestoreError(e, context.l10n))),
+        ),
       );
     }
   }

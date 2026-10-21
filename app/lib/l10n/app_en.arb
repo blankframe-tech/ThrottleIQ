@@ -5182,9 +5182,13 @@
   "@errNotFound": {
     "description": "Error: the requested item does not exist."
   },
-  "errTooManyRequests": "Too many requests right now. Please try again in a moment.",
+  "errTooManyRequests": "ThrottleIQ's database is overloaded because too many riders are using it right now. Please try again later.",
   "@errTooManyRequests": {
-    "description": "Error: rate limit / quota exhausted."
+    "description": "Error shown when Firestore refuses a request because the project's daily quota is used up (resets the next day). Used for any failed load or send, so it must not promise that anything was saved."
+  },
+  "overQuotaBar": "ThrottleIQ's database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day.",
+  "@overQuotaBar": {
+    "description": "Strip above the bottom navigation while Firestore is over its daily quota and background sync is paused."
   },
   "errNotReady": "This isn't ready yet. Please try again in a few minutes.",
   "@errNotReady": {

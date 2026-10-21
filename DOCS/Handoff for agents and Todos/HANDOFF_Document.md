@@ -2,7 +2,7 @@
 
 _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`); `experimental` (e6c9a54), `indriyo` (e28d75c)_
 
-## 2026-10-21 (repo layout): one-off scripts moved to `scripts/oneoff/`; no app change, not committed
+## 2026-10-21 (repo layout): one-off scripts moved to `scripts/oneoff/`; no app change — committed 2026-10-22 as `03a209b5`
 
 - **Moved (`git mv`):** the seeds, the Google Places import and revert, the QA rider seed and cleanup, `qa_seed_catalog`, `cleanup_qa_engagement`, `migrate_emails_private`, `backfill_users_visibility`, `reset_beta_data`, `set_admin_claim`, `create_review_account`. Run them as `node oneoff/<name>.js` from `scripts/`; the `npm run` names are unchanged. Tests, `package.json`, `.gitignore` (`scripts/**/qa_seed_passwords.*.json`) and doc/comment paths follow.
 - **Stay in `scripts/`:** `check.sh`, `deploy.sh`, `publish_release.sh` (hooks, CI and the deploy skill call them by path), `crash_stats.js`, `export_impact_events.js`, `ste_sentence_length.js`. Root config files and `functions/` stay where they are: `firebase.json` and the rules tests read them by path.
@@ -13,6 +13,28 @@ _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`
 - **Done:** the forum-ideas scrape blocked in §105.3. The founder raised the Apify limit to $10. The run took 375 posts from Freewheelers, BikeBD and Motorcycle Valley and cost $2.65, so about $2.22 is left this month. Write-up and ranked product ideas: `DOCS/forum_ideas/2026-10-21_fb_bike_groups.md`. All five Apify datasets ever run (incl. the 10-19 Google Maps and traffic scrapes) are now in `DOCS/apify/` (gitignored except `README.md`, which records the lessons).
 - **Top finding:** the BRTA front number-plate rule (deadline **15 Nov 2026**) is by far the most discussed topic. A plate guide is the only idea with a time limit.
 - **Token:** now read from `~/.secrets/throttleiq/apify_token` (chmod 600). The new token was also typed into this chat via a `!` command; rotate it once the Apify work is done.
+
+## 2026-10-21 (quota): Firestore outage mode — merged into `main` on 2026-10-22 (owner's OK), branch deleted; not on a device
+
+- **Gate:** `scripts/check.sh --base d92f694e` passed on `fccd0ac4`, including all 2294 tests. The base is this branch's fork point. The default base, `origin/main`, would also have run the rules and functions suites for 7 `main` commits from another session (unpushed then, pushed since), and this machine can't run those (port 8080 is taken, and the worktree has no functions dependencies). GitHub CI passed on `131214de`.
+- **Owner to-dos** are in `~/Everything/dev/housekeeping/owner_works_now.html` (ThrottleIQ items 25-29) and `needs_attention.md`: check the alert emails, OK the merge, the release, and the Bangla review. Item 28 (§106) is done on `main`.
+
+- **App:** when the Spark daily quota runs out, sync and the outbox pause instead of burning retries, riders see `OverQuotaBar`, and sync resumes by itself after the reset. Details: `features.md` "Firestore quota outage mode", `issues_open.md` §104.6. Focused tests pass.
+- **Owner email (live on production since 2026-10-21):** the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml` emails blankframe.technologies@gmail.com at 80% of reads, writes or deletes, and when reads or writes are used up (99%).
+  - IDs: `alertPolicies/13055223357814148266` and `notificationChannels/9574270854457855850`.
+  - Re-apply steps: `scripts/README.md` "Firestore daily quota".
+  - gcloud's default account is back on the Play-publisher SA; the owner account is used with `--account`.
+- **Rehearsal done:** `load_test/quota-rehearsal-2026-10-21.md`, run on `throttleiq-quota-lab-20261021`.
+  - `count()` and transactions fail once reads run out, which is what triggers the app's pause.
+  - Gets and listeners keep working.
+  - Nothing is lost.
+  - Alerting works on Spark.
+  - Production usage is far from the limits: 3-14% of reads a day over the last week.
+- **Lab:** `throttleiq-quota-lab-20261021` was deleted on 2026-10-21 (undo possible for 30 days). The revised 5-condition policy opened all 4 expected incidents there (reads/writes 80% and 99%) before deletion.
+- **Left:**
+  - Release the app part. Any build from `main` now also carries the App Check sideload gate (`d92f694e`), so settle the owner's App Check items first (`app_check.md`, `judge.md` 2026-10-21).
+  - E2E: §106 is fixed on `main` (`4b914c10`). With that commit applied on top of this branch, E2E passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21), so the strip and the sync pause don't break launch or teardown.
+  - Bangla review of `overQuotaBar` and `errTooManyRequests`.
 
 ## 2026-10-19 (places): Google Maps gap-fill written to production; Google ratings dropped — `main` pushed at `074def1`
 

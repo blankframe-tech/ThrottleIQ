@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:throttleiq/core/cloud/firestore_quota.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 import 'package:throttleiq/features/ride/presentation/widgets/ride_in_progress_bar.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
@@ -133,6 +134,65 @@ void main() {
       await tester.tap(find.byType(RideInProgressBar));
       await tester.pumpAndSettle();
       expect(find.text('Active Cockpit'), findsOneWidget);
+    });
+  });
+
+  /// §104: the strip that tells riders Firestore is over its daily quota.
+  group('AppShell OverQuotaBar', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Future<void> pumpShell(
+      WidgetTester tester, {
+      required bool paused,
+      Locale locale = const Locale('en'),
+    }) async {
+      final router = GoRouter(
+        initialLocation: '/home/places',
+        routes: [
+          GoRoute(
+            path: '/home/places',
+            builder: (_, __) => const AppShell(
+              child: Scaffold(body: Text('Places Content')),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            rideRecordingProvider
+                .overrideWith((ref) => _FakeRideRecordingNotifier()),
+            firestorePausedProvider.overrideWithValue(paused),
+          ],
+          child: MaterialApp.router(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('hidden while Firestore answers', (tester) async {
+      await pumpShell(tester, paused: false);
+      expect(find.textContaining('database is overloaded'), findsNothing);
+    });
+
+    testWidgets('shown while over quota', (tester) async {
+      await pumpShell(tester, paused: true);
+      expect(
+        find.textContaining('Your data is safe on this phone'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('shown in Bangla too', (tester) async {
+      await pumpShell(tester, paused: true, locale: const Locale('bn'));
+      expect(find.textContaining('এই ফোনে নিরাপদ'), findsOneWidget);
     });
   });
 }

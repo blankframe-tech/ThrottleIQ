@@ -1758,3 +1758,5 @@ sideloadBlockedBody
 sideloadBlockedPlayAction
 sideloadBlockedTesting
 sideloadBlockedWhatsAppAction
+# batch: quota pause (2026-10-21)
+overQuotaBar

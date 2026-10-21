@@ -3730,7 +3730,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errTooManyRequests =>
-      'Too many requests right now. Please try again in a moment.';
+      'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Please try again later.';
+
+  @override
+  String get overQuotaBar =>
+      'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day.';
 
   @override
   String get errNotReady =>

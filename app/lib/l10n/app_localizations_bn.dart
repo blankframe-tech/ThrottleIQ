@@ -3712,7 +3712,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get errTooManyRequests =>
-      'এই মুহূর্তে অনেক বেশি অনুরোধ। একটু পরে আবার চেষ্টা করুন।';
+      'অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get overQuotaBar =>
+      'অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। আপনার ডেটা এই ফোনে নিরাপদ, এবং সাধারণত এক দিনের মধ্যে নিজে থেকেই আপলোড হয়ে যাবে।';
 
   @override
   String get errNotReady =>

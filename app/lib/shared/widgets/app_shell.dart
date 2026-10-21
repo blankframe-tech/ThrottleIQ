@@ -6,6 +6,7 @@ import '../../core/theme/app_theme_context.dart';
 import '../../features/auth/presentation/widgets/tour_floating_banner.dart';
 import '../../features/ride/presentation/widgets/ride_in_progress_bar.dart';
 import '../../l10n/app_localizations.dart';
+import 'over_quota_bar.dart';
 
 /// Every bottom-nav destination with all modules on, in display order. The
 /// live list is [AppModules.tabs]; a location's index in that list *is* its
@@ -115,6 +116,7 @@ class AppShell extends ConsumerWidget {
       bottomNavigationBar: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          const OverQuotaBar(),
           const RideInProgressBar(),
           Container(
             decoration: BoxDecoration(

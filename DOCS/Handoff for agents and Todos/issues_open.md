@@ -2048,6 +2048,27 @@ Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.
 - **104.3 MEDIUM — feed vote hydration costs 40 of 63 base reads per page.** 20 vote `get()`s, each with a rules `get()` on the ride (`ride_share_repository.dart:350`). *Fix:* one per-user votes doc or one query.
 - **104.4 LOW — the per-author restricted query costs 3 reads even when the author has no such posts** (query + 2 rules `exists()`). The `hasRestrictedPosts` flag from §90.A1 is still open.
 - **104.5 Pending:** real per-user usage from Firebase console → Usage. The local gcloud account (Play publisher SA) cannot read Cloud Monitoring.
+- **104.6 Outage mode (2026-10-21, branch `feat/quota-outage`):** what happens when a limit does run out.
+  - **Built:**
+    - `FirestoreQuota` plus a `count()` probe in `SyncManager` (1 read, at most every 15 min) pause sync and the outbox, then resume on the first answer after the reset.
+    - `OverQuotaBar` and the reworded `errTooManyRequests` tell riders.
+    - The owner gets an email from the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml`.
+  - **Before the pause:** the outbox retired an entry after 20 attempts (about 7.5 h), shorter than a quota day. Every retry also stacked another copy of the same write in the SDK queue.
+  - **Not covered:**
+    - About 20 transaction-based social actions (forums, comments, votes, group-ride join/leave, new chats, reviews, onboarding username) fail with the overload message.
+    - About 20 screens await plain writes without a timeout and hang if the *write* limit runs out (the write lands at the reset).
+    - A write-only outage is caught only when a transactional upload or outbox delivery fails; until then `SyncManager` can sit on an untimed write.
+  - **Rehearsed 2026-10-21** on a throwaway Spark project (`DOCS/load_test/quota-rehearsal-2026-10-21.md`):
+    - `count()` and transactions answer `resource-exhausted` once reads run out.
+    - Gets and listeners kept being served 8 min past the limit (100,169 reads counted on a 50,000 day).
+    - Writes past the limit are queued or accepted, never rejected.
+    - Writes behind a rules `get()` keep working.
+  - **Alerting:**
+    - Alerting works on Spark. The production policy is live: `alertPolicies/13055223357814148266`, 5 conditions, emailing blankframe.technologies@gmail.com.
+    - Refused requests never show in `api/request_count`, so "used up" is 99% of reads or writes.
+  - **Still open:**
+    - Whether realtime reads get refused later in a spent day.
+    - The native Android/iOS SDKs weren't rehearsed (same design as the JS SDK).
 - **Stale note:** §90.C7 (full re-download every 5 min) no longer holds. Pulls are incremental (`cloud_repository.dart:549`), and an idle cycle costs 4 reads.
 
 ## §105 Google ratings on Places have no traceable source (2026-10-19, found while evaluating Apify scrapers)
@@ -2059,3 +2080,11 @@ Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.
 - **105.3 Apify run status (2026-10-19):** the traffic-group scrape finished (300 posts from Dhaka Traffic Alert `groups/1711912042372401` and DHAKA News & Traffic Alert `groups/874833945893042`, dataset `hhA8ylkEkcMoV07Mf`). The largest group, Traffic Alert BD (450k members), is private and cannot be scraped. The search for bike maintenance and suggestion groups was aborted because the Apify account reached its monthly usage limit, so the forum-topic research for `DOCS/forum_ideas/` is blocked until the limit resets on 2026-11-18 ($5.13 of the free $5 used) or the plan is upgraded.
   - **Update 2026-10-21: done.** Limit raised to $10. Scraped 375 posts (Freewheelers `groups/fcb.zone`, BikeBD `groups/bikebdofficial`, Motorcycle Valley), cost $2.65. BD Biker Club, Gixxer Riders BD and Royal Enfield BD returned nothing (private or wrong URL). Topics and ideas: `DOCS/forum_ideas/2026-10-21_fb_bike_groups.md`. Raw data for every Apify run, plus lessons: `DOCS/apify/` (gitignored except `README.md`).
 - **105.4 Checkpost scrape result (2026-10-19): not worth a monthly run.** Of the 300 posts (2026-08-25 to 2026-10-18), 1 reported police enforcement: on 2026-10-15, police at every junction in Uttara's sectors were booking riders going the wrong way. That is a one-off crackdown, not a fixed checkpost, so nothing was seeded. These public groups post news, blockades and complaints; checkpost reports would be in the private Traffic Alert BD group, which cannot be scraped. Drop the monthly-run idea unless a public group that reports checkposts turns up.
+
+## §106 The E2E test fails on `main` (2026-10-21, found while checking `feat/quota-outage`) — FIXED on `main` (2026-10-21, `4b914c10`)
+
+- **Symptom:** `flutter drive … integration_test/e2e_test.dart` on an iOS simulator fails 3 to 6 s in. `Bad state: Tried to read a provider from a ProviderContainer that was already disposed`, thrown from `RideRecordingNotifier.dispose()` (`ride_recording_provider.dart:1592`).
+- **Already on `main`:** the base commit `d92f694e`, run on its own with no other changes, fails the same way. The `feat/quota-outage` branch fails identically and doesn't touch this code.
+- **Cause:** `_liveCoordinator` is a `late final` that calls `_ref.read(realtimeServicesProvider)` on first use (`:304-305`). If nothing used it while the notifier was alive, `dispose()` creates it after the container is gone, and Riverpod throws.
+- **Fix:** keep the coordinator in a nullable field created on first use, and in `dispose()` call `_liveCoordinatorOrNull?.dispose()`.
+- **Resolution:** another session applied this fix on `main` in `4b914c10`, with the unit test `ride_recording_dispose_test.dart`; E2E on `main` then passed 4/4 (`judge.md`, 2026-10-21). `feat/quota-outage` gets it when it merges. With `4b914c10` applied on top of that branch, E2E also passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21).
