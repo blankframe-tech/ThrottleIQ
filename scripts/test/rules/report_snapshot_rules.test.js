@@ -120,6 +120,18 @@ test('a forged, misattributed or partial snapshot is denied', async () => {
   await assertFails(add({ contentId: 'm1' }));
 });
 
+test('moderation fields on the message and a deleted peer do not break the copy', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    // chat-moderation.ts rewrites text and adds isToxic; account erasure
+    // swaps a deleted rider's uid for 'deleted-rider' in participants.
+    await updateDoc(doc(db, MSG_PATH), { isToxic: true, text: 'hidden' });
+    await updateDoc(doc(db, 'chats', DM_ID), { participants: ['deleted-rider', ALICE] });
+  });
+  await assertSucceeds(setDoc(doc(collection(dbFor(ALICE), 'reports')),
+    report({ snapshot: { ...REAL, text: 'hidden' } })));
+});
+
 test('a rider outside the chat cannot snapshot (or probe) its messages', async () => {
   await assertFails(setDoc(doc(collection(dbFor(OUTSIDER), 'reports')), report({ reporterId: OUTSIDER })));
 });
