@@ -4,8 +4,8 @@ _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`
 
 ## 2026-10-21 (quota): Firestore outage mode — branch `feat/quota-outage` (worktree `.claude/worktrees/quota-outage`), committed `fccd0ac4` and pushed, not merged into main, not on a device
 
-- **Gate:** `scripts/check.sh --base d92f694e` passed on `fccd0ac4`, including all 2294 tests. The base is this branch's fork point. The default base, `origin/main`, would also run the rules and functions suites for the other session's 7 unpushed `main` commits, and this machine can't run those (port 8080 is taken, and the worktree has no functions dependencies).
-- **Owner to-dos** are in `~/Everything/dev/housekeeping/owner_works_now.html`, ThrottleIQ items 25-29: check the alert emails, OK the merge, the release, the §106 E2E fix, and the Bangla review.
+- **Gate:** `scripts/check.sh --base d92f694e` passed on `fccd0ac4`, including all 2294 tests. The base is this branch's fork point. The default base, `origin/main`, would also have run the rules and functions suites for 7 `main` commits from another session (unpushed then, pushed since), and this machine can't run those (port 8080 is taken, and the worktree has no functions dependencies). GitHub CI passed on `131214de`.
+- **Owner to-dos** are in `~/Everything/dev/housekeeping/owner_works_now.html` (ThrottleIQ items 25-29) and `DOCS/needs_attention.md`: check the alert emails, OK the merge, the release, and the Bangla review. Item 28 (§106) is done on `main`.
 
 - **App:** when the Spark daily quota runs out, sync and the outbox pause instead of burning retries, riders see `OverQuotaBar`, and sync resumes by itself after the reset. Details: `features.md` "Firestore quota outage mode", `issues_open.md` §104.6. Focused tests pass.
 - **Owner email (live on production since 2026-10-21):** the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml` emails blankframe.technologies@gmail.com at 80% of reads, writes or deletes, and when reads or writes are used up (99%).
@@ -18,14 +18,11 @@ _Last updated: 2026-10-15 · Branches: `main` = `origin/main` (tag `beta-v4.7.0`
   - Nothing is lost.
   - Alerting works on Spark.
   - Production usage is far from the limits: 3-14% of reads a day over the last week.
-- **Gate:** `scripts/check.sh` in the worktree is green for everything this branch touches: l10n, format, guards, analyze, and all 2294 Flutter tests.
-  - Its rules and functions steps still fail. They run because `main` has 7 unpushed commits that change functions and a rules test, not because of this branch.
-  - They fail for two local reasons: port 8080 is held by another app (`xerj`), so the Firestore emulator can't start; and the worktree has no `functions/node_modules`.
 - **Lab:** `throttleiq-quota-lab-20261021` was deleted on 2026-10-21 (undo possible for 30 days). The revised 5-condition policy opened all 4 expected incidents there (reads/writes 80% and 99%) before deletion.
 - **Left:**
-  - Commit and merge this branch after the 7 unpushed `main` commits, then re-run the gate.
-  - Release the app part.
-  - The E2E test fails on this branch and on plain `main` (`d92f694e`) the same way: a `StateError` in `RideRecordingNotifier.dispose`. It isn't caused by this branch. Cause and a 3-line fix: `issues_open.md` §106.
+  - Merge into `main` once the owner OKs it, then re-run the gate. `main` is 9 commits ahead (report snapshots, the §106 fix, the places revert script). A dry-run merge (`git merge-tree`) conflicts only in this file and `scripts/package.json`, where both sides added lines.
+  - Release the app part. Any build from `main` now also carries the App Check sideload gate (`d92f694e`), so settle the owner's App Check items first (`DOCS/app_check.md`, `judge.md` 2026-10-21).
+  - E2E: §106 is fixed on `main` (`4b914c10`). With that commit applied on top of this branch, E2E passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21), so the strip and the sync pause don't break launch or teardown.
   - Bangla review of `overQuotaBar` and `errTooManyRequests`.
 
 ## 2026-10-19 (places): Google Maps gap-fill written to production; Google ratings dropped — `main` pushed at `074def1`

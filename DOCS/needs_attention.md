@@ -4,6 +4,18 @@ _Rewritten 2026-09-21 (evening) against the real state of `main` @ `0222f03`. Ea
 listed things that have since been done (keystore, route navigation, print sticker, rules deploy).
 What is left needs the founder: an account, a real device, a decision, or the Blaze plan._
 
+## From the 2026-10-21 quota work (branch `feat/quota-outage`)
+
+- [ ] **Check that the Firestore quota alert emails reach you.** The rehearsal sent 6 to
+      blankframe.technologies@gmail.com (21 Oct, about 18:42 and 18:47 Dhaka). If they are in Spam,
+      mark them Not spam, or the real alerts will land there too.
+- [ ] **OK merging `feat/quota-outage` into `main`.** It is pushed and green on CI; the agent merges,
+      re-runs `scripts/check.sh` and pushes.
+- [ ] **Ship it in the next release** (after the merge); the email alert works without one. Builds
+      from `main` also carry the App Check sideload gate, so read `DOCS/app_check.md` first.
+- [ ] **Bangla review** of `overQuotaBar` and `errTooManyRequests` (`app/lib/l10n/bn_pending_review.txt`,
+      batch "quota pause (2026-10-21)").
+
 ## From the 2026-10-14 critique pass (branch `fix/oct14-tiq-shell`)
 
 - [x] **Create `config/app` with `minBuild`** (an int) in Firestore once the public-read rule for it
