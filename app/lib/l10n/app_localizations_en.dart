@@ -5796,6 +5796,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRequiredAction => 'Get the latest version';
 
   @override
+  String get sideloadBlockedTitle => 'Install ThrottleIQ from Google Play';
+
+  @override
+  String get sideloadBlockedBody =>
+      'This copy of ThrottleIQ was not installed from Google Play, so it can\'t connect to the server. Install ThrottleIQ from the Play Store to keep using it.';
+
+  @override
+  String get sideloadBlockedPlayAction => 'Open the Play Store';
+
+  @override
+  String get sideloadBlockedTesting =>
+      'Want to test a build? Send a testing request on WhatsApp: 01327045005';
+
+  @override
+  String get sideloadBlockedWhatsAppAction => 'Send a testing request';
+
+  @override
   String get reauthRequiredTitle => 'Confirm it\'s you';
 
   @override

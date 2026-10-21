@@ -8014,6 +8014,26 @@
   "@updateRequiredAction": {
     "description": "Button on the blocking update screen; opens the install page."
   },
+  "sideloadBlockedTitle": "Install ThrottleIQ from Google Play",
+  "@sideloadBlockedTitle": {
+    "description": "Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play."
+  },
+  "sideloadBlockedBody": "This copy of ThrottleIQ was not installed from Google Play, so it can't connect to the server. Install ThrottleIQ from the Play Store to keep using it.",
+  "@sideloadBlockedBody": {
+    "description": "Body of the sideload blocking screen."
+  },
+  "sideloadBlockedPlayAction": "Open the Play Store",
+  "@sideloadBlockedPlayAction": {
+    "description": "Button on the sideload screen; opens ThrottleIQ on Google Play."
+  },
+  "sideloadBlockedTesting": "Want to test a build? Send a testing request on WhatsApp: 01327045005",
+  "@sideloadBlockedTesting": {
+    "description": "Line on the sideload screen for testers; keep the phone number as is."
+  },
+  "sideloadBlockedWhatsAppAction": "Send a testing request",
+  "@sideloadBlockedWhatsAppAction": {
+    "description": "Button on the sideload screen; opens WhatsApp with a prefilled testing request."
+  },
   "reauthRequiredTitle": "Confirm it's you",
   "@reauthRequiredTitle": {
     "description": "Title of the re-authentication dialog before deleting an account."

@@ -1752,3 +1752,9 @@ chatPeerDeleted
 messageDeleted
 reportReviewPromise
 communityRules
+# batch: App Check sideload screen
+sideloadBlockedTitle
+sideloadBlockedBody
+sideloadBlockedPlayAction
+sideloadBlockedTesting
+sideloadBlockedWhatsAppAction

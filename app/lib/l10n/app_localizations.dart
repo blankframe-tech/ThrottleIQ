@@ -9930,6 +9930,36 @@ abstract class AppLocalizations {
   /// **'Get the latest version'**
   String get updateRequiredAction;
 
+  /// Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play.
+  ///
+  /// In en, this message translates to:
+  /// **'Install ThrottleIQ from Google Play'**
+  String get sideloadBlockedTitle;
+
+  /// Body of the sideload blocking screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of ThrottleIQ was not installed from Google Play, so it can\'t connect to the server. Install ThrottleIQ from the Play Store to keep using it.'**
+  String get sideloadBlockedBody;
+
+  /// Button on the sideload screen; opens ThrottleIQ on Google Play.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Play Store'**
+  String get sideloadBlockedPlayAction;
+
+  /// Line on the sideload screen for testers; keep the phone number as is.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to test a build? Send a testing request on WhatsApp: 01327045005'**
+  String get sideloadBlockedTesting;
+
+  /// Button on the sideload screen; opens WhatsApp with a prefilled testing request.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a testing request'**
+  String get sideloadBlockedWhatsAppAction;
+
   /// Title of the re-authentication dialog before deleting an account.
   ///
   /// In en, this message translates to:
