@@ -232,7 +232,7 @@ assessment, and splitting the profile by `userInitiated` is how you pull it.
 The request that started this was "at day end it updates you." Flagging a
 conflict with existing product thinking rather than silently overriding it:
 
-`hooked_throttleiq.md` argues for a **weekly digest, not a daily one** — "given
+The Hooked analysis (`marketing.md` §7, under `DOCS/Handoffs for Non Coding Agents/marketing/`) argues for a **weekly digest, not a daily one** — "given
 the loop is ride-frequency-driven (not daily), a Sunday-evening 'this week: 3
 rides, 142km, chain due in 80km' notification fits the actual usage pattern
 better than a daily streak nag."
@@ -423,9 +423,9 @@ than pay it, the plugin was replaced with a free stack
 (`flutter_activity_recognition` + `flutter_foreground_task`), a deliberate
 decision to stay on the free tier for roughly the next three months. Full
 writeup in `issues_fixed.md` §50; pros/cons for revisiting the paid plugin later
-are in `HANDOFF_Document.md`'s Feature Backlog, under "Automatic ride
-tracking"; the old implementation is archived at
-`DOCS/old/archives/flutter_background_geolocation-2026-08-28/`.
+are in `HANDOFF_Document.md`, "Reference: the paid background-location
+plugin"; the old implementation is archived at
+`DOCS/old/background_geolocation/flutter_background_geolocation-2026-08-28/`.
 
 This does not change anything else in this document — Parts 0–5 above
 describe the detection/reconciliation architecture, which the swap left

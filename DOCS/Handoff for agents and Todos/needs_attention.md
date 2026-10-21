@@ -1,0 +1,94 @@
+# Needs Attention
+
+_Rewritten 2026-10-22 against `main`. Only what the founder must do: an account, money, a real
+device, a decision, or a deploy. Steps for each item are on the owner page,
+`~/Everything/dev/housekeeping/owner_works_now.html` (ThrottleIQ block); `#N` below is its item
+number. Done items are deleted, not ticked; git history keeps them._
+
+## Release and deploy
+
+- [ ] **Deploy in order (#30, #31):** Firestore rules and indexes, then Hosting (`privacy.html` §9,
+      the community rules page), then Cloud Functions once on Blaze. `main` holds the 2026-10-21
+      moderation, deletion and App Check work, none of it deployed.
+- [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
+      Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
+      (`For Devs and Contributors/guides/app_check.md`).
+- [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.
+      Enforcing early locks out every older build.
+- [ ] **Check that the Firestore quota alert emails reach you (#24).** The rehearsal sent 6 to
+      blankframe.technologies@gmail.com on 2026-10-21. If they are in Spam, mark them Not spam.
+
+## Google Play and stores
+
+- [ ] **Play Console (#4, #8):** internal then closed testing; add testers (the install page asks
+      for tester emails). Declarations: background location and the full-screen intent stay
+      (decided 2026-10-21).
+- [ ] **Data Safety form** from `General/Files for Stores/store_listing/throttleiq_data_safety.csv`:
+      app interactions (analytics on by default with a disclosed opt-out, decided 2026-10-22), audio,
+      precise location, crash logs. The drafts don't yet cover the opt-in crash research sharing;
+      an agent fixes the drafts first (issues §110.5).
+- [ ] **Terms of Service and a PDPO 2025 review by a lawyer (new 2026-10-22).** No terms exist in
+      `public/` or the app (issues §109.14).
+- [ ] **Before any App Store submission:** enrol in the Apple Developer Program (#21), then the
+      widget extension's privacy manifest and Sign in with Apple.
+
+## Accounts and security
+
+- [ ] **SECURITY step 3 (#2):** deploy rules and indexes and run the email migration in the same
+      hour. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
+      `isAdmin()` can be removed (issues §110.4).
+- [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
+      Firebase API keys.
+- [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are
+      locked). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
+      the deletion sweep's ownership check skips every asset.
+- [ ] **CI (#16):** GitHub CI runs and passes, but `main` has no required checks. Make `flutter`,
+      `rules` and `functions` required; approve or close the Dependabot PRs.
+- [ ] **Deletion requests by hand within 30 days**, with
+      `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function
+      runs on Blaze.
+
+## Needs a phone, a bike or a person
+
+- [ ] **Real-phone test (#5).** Nothing on `main` since the last release has run on hardware. The
+      checklist is the "Device checks" follow-up at the top of `issues_open.md` and the HANDOFF's
+      "Built but never run on a real phone" list (widgets and the ride ⋮ menu: issues §107.7;
+      battery with the 50 Hz shadow-mode crash detector).
+- [ ] **Crash calibration recordings (new 2026-10-22):** phyphox recordings on the bike, so the
+      shadow-mode thresholds rest on measurements (issues §78.1, §78.12).
+- [ ] **Bangla review (#12, #28):** a native reviewer for `app/lib/l10n/bn_pending_review.txt`
+      (includes the quota strings), the draft Bangla in `marketing_kit.md`, and the Bangla store
+      listing.
+- [ ] **Beta riders (#6):** count them and talk to five.
+- [ ] **A budget Android phone (new 2026-10-22):** one day of normal use on a 2-3 GB itel, Tecno
+      or Redmi: OEM battery managers, the all-day wakelock, low-RAM recovery (issues §96).
+- [ ] **Maintenance schedules (new 2026-10-22):** check the templates against Bangladesh service
+      booklets and 2-3 mechanics (issues §95.2-§95.4).
+
+## Decisions
+
+- [ ] **Google Maps data in production (#1):** take it down or keep it.
+- [ ] **Blaze (#3)**, or how far to go on Spark. Blocked without Blaze: Firestore TTL policies
+      (`liveSessions.expiresAt`, and `places.expiresAt` for expired checkpoints, issues §107.4;
+      tried 2026-10-08: 403 billing disabled), real SMS and escalation, signed Cloudinary uploads,
+      account deletion (a Spark workaround is issues §109.12), rate limits. Cloud Functions Node 20
+      is decommissioned late October 2026; `functions/` already targets Node 22.
+- [ ] **Blocking and Cloudinary uploads on Spark** (issues §83.18, §83.16): the options are in
+      issues §107.3.
+- [ ] **Pitch (#22):** slide 9 (the team) and slide 10 (the ask). The iDEA submission names three
+      roles and an advisory panel; git shows one author.
+- [ ] **PRD success-metric targets (new 2026-10-22):** PRD §10 lists five proposals for you to
+      confirm.
+- [ ] **Smaller calls:** reports filed by a deleted rider (#29), report rate limit and retention
+      (#33), the public WhatsApp number on the install page (#34), ranking the forum ideas (#35, the
+      front-plate guide only helps before 15 Nov), the badge-tier prize promotion (new), the beta-only
+      order-parts button: keep it for a partner or remove it (new, issues §95.11).
+
+## Settled, don't re-ask
+
+- Keystore backed up (2026-09-21). Map tiles: Thunderforest. `config/app.minBuild = 29`.
+- hello@blankframe.tech delivery confirmed (2026-10-22). Analytics: on by default with a disclosed
+  opt-out (2026-10-22).
+- Crash detection runs in shadow mode only: nothing is sent to anyone.
+- Deleting a bike archives it; the Profile tab is "Garage"; Bangla dates use English-style digits
+  in the Bangla font.

@@ -81,7 +81,7 @@ Road"), can't reroute when the rider goes off-route (it only *tells* them
 they're off-route), and can't know about one-way streets or turn
 restrictions. It's a breadcrumb follower for a route you already rode,
 which is precisely the stated use case ("if I pick a route"). Street
-names need map matching — already scoped as Phase 3 in the handoff doc.
+names need map matching — already scoped as Phase 3 in `vehicle_state_engine.md`.
 
 ## Assumption 5 — iOS widgets ship as sources + instructions, not a wired target
 
@@ -110,7 +110,7 @@ irreversible and requires Admin SDK credentials that aren't present.
 Running it blind would also have destroyed the project owner's own test
 data mid-session.
 
-**Taken:** `scripts/reset_beta_data.js`, which **defaults to a dry run**,
+**Taken:** `scripts/oneoff/reset_beta_data.js`, which **defaults to a dry run**,
 refuses to run without both an explicit `--yes-i-really-mean-it` flag and
 a `FIREBASE_PROJECT_ID` that matches, and prints per-collection counts
 first. See `scripts/README.md`.
