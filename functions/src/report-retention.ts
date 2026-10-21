@@ -67,6 +67,8 @@ export async function purgeOldReportSnapshots(
   const old = await db.collection("reports").where("reviewedAt", "<", new Date(cutoff)).get();
   for (const doc of old.docs) {
     if (doc.get("snapshot") === undefined && !doc.get("originalText")) continue;
+    // Reopened (e.g. an appeal): pending keeps its evidence (moderation_policy §5).
+    if (isPendingReport(doc.data())) continue;
     // Deleting the whole map replaces a pending snapshot.senderId patch.
     const anonymize = updates.get(doc.ref.path)?.[1] ?? {};
     delete anonymize["snapshot.senderId"];

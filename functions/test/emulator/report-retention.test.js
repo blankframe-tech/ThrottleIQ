@@ -28,6 +28,7 @@ test('evidence of reports reviewed over 90 days ago is removed, nothing else', a
   set('edge', { snapshot: SNAP, reviewedAt: daysAgo(89) });
   set('open', { snapshot: SNAP, status: 'pending' });
   set('oldNoSnap', { reviewedAt: daysAgo(300) });
+  set('reopened', { snapshot: SNAP, status: 'pending', reviewedAt: daysAgo(120) });
   await batch.commit();
 
   assert.equal(await purgeOldReportSnapshots(db, NOW), 2);
@@ -35,6 +36,7 @@ test('evidence of reports reviewed over 90 days ago is removed, nothing else', a
   assert.deepEqual(await get('oldSystem'), { status: 'actioned', reviewedAt: daysAgo(200) });
   assert.deepEqual((await get('edge')).snapshot, SNAP);
   assert.deepEqual((await get('open')).snapshot, SNAP);
+  assert.deepEqual((await get('reopened')).snapshot, SNAP, 'a reopened report keeps its evidence');
   assert.equal(await purgeOldReportSnapshots(db, NOW), 0, 'a re-run is a no-op');
 });
 
