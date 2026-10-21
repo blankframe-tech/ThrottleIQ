@@ -348,6 +348,10 @@ export async function deleteUserData(
     ],
     [
       // chat-moderation.ts copies a hidden message's text into its report.
+      // A rider's report keeps its `snapshot` of the reported message on
+      // purpose (owner decision 2026-10-21): evidence, removed by
+      // report-retention.ts 180 days after review. Reports the deleted rider
+      // filed stay untouched, as before.
       "chat reports",
       db.collection("reports")
         .where("reportedId", "==", uid)

@@ -118,6 +118,10 @@ async function seed() {
   // The moderation report holding a copy of one of the rider's messages.
   set('reports/auto_chat_1', { reportedId: UID, contentType: 'chat', originalText: 'you idiot', reporterId: 'system' });
   set('reports/other', { reportedId: OTHER, contentType: 'chat', originalText: 'hm' });
+  // Rider reports with a message snapshot (2026-10-21): against the rider
+  // (evidence, kept) and by the rider (untouched).
+  set('reports/against', { reporterId: OTHER, reportedId: UID, contentType: 'chat', snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 } });
+  set('reports/by', { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
   await batch.commit();
 
   await rtdb.ref().set({
@@ -207,6 +211,9 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal(report.reportedId, '');
   assert.equal(report.originalText, '');
   assert.equal((await db.doc('reports/other').get()).get('originalText'), 'hm');
+  assert.deepEqual((await db.doc('reports/against').get()).get('snapshot'), { text: 'you idiot', senderId: UID, sentAt: 1 });
+  assert.equal((await db.doc('reports/against').get()).get('reportedId'), '');
+  assert.deepEqual((await db.doc('reports/by').get()).data(), { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
 
   // Forum follows: the rider's are gone, the other rider's stays, and the
   // live forum's count drops by exactly one. The deleted forum is not

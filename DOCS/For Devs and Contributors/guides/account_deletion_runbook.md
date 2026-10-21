@@ -56,7 +56,7 @@ Filters below are console query-builder filters.
 | `follows` where `followerUid == uid`, and where `followeeUid == uid` | Follow edges both ways |
 | `forum_follows` where `userId == uid` | Forum follows; take 1 off `forums/{forumId}.followerCount` for each |
 | Collection group `likes` and `votes`, doc id `== uid` | The rider's likes and votes on other riders' shared rides; adjust that ride's like/vote counter |
-| `reports` where `reporterId == uid`, and where `reportedId == uid` | Moderation reports filed by or about the rider |
+| `reports` where `reporterId == uid` | Moderation reports the rider filed |
 | `groupRides/{id}/members/{uid}`, `memberLocations/{uid}`, `invitations/{uid}` | For every group ride where `memberIds` or `invitedIds` contains `uid`; also remove `uid` from those arrays |
 | `groupRides/{id}/voiceNotes` where `senderId == uid` | Push-to-talk clips (the audio is on Cloudinary, below) |
 | `groupRides` where `creatorId == uid` | End it (`status: 'ended'`) if other riders are in it, otherwise delete it (recursive) and its `groupRideJoinCodes/{code}` |
@@ -73,6 +73,7 @@ tombstone the function writes), or delete the doc if the email asks for it:
 | Collection group `comments` (ride comments) | `userId == uid` |
 | `reviews` | `userId == uid` → set `userId: ""` |
 | `places` | `createdBy == uid` → set `createdBy: ""` |
+| `reports` | `reportedId == uid` and `contentType == "chat"` → set `reportedId: ""`, `originalText: ""`; **keep `snapshot`** even if the rider asked for deletion: evidence, removed 180 days after review (owner decision 2026-10-21, `DOCS/moderation_policy.md` §5). Other reports about the rider: keep |
 | `chats` | `participants` array-contains `uid` → in `participants` and `lastMessage.senderId` replace `uid` with `deleted-rider`; remove `participantNames.<uid>` / `participantPhotos.<uid>`; in `messages` where `senderId == uid` set `senderId: "deleted-rider"`, `text: ""`. If no real uid is left in `participants`, delete the chat (recursive). Owner decision 2026-10-21: the other rider keeps the thread; the rider's text is always deleted (privacy.html §9), even without a request |
 
 The three collection-group queries need a COLLECTION_GROUP single-field

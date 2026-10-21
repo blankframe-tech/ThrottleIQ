@@ -109,6 +109,13 @@ Do these in order.
    preset switched to signed (switching it before that build ships breaks
    every upload).
 
+8. **Report evidence (2026-10-21).** The `reports` snapshot rule rides on
+   the step 3 rules deploy; until then the app files chat reports without
+   the copy (it retries without it). Deploy Hosting for the `privacy.html`
+   §8 text with step 3. Retention needs Blaze:
+   `firebase deploy --only functions:purgeReportSnapshots --project throttleiqfb`.
+   Until it runs, purge by hand (`DOCS/moderation_policy.md` §5).
+
 ### App Check enforcement
 
 Decision 2026-10-21: enforce App Check on Cloud Firestore only. The runbook,

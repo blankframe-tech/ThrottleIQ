@@ -41,6 +41,7 @@ written by the app (`ReportModel.toFirestore`):
 | `additionalDetails` | Optional free text, up to 2000 characters |
 | `createdAt` | Server time; the 24-hour clock starts here |
 | `status` | Always `pending` when filed |
+| `snapshot` | `chat` only, builds from 2026-10-21 on: `{text, senderId, sentAt}`, a copy of the reported message. The rules accept it only if it equals the stored message and the reporter is in that chat, so it is not the reporter's word. It stays when the sender's message or account goes. Missing on old builds, or if the copy couldn't be read. |
 
 `functions/src/chat-moderation.ts` (`onMessageCreate`, **not deployed**) also
 files `system` reports with `chatId`, `contentPath` and `originalText`. Before
@@ -61,8 +62,9 @@ only for the app; the console works with your Google login.
 
 ### 2. Review
 
-1. Open the content by `contentId` (paste the path into the console's path
-   bar). For an old-build `chat` report with a bare message id, the chat id is
+1. For a chat report, read `snapshot` first: it is what the message said
+   when it was reported. Then open the content by `contentId` (paste the path
+   into the console's path bar). For an old-build `chat` report with a bare message id, the chat id is
    the two uids sorted and joined with `_` (`ChatRepository.dmId`), so
    `chats/{smallerUid}_{largerUid}/messages/{messageId}`.
 2. For chat, read the messages just before and after the reported one, and
@@ -91,7 +93,7 @@ Edit the report document in the console:
 |---|---|
 | `status` | `actioned` (something was done) or `dismissed` (no violation) |
 | `action` | `none`, `warn`, `remove`, `suspend` or `ban` |
-| `reviewedAt` | timestamp of the review |
+| `reviewedAt` | timestamp of the review (type **timestamp**, not string: the snapshot retention below counts from it) |
 | `reviewedBy` | your name or email |
 | `note` | one line: what you saw and why; suspension end date |
 
@@ -99,7 +101,22 @@ The app ignores these fields. They are the audit trail if a store reviewer or
 an appeal asks what happened. Keep resolved reports; the time between
 `createdAt` and `reviewedAt` is the response-time record.
 
-### 5. Appeals
+### 5. Retention of the message copy
+
+Default **180 days after review** (`reviewedAt`), set 2026-10-21; the owner
+can change it. Then `snapshot` is removed and the rest of the report stays
+as the audit trail. A report still `pending` keeps it. Account deletion does
+not remove the snapshot from reports about the deleted rider (evidence);
+it blanks `reportedId` and `originalText` as before
+(`functions/src/account-erasure.ts`). Reports the rider filed: the function
+leaves them, the manual runbook deletes them (open owner decision).
+
+`purgeReportSnapshots` (`functions/src/report-retention.ts`) does this daily
+once deployed (Blaze). Until then, do it by hand monthly: filter `reviewedAt`
+`<` 180 days ago, delete the `snapshot` field. To change the period, change
+`REPORT_SNAPSHOT_RETENTION_DAYS`, this section and `public/privacy.html` §8.
+
+### 6. Appeals
 
 Appeals arrive at hello@blankframe.tech. Reread the content and the report
 note, answer within 7 days, and record the result in the same report's
@@ -111,7 +128,7 @@ note, answer within 7 days, and record the result in the same report's
   `reports/{id}` that emails hello@blankframe.tech; needs Blaze and a mail
   provider secret (none in the repo today).
 - No dedupe: one rider can file many reports on the same thing.
-- A report does not copy the reported text, so a sender who deletes the
-  message or the account removes the evidence. Adding a text field would let
-  the reporter fake it; review the real document instead.
+- Only chat reports carry a message copy. Forum posts, rides and profiles
+  are reviewed from the live document, so their author's edit or deletion
+  still removes the evidence.
 - Reporting does not block. Riders do both from the profile menu.

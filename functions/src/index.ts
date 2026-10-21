@@ -19,6 +19,7 @@ export * from './ride-identity';
 export * from './chat-moderation';
 export * from './account-deletion';
 export * from './track-retention';
+export * from './report-retention';
 // './badge-stats' is deliberately NOT exported. The project is on the Spark
 // plan, where Cloud Functions can't be deployed, so the app keeps
 // `stats/badges` itself (app/lib/features/stats/data/badge_stats_counter.dart,

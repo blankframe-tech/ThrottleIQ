@@ -12,7 +12,19 @@ class ReportModel extends ReportEntity {
     super.additionalDetails,
     required super.createdAt,
     required super.status,
+    super.snapshot,
   });
+
+  /// The evidence copy of a reported chat message, from its stored fields as
+  /// read. firestore.rules (`chatSnapshotIsReal`) accepts it only if it equals
+  /// the stored message field for field, so `sentAt` must stay the raw
+  /// Timestamp, never a DateTime round trip.
+  static Map<String, dynamic> reportSnapshotOf(Map<String, dynamic> message) =>
+      {
+        'text': message['text'],
+        'senderId': message['senderId'],
+        'sentAt': message['createdAt'],
+      };
 
   factory ReportModel.fromFirestore(Map<String, dynamic> data, String id) {
     return ReportModel(
@@ -38,6 +50,7 @@ class ReportModel extends ReportEntity {
       if (additionalDetails != null) 'additionalDetails': additionalDetails,
       'createdAt': FieldValue.serverTimestamp(),
       'status': status,
+      if (snapshot != null) 'snapshot': snapshot,
     };
   }
 }

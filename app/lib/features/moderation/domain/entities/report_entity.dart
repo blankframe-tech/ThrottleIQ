@@ -8,6 +8,8 @@ class ReportEntity {
   final String? additionalDetails;
   final DateTime createdAt;
   final String status; // 'pending', 'reviewed', 'actioned'
+  /// Chat reports: a copy of the reported message (see reportSnapshotOf).
+  final Map<String, dynamic>? snapshot;
 
   const ReportEntity({
     required this.id,
@@ -19,5 +21,6 @@ class ReportEntity {
     this.additionalDetails,
     required this.createdAt,
     required this.status,
+    this.snapshot,
   });
 }

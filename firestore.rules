@@ -1953,6 +1953,27 @@ service cloud.firestore {
     match /reports/{reportId} {
       // Admins can read/update/delete (update for status changes)
       allow read, update, delete: if isAdmin();
+
+      // Report evidence (owner decision 2026-10-21): a chat report may carry
+      // `snapshot` {text, senderId, sentAt}, a copy of the reported message
+      // that must equal the stored message right now, so it survives the
+      // sender's later edit, delete or account erasure. get() ignores the
+      // reporter's read access, so the reporter must also be in that chat
+      // (else the rule is an oracle for other riders' messages). Riders can't
+      // read or update reports, so it can't be edited later. Shape:
+      // reportSnapshotOf() in report_model.dart. Retention: 180 days after
+      // review (DOCS/moderation_policy.md, report-retention.ts).
+      function chatSnapshotIsReal(d) {
+        let parts = d.contentId.split('/');
+        let chat = /databases/$(database)/documents/chats/$(parts[1]);
+        let m = get(/databases/$(database)/documents/chats/$(parts[1])/messages/$(parts[3])).data;
+        return d.contentType == 'chat' &&
+          d.contentId.matches('chats/[^/]+/messages/[^/]+') &&
+          request.auth.uid in get(chat).data.participants &&
+          d.snapshot == {'text': m.text, 'senderId': m.senderId, 'sentAt': m.createdAt} &&
+          d.reportedId == m.senderId;
+      }
+
       // Any authenticated user can create a report, but only if they correctly
       // stamp themselves as the reporter, target a real (non-empty) id, and
       // leave it in the 'pending' state a real report always starts in —
@@ -1969,8 +1990,10 @@ service cloud.firestore {
       allow create: if request.auth != null &&
         request.resource.data.keys().hasOnly([
           'reporterId', 'reportedId', 'contentType', 'contentId', 'reason',
-          'additionalDetails', 'createdAt', 'status'
+          'additionalDetails', 'createdAt', 'status', 'snapshot'
         ]) &&
+        (!('snapshot' in request.resource.data) ||
+         chatSnapshotIsReal(request.resource.data)) &&
         request.resource.data.reporterId == request.auth.uid &&
         request.resource.data.reportedId is string &&
         request.resource.data.reportedId.size() > 0 &&
