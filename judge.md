@@ -113,3 +113,7 @@ Re-reviewed `main` at `76ed92a` (8 commits since `f464230`). Read-only: live GET
 6. **You:** ship the next build (Hosting link, detail-screen fix), upload it to the Play closed track, and do one real ride, a swipe-away test and a deletion on a phone. Keep the landing-page redirect.
 
 **Score:** product works 6, quality 6, security 5, legal 3 → 2 (scraped Google data in production), market 1, deploy 4, claims 6. Weighted 45. **Cap 40:** rules and functions are still not live (deletion by email), production now holds Google Maps data the terms forbid, and nothing has run on a phone. Final **40%**.
+
+## Update (2026-10-21): stale `test` branch merged and deleted
+
+The local-only `test` branch (2 commits, 2026-08-30/31, 419 behind) is merged into `main` so its history stays, then deleted. Almost all of it was obsolete: a Space Grotesk heading font, CartoDB tiles (already undone by its own second commit), pause-button, stat-label, spacing and bike-card tweaks on screens `main` has since rewritten, five per-screen copies of the map tile code (now one `AppTileLayer`), plus screenshots, a 1.7 MB screen recording, `preview.html` and a stray `test_matrix.dart`. All of that resolved to `main`. Kept: its dark-mode map filter (grayscale + invert on OSM tiles), now in `AppTileLayer` with a test. This fixes the "dark map glare" item in `CrtiQue_Oct15.md` §6. Not checked on a phone. Score unchanged.

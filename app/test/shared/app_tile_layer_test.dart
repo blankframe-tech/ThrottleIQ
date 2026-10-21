@@ -7,12 +7,14 @@ import 'package:throttleiq/shared/widgets/app_tile_layer.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
 void main() {
-  Future<void> pumpMap(WidgetTester tester) async {
+  Future<void> pumpMap(WidgetTester tester,
+      {Brightness brightness = Brightness.light}) async {
     await tester.pumpWidget(
-      const MaterialApp(
+      MaterialApp(
+        theme: ThemeData(brightness: brightness),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: SizedBox(
+        home: const SizedBox(
           width: 300,
           height: 300,
           child: FlutterMap(
@@ -54,6 +56,19 @@ void main() {
         'ThrottleIQ (com.bft.throttleiq; hello@blankframe.tech)',
       );
       expect(layer.errorImage, isA<MemoryImage>());
+      expect(layer.tileBuilder, isNull, reason: 'light theme: tiles as-is');
+
+      await disposeMap(tester);
+    });
+
+    // A fresh pump each: re-pumping MaterialApp animates the theme change.
+    testWidgets('dark theme darkens the tiles', (tester) async {
+      await pumpMap(tester, brightness: Brightness.dark);
+
+      expect(
+        tester.widget<TileLayer>(find.byType(TileLayer)).tileBuilder,
+        isNotNull,
+      );
 
       await disposeMap(tester);
     });
