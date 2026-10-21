@@ -22,13 +22,16 @@ What is left needs the founder: an account, a real device, a decision, or the Bl
       is deployed. Leave it at or below the oldest build you still support; raise it to force an update.
       Done 2026-10-19: `minBuild = 29` (beta-v4.7.1), after the `/ThrottleIQ/install` redirect on
       blankframe.tech and the hosting redeploy went live. Builds 27 and 28 now see the update screen.
-- [ ] **Check that hello@blankframe.tech reaches you.** `privacy.html` and the delete dialog now send
+- [x] **Check that hello@blankframe.tech reaches you.** `privacy.html` and the delete dialog now send
       every privacy and deletion request there (they used a personal Gmail before).
+      Done 2026-10-22: owner confirmed delivery (ticked in `owner_works_now.html`).
 - [ ] **Handle deletion requests by hand within 30 days**, with
       `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function is
       live on Blaze. Deploy `privacy.html` (hosting) so the new §9 is live.
 - [ ] **Update the Play Data Safety form** from `General/store_listing/throttleiq_data_safety.csv`
-      (App interactions now declared, on by default with opt-out).
+      (App interactions now declared, on by default with opt-out). Decided 2026-10-22 (owner): keep
+      the disclosed opt-out (Settings → Privacy & Safety, `privacy.html`); no opt-in prompt, no native
+      default-off flags.
 - [ ] **`gov-pitch/`:** rewrite it from `iDEA_PITCH_SUBMISSION.md` or delete it. It still claims
       crash detection and carries a "do not submit" banner.
 - [ ] **iOS widget extension privacy manifest** (`ThrottleIQWidget`, App Group UserDefaults) before

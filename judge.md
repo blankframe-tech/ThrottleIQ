@@ -45,7 +45,7 @@ Scored 2026-10-14 from the README, `DOCS/Handoff for agents and Todos/HANDOFF_Do
 1. **You:** confirm what is live: `firebase deploy --only firestore:rules,firestore:indexes` and the Blaze decision for Functions. Record the result here.
 2. **You:** run the current build on a real phone through one real ride, a widget refresh and an account deletion.
 3. **You:** count the beta riders and ask five of them what they would miss if the app vanished.
-4. **You:** finish the Play and Apple declarations, analytics consent and the chat moderation policy.
+4. **You:** finish the Play and Apple declarations. Analytics consent decided 2026-10-22: disclosed opt-out stays (default on, Settings toggle, `privacy.html`). Moderation policy done 2026-10-21 (`DOCS/moderation_policy.md`).
 5. **Code:** done. `SECURITY.md` replaced and `AGENTS.md` added (Update 1); `Podfile.lock` committed (`6c64333`).
 6. **You:** get a human to review `firestore.rules` and the auth and moderation functions.
 7. Keep crash detection off until it is calibrated on real rides.
