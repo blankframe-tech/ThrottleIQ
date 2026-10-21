@@ -3,8 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { planImport, toPlaceDocument, SEED_AUTHOR } = require('../import_google_places');
-const { planRevert, restorePatch, backupEntries, decodeDoc } = require('../revert_google_places');
+const { planImport, toPlaceDocument, SEED_AUTHOR } = require('../oneoff/import_google_places');
+const { planRevert, restorePatch, backupEntries, decodeDoc } = require('../oneoff/revert_google_places');
 
 const row = (over = {}) => ({
   title: 'Hazipara CNG Filling Station',

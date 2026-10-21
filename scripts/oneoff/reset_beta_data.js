@@ -23,8 +23,8 @@
  *     simply are not found the second time.
  *
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node reset_beta_data.js
- *   FIREBASE_PROJECT_ID=throttleiqfb node reset_beta_data.js --yes-i-really-mean-it
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/reset_beta_data.js
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/reset_beta_data.js --yes-i-really-mean-it
  *
  * Flags:
  *   --dry-run                 Count only, change nothing. (default)
@@ -167,10 +167,10 @@ function parseArgs(argv) {
 const USAGE = `
 reset_beta_data.js — irreversibly wipe all ThrottleIQ beta data.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node reset_beta_data.js
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/reset_beta_data.js
       Dry run (the default). Counts everything, deletes nothing.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node reset_beta_data.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/reset_beta_data.js --yes-i-really-mean-it
       Actually delete. THIS CANNOT BE UNDONE.
 
 Flags:

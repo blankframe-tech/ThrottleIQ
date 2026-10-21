@@ -17,7 +17,7 @@ const {
   EXPECTED_PROJECT_ID,
   COLLECTION,
   SEED_AUTHOR,
-} = require('../seed_ai_cameras.js');
+} = require('../oneoff/seed_ai_cameras.js');
 
 test('seed_ai_cameras has at least 30 major camera intersections in Dhaka', () => {
   assert.ok(AI_CAMERAS.length >= 30, `Expected at least 30 cameras, found ${AI_CAMERAS.length}`);

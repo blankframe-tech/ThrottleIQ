@@ -34,8 +34,8 @@
  *
  * Usage (from scripts/):
  *   export GOOGLE_APPLICATION_CREDENTIALS=~/.secrets/throttleiqfb-admin.json
- *   FIREBASE_PROJECT_ID=throttleiqfb node revert_google_places.js --seeded-only                 # dry run, B
- *   FIREBASE_PROJECT_ID=throttleiqfb node revert_google_places.js --from=<export.json>          # dry run, A
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/revert_google_places.js --seeded-only                 # dry run, B
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/revert_google_places.js --from=<export.json>          # dry run, A
  *   ... --apply --backup="$HOME/.secrets/throttleiq/places-revert-$(date +%F).json"           # writes
  *   ... --restore=<backup.json> [--apply]                                                         # undo
  */

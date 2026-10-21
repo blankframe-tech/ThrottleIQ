@@ -3,7 +3,7 @@ import 'package:throttleiq/features/profile/data/repositories/profile_repository
 
 /// `emailLookup/{id}` (B2, critique 2026-10-14): the app, firestore.rules
 /// (`hashing.sha256(token.email.lower()).toHexString().lower()`), the rules
-/// tests and scripts/migrate_emails_private.js must all derive the same id.
+/// tests and scripts/oneoff/migrate_emails_private.js must all derive the same id.
 void main() {
   test('is the lowercase hex SHA-256 of the lowercased email', () {
     // node -e "require('crypto').createHash('sha256').update('alice@example.com').digest('hex')"

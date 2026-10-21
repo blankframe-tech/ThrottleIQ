@@ -116,7 +116,7 @@ service cloud.firestore {
     // a non-admin from deleting other riders' content.
     //
     // issues §24.9: prefers the `admin` custom claim
-    // (request.auth.token.admin) — set via scripts/set_admin_claim.js, which
+    // (request.auth.token.admin) — set via scripts/oneoff/set_admin_claim.js, which
     // only this project's own service-account credentials can run — over the
     // email-string comparison this used to be exclusively. A custom claim can
     // only ever be written server-side with the Admin SDK, never by a client

@@ -27,8 +27,8 @@
  *   - Prints counts and uids only, never an email address.
  *
  * Usage (from scripts/):
- *   node migrate_emails_private.js --service-account=/path/to/key.json
- *   node migrate_emails_private.js --service-account=/path/to/key.json --yes-i-really-mean-it
+ *   node oneoff/migrate_emails_private.js --service-account=/path/to/key.json
+ *   node oneoff/migrate_emails_private.js --service-account=/path/to/key.json --yes-i-really-mean-it
  */
 
 const fs = require('node:fs');

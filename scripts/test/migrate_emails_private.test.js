@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { emailLookupId, planForProfile, duplicateLookups } = require('../migrate_emails_private.js');
+const { emailLookupId, planForProfile, duplicateLookups } = require('../oneoff/migrate_emails_private.js');
 
 test('lookup id matches the app and the rules (lowercase hex sha256)', () => {
   // Same vector as app/test/features/profile/email_lookup_id_test.dart.

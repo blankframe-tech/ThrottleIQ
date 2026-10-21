@@ -30,8 +30,8 @@
  *   - Idempotent: a second run finds nothing.
  *
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_engagement.js
- *   FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_engagement.js --yes-i-really-mean-it
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_engagement.js
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_engagement.js --yes-i-really-mean-it
  */
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
@@ -59,9 +59,9 @@ const USAGE = `
 cleanup_qa_engagement.js — remove QA-seed comments/likes on shared rides and the
 dead 'likes' field on qashare_* rides (issues §79, §80).
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node cleanup_qa_engagement.js
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/cleanup_qa_engagement.js
       Dry run (default). Reads only.
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node cleanup_qa_engagement.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/cleanup_qa_engagement.js --yes-i-really-mean-it
       Actually change data. THIS CANNOT BE UNDONE.
 `;
 

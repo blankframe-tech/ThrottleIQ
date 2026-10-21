@@ -25,8 +25,8 @@
  *
  * Usage (from scripts/):
  *   export GOOGLE_APPLICATION_CREDENTIALS=~/.secrets/throttleiqfb-admin.json
- *   node backfill_users_visibility.js --project=throttleiqfb                         # dry run
- *   node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes
+ *   node oneoff/backfill_users_visibility.js --project=throttleiqfb                         # dry run
+ *   node oneoff/backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes
  */
 
 const fs = require('node:fs');

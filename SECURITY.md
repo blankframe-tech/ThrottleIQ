@@ -67,8 +67,8 @@ Do these in order.
    move it first):
    ```bash
    cd scripts
-   node migrate_emails_private.js --service-account=/path/key.json
-   node migrate_emails_private.js --service-account=/path/key.json --yes-i-really-mean-it
+   node oneoff/migrate_emails_private.js --service-account=/path/key.json
+   node oneoff/migrate_emails_private.js --service-account=/path/key.json --yes-i-really-mean-it
    ```
    The first command is a dry run. A second real run should report 0.
    The migration writes an `emailLookup` entry only for addresses that

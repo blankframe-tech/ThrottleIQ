@@ -25,7 +25,7 @@ const {
   parseBbox,
   SEED_AUTHOR,
   DHAKA_BBOX,
-} = require('../seed_dhaka_places.js');
+} = require('../oneoff/seed_dhaka_places.js');
 
 // ---------------------------------------------------------------------------
 // Geohash

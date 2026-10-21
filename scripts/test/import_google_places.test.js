@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { parseGooglePlace, planImport, hoursFrom, SEED_AUTHOR, toPlaceDocument } = require('../import_google_places');
+const { parseGooglePlace, planImport, hoursFrom, SEED_AUTHOR, toPlaceDocument } = require('../oneoff/import_google_places');
 
 const row = (over = {}) => ({
   title: 'Hazipara CNG Filling Station',

@@ -42,8 +42,8 @@
  *     than aborting the run).
  *
  * Usage:
- *   node seed_qa_test_riders.js                              # dry run, no creds needed
- *   FIREBASE_PROJECT_ID=throttleiqfb node seed_qa_test_riders.js --yes-i-really-mean-it
+ *   node oneoff/seed_qa_test_riders.js                              # dry run, no creds needed
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_qa_test_riders.js --yes-i-really-mean-it
  *
  * Flags:
  *   --dry-run                 Generate + print only (default). No credentials needed.
@@ -381,12 +381,12 @@ seed_qa_test_riders.js — create fabricated QA/test rider accounts with
 Bangladesh-market bikes (commuter to high-range), backdated ride history, and
 forum posts.
 
-  node seed_qa_test_riders.js
+  node oneoff/seed_qa_test_riders.js
       Dry run (the default). Generates everything in memory and prints a
       summary + one sample rider. No credentials needed, nothing is sent
       anywhere.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node seed_qa_test_riders.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/seed_qa_test_riders.js --yes-i-really-mean-it
       Actually create the Auth accounts and Firestore documents. This writes
       PUBLICLY VISIBLE content (shared rides, forum posts) into the live
       '${EXPECTED_PROJECT_ID}' project.

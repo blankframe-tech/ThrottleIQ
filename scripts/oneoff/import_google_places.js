@@ -19,7 +19,7 @@
  * rating or review text is stored.
  *
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node import_google_places.js --from=gmaps.json
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/import_google_places.js --from=gmaps.json
  *       Dry run (default): reports what would change, writes nothing.
  *   ... --from=gmaps.json --yes-i-really-mean-it
  *       Writes.

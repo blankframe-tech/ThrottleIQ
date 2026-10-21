@@ -35,8 +35,8 @@
  *   - Idempotent: re-running finds fewer (eventually zero) tagged documents.
  *
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js
- *   FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js --yes-i-really-mean-it
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js --yes-i-really-mean-it
  */
 
 let admin;
@@ -79,10 +79,10 @@ cleanup_qa_test_riders.js — remove all QA test riders created by
 seed_qa_test_riders.js (matched by qaSeed: true and the @${QA_EMAIL_DOMAIN}
 email domain).
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node cleanup_qa_test_riders.js
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/cleanup_qa_test_riders.js
       Dry run (the default). Counts everything, deletes nothing.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node cleanup_qa_test_riders.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/cleanup_qa_test_riders.js --yes-i-really-mean-it
       Actually delete. THIS CANNOT BE UNDONE.
 
 Flags:

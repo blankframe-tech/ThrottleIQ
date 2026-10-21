@@ -32,13 +32,13 @@
  *     the whole batch is one query away for a future re-seed or rollback.
  *
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js
- *   FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js --yes-i-really-mean-it
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js --yes-i-really-mean-it
  *
  * Suggested flow — look at the data before you commit it to production:
- *   node seed_dhaka_places.js --out=dhaka.json      # fetch + report, no writes
+ *   node oneoff/seed_dhaka_places.js --out=dhaka.json      # fetch + report, no writes
  *   <read dhaka.json, delete anything that is junk>
- *   node seed_dhaka_places.js --from=dhaka.json --yes-i-really-mean-it
+ *   node oneoff/seed_dhaka_places.js --from=dhaka.json --yes-i-really-mean-it
  *
  * Requires GOOGLE_APPLICATION_CREDENTIALS to point at a service-account JSON
  * key with Firebase Admin rights — but only for a real write or the dedup
@@ -450,16 +450,16 @@ const USAGE = `
 seed_dhaka_places.js — seed the places directory with Dhaka's petrol pumps,
 motorcycle garages and parts sellers, from OpenStreetMap via Overpass.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node seed_dhaka_places.js
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/seed_dhaka_places.js
       Dry run (the default). Fetches, reports what it found and what is new,
       writes nothing.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node seed_dhaka_places.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/seed_dhaka_places.js --yes-i-really-mean-it
       Actually create the place documents.
 
 Review the data before you commit it:
-  node seed_dhaka_places.js --out=dhaka.json    (fetch only; no credentials needed)
-  node seed_dhaka_places.js --from=dhaka.json --yes-i-really-mean-it
+  node oneoff/seed_dhaka_places.js --out=dhaka.json    (fetch only; no credentials needed)
+  node oneoff/seed_dhaka_places.js --from=dhaka.json --yes-i-really-mean-it
 
 Flags:
   --dry-run                 Fetch and report only (default).
@@ -846,7 +846,7 @@ async function main() {
     log('');
     log(`  Wrote ${candidates.length} candidates to ${opts.out} — nothing was sent to Firestore.`);
     log('  Read it, delete anything that is junk, then:');
-    log(`    node seed_dhaka_places.js --from=${opts.out} --yes-i-really-mean-it`);
+    log(`    node oneoff/seed_dhaka_places.js --from=${opts.out} --yes-i-really-mean-it`);
     log('');
     return;
   }

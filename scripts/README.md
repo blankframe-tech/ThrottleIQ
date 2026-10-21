@@ -12,7 +12,7 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`seed_police_checkposts.js`](#seed_police_checkpostsjs--seed-frequent-police-checkposts) | Populates the `places` collection with Dhaka's 30 frequent police checkpost & citation hotspots | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed'` |
 | [`seed_police_checkposts_v2.js`](#seed_police_checkposts_v2js--seed-additional-police-checkposts) | Populates the `places` collection with 25 additional DMP police checkposts across outer/corridor zones | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v2'` |
 | [`seed_police_checkposts_v3.js`](#seed_police_checkposts_v3js--seed-crowdsourced-police-checkposts) | Populates the `places` collection with 35 crowdsourced checkposts from Facebook Traffic groups & Waze | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v3'` |
-| [`import_google_places.js`](import_google_places.js) | From an Apify Google Maps Scraper export: adds missing Dhaka fuel/garage/parts places, fills phone/hours/generic names on nearby existing ones, and sets every Google rating to 0 (§105). Facts only, no ratings stored. `--from=<export.json>` (the 2026-10-19 export: `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`) | Creates and enrichments: yes, `revert_google_places.js`. Rating reset: no |
+| [`import_google_places.js`](oneoff/import_google_places.js) | From an Apify Google Maps Scraper export: adds missing Dhaka fuel/garage/parts places, fills phone/hours/generic names on nearby existing ones, and sets every Google rating to 0 (§105). Facts only, no ratings stored. `--from=<export.json>` (the 2026-10-19 export: `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`) | Creates and enrichments: yes, `revert_google_places.js`. Rating reset: no |
 | [`revert_google_places.js`](#revert_google_placesjs--take-the-google-maps-import-back-out) | Undoes `import_google_places.js`: deletes the `system:gmaps-seed-dhaka` places nobody has touched since (`--seeded-only`), and with `--from=<export.json>` also clears the Google-derived fields on the 80 enriched ones. Dry run by default; `--apply --backup=<file>` writes | Yes: `--restore=<backup> --apply`. Ratings set to 0 by the import: no |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
@@ -95,8 +95,8 @@ covers riders who never open the app again.
 
 ```bash
 cd scripts
-node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
-node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
+node oneoff/migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
+node oneoff/migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
 ```
 
 It prints counts and uids, never an address, warns if one email sits on two
@@ -116,8 +116,8 @@ field as public, so no rider's privacy changes.
 ```bash
 cd scripts && npm install
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
-node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
-node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
+node oneoff/backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+node oneoff/backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
 ```
 
 `--project` is required and must match the key's `project_id`. Missing and
@@ -236,7 +236,7 @@ npm run reset:dry-run
 or equivalently:
 
 ```bash
-node reset_beta_data.js
+node oneoff/reset_beta_data.js
 ```
 
 Running the script with **no flags does a dry run**. It walks every collection,
@@ -259,7 +259,7 @@ npm run reset:execute
 or equivalently:
 
 ```bash
-node reset_beta_data.js --yes-i-really-mean-it
+node oneoff/reset_beta_data.js --yes-i-really-mean-it
 ```
 
 Nothing is deleted without that flag. The script pauses for five seconds before
@@ -310,7 +310,7 @@ the script moves on to the next, so one bad collection does not block the rest.
 ## Syntax check
 
 ```bash
-node --check reset_beta_data.js
+node --check oneoff/reset_beta_data.js
 ```
 
 or `npm run check`. This only parses the file; it does not connect to anything.
@@ -393,7 +393,7 @@ editing it is just deleting objects.
 ### Step 2 — dry run
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js --from=dhaka_places.json
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js --from=dhaka_places.json
 ```
 
 Reports how many of those places are already in the directory and how many are
@@ -408,7 +408,7 @@ FIREBASE_PROJECT_ID=throttleiqfb npm run seed:dhaka:dry-run
 ### Step 3 — write
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js \
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js \
   --from=dhaka_places.json --yes-i-really-mean-it
 ```
 
@@ -464,7 +464,7 @@ be tidier on paper and would cut exactly those edges.
 To seed another city, pass its box — for example Chattogram:
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js \
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js \
   --bbox=22.28,91.72,22.42,91.88 --dry-run
 ```
 
@@ -578,8 +578,8 @@ Firestore. Read that output before you ever point it at real credentials.
 
 ```bash
 cd scripts
-node seed_qa_test_riders.js               # dry run, no setup needed
-node seed_qa_test_riders.js --count=5     # smaller sample dry run
+node oneoff/seed_qa_test_riders.js               # dry run, no setup needed
+node oneoff/seed_qa_test_riders.js --count=5     # smaller sample dry run
 ```
 
 ## Running it for real
@@ -600,7 +600,7 @@ underlying project); logging in as the wrong one fails with
 
 ```bash
 cd scripts
-FIREBASE_PROJECT_ID=throttleiqfb node seed_qa_test_riders.js --yes-i-really-mean-it
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_qa_test_riders.js --yes-i-really-mean-it
 ```
 
 Nothing is created without that flag, and it also requires typing the phrase
@@ -666,8 +666,8 @@ behind is harmless; deleting one a real rider is now using would not be.
 
 ```bash
 cd scripts
-FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js               # dry run
-FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js --yes-i-really-mean-it
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js               # dry run
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js --yes-i-really-mean-it
 ```
 
 Requires the confirmation phrase `DELETE QA SEED DATA`, same as
@@ -733,9 +733,9 @@ forums — **Road Trips** (4 posts), **Maintenance** (11), **Mileage Talk**
 ## Syntax check
 
 ```bash
-node --check seed_qa_test_riders.js
-node --check cleanup_qa_test_riders.js
-node --check qa_seed_catalog.js
+node --check oneoff/seed_qa_test_riders.js
+node --check oneoff/cleanup_qa_test_riders.js
+node --check oneoff/qa_seed_catalog.js
 ```
 
 ---
@@ -780,13 +780,13 @@ export FIREBASE_PROJECT_ID=throttleiqfb
 EXPORT="$HOME/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json"
 BACKUP="$HOME/.secrets/throttleiq/places-revert-$(date +%F-%H%M).json"
 
-node revert_google_places.js --seeded-only                 # B, dry run (reads only)
-node revert_google_places.js --from="$EXPORT"              # A, dry run (reads only)
-node revert_google_places.js --from="$EXPORT" --apply --backup="$BACKUP"   # writes (or --seeded-only)
-node revert_google_places.js --from="$EXPORT"              # again: 0 to delete, 0 to clear
+node oneoff/revert_google_places.js --seeded-only                 # B, dry run (reads only)
+node oneoff/revert_google_places.js --from="$EXPORT"              # A, dry run (reads only)
+node oneoff/revert_google_places.js --from="$EXPORT" --apply --backup="$BACKUP"   # writes (or --seeded-only)
+node oneoff/revert_google_places.js --from="$EXPORT"              # again: 0 to delete, 0 to clear
 
-node revert_google_places.js --restore="$BACKUP"           # undo, dry run
-node revert_google_places.js --restore="$BACKUP" --apply   # undo
+node oneoff/revert_google_places.js --restore="$BACKUP"           # undo, dry run
+node oneoff/revert_google_places.js --restore="$BACKUP" --apply   # undo
 ```
 
 - Dry run is the default. `--apply` needs `--backup=<new file>`; it refuses an

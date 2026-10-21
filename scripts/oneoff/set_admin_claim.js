@@ -26,8 +26,8 @@
  *
  * ---------------------------------------------------------------------------
  * Usage:
- *   FIREBASE_PROJECT_ID=throttleiqfb node set_admin_claim.js --email you@example.com
- *   FIREBASE_PROJECT_ID=throttleiqfb node set_admin_claim.js --email you@example.com --yes-i-really-mean-it
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/set_admin_claim.js --email you@example.com
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/set_admin_claim.js --email you@example.com --yes-i-really-mean-it
  *
  * Flags:
  *   --email <address>          Required. The account to grant admin:true.
@@ -84,7 +84,7 @@ function printHelp() {
 set_admin_claim.js — grant/revoke the admin:true custom claim.
 
 Usage:
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node set_admin_claim.js --email you@example.com [--yes-i-really-mean-it] [--revoke]
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/set_admin_claim.js --email you@example.com [--yes-i-really-mean-it] [--revoke]
 
 Flags:
   --email <address>          Required. The account to grant/revoke admin:true.

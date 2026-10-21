@@ -38,8 +38,8 @@
  *
  * ---------------------------------------------------------------------------
  * Usage:
- *   node create_review_account.js                                    # dry run, no creds needed
- *   FIREBASE_PROJECT_ID=throttleiqfb node create_review_account.js --yes-i-really-mean-it
+ *   node oneoff/create_review_account.js                                    # dry run, no creds needed
+ *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/create_review_account.js --yes-i-really-mean-it
  *
  * Flags:
  *   --email <address>      Default: rider.admin@example.com
@@ -144,11 +144,11 @@ const USAGE = `
 create_review_account.js — create/repair the Google Play "App access"
 reviewer sign-in account.
 
-  node create_review_account.js
+  node oneoff/create_review_account.js
       Dry run (the default). Prints the planned Auth + Firestore payload.
       No credentials needed, nothing is sent anywhere.
 
-  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node create_review_account.js --yes-i-really-mean-it
+  FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} node oneoff/create_review_account.js --yes-i-really-mean-it
       Actually create (or update, if it already exists) the Auth account and
       Firestore docs in the live '${EXPECTED_PROJECT_ID}' project.
 
