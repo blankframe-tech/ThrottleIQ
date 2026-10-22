@@ -1262,8 +1262,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     final service = ExportService();
     final rideMap = {
       'id': ride.id,
-      'startTime': ride.startTime.toIso8601String(),
-      'endTime': ride.endTime?.toIso8601String(),
+      'startTime': ride.startTime.toUtc().toIso8601String(),
+      'endTime': ride.endTime?.toUtc().toIso8601String(),
       'distanceM': ride.distanceM,
       'avgSpeedMs': ride.avgSpeedMs,
       'maxSpeedMs': ride.maxSpeedMs,

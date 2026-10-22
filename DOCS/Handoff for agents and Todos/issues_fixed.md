@@ -7515,6 +7515,27 @@ From `issues_open.md` §104.6. Branch `feat/quota-outage` was merged to `main` i
     - Refused requests never show in `api/request_count`, so "used up" is 99% of reads or writes.
 - **Stale note:** §90.C7 (full re-download every 5 min) no longer holds. Pulls are incremental (`cloud_repository.dart:549`), and an idle cycle costs 4 reads.
 
+## 104.1 Nearby places refetched every 5 km during a ride — FIXED (2026-10-22), not in a release
+
+Was: `live_ride_places_provider.dart` read every place within 25 km from Firestore at ride
+start and after each 5 km (about 1,000-1,200 reads per fetch after the §105 import).
+- **Now:** `RidePlacesCache` (`app/lib/features/poi_directory/data/ride_places_cache.dart`)
+  keeps the places on the device (`ride_places_cache.json` in app support). A refresh pulls
+  `updatedAt > lastPull` across `places` (one read when nothing changed), then reads a
+  geohash cell whole only when it is new to the phone or older than 3 days. The ride shows
+  10 km around the rider, refreshed every 5 km, and shows cached places at once and offline.
+- **`updatedAt`:** `PlaceModel.toFirestore` writes `FieldValue.serverTimestamp()`;
+  `firestore.rules` refuses any other value on create (optional, so older builds still add
+  places). The watermark is always a server `updatedAt`, never the phone clock (the first
+  one is the phone clock minus a day).
+- **Limits (shortcut, in code):** deletions, the §105 revert, and places added by admin
+  scripts or by builds without `updatedAt` reach a phone only on its 3-day cell re-read.
+  Rating bumps don't touch `updatedAt`, so cached ratings can be stale; the ride map doesn't
+  show them and place detail streams the doc.
+- **Tests:** `app/test/features/poi_directory/data/ride_places_cache_test.dart`,
+  `scripts/test/rules/places_rules.test.js` (server time allowed, backdated refused).
+- **Not done:** `scripts/loadtest/quota_sim.js` still models the old 25 km query.
+
 ## 105. Google ratings on Places had no traceable source — FIXED (2026-10-19, branch `data/apify-dhaka-places`), moved 2026-10-22
 
 The founder chose to drop the Google rating (105.1). Whether the 717 seeded places stay in
@@ -7539,6 +7560,24 @@ Paths are updated to the 2026-10-22 DOCS layout (`DOCS/old/apify/`).
 - **Cause:** `_liveCoordinator` is a `late final` that calls `_ref.read(realtimeServicesProvider)` on first use (`:304-305`). If nothing used it while the notifier was alive, `dispose()` creates it after the container is gone, and Riverpod throws.
 - **Fix:** keep the coordinator in a nullable field created on first use, and in `dispose()` call `_liveCoordinatorOrNull?.dispose()`.
 - **Resolution:** another session applied this fix on `main` in `4b914c10`, with the unit test `ride_recording_dispose_test.dart`; E2E on `main` then passed 4/4 (`judge.md`, 2026-10-21). `feat/quota-outage` gets it when it merges. With `4b914c10` applied on top of that branch, E2E also passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21).
+
+## 109. Leftovers from the retired 2026-10-14/15 critiques — partly resolved
+
+- **109.3 N10: GPX and JSON exports write local time with no offset — FIXED (2026-10-22).** `ride_summary_screen.dart` passed `ride.startTime.toIso8601String()` and `ride.endTime?.toIso8601String()` (local time without UTC offset or 'Z') to `ExportService`, and `ExportService.generateGPX` output `<time>$startTime</time>`. Since track points are recorded in UTC, third-party services like Strava showed rides skewed by the local timezone offset (e.g. 6 hours off for Dhaka UTC+6).
+  - *Fix:* In `ride_summary_screen.dart:1265-1266`, converted `ride.startTime.toUtc().toIso8601String()` and `ride.endTime?.toUtc().toIso8601String()` at the export boundary so both JSON and GPX receive ISO-8601 UTC strings ending with `Z`. In `ExportService.generateGPX`, normalized `startTime` and trackpoint timestamps via `DateTime.tryParse(...).toUtc().toIso8601String()`, ensuring all emitted GPX `<time>` tags are always UTC.
+  - *Tests:* `app/test/core/cloud/export_service_test.dart` (4 unit tests covering local-to-UTC conversion, UTC preservation, point timestamp UTC formatting, bounds and distance).
+
+## 110. Leftovers from the HANDOFF to-do and unverified lists — partly resolved
+
+- **110.3 Gradle wrapper is 8.13 — FIXED (2026-10-22).** Upgraded `distributionUrl` in `app/android/gradle/wrapper/gradle-wrapper.properties` to `gradle-8.14-all.zip`. Verified with Gradle 8.14 runtime (`./gradlew --version`) and `./gradlew tasks --dry-run` successfully.
+
+## 110.5 Data-safety notes missed impact records and the crash research copy — FIXED (2026-10-22)
+
+`throttleiq_data_safety.csv` now ticks App activity → Other actions (impact records:
+collected, required, App functionality + Analytics) and Location → Approximate location (the
+research copy's map cell: collected, optional opt-in, Analytics).
+`data_safety_and_permissions.md` has a "Crash detection records" section with the reasoning
+and two founder calls (Health info? User IDs?). Owner still fills the Play form.
 
 ## 2026-10-15 — Cockpit overlap and phone placement
 
