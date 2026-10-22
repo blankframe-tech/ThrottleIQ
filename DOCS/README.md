@@ -57,6 +57,7 @@ Update these in the same session as the change they describe.
 | [`architecture/backend_options.md`](For%20Devs%20and%20Contributors/architecture/backend_options.md) | Blaze billing vs a workaround vs leaving Firebase, with costs. |
 | [`architecture/phone_vs_cloud_data.md`](For%20Devs%20and%20Contributors/architecture/phone_vs_cloud_data.md) | What the phone stores vs what the cloud stores, and the gaps. |
 | [`architecture/realtime-database.md`](For%20Devs%20and%20Contributors/architecture/realtime-database.md) | The parked Realtime Database design (no RTDB access on `main`). |
+| [`architecture/indriyo_ideas.md`](For%20Devs%20and%20Contributors/architecture/indriyo_ideas.md) | Indriyo (this branch only): ideas not built yet, starting with on-device object detection on the mirror feed. |
 | [`guides/SETUP.md`](For%20Devs%20and%20Contributors/guides/SETUP.md) | Local setup: Firebase, Cloudinary, signing, build commands. |
 | [`guides/account_deletion_runbook.md`](For%20Devs%20and%20Contributors/guides/account_deletion_runbook.md) | How to delete a rider's account and data by hand. |
 | [`guides/app_check.md`](For%20Devs%20and%20Contributors/guides/app_check.md) | App Check setup and enforcement runbook. |
