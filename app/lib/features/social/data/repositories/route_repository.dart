@@ -6,6 +6,7 @@ import '../../domain/entities/route_entity.dart';
 import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/route_model.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 class RouteRepository {
   static final RouteRepository _instance = RouteRepository._internal();
@@ -50,7 +51,7 @@ class RouteRepository {
       sharedWithUserIds: [],
     );
 
-    await routeRef.set(route.toFirestore());
+    await ackOrQueued(routeRef.set(route.toFirestore()));
     return routeRef.id;
   }
 
@@ -156,7 +157,7 @@ class RouteRepository {
         .doc(routeId);
 
     if (!isPublic) {
-      await docRef.update({'isPublic': false});
+      await ackOrQueued(docRef.update({'isPublic': false}));
       return;
     }
 
@@ -170,12 +171,12 @@ class RouteRepository {
       seed: await _privacySalt.forUid(userId),
     );
 
-    await docRef.update({
+    await ackOrQueued(docRef.update({
       'isPublic': true,
       'polyline': clipped
           .map((point) => {'lat': point.latitude, 'lng': point.longitude})
           .toList(),
-    });
+    }));
   }
 
   /// Records that [userId] has just finished riding their own route
@@ -217,12 +218,12 @@ class RouteRepository {
 
   /// Deletes a route.
   Future<void> deleteRoute(String userId, String routeId) async {
-    await _firestore
+    await ackOrQueued(_firestore
         .collection('users')
         .doc(userId)
         .collection('routes')
         .doc(routeId)
-        .delete();
+        .delete());
   }
 
   /// Updates route details.

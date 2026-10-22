@@ -82,19 +82,22 @@ class _RideModeSelectorState extends ConsumerState<RideModeSelector> {
       // In-app notifications only — see NotificationRepository
       // .notifyGroupRideInvite; a real phone push needs a Cloud Function that
       // this project doesn't deploy yet. One failed write must not sink the
-      // whole ride, so these are individually best-effort.
+      // whole ride, so these are individually best-effort. In parallel: each
+      // may wait out its ack timeout (§104.6).
       final notifications = ref.read(notificationRepositoryProvider);
-      for (final rider in picked) {
-        try {
-          await notifications.notifyGroupRideInvite(
-            toUid: rider.uid,
-            fromUid: user.uid,
-            fromName: inviterName,
-            fromPhotoUrl: user.photoURL,
-            groupRideId: groupRideId,
-          );
-        } catch (_) {/* invitation doc still exists; they can be re-pinged */}
-      }
+      await Future.wait([
+        for (final rider in picked)
+          notifications
+              .notifyGroupRideInvite(
+                toUid: rider.uid,
+                fromUid: user.uid,
+                fromName: inviterName,
+                fromPhotoUrl: user.photoURL,
+                groupRideId: groupRideId,
+              )
+              // The invitation doc still exists; they can be re-pinged.
+              .catchError((Object e) => debugPrint('Invite ping failed: $e')),
+      ]);
 
       if (!mounted) return;
       // `go`, not `push`, and the recording is kicked off by the destination

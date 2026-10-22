@@ -6,6 +6,7 @@ import '../../domain/utilities/group_ride_join_code.dart';
 import '../../domain/utilities/group_ride_liveness.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
 /// rider verbatim — "wrong/expired code" and "ride is full" are both real,
@@ -162,7 +163,7 @@ class GroupRideRepository {
       'groupRideId': groupRideRef.id,
       'createdAt': FieldValue.serverTimestamp(),
     });
-    await batch.commit();
+    await ackOrQueued(batch.commit());
 
     return groupRideRef.id;
   }
@@ -423,7 +424,7 @@ class GroupRideRepository {
       'invitedIds': FieldValue.arrayUnion([for (final i in invitees) i.userId]),
     });
 
-    await batch.commit();
+    await ackOrQueued(batch.commit());
   }
 
   /// Accepts a group ride invitation: flips the rider's own member document to
@@ -486,7 +487,7 @@ class GroupRideRepository {
     // Best-effort: the invite doc is only a to-do marker, and losing the race
     // to delete it must not make a successful join look like a failure.
     try {
-      await rideRef.collection('invitations').doc(userId).delete();
+      await ackOrQueued(rideRef.collection('invitations').doc(userId).delete());
     } catch (_) {/* already gone, or rules raced us */}
   }
 
@@ -519,7 +520,7 @@ class GroupRideRepository {
     });
 
     try {
-      await rideRef.collection('invitations').doc(userId).delete();
+      await ackOrQueued(rideRef.collection('invitations').doc(userId).delete());
     } catch (_) {/* already gone */}
   }
 
@@ -530,7 +531,7 @@ class GroupRideRepository {
     required double lat,
     required double lng,
   }) async {
-    await _firestore
+    await ackOrQueued(_firestore
         .collection('groupRides')
         .doc(groupRideId)
         .collection('memberLocations')
@@ -540,7 +541,7 @@ class GroupRideRepository {
       'lat': lat,
       'lng': lng,
       'timestamp': FieldValue.serverTimestamp(),
-    });
+    }));
   }
 
   /// Gets live member locations.
@@ -613,10 +614,10 @@ class GroupRideRepository {
       audioUrl: audioUrl,
       durationMs: durationMs,
     );
-    await _rideRef(groupRideId).collection('voiceNotes').add({
+    await ackOrQueued(_rideRef(groupRideId).collection('voiceNotes').add({
       ...model.toDocument(),
       'createdAt': FieldValue.serverTimestamp(),
-    });
+    }));
   }
 
   /// Live view of a group ride's most recent [limit] voice notes, oldest
@@ -662,8 +663,8 @@ class GroupRideRepository {
   /// arrays, so a member's heartbeat would be refused. The creator is the
   /// right source anyway — the ride ends when they leave.
   Future<void> heartbeat(String groupRideId) async {
-    await _rideRef(groupRideId)
-        .update({'lastActiveAt': FieldValue.serverTimestamp()});
+    await ackOrQueued(_rideRef(groupRideId)
+        .update({'lastActiveAt': FieldValue.serverTimestamp()}));
   }
 
   /// Heartbeats every active ride [uid] created. Called periodically while
@@ -758,7 +759,8 @@ class GroupRideRepository {
     });
 
     try {
-      await rideRef.collection('memberLocations').doc(userId).delete();
+      await ackOrQueued(
+          rideRef.collection('memberLocations').doc(userId).delete());
     } catch (_) {/* nothing published yet, or already gone */}
   }
 
@@ -801,7 +803,8 @@ class GroupRideRepository {
     });
 
     try {
-      await rideRef.collection('memberLocations').doc(userId).delete();
+      await ackOrQueued(
+          rideRef.collection('memberLocations').doc(userId).delete());
     } catch (_) {/* nothing published yet, or already gone */}
   }
 

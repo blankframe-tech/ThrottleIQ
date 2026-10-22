@@ -8,6 +8,23 @@ import 'package:latlong2/latlong.dart';
 /// where is everyone".
 const Duration kGroupRideBroadcastInterval = Duration(seconds: 20);
 
+/// The slowest [groupRideBroadcastInterval] gets (reached at 20 riders, the
+/// ride cap).
+const Duration kGroupRideMaxBroadcastInterval = Duration(seconds: 40);
+
+/// How often a group of [members] riders publishes (issues §104.2). Every
+/// publish is read by every member's listener, so a fixed interval costs
+/// N² reads per tick. Spacing ticks by 2 s per rider keeps a group's reads
+/// per minute growing with N, not N², between the 20 s and 40 s bounds.
+Duration groupRideBroadcastInterval(int members) {
+  final gap = const Duration(seconds: 2) * members;
+  if (gap < kGroupRideBroadcastInterval) return kGroupRideBroadcastInterval;
+  if (gap > kGroupRideMaxBroadcastInterval) {
+    return kGroupRideMaxBroadcastInterval;
+  }
+  return gap;
+}
+
 /// Below this movement since the last publish, a tick is skipped…
 const double kGroupRideMinMoveMeters = 25;
 
@@ -16,10 +33,11 @@ const double kGroupRideMinMoveMeters = 25;
 const Duration kGroupRideBroadcastHeartbeat = Duration(minutes: 2);
 
 /// Past this age a member's position is shown as stale rather than current.
-/// One heartbeat plus two broadcast ticks of slack — a rider who is parked
-/// (publishing only every [kGroupRideBroadcastHeartbeat]) must not flicker
-/// stale between heartbeats, and one dropped write shouldn't flag them.
-const Duration kGroupRideStaleAfter = Duration(seconds: 160);
+/// One heartbeat plus two of the slowest broadcast ticks of slack — a rider
+/// who is parked (publishing only every [kGroupRideBroadcastHeartbeat]) must
+/// not flicker stale between heartbeats, and one dropped write shouldn't
+/// flag them.
+const Duration kGroupRideStaleAfter = Duration(seconds: 200);
 
 const Distance _distance = Distance();
 
