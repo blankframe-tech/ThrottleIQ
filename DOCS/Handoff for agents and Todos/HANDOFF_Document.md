@@ -1,12 +1,13 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-22._
+_Last updated: 2026-10-23._
 
 **Branches (2026-10-22):**
-- `main` includes the Firestore quota outage mode (merge `c751968e`, §104.6) and the `scripts/oneoff/` move (`03a209b5`). `scripts/check.sh` passed on `9df0365a`.
-- `experimental` = `main` (fast-forwarded 2026-10-22).
+- `main` (`a0bf4f4f`, pushed 2026-10-22) includes the Firestore quota outage mode (merge `c751968e`, §104.6), the `scripts/oneoff/` move (`03a209b5`) and the 2026-10-22 agent run (see Recent sessions). `scripts/check.sh` passed on `a0bf4f4f`'s parent merge `0568c1ec`.
+- `experimental` is 39 commits behind `main` since that run (last fast-forwarded 2026-10-22).
+- Waiting for owner review: `lane/f-wcag-contrast` (pushed, palette contrast fix, owner item 24).
 - Retired 2026-10-22, all fully in `main`: `feat/crash-shadow-mode`, `feat/quota-outage`, `data/apify-dhaka-places`.
-- In progress: `fix/reads-104` (a separate session: Firestore ack timeout, §104.6 follow-up).
+- Merged into `main` 2026-10-22: `fix/reads-104` (via `lane/a-reads-likes`).
 - Never merged: `indriyo` and `mayabi` (notes below). Three Dependabot branches exist on `origin` (owner item 16).
 
 **`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 9 commits ahead, last merged `main` 2026-10-22). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
@@ -182,6 +183,14 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-10-22 (agent rooms run): eight lanes from `DOCS/agent_rooms/`, merged and pushed
+
+- Coordinator branch `integration/agent-rooms-2026-10-22`, one worktree per lane, a fresh reviewer per lane, `check.sh` once after the last merge; `main` fast-forwarded to `a0bf4f4f`. Nothing deployed, nothing on a device.
+- Code: `fix/reads-104` merged, keeping main's §104.1 places cache (§104.2 interval, §104.3 vote skip, §104.6 screen-write `ackOrQueued`); §80 step 1 (no legacy likes sweep); `crashEvents.createdAt` floored to the UTC hour; functions: bounded purges with a time budget, retry-safe erasure, report-first moderation (`ba11d594`); `reportSilently` plus a bare-`catch (_)` ratchet at 54 (§83.14); 21 widget tests (§83.28) that found and fixed the Sync issues Retry message.
+- Branches: `main` merged into `mayabi` and `indriyo` (no rebase), pushed. WCAG palette on `lane/f-wcag-contrast`, not merged.
+- Drafts for the owner (all marked DRAFT): `DOCS/agent_rooms/drafts/` (deploy/test rules, §84 index audit, prize plan, decision cards for the Maps data and Blaze), signed-upload design, `public/.terms.DRAFT.html`, Data Safety CSV and review, forum starter posts, SafeSpot flyer, Play reviewer video script. Maya meeting prep is local only (`DOCS/General/partnerships/`).
+- Owner page items 46-50 added (likes steps 2-3, privacy.html gaps, Verified vs SafeSpot, Maya pricing in public, CodeQL check). Room to-dos carry dated status lines.
 
 ### 2026-10-22 (tour): feature tour shows the real screens
 
