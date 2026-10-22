@@ -12,6 +12,7 @@ import '../../domain/entities/forum_reply_entity.dart';
 import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Deterministic doc id for a rider-created forum.
 ///
@@ -347,15 +348,15 @@ class ForumRepository {
   /// this idempotent — re-adding an existing maintainer is a no-op rather
   /// than a duplicate entry.
   Future<void> addMaintainer(String forumId, String uid) async {
-    await _forums.doc(forumId).update({
+    await ackOrQueued(_forums.doc(forumId).update({
       'maintainerIds': FieldValue.arrayUnion([uid]),
-    });
+    }));
   }
 
   Future<void> removeMaintainer(String forumId, String uid) async {
-    await _forums.doc(forumId).update({
+    await ackOrQueued(_forums.doc(forumId).update({
       'maintainerIds': FieldValue.arrayRemove([uid]),
-    });
+    }));
   }
 
   /// Deletes a post and rolls back the forum's `postCount`.
@@ -380,7 +381,7 @@ class ForumRepository {
       'postCount': FieldValue.increment(-1),
       'lastPostId': postId,
     });
-    await batch.commit();
+    await ackOrQueued(batch.commit());
   }
 
   /// Deletes a reply and rolls back its post's `replyCount`.
@@ -550,7 +551,7 @@ class ForumRepository {
       'postCount': FieldValue.increment(1),
       'lastPostId': postRef.id,
     });
-    await batch.commit();
+    await ackOrQueued(batch.commit());
 
     return postRef.id;
   }
@@ -565,10 +566,11 @@ class ForumRepository {
     required bool isSolved,
     String? solutionReplyId,
   }) async {
-    await _forums.doc(forumId).collection('posts').doc(postId).update({
+    await ackOrQueued(
+        _forums.doc(forumId).collection('posts').doc(postId).update({
       'isSolved': isSolved,
       'solutionReplyId': solutionReplyId,
-    });
+    }));
   }
 
   /// The forums whose posts make up [forumId]'s post list: itself, plus —

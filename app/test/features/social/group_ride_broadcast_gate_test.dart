@@ -55,9 +55,22 @@ void main() {
       "don't flicker stale", () {
     expect(
       kGroupRideStaleAfter >
-          kGroupRideBroadcastHeartbeat + kGroupRideBroadcastInterval,
+          kGroupRideBroadcastHeartbeat + kGroupRideMaxBroadcastInterval,
       isTrue,
     );
+  });
+
+  test('bigger groups tick slower, so reads per minute grow with N, not N²',
+      () {
+    expect(groupRideBroadcastInterval(0), kGroupRideBroadcastInterval);
+    expect(groupRideBroadcastInterval(3), kGroupRideBroadcastInterval);
+    expect(groupRideBroadcastInterval(15), const Duration(seconds: 30));
+    expect(groupRideBroadcastInterval(20), kGroupRideMaxBroadcastInterval);
+    expect(groupRideBroadcastInterval(50), kGroupRideMaxBroadcastInterval);
+    // Listener reads per minute: n writes × n listeners per tick.
+    double readsPerMin(int n) =>
+        n * n * 60 / groupRideBroadcastInterval(n).inSeconds;
+    expect(readsPerMin(20) / readsPerMin(10), closeTo(2, 0.01));
   });
 
   test('interval is no faster than 15 s (Spark write budget)', () {

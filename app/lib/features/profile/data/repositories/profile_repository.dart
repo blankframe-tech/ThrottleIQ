@@ -14,6 +14,7 @@ import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Doc id of `emailLookup/{id}`: lowercase hex SHA-256 of the trimmed,
 /// lowercased email. firestore.rules recomputes it from the token email, and
@@ -109,15 +110,16 @@ class ProfileRepository {
     var written = false;
     if (!snap.exists && !snap.metadata.isFromCache) {
       try {
-        await BadgeStatsCounter(firestore: _firestore).commit(
-          BadgeStatsBatches.riderRegistration(user.uid, profileFields: fields),
-        );
-        written = true;
+        // A queued (unacked) batch still gets the plain set below: if the
+        // batch is refused later, the profile must exist anyway.
+        written = await ackOrQueued(BadgeStatsCounter(firestore: _firestore)
+            .commit(BadgeStatsBatches.riderRegistration(user.uid,
+                profileFields: fields)));
       } on FirebaseException catch (e) {
         if (e.code != 'permission-denied') rethrow;
       }
     }
-    if (!written) await ref.set(fields, SetOptions(merge: true));
+    if (!written) await ackOrQueued(ref.set(fields, SetOptions(merge: true)));
     await _saveEmail(user);
   }
 
@@ -133,12 +135,14 @@ class ProfileRepository {
     final email = user.email;
     if (email == null || email.isEmpty) return;
     try {
-      await _users.doc(user.uid).collection('private').doc('account').set(
+      await ackOrQueued(
+          _users.doc(user.uid).collection('private').doc('account').set(
         {'email': email, 'emailLower': email.toLowerCase()},
         SetOptions(merge: true),
-      );
+      ));
       if (!user.emailVerified) return;
-      await _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid});
+      await ackOrQueued(
+          _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid}));
     } on FirebaseException catch (e) {
       if (e.code != 'permission-denied') rethrow;
     }
@@ -152,7 +156,7 @@ class ProfileRepository {
     String? bio,
     String? photoUrl,
   }) async {
-    await _users.doc(uid).set(
+    await ackOrQueued(_users.doc(uid).set(
           UserProfileModel.editableFields(
             displayName: displayName,
             nickname: nickname,
@@ -160,7 +164,7 @@ class ProfileRepository {
             photoUrl: photoUrl,
           ),
           SetOptions(merge: true),
-        );
+        ));
   }
 
   /// Claims a unique @username for [uid]. Throws [UsernameTakenException] if
@@ -270,10 +274,10 @@ class ProfileRepository {
     required String visibility,
   }) async {
     assert(['public', 'mutual', 'private'].contains(visibility));
-    await _users.doc(uid).set({
+    await ackOrQueued(_users.doc(uid).set({
       'visibility': visibility,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)));
   }
 
   /// Sets who can see this rider's garage: 'public' (any signed-in rider —
@@ -287,10 +291,10 @@ class ProfileRepository {
     required String bikesVisibility,
   }) async {
     assert(kBikesVisibilityLevels.contains(bikesVisibility));
-    await _users.doc(uid).set({
+    await ackOrQueued(_users.doc(uid).set({
       'bikesVisibility': bikesVisibility,
       'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    }, SetOptions(merge: true)));
   }
 
   /// The bikes in [uid]'s garage, read from the synced Firestore mirror of
@@ -439,11 +443,11 @@ class ProfileRepository {
 
   /// Unblocks a user by removing their uid from the current user's blocks subcollection.
   Future<void> unblockUser(String currentUserId, String blockedUserId) async {
-    await _users
+    await ackOrQueued(_users
         .doc(currentUserId)
         .collection('blocks')
         .doc(blockedUserId)
-        .delete();
+        .delete());
   }
 
   /// Whether [otherUserId] has blocked [currentUserId]. Reads the single

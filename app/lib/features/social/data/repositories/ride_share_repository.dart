@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -11,6 +12,7 @@ import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Comments fetched per page by [RideShareRepository.getComments].
 const int kRideCommentsPageSize = 30;
@@ -165,11 +167,11 @@ class RideShareRepository {
   }) {
     final urls = normalizeRidePhotoUrls(photoUrls);
     final trimmed = caption?.trim() ?? '';
-    return _firestore.collection('rides').doc(rideId).update({
+    return ackOrQueued(_firestore.collection('rides').doc(rideId).update({
       'caption': trimmed.isEmpty ? null : trimmed,
       'photoUrls': urls,
       'photoUrl': urls.isEmpty ? null : urls.first,
-    });
+    }));
   }
 
   /// Gets a shared ride by ID.
@@ -342,22 +344,37 @@ class RideShareRepository {
   /// [hydrateVotesFor] ONCE on the
   /// merged, de-duplicated page instead — see `RideFeedNotifier._fetchPage`.
   ///
-  /// Reducing it below one-read-per-ride needs a `collectionGroup('votes')`
-  /// query, which in turn needs a `uid` field on each vote document (the uid
-  /// is currently only the document id, which a collection-group query can't
-  /// filter on), a collection-group read rule, and a backfill of existing
-  /// vote docs. Left for a pass that can run and verify that migration.
+  /// A ride with no votes at all is skipped ([hydrateWith], issues §104.3).
+  /// Reducing it below one-read-per-voted-ride needs a
+  /// `collectionGroup('votes')` query, which in turn needs a `uid` field on
+  /// each vote document (the uid is currently only the document id, which a
+  /// collection-group query can't filter on), a collection-group read rule,
+  /// and a backfill of existing vote docs. Left for a pass that can run and
+  /// verify that migration.
   Future<List<SharedRideEntity>> _hydrate(
       List<SharedRideEntity> entities) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-    if (currentUserId == null || entities.isEmpty) return entities;
+    if (currentUserId == null) return entities;
+    return hydrateWith(entities, (id) => getMyVote(id, currentUserId));
+  }
 
-    final votes = await Future.wait(
-        entities.map((ride) => getMyVote(ride.id, currentUserId)));
-
+  /// Puts [getVote]'s answer on each ride, without asking for rides whose
+  /// tallies are both 0: `vote()` bumps a tally in the same transaction that
+  /// writes the vote doc, so such a ride has no vote from anyone. Most feed
+  /// rides have none, and each ask is 2 billed reads (the doc plus its rules
+  /// `get()` on the ride).
+  @visibleForTesting
+  static Future<List<SharedRideEntity>> hydrateWith(
+    List<SharedRideEntity> rides,
+    Future<int?> Function(String rideId) getVote,
+  ) async {
+    final votes = await Future.wait(rides.map((ride) =>
+        ride.upvotes == 0 && ride.downvotes == 0
+            ? Future<int?>.value()
+            : getVote(ride.id)));
     return [
-      for (var i = 0; i < entities.length; i++)
-        entities[i].copyWith(myVote: votes[i]),
+      for (var i = 0; i < rides.length; i++)
+        rides[i].copyWith(myVote: votes[i]),
     ];
   }
 
@@ -510,21 +527,15 @@ class RideShareRepository {
   Future<void> deleteSharedRide(String rideId) async {
     final docRef = _firestore.collection('rides').doc(rideId);
 
-    // Fetch both subcollections concurrently, then fire every delete at
-    // once rather than awaiting them one at a time — a popular ride with
-    // many comments/votes used to stall proportionally to that count.
-    final commentsFuture = docRef.collection('comments').get();
-    // `likes` is a retired engagement model (issues_fixed.md §81); legacy
-    // docs are still swept up here so a delete leaves nothing behind.
-    final likesFuture = docRef.collection('likes').get();
-    final comments = await commentsFuture;
-    final likes = await likesFuture;
-    await Future.wait([
+    // Fire every comment delete at once rather than awaiting them one at a
+    // time — a popular ride with many comments used to stall proportionally
+    // to that count.
+    final comments = await docRef.collection('comments').get();
+    await ackOrQueued(Future.wait([
       for (final comment in comments.docs) comment.reference.delete(),
-      for (final like in likes.docs) like.reference.delete(),
-    ]);
+    ]));
 
     // Delete the ride
-    await docRef.delete();
+    await ackOrQueued(docRef.delete());
   }
 }

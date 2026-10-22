@@ -68,9 +68,10 @@ test('far, other-category, or already-imported places are handled correctly', ()
   assert.equal(plan.updates.length, 0);
 });
 
-test('created docs carry no Google rating and the seed sentinel', () => {
+test('created docs carry no Google rating, the seed sentinel, and are unverified', () => {
   const doc = toPlaceDocument(parseGooglePlace(row()), 'now');
   assert.equal(doc.googleRating, 0);
+  assert.equal(doc.verified, false);
   assert.equal(doc.createdBy, SEED_AUTHOR);
   assert.equal(doc.geohash.length, 9);
 });

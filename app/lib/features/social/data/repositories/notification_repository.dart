@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../domain/entities/app_notification_entity.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// In-app notifications at `users/{uid}/notifications/{id}`. See
 /// [AppNotificationEntity]'s doc comment for why this is in-app only, not a
@@ -9,7 +10,8 @@ import '../../domain/entities/app_notification_entity.dart';
 String followNotificationId(String fromUid) => 'follow_$fromUid';
 
 class NotificationRepository {
-  static final NotificationRepository _instance = NotificationRepository._internal();
+  static final NotificationRepository _instance =
+      NotificationRepository._internal();
   factory NotificationRepository() => _instance;
   NotificationRepository._internal();
 
@@ -67,7 +69,7 @@ class NotificationRepository {
     String? fromPhotoUrl,
   }) async {
     if (toUid == fromUid) return;
-    await _notifs(toUid).add({
+    await ackOrQueued(_notifs(toUid).add({
       'type': NotificationType.groupRideInvite.name,
       'fromUid': fromUid,
       'fromName': fromName,
@@ -75,7 +77,7 @@ class NotificationRepository {
       'groupRideId': groupRideId,
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
-    });
+    }));
   }
 
   /// Writes a "so-and-so joined your ride" notification into [toUid]'s
@@ -95,7 +97,7 @@ class NotificationRepository {
     String? fromPhotoUrl,
   }) async {
     if (toUid == fromUid) return;
-    await _notifs(toUid).add({
+    await ackOrQueued(_notifs(toUid).add({
       'type': NotificationType.groupRideJoined.name,
       'fromUid': fromUid,
       'fromName': fromName,
@@ -103,7 +105,7 @@ class NotificationRepository {
       'groupRideId': groupRideId,
       'createdAt': FieldValue.serverTimestamp(),
       'read': false,
-    });
+    }));
   }
 
   Stream<List<AppNotificationEntity>> watchNotifications(String uid) {
@@ -114,7 +116,8 @@ class NotificationRepository {
         .map((snap) => snap.docs.map(_fromDoc).toList());
   }
 
-  AppNotificationEntity _fromDoc(QueryDocumentSnapshot<Map<String, dynamic>> doc) {
+  AppNotificationEntity _fromDoc(
+      QueryDocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data();
     return AppNotificationEntity(
       id: doc.id,
