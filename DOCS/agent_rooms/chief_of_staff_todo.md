@@ -8,6 +8,7 @@
 ## 🚨 P0: Executive Decision Triage (Owner Blockers)
 
 - [ ] **1. Drive Final Decision on Scraped Google Maps Data ([`owner_works_now.html #1`](../../../../housekeeping/owner_works_now.html), [`judge.md:93`](../../../judge.md)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** decision card drafted: `DOCS/agent_rooms/drafts/``decision_card_scraped_places.md` (recommends a full revert, dry run first).
   - **Context:** 717 scraped places + 80 enriched docs violate Google Maps Terms of Service, capping the product audit score at 40 and introducing legal/store takedown risk.
   - **Tradeoff Options:**
     - *Option A (Recommended):* Revert all scraped fields using the saved Apify backup (`revert_google_places.js --from=...`). Places drop from 1,238 to 521, eliminating legal risk. Rebuild directory organically from OpenStreetMap and rider submissions.
@@ -16,6 +17,7 @@
   - **Action:** Present concise decision card to the owner; upon approval, instruct the Operations Manager / Architect to run the chosen script.
 
 - [ ] **2. Facilitate Firebase Blaze Plan Upgrade ([`owner_works_now.html #3`](../../../../housekeeping/owner_works_now.html)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** decision card drafted: `DOCS/agent_rooms/drafts/``decision_card_blaze_upgrade.md` (recommends upgrading now with a budget alert).
   - **Context:** ThrottleIQ is running on the free Spark tier. Blocked capabilities: Cloud Functions background triggers, Firestore automated TTL policies (`liveSessions.expiresAt`, `places.expiresAt`), automated account erasure, and signed Cloudinary image uploads.
   - **Action:** Present cost-benefit briefing to the owner (Firebase Blaze includes generous free-tier allowances identical to Spark, with pay-as-you-go billing only upon exceeding thresholds). Secure billing enablement.
 
