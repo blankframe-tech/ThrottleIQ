@@ -9,6 +9,7 @@ import '../../../../core/database/database_helper.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 final firebaseAuthProvider =
     Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
@@ -53,7 +54,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     try {
       await _profiles.ensureProfile(user);
       await _ensureUsername(user);
-    } catch (_) {/* non-fatal */}
+    } catch (e, st) {
+      reportSilently(e, st, where: 'auth.seedProfile');
+    }
   }
 
   /// Every rider ends up with an @handle even if they never touch the
@@ -167,7 +170,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       try {
         await _profiles.ensureProfile(_auth.currentUser!);
         await _profiles.updateProfile(uid: uid, displayName: name);
-      } catch (_) {/* non-fatal — profile syncs on next launch */}
+      } catch (e, st) {
+        // Non-fatal: the profile syncs on next launch.
+        reportSilently(e, st, where: 'auth.updateDisplayName');
+      }
     }
   }
 
@@ -276,8 +282,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       // SQLite data (no server auth dependency) and sign out of Google.
       try {
         await DatabaseHelper.instance.deleteUserData(uid);
-      } catch (_) {
+      } catch (e, st) {
         // Non-fatal — the account is gone either way.
+        reportSilently(e, st, where: 'auth.deleteUserData');
       }
       try {
         await GoogleSignIn().signOut();

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/medical_info_entity.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 const _prefsKeyPrefix = 'safe_qr_medical_info_';
 
@@ -35,11 +36,12 @@ class MedicalInfoNotifier extends StateNotifier<MedicalInfoEntity> {
     final raw = prefs.getString(_prefsKey);
     if (raw == null) return;
     try {
-      state = MedicalInfoEntity.fromJson(
-          json.decode(raw) as Map<String, dynamic>);
-    } catch (_) {
+      state =
+          MedicalInfoEntity.fromJson(json.decode(raw) as Map<String, dynamic>);
+    } catch (e, st) {
       // Corrupt/foreign value under this key — treat as never set rather
       // than crashing the settings screen that reads this provider.
+      reportSilently(e, st, where: 'medicalInfo.decode');
     }
   }
 

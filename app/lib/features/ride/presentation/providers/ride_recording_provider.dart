@@ -59,6 +59,7 @@ import 'helpers/sensor_fusion_coordinator.dart';
 import '../../../../core/i18n/l10n_lookup.dart';
 import '../../../../core/i18n/locale_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 const _uuid = Uuid();
 
@@ -581,7 +582,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       try {
         await _persistenceCoordinator.clearRecordingState();
         if (inserted != null) await _rideDao.delete(inserted.id);
-      } catch (_) {}
+      } catch (e, st) {
+        reportSilently(e, st, where: 'ride.startFailedCleanup');
+      }
       if (mounted) {
         state = const RideRecordingState(error: kStartFailedRecordingError);
       }

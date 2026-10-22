@@ -22,3 +22,16 @@ void reportNonFatal(Object error, StackTrace? stack, {String? reason}) {
     // Reporting must never take the app down with it.
   }
 }
+
+/// For a `catch` that swallows an error on purpose (best-effort work the app
+/// carries on without, §83.14): records it as a non-fatal so it still shows on
+/// the dashboard, tagged with [where]. A no-op in debug builds and tests, and
+/// for Firestore being offline (expected, not a failure). Never throws.
+void reportSilently(Object error, StackTrace? stack, {required String where}) {
+  if (kDebugMode) return;
+  if (error is FirebaseException &&
+      (error.code == 'unavailable' || error.code == 'deadline-exceeded')) {
+    return;
+  }
+  reportNonFatal(error, stack, reason: where);
+}

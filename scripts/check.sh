@@ -98,13 +98,8 @@ format_changed() {
 # §1.3.4). Use asDouble/asDoubleOrNull from core/utils/num_cast.dart.
 guard_as_double() { ! grep -rnE "\] as double\b" app/lib; }
 
-# Ratchet (§90.B6): bare `catch (_)` swallows errors. The count may only go
-# down; lower MAX when you remove some. Prefer reportNonFatal
-# (core/utils/error_reporter.dart) or a logged `catch (e)`.
-CATCH_MAX=66
-guard_bare_catch() {
-  local n; n=$(grep -rn "catch (_)" app/lib | wc -l | tr -d ' ')
-  echo "bare catch (_): $n (max $CATCH_MAX)"; [ "$n" -le "$CATCH_MAX" ]; }
+# The bare `catch (_)` ratchet (§83.14) is a test now:
+# app/test/core/utils/error_reporter_test.dart.
 
 # Team NJ4675FFUX is a personal Apple team: paid-only entitlements break every
 # iPhone build. See .agents/skills/deploy/SKILL.md.
@@ -130,7 +125,6 @@ functions_if_changed() {
 step "l10n generate" l10n
 step "format (changed files)" format_changed
 step "guard: raw as double" guard_as_double
-step "guard: bare catch ratchet" guard_bare_catch
 step "guard: paid-only entitlements" guard_entitlements
 step "flutter analyze" analyze
 step "flutter test" tests

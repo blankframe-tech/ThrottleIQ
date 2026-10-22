@@ -4,12 +4,14 @@ import 'package:flutter/foundation.dart' show compute;
 import 'package:sqflite/sqflite.dart';
 
 import '../database_helper.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Top-level so [compute] can hand it to a worker isolate. A share-ride
 /// payload carries the ride's full polyline, which can be large enough that
 /// encoding it inline on the calling isolate is a visible hitch right when
 /// the rider taps "Share" — see issues §65.3.
-String _encodeOutboxPayload(Map<String, dynamic> payload) => jsonEncode(payload);
+String _encodeOutboxPayload(Map<String, dynamic> payload) =>
+    jsonEncode(payload);
 
 /// `outbox.status` values. See `_createOutboxSql` in [DatabaseHelper].
 class OutboxStatus {
@@ -85,7 +87,8 @@ class OutboxEntry {
     try {
       final decoded = jsonDecode(raw);
       return decoded is Map<String, dynamic> ? decoded : const {};
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'outbox.decodePayload');
       return const {};
     }
   }
