@@ -168,20 +168,19 @@ void main() {
     await tester.pumpWidget(_app());
     await _settle(tester);
 
-    // Garage, Maintenance, Places, Social, Profile.
+    // Garage, Profile, Maintenance, Places, Social.
     expect(find.text(_en.tourStepCounter(1, 5)), findsWidgets);
     expect(find.text(_en.tourGarageTitle), findsOneWidget);
     expect(find.text(_en.tourRecordTitle), findsNothing);
-    // The mini nav mirrors the rider's own: Maintenance in, Record and Rides out.
-    expect(find.text(_en.maintenance), findsWidgets);
-    expect(find.text(_en.navRecordLabel), findsNothing);
-    expect(find.text(_en.navRidesLabel), findsNothing);
 
     await _tap(tester, 'tour-next');
+    await _tap(tester, 'tour-next');
     expect(find.text(_en.tourMaintenanceTitle), findsOneWidget);
+    // Maintenance is its own tab here, not "Garage › Maintenance".
+    expect(find.text(_en.maintenance.toUpperCase()), findsOneWidget);
     await _tap(tester, 'tour-show-me');
     expect(find.text('screen:/home/maintenance'), findsOneWidget);
-    expect(find.text(_en.tourStepCounter(2, 5)), findsOneWidget);
+    expect(find.text(_en.tourStepCounter(3, 5)), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

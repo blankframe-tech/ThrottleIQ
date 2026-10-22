@@ -1,10 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
 import '../../../../shared/widgets/app_card.dart';
@@ -21,7 +19,7 @@ bool _reduceMotion(BuildContext context) =>
 
 // ─── Content ────────────────────────────────────────────────────────────────
 
-/// One tour step's content: the spotlight preview, the title, and the
+/// One tour step's content: the real-screen preview, the title, and the
 /// numbered callouts. Navigation chrome (progress, skip, back/next) lives
 /// outside the `PageView` in [TourProgressHeader] / [TourControls] so it stays
 /// put while the content swipes.
@@ -82,12 +80,13 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
   Widget build(BuildContext context) {
     final slide = widget.slide;
     final palette = context.palette;
-    final accent = slide.accent.resolve(palette);
+    final accent = tourAccent(palette);
 
     return LayoutBuilder(builder: (context, constraints) {
       final compact = constraints.maxHeight < kTourCompactHeight;
-      final previewHeight =
-          compact ? 170.0 : (constraints.maxHeight * 0.4).clamp(200.0, 260.0);
+      final previewHeight = compact
+          ? 220.0
+          : (constraints.maxHeight * 0.58).clamp(280.0, 420.0);
 
       return SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -96,12 +95,25 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
           children: [
             _staggered(
               0,
-              TourSpotlightPreview(
+              TourScreenPreview(
                 slide: slide,
                 height: previewHeight,
               ),
             ),
             SizedBox(height: compact ? 14 : 20),
+            _staggered(
+              1,
+              Text(
+                slide.location.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                  color: palette.textSecondary,
+                ),
+              ),
+            ),
+            const SizedBox(height: 4),
             _staggered(
               1,
               Text(
@@ -253,17 +265,12 @@ class _NumberBadge extends StatelessWidget {
   }
 }
 
-// ─── Spotlight preview ──────────────────────────────────────────────────────
+// ─── Screen preview ─────────────────────────────────────────────────────────
 
-/// A schematic of where the step's feature lives: the hero icon under a
-/// pulsing spotlight, the numbered callouts orbiting it, a breadcrumb chip,
-/// and a miniature of the real bottom navigation with the step's tab lit.
-///
-/// Drawn entirely from theme tokens (palette, shape, typography), so it
-/// matches every color mode, brightness and shape vibe — the old per-feature
-/// pixel mockups hardcoded their own colors and drifted from the real UI.
-class TourSpotlightPreview extends StatefulWidget {
-  const TourSpotlightPreview({
+/// A real capture of the step's screen in a phone-shaped frame, with the
+/// step's numbered callouts pinned on the elements they describe.
+class TourScreenPreview extends StatelessWidget {
+  const TourScreenPreview({
     super.key,
     required this.slide,
     required this.height,
@@ -272,353 +279,73 @@ class TourSpotlightPreview extends StatefulWidget {
   final OnboardingSlide slide;
   final double height;
 
-  @override
-  State<TourSpotlightPreview> createState() => _TourSpotlightPreviewState();
-}
-
-class _TourSpotlightPreviewState extends State<TourSpotlightPreview>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulse = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1800),
-  );
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_reduceMotion(context)) {
-      _pulse.stop();
-      _pulse.value = 0.5;
-    } else if (!_pulse.isAnimating) {
-      _pulse.repeat(reverse: true);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
+  // Width / height of the cropped captures in assets/images/tour_*.jpg.
+  static const double _aspect = 540 / 1098;
+  static const double _pinSize = 22;
 
   @override
   Widget build(BuildContext context) {
-    final slide = widget.slide;
     final palette = context.palette;
-    final accent = slide.accent.resolve(palette);
-    const navHeight = 52.0;
-    final stageHeight = widget.height - navHeight;
-    // Halo (1.9x) plus a pin (22) has to fit under the breadcrumb chip.
-    final heroSize = ((stageHeight - 48) / 1.9).clamp(36.0, 92.0);
-
-    return Semantics(
-      container: true,
-      label: '${slide.location}: ${slide.title}',
-      excludeSemantics: true,
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(context.shape.radiusXl),
-          child: SizedBox(
-            height: widget.height,
-            child: Column(
-              children: [
-                // ── Stage ─────────────────────────────────────────────────
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: RadialGradient(
-                        radius: 0.9,
-                        colors: [
-                          accent.withValues(
-                              alpha: palette.isDark ? 0.18 : 0.12),
-                          palette.surface.withValues(alpha: 0),
+    final accent = tourAccent(palette);
+    final width = height * _aspect;
+    return Center(
+      child: Semantics(
+        container: true,
+        image: true,
+        label: '${slide.location}: ${slide.title}',
+        excludeSemantics: true,
+        child: SizedBox(
+          width: width,
+          height: height,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned.fill(
+                child: DecoratedBox(
+                  position: DecorationPosition.foreground,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: palette.border, width: 1.5),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: Image.asset(
+                      slide.screenshot,
+                      fit: BoxFit.cover,
+                      // Decode at display size, not the asset's full size.
+                      cacheWidth: (width *
+                              MediaQuery.devicePixelRatioOf(context))
+                          .round(),
+                    ),
+                  ),
+                ),
+              ),
+              for (final p in slide.pointers)
+                if (p.at case final at?)
+                  Positioned(
+                    left: at.dx * width - _pinSize / 2,
+                    top: at.dy * height - _pinSize / 2,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.5),
+                            blurRadius: 6,
+                          ),
                         ],
                       ),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          left: 12,
-                          top: 12,
-                          right: 12,
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: _LocationChip(text: slide.location),
-                          ),
-                        ),
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 18),
-                            child: _Spotlight(
-                              pulse: _pulse,
-                              accent: accent,
-                              icon: slide.icon,
-                              size: heroSize,
-                              // Too tight to orbit pins on a compact stage;
-                              // the numbered cards below carry them anyway.
-                              pins: heroSize < 52 ? 0 : slide.pointers.length,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // ── Mini bottom nav ───────────────────────────────────────
-                _MiniNavBar(
-                  height: navHeight,
-                  activeTab: slide.tab,
-                  accent: accent,
-                  pulse: _pulse,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LocationChip extends StatelessWidget {
-  const _LocationChip({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: palette.background,
-        borderRadius: BorderRadius.circular(context.shape.radiusFull),
-        border: Border.all(color: palette.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.near_me_outlined, size: 13, color: palette.textSecondary),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              text,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 11.5,
-                fontWeight: FontWeight.w600,
-                color: palette.textSecondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Hero icon under a breathing spotlight, with the step's numbered callout
-/// pins orbiting it.
-class _Spotlight extends StatelessWidget {
-  const _Spotlight({
-    required this.pulse,
-    required this.accent,
-    required this.icon,
-    required this.size,
-    required this.pins,
-  });
-
-  final Animation<double> pulse;
-  final Color accent;
-  final IconData icon;
-  final double size;
-  final int pins;
-
-  // Pin arc, in radians from 3 o'clock: from about 1 o'clock round to
-  // about 4 o'clock.
-  static const double _pinStart = -math.pi * 0.4;
-  static const double _pinEnd = math.pi * 0.15;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final outer = size * 1.9;
-    const pinSize = 22.0;
-    return SizedBox(
-      width: outer + pinSize,
-      height: outer + pinSize,
-      child: AnimatedBuilder(
-        animation: pulse,
-        builder: (context, _) {
-          final t = Curves.easeInOut.transform(pulse.value);
-          return Stack(
-            alignment: Alignment.center,
-            children: [
-              // Outer halo.
-              Container(
-                width: outer * (0.92 + 0.08 * t),
-                height: outer * (0.92 + 0.08 * t),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accent.withValues(alpha: 0.06 + 0.04 * t),
-                ),
-              ),
-              // Inner ring.
-              Container(
-                width: size * 1.4,
-                height: size * 1.4,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: accent.withValues(alpha: 0.12),
-                ),
-              ),
-              // Lit disc.
-              Container(
-                width: size,
-                height: size,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.surface,
-                  border: Border.all(color: accent, width: 2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: accent.withValues(alpha: 0.25 + 0.15 * t),
-                      blurRadius: 18,
-                    ),
-                  ],
-                ),
-                child: Icon(icon, size: size * 0.48, color: accent),
-              ),
-              // Callout pins, spread over the upper-right arc so they never
-              // collide with the breadcrumb chip at the top-left.
-              for (var i = 0; i < pins; i++)
-                Transform.translate(
-                  offset: Offset.fromDirection(
-                    _pinStart +
-                        i * (_pinEnd - _pinStart) / math.max(1, pins - 1),
-                    outer / 2 - 2,
-                  ),
-                  child: _NumberBadge(
-                    number: i + 1,
-                    accent: accent,
-                    size: pinSize,
-                  ),
-                ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Miniature of the rider's bottom navigation (only the tabs their
-/// Settings → Your ThrottleIQ choice keeps), with the step's tab spotlit.
-class _MiniNavBar extends ConsumerWidget {
-  const _MiniNavBar({
-    required this.height,
-    required this.activeTab,
-    required this.accent,
-    required this.pulse,
-  });
-
-  final double height;
-  final TourTab activeTab;
-  final Color accent;
-  final Animation<double> pulse;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final palette = context.palette;
-    final l10n = context.l10n;
-    final modules = ref.watch(appModulesProvider);
-    return Container(
-      height: height,
-      decoration: BoxDecoration(
-        color: palette.surface,
-        border: Border(top: BorderSide(color: palette.border)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
-      child: Row(
-        children: [
-          for (final tab in TourTab.values)
-            if (modules.tabs.contains(tab.route))
-              Expanded(
-                child: tab == activeTab
-                    ? AnimatedBuilder(
-                        animation: pulse,
-                        builder: (context, child) => Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
-                          decoration: BoxDecoration(
-                            color: accent.withValues(alpha: 0.14),
-                            borderRadius:
-                                BorderRadius.circular(context.shape.radiusMd),
-                            border: Border.all(
-                              color: accent.withValues(
-                                  alpha: 0.55 + 0.45 * pulse.value),
-                              width: 1.5,
-                            ),
-                          ),
-                          child: child,
-                        ),
-                        child: _MiniNavItem(
-                          icon: tab.activeIcon(modules),
-                          label: tab.label(l10n, modules),
-                          iconColor: accent,
-                          labelColor: palette.textPrimary,
-                          bold: true,
-                        ),
-                      )
-                    : _MiniNavItem(
-                        icon: tab.icon(modules),
-                        label: tab.label(l10n, modules),
-                        iconColor: palette.textTertiary,
-                        labelColor: palette.textTertiary,
+                      child: _NumberBadge(
+                        number: p.number,
+                        accent: accent,
+                        size: _pinSize,
                       ),
-              ),
-        ],
-      ),
-    );
-  }
-}
-
-class _MiniNavItem extends StatelessWidget {
-  const _MiniNavItem({
-    required this.icon,
-    required this.label,
-    required this.iconColor,
-    required this.labelColor,
-    this.bold = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final Color iconColor;
-  final Color labelColor;
-  final bool bold;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 18, color: iconColor),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          // Fixed scale: this is a picture of the nav bar, and a large system
-          // text size would only push the labels out of the miniature.
-          textScaler: TextScaler.noScaling,
-          style: TextStyle(
-            fontSize: 9.5,
-            fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
-            color: labelColor,
+                    ),
+                  ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 }
