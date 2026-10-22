@@ -60,6 +60,20 @@ test("a deleted rider's report is anonymised once closed, kept while pending", a
   assert.equal(await purgeOldReportSnapshots(db, NOW), 0, 'a re-run is a no-op');
 });
 
+test('pages past one batch, and stops at the deadline', async () => {
+  await clearEmulators();
+  for (let start = 0; start < 450; start += 225) {
+    const batch = db.batch();
+    for (let i = start; i < start + 225; i++) {
+      batch.set(db.doc(`reports/r${i}`), { status: 'actioned', snapshot: SNAP, reviewedAt: daysAgo(100) });
+    }
+    await batch.commit();
+  }
+  assert.equal(await purgeOldReportSnapshots(db, NOW, Date.now() - 1), 0, 'past deadline: nothing done');
+  assert.equal(await purgeOldReportSnapshots(db, NOW), 450);
+  assert.equal(await purgeOldReportSnapshots(db, NOW), 0);
+});
+
 test.after(async () => {
   await rtdb.app.delete();
 });

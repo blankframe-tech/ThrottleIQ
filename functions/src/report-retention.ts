@@ -22,8 +22,14 @@ export const REPORT_SNAPSHOT_RETENTION_DAYS = 90;
 /** Stands in for the deleted rider's uid (same as DELETED_PARTICIPANT). */
 const DELETED_RIDER_UID = "deleted-rider";
 
-/** Updates per batch; under Firestore's 500-write cap. */
+/** Docs read and updated per page; under Firestore's 500-write cap. */
 const PAGE = 400;
+
+/**
+ * How long one daily run may keep paging: the scheduler's 540 s timeout less
+ * a margin, so a large backlog stops cleanly and the next run finishes it.
+ */
+export const PURGE_BUDGET_MS = 480_000;
 
 /** A report filed while it is still waiting for review. Missing = pending. */
 export function isPendingReport(data: FirebaseFirestore.DocumentData): boolean {
@@ -52,37 +58,66 @@ export function anonymizedReportPatch(
  */
 export async function purgeOldReportSnapshots(
   db: FirebaseFirestore.Firestore,
-  now: Date = new Date()
+  now: Date = new Date(),
+  deadline: number = Date.now() + PURGE_BUDGET_MS
 ): Promise<number> {
-  const cutoff = now.getTime() - REPORT_SNAPSHOT_RETENTION_DAYS * 86_400_000;
-  const updates = new Map<string, [FirebaseFirestore.DocumentReference, Record<string, unknown>]>();
+  const cutoff = new Date(now.getTime() - REPORT_SNAPSHOT_RETENTION_DAYS * 86_400_000);
+  let changed = 0;
 
-  const gone = await db.collection("reports").where("reportedAccountDeleted", "==", true).get();
-  for (const doc of gone.docs) {
-    if (!isPendingReport(doc.data())) updates.set(doc.ref.path, [doc.ref, anonymizedReportPatch(doc.data())]);
-  }
+  // Old evidence first. A closed report about a deleted rider gets the
+  // anonymisation in the same write, which also drops its
+  // reportedAccountDeleted flag, so the second pass skips it.
+  // shortcut: re-reads every report reviewed before the cutoff on each run
+  // (paged, so memory is bounded); add a purged flag + composite index past ~10k reports.
+  changed += await pagedUpdate(
+    db.collection("reports").where("reviewedAt", "<", cutoff).orderBy("reviewedAt"),
+    deadline,
+    (data) => {
+      if (data.snapshot === undefined && !data.originalText) return null;
+      // Reopened (e.g. an appeal): pending keeps its evidence (moderation_policy §5).
+      if (isPendingReport(data)) return null;
+      const anonymize = data.reportedAccountDeleted === true ? anonymizedReportPatch(data) : {};
+      // Deleting the whole map replaces the snapshot.senderId patch.
+      delete anonymize["snapshot.senderId"];
+      return { ...anonymize, snapshot: FieldValue.delete(), originalText: FieldValue.delete() };
+    }
+  );
 
-  // shortcut: reads every report reviewed before the cutoff on each run;
-  // fine at beta volume, add a purged flag + composite index past ~10k reports.
-  const old = await db.collection("reports").where("reviewedAt", "<", new Date(cutoff)).get();
-  for (const doc of old.docs) {
-    if (doc.get("snapshot") === undefined && !doc.get("originalText")) continue;
-    // Reopened (e.g. an appeal): pending keeps its evidence (moderation_policy §5).
-    if (isPendingReport(doc.data())) continue;
-    // Deleting the whole map replaces a pending snapshot.senderId patch.
-    const anonymize = updates.get(doc.ref.path)?.[1] ?? {};
-    delete anonymize["snapshot.senderId"];
-    updates.set(doc.ref.path, [
-      doc.ref,
-      { ...anonymize, snapshot: FieldValue.delete(), originalText: FieldValue.delete() },
-    ]);
-  }
+  changed += await pagedUpdate(
+    db.collection("reports").where("reportedAccountDeleted", "==", true),
+    deadline,
+    (data) => (isPendingReport(data) ? null : anonymizedReportPatch(data))
+  );
+  return changed;
+}
 
-  const all = [...updates.values()];
-  for (let i = 0; i < all.length; i += PAGE) {
-    const batch = db.batch();
-    for (const [ref, patch] of all.slice(i, i + PAGE)) batch.update(ref, patch);
-    await batch.commit();
+/**
+ * Pages through `query` PAGE docs at a time, writing `patchOf(data)` (null =
+ * skip) in one batch per page. Stops early once `deadline` (epoch ms) has
+ * passed; the next daily run picks up the rest. Returns the docs updated.
+ */
+async function pagedUpdate(
+  query: FirebaseFirestore.Query,
+  deadline: number,
+  patchOf: (data: FirebaseFirestore.DocumentData) => Record<string, unknown> | null
+): Promise<number> {
+  let updated = 0;
+  let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+  while (Date.now() < deadline) {
+    const snap = await (last ? query.startAfter(last) : query).limit(PAGE).get();
+    if (snap.empty) break;
+    last = snap.docs[snap.docs.length - 1];
+    const batch = query.firestore.batch();
+    let n = 0;
+    for (const doc of snap.docs) {
+      const patch = patchOf(doc.data());
+      if (patch === null) continue;
+      batch.update(doc.ref, patch);
+      n++;
+    }
+    if (n > 0) await batch.commit();
+    updated += n;
+    if (snap.size < PAGE) break;
   }
-  return all.length;
+  return updated;
 }

@@ -758,3 +758,9 @@ Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). 
 
 - **Where:** the row is a `SizedBox(height: 140)` in `app/lib/features/social/presentation/screens/social_people_tab.dart:172-173`; the card is `_SuggestedRiderCard` (same file, `:254`), whose column comes out 1 px taller than the row.
 - *Fix:* let the row size to the card (or raise the height by the 1 px, or trim one gap), then check at 1.3× text scale and in Bangla, where the name line runs taller.
+
+## Cloud Functions audit leftovers, architect to-do #5 (2026-10-22, lane C)
+
+- **The report purge re-reads every old report on each run.** Pass 1 pages through all reports reviewed before the 90-day cutoff, including those already purged. At very high volume it could use the whole 480 s budget, and pass 2 (closed reports about deleted riders) would then never run. Already marked `shortcut:` in `report-retention.ts`. *Fix when needed:* a `purged` flag plus a composite index.
+- **The auto-report can reopen a reviewed report.** `onMessageCreate` writes `reports/auto_chat_<chat>_<msg>` with `set` and `status: "pending"`. If the trigger were ever retried after an admin closed it, the report would go back to pending and lose its review fields. v2 Firestore triggers don't retry by default, so this can't happen today. *Fix if retries are turned on:* `create()`, treating ALREADY_EXISTS as done.
+- **Erasure loads each query fully into memory.** The owned-query, anonymise, report and chat-message steps `.get()` all matching docs before batching. That's fine for one rider's data, but not bounded. Not changed.

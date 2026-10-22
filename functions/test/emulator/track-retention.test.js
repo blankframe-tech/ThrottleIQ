@@ -54,6 +54,7 @@ test('pages past one batch and is a no-op on a re-run', async () => {
     }
     await batch.commit();
   }
+  assert.equal(await purgeOldTrackChunks(db, NOW, Date.now() - 1), 0, 'past deadline: nothing done');
   assert.equal(await purgeOldTrackChunks(db, NOW), 450);
   assert.equal(await purgeOldTrackChunks(db, NOW), 0);
 });

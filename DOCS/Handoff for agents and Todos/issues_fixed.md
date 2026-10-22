@@ -7588,3 +7588,14 @@ and two founder calls (Health info? User IDs?). Owner still fills the Play form.
   the top-left of the cockpit (`phone_placement_selector.dart`), switchable mid-ride. Read at impact
   time only; ride analytics do not yet record placement changes.
 - **§103.1 push blocked** (open-file section §103): `1349db5` reverted the format-only churn from `686bc73`; gate green and pushed. §103.2–103.5 stay open.
+
+## Cloud Functions audit, architect to-do #5 (2026-10-22) — FIXED (lane C, `lane/c-functions`)
+
+Functions are still undeployed; these were found by reading the code and are covered by the emulator suite (`npm run test:emulator`, 15/15).
+
+- **Report-evidence purge loaded every matching report into memory.** `purgeOldReportSnapshots` ran two unbounded `.get()` calls and built one in-memory map. *Fix:* both queries now page 400 docs at a time with `startAfter` and one batch per page (`pagedUpdate` in `report-retention.ts`). A closed report about a deleted rider gets its anonymisation in the same write as the evidence purge.
+- **Neither purge had a time budget.** Both already paged (the track purge did), but a large backlog ran into the 540 s scheduler timeout and failed the whole run. *Fix:* `purgeOldTrackChunks` and `purgeOldReportSnapshots` take a `deadline`, defaulting to now + `PURGE_BUDGET_MS` (480 s). They stop cleanly at the deadline and the next daily run continues.
+- **A re-run of account erasure could leave the username claim behind forever.** The claim was found through the profile's `username`. If the release failed but the profile delete succeeded, a re-run could no longer find the handle. A stale handle on the profile could also delete someone else's claim. *Fix:* `deleteUserData` releases every `usernames/*` doc whose `uid` is the rider's.
+- **Chat moderation could destroy the evidence it meant to keep.** `onMessageCreate` overwrote the message text before writing the report holding the original. A failed report write (or a retry, which no longer sees toxic text) lost the text. *Fix:* the report is written first and the message hidden after.
+- *Tests:* `test/emulator/account-deletion.test.js` has a re-run test that starts from a half-anonymised chat: one message done, one not, participants still holding the uid, profile gone, claim still present. Both runs must end in the same correct state. `report-retention.test.js` covers paging past 400 docs and the deadline. `track-retention.test.js` covers the deadline.
+- *Verified, no change needed:* `anonymizeChat` is idempotent. The rider's messages are blanked first, and `participants` (how a re-run finds the chat) changes last, in a transaction with the `lastMessage` and legacy name/photo cleanup. The chat id is kept, and a chat with nobody left is recursively deleted.
