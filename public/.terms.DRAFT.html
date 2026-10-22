@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<!--
+  DRAFT for owner review, 2026-10-22. Not legal advice; needs lawyer review. Do not publish.
+
+  This file starts with a dot on purpose: firebase.json hosting ignores "**/.*",
+  so it is NOT served even if Hosting is deployed. When the text is approved,
+  copy it to public/terms.html (no dot), remove the banner, and link it from the
+  app (Settings and the sign-up screen) and from public/privacy.html.
+
+  Sources used for every factual statement: public/privacy.html (canonical policy;
+  public/privacy-policy.html is only a redirect to it), public/community.html,
+  DOCS/General/Files for Stores/moderation_policy.md,
+  DOCS/Handoff for agents and Todos/features.md, SECURITY.md.
+  [LAWYER REVIEW: ...] marks clauses that need a lawyer. [PLACEHOLDER: ...] marks
+  facts nobody has decided yet.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <title>ThrottleIQ Terms of Service (DRAFT)</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+      color: #2d3748;
+      line-height: 1.65;
+    }
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 820px;
+      width: 100%;
+      overflow: hidden;
+      margin: 20px 0 60px;
+    }
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 36px 24px;
+      text-align: center;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 8px; }
+    .header p { font-size: 14px; opacity: 0.9; }
+    .content { padding: 30px 28px 40px; }
+    h2 {
+      font-size: 20px;
+      color: #2d3748;
+      margin: 34px 0 12px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    h2:first-of-type { margin-top: 8px; }
+    h3 { font-size: 16px; color: #4a5568; margin: 20px 0 8px; }
+    p, ul, ol { font-size: 15px; color: #4a5568; }
+    p + p { margin-top: 10px; }
+    ul, ol { margin: 10px 0 10px 22px; }
+    li { margin-bottom: 7px; }
+    strong { color: #2d3748; }
+    a { color: #667eea; font-weight: 600; }
+    code {
+      background: #f7fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 13px;
+      color: #4a5568;
+    }
+    .callout {
+      background: #f7fafc;
+      border-left: 4px solid #667eea;
+      border-radius: 8px;
+      padding: 16px 18px;
+      margin: 18px 0;
+      font-size: 15px;
+    }
+    .callout-warn { background: #fff5f5; border-left-color: #e53e3e; }
+    .callout h3 { margin-top: 0; }
+    .draft-banner {
+      background: #e53e3e;
+      color: white;
+      font-weight: 700;
+      text-align: center;
+      padding: 14px 18px;
+      font-size: 15px;
+    }
+    .review {
+      background: #fffaf0;
+      border: 1px dashed #dd6b20;
+      border-radius: 4px;
+      padding: 0 4px;
+      color: #9c4221;
+      font-size: 13px;
+    }
+    .meta {
+      text-align: center;
+      color: #718096;
+      font-size: 13px;
+      padding: 18px 24px 0;
+      margin-top: 30px;
+      border-top: 1px solid #e2e8f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="draft-banner">
+      DRAFT for owner review, 2026-10-22. Not legal advice; needs lawyer review. Do not publish.
+    </div>
+    <div class="header">
+      <h1>ThrottleIQ Terms of Service</h1>
+      <p>Effective date: <span class="review">[PLACEHOLDER: effective date, set when published]</span></p>
+    </div>
+
+    <div class="content">
+
+      <p>These terms are the agreement between you and the operator of ThrottleIQ for using the
+      ThrottleIQ app and its web pages (the live-ride viewer, the follow page and the community
+      rules). By creating an account or using the app you agree to them. If you do not agree,
+      do not use ThrottleIQ.</p>
+
+      <p>Read them together with the <a href="/privacy.html">Privacy Policy</a>, which says
+      what the app collects and how to delete it, and the
+      <a href="/community.html">Community Rules</a>, which say what you may and may not post.
+      Both form part of these terms.</p>
+
+      <h2>1. Who runs ThrottleIQ</h2>
+
+      <p>ThrottleIQ is a motorcycle ride-tracking app built and run by one independent developer.
+      It is in beta. There is no company, no support desk and no data protection officer behind
+      it; every request goes to one inbox:
+      <a href="mailto:hello@blankframe.tech">hello@blankframe.tech</a>.</p>
+
+      <p><span class="review">[PLACEHOLDER: legal name and postal address of the operator. The
+      privacy policy names no person or company. Internal docs call the operator "Blankframe
+      Tech" and say the Play developer account is registered as an individual; confirm which
+      name goes here.]</span></p>
+
+      <p><span class="review">[LAWYER REVIEW: whether an individual operator needs a trade
+      licence or registered business name in Bangladesh to offer these terms.]</span></p>
+
+      <h2>2. Who may use it</h2>
+
+      <ul>
+        <li>ThrottleIQ is for licensed motorcycle riders and is not intended for children. You
+        must be at least 13 years old, or the minimum age of digital consent where you live if
+        that is higher, to create an account. <span class="review">[PLACEHOLDER: the privacy
+        policy says 13; the Play target-audience recommendation in
+        <code>app_content_remaining.md</code> is 18 and over. Pick one age and use it in both
+        documents and the store listings.]</span></li>
+        <li>If you are under 18, <span class="review">[LAWYER REVIEW: whether parental consent
+        is required under Bangladeshi law and the Personal Data Protection Ordinance 2025, and
+        how it must be obtained.]</span></li>
+        <li>You must not use ThrottleIQ if you have been banned from it before.</li>
+      </ul>
+
+      <p>The app does not ask your age today. If we learn that a child has an account, we delete
+      it, as the privacy policy says.</p>
+
+      <h2>3. Your account</h2>
+
+      <ul>
+        <li>You sign in with an email address and password, or with Google. The app does not work
+        without an account.</li>
+        <li>Give a real email address you control. It is how account and deletion requests are
+        verified.</li>
+        <li>Keep your password to yourself. You are responsible for what is done from your
+        account.</li>
+        <li>Your display name and @username are public to other signed-in riders. Do not pick a
+        name that impersonates another rider, a business or a public figure.</li>
+        <li>You can delete your account at any time in Settings → Delete account. Cloud data is
+        then deleted by hand within 30 days of an email to
+        <a href="mailto:hello@blankframe.tech">hello@blankframe.tech</a>, as set out in §9 of the
+        <a href="/privacy.html">Privacy Policy</a>.</li>
+      </ul>
+
+      <h2>4. Safety: read this before you ride</h2>
+
+      <div class="callout callout-warn">
+        <h3>ThrottleIQ is not a safety device and not an emergency service</h3>
+        <ul>
+          <li><strong>Do not use the app while riding.</strong> Set it up, start recording and
+          send any live-share link before you set off, or stop safely first. Keep your eyes on
+          the road. Obey traffic law, wear a helmet and ride within your ability.</li>
+          <li><strong>Crash detection does not alert anyone.</strong> It is being tested. It only
+          records possible impacts and asks you about them after the ride. There is no alarm, no
+          countdown and no message to you, your emergency contacts or the emergency services.</li>
+          <li><strong>Emergency contacts are never contacted.</strong> The app stores the
+          contacts you type in, but sends them nothing.</li>
+          <li><strong>The app does not call for help.</strong> If you or someone else is in
+          danger, call 999 (Bangladesh) or your local emergency number.</li>
+          <li><strong>Do not rely on ThrottleIQ as a safety net.</strong> GPS, sensors, batteries,
+          networks and phones fail. A live-share link stops updating when your phone dies or loses
+          signal.</li>
+        </ul>
+      </div>
+
+      <p>Speed figures, riding scores, hard-braking and acceleration counts, lean-angle and g
+      estimates, maintenance forecasts, ride-cost figures and "faster than usual" notes are
+      estimates from phone sensors and your own entries. They can be wrong. Do not use them to
+      decide whether your motorcycle is safe to ride, or as evidence of how anyone rode.</p>
+
+      <p>Route guidance is geometric only: no street names, no lane guidance and no rerouting.
+      It does not know about closures, traffic or hazards. Places, cop checkpoints, AI-camera
+      locations and opening hours come from other riders and from OpenStreetMap; they may be
+      out of date or wrong. Always follow road signs and the law.</p>
+
+      <p><span class="review">[LAWYER REVIEW: wording of this safety disclaimer so it is
+      enforceable under Bangladeshi consumer law (Consumer Rights Protection Act 2009) and the
+      Road Transport Act 2018.]</span></p>
+
+      <h2>5. Location and live sharing</h2>
+
+      <ul>
+        <li>Ride recording uses precise GPS while a ride records. The optional "Detect rides
+        automatically" setting uses location in the background; it is off unless you turn it
+        on. The <a href="/privacy.html">Privacy Policy</a> (§3) explains both.</li>
+        <li><strong>A live-share link works for anyone who has it</strong>, with no sign-in, and
+        whoever you send it to can forward it. Only send it to people you want to know where you
+        are.</li>
+        <li>In a group ride, the other members see your position on the group map while you
+        ride, and can hear your push-to-talk voice clips.</li>
+        <li>The optional public link (<code>/r/@handle</code>, off by default) lets anyone who
+        knows your @username watch whenever you share live.</li>
+        <li>When you share a ride, add a place or report a cop checkpoint, the location you
+        attach becomes visible to other riders.</li>
+        <li>Do not share another person's live location, home or other private location without
+        their consent.</li>
+      </ul>
+
+      <h2>6. What you post</h2>
+
+      <p>ThrottleIQ lets riders create content that other riders can see: shared rides (route,
+      stats, caption and photos), comments and votes, forum posts and replies with photos,
+      rider-created forums, places, place reviews and cop-checkpoint reports, profile details and
+      photos, one-to-one direct messages, and push-to-talk voice clips in group rides.</p>
+
+      <h3>You own it, and you give us a licence</h3>
+      <p>You keep ownership of what you post. You give the operator a worldwide, non-exclusive,
+      royalty-free licence to store, copy, display and transmit it inside ThrottleIQ, only as
+      needed to run the features you used and to moderate them. The licence ends when the
+      content is deleted, except for copies kept with a report as set out in §8 of the
+      <a href="/privacy.html">Privacy Policy</a>.
+      <span class="review">[LAWYER REVIEW: scope and survival of this licence.]</span></p>
+
+      <h3>You are responsible for it</h3>
+      <p>Only post what you have the right to post. Do not post other people's photos, words or
+      voice without permission. Photos and voice clips are stored at a public, unguessable web
+      address, so treat anything you upload as something that could be seen outside the app.</p>
+
+      <h2>7. Zero tolerance for objectionable content and abusive users</h2>
+
+      <div class="callout callout-warn">
+        <p><strong>ThrottleIQ has zero tolerance for objectionable content and for abusive
+        users.</strong> By using the app you agree not to post, send or share any of the
+        following, anywhere in the app (direct messages, forum posts and replies, shared rides,
+        comments, places, reviews, profiles, photos or voice clips):</p>
+        <ul>
+          <li>Harassment, bullying or threats, including messages that continue after someone
+          asks you to stop.</li>
+          <li>Hate speech: attacks on people for their religion, ethnicity, gender, sexuality,
+          disability or similar.</li>
+          <li>Sexual content. Any sexual content involving a minor is reported to the
+          authorities.</li>
+          <li>Another person's private information (phone number, address, live location)
+          without their consent.</li>
+          <li>Spam, scams, fake listings, and impersonating another rider or a business.</li>
+          <li>Encouraging self-harm, or promoting illegal street racing or dangerous riding on
+          public roads.</li>
+          <li>Anything illegal in Bangladesh or where you live.</li>
+        </ul>
+        <p>Content that breaks these rules is removed, and riders who post it are warned,
+        suspended or banned (§8). Threats of violence, sexual content involving a minor, and a
+        repeat offence after a suspension lead straight to a ban.</p>
+      </div>
+
+      <p>The full rules are on the <a href="/community.html">Community Rules</a> page. If the
+      two ever differ, <span class="review">[PLACEHOLDER: say which document wins; suggest the
+      Community Rules page, which the app links from the report sheet]</span>.</p>
+
+      <p>You also agree not to misuse the service itself: no scraping other riders' data, no
+      automated accounts or scripts, no attempts to get around security rules, App Check or
+      blocks, no uploading files to ThrottleIQ's storage outside the app, no faking rides or
+      badges to mislead others, and no use of the app to stalk anyone.</p>
+
+      <h2>8. Reporting, blocking and how moderation works</h2>
+
+      <h3>Report</h3>
+      <ul>
+        <li><strong>A chat message:</strong> press and hold the message, then tap Report.</li>
+        <li><strong>A rider:</strong> open their profile (in a chat, tap their name at the top),
+        tap ⋮, then Report User.</li>
+        <li><strong>A forum post or a shared ride:</strong> tap ⋮ on it, then Report.</li>
+      </ul>
+      <p>The rider you report is not told who reported them. A report on a message or forum post
+      keeps a copy of that content as evidence, readable only by the reviewer, and deleted 90
+      days after the report is reviewed.</p>
+
+      <h3>Block</h3>
+      <p>Open the rider's profile, tap ⋮, then Block User. A blocked rider cannot message you,
+      follow you or see your followers-only rides, and blocking removes follows both ways. You can
+      unblock in Settings → Privacy &amp; Safety → Blocked users. Blocking does not send a report;
+      do both if the rider broke the rules.</p>
+
+      <h3>Review and action</h3>
+      <ul>
+        <li>A person reads every report <strong>within 24 hours</strong> of receiving it.</li>
+        <li>To review a reported chat message, the reviewer reads that message and the messages
+        around it, and nothing else in the conversation. Conversations nobody reported are not
+        read.</li>
+        <li>Depending on how serious it is and whether it happened before, the outcome is one or
+        more of: no action, a warning by email, removal of the content, a suspension (usually 7
+        days, during which the account cannot sign in), or a ban (the account is closed for
+        good).</li>
+        <li>Sexual content involving a minor is reported to the authorities.</li>
+      </ul>
+
+      <h3>Appeals</h3>
+      <p>Email <a href="mailto:hello@blankframe.tech">hello@blankframe.tech</a> from the address
+      you signed up with to ask about a report or appeal an action. Appeals are answered within
+      7 days.</p>
+
+      <p><span class="review">[LAWYER REVIEW: obligations to preserve and report illegal content
+      to Bangladeshi authorities under current cyber-security law and BTRC directions, and whether the 24-hour and 7-day promises create liability if missed.]</span></p>
+
+      <h2>9. Other services the app relies on</h2>
+
+      <p>ThrottleIQ runs on services from other companies. Their own terms and policies apply to
+      what they handle:</p>
+      <ul>
+        <li><strong>Google Firebase</strong>: Authentication, Cloud Firestore (the app's
+        database), Analytics (anonymous usage counts, can be switched off in Settings → Privacy
+        &amp; Safety), Crashlytics (app crash reports), App Check and Hosting.</li>
+        <li><strong>Google Sign-In</strong>, if you choose it.</li>
+        <li><strong>Cloudinary</strong>: stores the photos and voice clips you upload.</li>
+        <li><strong>OpenStreetMap</strong>: map tiles, and address suggestions when you add a
+        place (Nominatim); <strong>Overpass API</strong> when you tap the OpenStreetMap import in
+        Places.</li>
+        <li><strong>Open-Meteo</strong>: weather at the start of each ride.</li>
+      </ul>
+      <p>Map data © OpenStreetMap contributors. <span class="review">[PLACEHOLDER: confirm the
+      exact attribution wording the OSM tile and Nominatim usage policies require, and whether
+      the app shows it on every map.]</span></p>
+      <p>Directions from a place open your phone's own maps app. That app's terms apply.</p>
+
+      <h2>10. Beta service, availability and changes</h2>
+
+      <ul>
+        <li>ThrottleIQ is a beta app maintained by one person. Features may change, break or be
+        removed without notice.</li>
+        <li>It runs on a free cloud plan with a daily limit. When the limit is reached, syncing
+        and community features pause until it resets; rides stay on your phone.</li>
+        <li>Keep your own copy of anything important. You can export rides to JSON, GPX or CSV
+        from the app.</li>
+        <li>The app may require you to update before you can keep using it.</li>
+        <li>The app is free. <span class="review">[PLACEHOLDER: add payment terms if paid
+        features or part ordering are ever launched; the "order a part" screen is a demo for
+        beta testers and charges nothing.]</span></li>
+      </ul>
+
+      <h2>11. Ending your use</h2>
+
+      <ul>
+        <li>You can stop using ThrottleIQ and delete your account at any time (§3).</li>
+        <li>The operator may suspend or close your account, and remove your content, if you break
+        these terms or the Community Rules, if the law requires it, or to protect other riders.
+        You will normally be told why by email, unless the law or a safety reason prevents
+        it.</li>
+        <li>The operator may stop running ThrottleIQ altogether. <span class="review">[PLACEHOLDER:
+        notice period before shutdown, and how riders get their data out.]</span></li>
+        <li>Sections 6 (licence for retained report copies), 12, 13 and 14 survive the end of
+        your account.</li>
+      </ul>
+
+      <h2>12. No warranty</h2>
+
+      <p>ThrottleIQ is provided "as is" and "as available", without warranties of any kind,
+      including that it is accurate, uninterrupted, secure or fit for a particular purpose, to the
+      fullest extent the law allows.
+      <span class="review">[LAWYER REVIEW: which warranties cannot be excluded for consumers in
+      Bangladesh.]</span></p>
+
+      <h2>13. Limits on liability</h2>
+
+      <p>To the fullest extent the law allows, the operator is not liable for:</p>
+      <ul>
+        <li>any accident, injury, death, or damage to a motorcycle or property, while or after
+        using the app;</li>
+        <li>crash detection not detecting a crash, or nobody being alerted;</li>
+        <li>wrong or missing figures, routes, places, checkpoints or forecasts;</li>
+        <li>what other riders post, send or do, including people you sent a live-share link
+        to;</li>
+        <li>loss of data, including rides not synced before a phone was lost;</li>
+        <li>outages of the services listed in §9.</li>
+      </ul>
+      <p>Where liability cannot be excluded, it is limited to
+      <span class="review">[PLACEHOLDER: cap, for example the amount you paid in the last 12
+      months, which today is zero, or a fixed sum]</span>. Nothing in these terms limits
+      liability for death or personal injury caused by negligence, or for fraud, where the law
+      does not allow it.
+      <span class="review">[LAWYER REVIEW: enforceability of every item in this section, and
+      whether an indemnity clause from the rider is advisable.]</span></p>
+
+      <h2>14. Governing law and disputes</h2>
+
+      <p>These terms are governed by the laws of the People's Republic of Bangladesh.
+      <span class="review">[LAWYER REVIEW: courts with jurisdiction (for example Dhaka), any
+      required pre-court complaint step, and how this works for riders outside
+      Bangladesh.]</span></p>
+
+      <p>Personal data is handled as set out in the <a href="/privacy.html">Privacy Policy</a>.
+      <span class="review">[LAWYER REVIEW: wording on the Bangladesh Personal Data Protection
+      Ordinance 2025: lawful basis and consent, data-subject rights and how to exercise them,
+      cross-border transfer to Google and Cloudinary servers outside Bangladesh, breach
+      notification, and any registration duty. The privacy policy states there is no
+      data protection officer and no formal breach-notification programme.]</span></p>
+
+      <p>Before going to court, please email
+      <a href="mailto:hello@blankframe.tech">hello@blankframe.tech</a> so we can try to sort it
+      out.</p>
+
+      <h2>15. Changes to these terms</h2>
+
+      <p>If these terms change, this page changes and the effective date at the top is updated.
+      For a change that materially affects you, notice will be given in the app before it takes
+      effect. Continuing to use ThrottleIQ after that means you accept the new terms.
+      <span class="review">[LAWYER REVIEW: whether continued use is valid acceptance, or the
+      app must ask riders to accept again.]</span></p>
+
+      <h2>16. Contact</h2>
+
+      <p>Questions, reports, appeals and legal notices:</p>
+      <p style="font-size: 17px; margin-top: 10px;">
+        <a href="mailto:hello@blankframe.tech">hello@blankframe.tech</a>
+      </p>
+
+      <div class="meta">
+        <p>ThrottleIQ — Terms of Service · DRAFT 2026-10-22, not published</p>
+        <p>To be published at https://throttleiqfb.web.app/terms.html after lawyer review</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
