@@ -7583,6 +7583,21 @@ research copy's map cell: collected, optional opt-in, Analytics).
 `data_safety_and_permissions.md` has a "Crash detection records" section with the reasoning
 and two founder calls (Health info? User IDs?). Owner still fills the Play form.
 
+## 78.1 (part). `crashEvents.createdAt` was exact to the millisecond — FIXED (2026-10-22), not in a release
+
+The opt-in research copy (`crashEventCloudPayload`, `app/lib/core/cloud/impact_event_payload.dart`)
+uploaded the row's `created_at` to the millisecond next to `ownerUid`, a re-identification
+handle (architect_todo #8, owner_works_now #18). It is now floored to the UTC hour
+(`2026-10-14T15:29:30.000Z` → `2026-10-14T15:00:00.000Z`); an unparseable value is dropped.
+`ownerUid` stays (account erasure, `functions/src/account-erasure.ts`, queries by it).
+Checked first: `firestore.rules` `crashEventValid` only wants an optional string ≤ 40 chars,
+no function reads `crashEvents.createdAt`, the doc id (the row id) is the dedupe key, and
+local SQLite (`impact_events.created_at`, used for upload order) and the private
+`users/{uid}/impactEvents` copy keep full precision. Already-uploaded docs keep their exact
+value until the row is re-synced (relabel or consent change). Tests:
+`app/test/cloud/impact_event_payload_test.dart` (floor, on the hour, 59:59.999, year end,
+a `+06:00` offset, unparseable).
+
 ## 2026-10-15 — Cockpit overlap and phone placement
 
 - **"I'm in a jam" (beta) covered the speed panel** on the ride screen: the button sat in the bottom
