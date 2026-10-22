@@ -133,16 +133,20 @@ When a feature is removed:
 
 ---
 
-## Quick Reference — Current Slide List (v4)
+## Quick Reference — Current Slide List (v5)
 
-| # | featureKey     | Tab spotlit | Target route      |
+Grouped by tab; each step shows a real capture (`app/assets/images/tour_*.jpg`)
+with callouts pinned by `SlidePointer.at`. A slide change that moves a screen's
+layout means recapturing that screen.
+
+| # | featureKey     | Tab         | Target route      |
 |---|----------------|-------------|-------------------|
 | 1 | ride_recording | Record      | /home/record      |
 | 2 | ride_cockpit   | Record      | (none — mid-ride) |
-| 3 | auto_tracking  | Garage      | /settings         |
-| 4 | rides_stats    | Rides       | /home/stats       |
-| 5 | garage         | Garage      | /home/profile     |
-| 6 | maintenance    | Garage      | /home/maintenance |
-| 7 | places         | Places      | /home/places      |
-| 8 | social_forums  | Social      | /home/social      |
-| 9 | profile        | Garage      | /profile          |
+| 3 | rides_stats    | Rides       | /home/stats       |
+| 4 | garage         | Garage      | /home/profile     |
+| 5 | profile        | Garage      | /profile          |
+| 6 | auto_tracking  | Garage      | /settings         |
+| 7 | maintenance    | Garage      | /home/maintenance |
+| 8 | places         | Places      | /home/places      |
+| 9 | social_forums  | Social      | /home/social      |
