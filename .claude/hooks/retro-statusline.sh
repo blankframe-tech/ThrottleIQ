@@ -6,6 +6,9 @@
 # Pro/Max only (rate_limits is absent otherwise, so this is then a no-op).
 THRESHOLD=60
 in=$(cat)
+# This project statusLine replaces the account's own one; still run it (output dropped) so whatever it feeds keeps updating.
+user_sl=$(jq -r '.statusLine.command // empty' "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/settings.json" 2>/dev/null)
+case "$user_sl" in ''|*retro-statusline*) ;; *) printf '%s' "$in" | sh -c "$user_sl" >/dev/null 2>&1 ;; esac
 sid=$(printf '%s' "$in" | jq -r '.session_id // empty')
 pct=$(printf '%s' "$in" | jq -r '.rate_limits.five_hour.used_percentage // empty')
 rst=$(printf '%s' "$in" | jq -r '.rate_limits.five_hour.resets_at // empty')
