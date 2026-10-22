@@ -1371,7 +1371,14 @@ service cloud.firestore {
       // (`category == 'police'`), and must lie in the next two days: the app
       // only ever writes now + 24 h, and "permanent" is the field's absence,
       // so a far-future value is just a permanent pin dodging the choice.
+      //
+      // `updatedAt` is the ride cache's delta watermark (issues §104.1), so it
+      // must be server time: a backdated value would hide the place from every
+      // `updatedAt > lastPull` pull. Optional, because builds before the cache
+      // don't write it.
       allow create: if request.auth != null &&
+        (!('updatedAt' in request.resource.data) ||
+          request.resource.data.updatedAt == request.time) &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.verified == false &&
         request.resource.data.ratingSum == 0 &&

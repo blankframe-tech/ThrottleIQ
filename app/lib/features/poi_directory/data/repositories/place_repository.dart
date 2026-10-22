@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:throttleiq/core/utils/geo_math.dart';
 import 'package:throttleiq/core/utils/geohash_util.dart';
 import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
@@ -221,10 +220,38 @@ class PlaceRepository {
     );
   }
 
+  /// Every place in geohash cell [prefix], from the server only: a
+  /// cache-only answer while offline would look complete but miss places.
+  Future<List<PlaceEntity>> getPlacesInCellFromServer(String prefix) =>
+      _fetchGeohashRange(prefix, null, source: Source.server);
+
+  /// Places written after [since] (server `updatedAt`), with the newest
+  /// `updatedAt` among them: the ride cache's next watermark. A single-field
+  /// range filter, served by Firestore's automatic index. Server only, for the
+  /// same reason as [getPlacesInCellFromServer].
+  Future<(List<PlaceEntity>, DateTime?)> getPlacesUpdatedSince(
+    DateTime since,
+  ) async {
+    final snap = await _firestore
+        .collection(_collection)
+        .where('updatedAt', isGreaterThan: Timestamp.fromDate(since))
+        .get(const GetOptions(source: Source.server));
+    DateTime? newest;
+    for (final doc in snap.docs) {
+      final t = (doc.data()['updatedAt'] as Timestamp?)?.toDate();
+      if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+    }
+    return (
+      [for (final doc in snap.docs) PlaceModel.fromFirestore(doc).toEntity()],
+      newest,
+    );
+  }
+
   Future<List<PlaceEntity>> _fetchGeohashRange(
     String prefix,
-    PlaceCategory? category,
-  ) async {
+    PlaceCategory? category, {
+    Source source = Source.serverAndCache,
+  }) async {
     Query<Map<String, dynamic>> query = _firestore.collection(_collection);
     if (category != null) {
       query = query.where('category', isEqualTo: category.name);
@@ -232,16 +259,15 @@ class PlaceRepository {
     final snap = await query
         .where('geohash', isGreaterThanOrEqualTo: prefix)
         .where('geohash', isLessThan: '$prefix~')
-        .get();
+        .get(GetOptions(source: source));
     return snap.docs
         .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
         .toList();
   }
 
-  /// The query plan behind [getNearbyPlaces], with the Firestore read
-  /// injected as [fetchRange] (every place whose geohash starts with the
-  /// given prefix) so tests can run it against an in-memory fake.
-  @visibleForTesting
+  /// The query plan behind [getNearbyPlaces], with the read injected as
+  /// [fetchRange] (every place whose geohash starts with the given prefix):
+  /// Firestore, the ride cache (`RidePlacesCache`), or a test fake.
   static Future<List<PlaceEntity>> nearbyViaGeohashRanges({
     required double latitude,
     required double longitude,

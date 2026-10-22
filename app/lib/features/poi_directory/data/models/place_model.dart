@@ -106,10 +106,15 @@ class PlaceModel {
     );
   }
 
-  factory PlaceModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+  factory PlaceModel.fromFirestore(
+          DocumentSnapshot<Map<String, dynamic>> doc) =>
+      PlaceModel.fromMap(doc.id, doc.data()!);
+
+  /// A Firestore doc's fields, or [toCacheJson]'s output (dates as epoch
+  /// millis instead of [Timestamp]s).
+  factory PlaceModel.fromMap(String id, Map<String, dynamic> data) {
     return PlaceModel(
-      id: doc.id,
+      id: id,
       name: data['name'] ?? '',
       category: data['category'] ?? 'fuel',
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
@@ -121,7 +126,7 @@ class PlaceModel {
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       verified: data['verified'] ?? false,
       createdBy: data['createdBy'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: _date(data['createdAt']) ?? DateTime.now(),
       ratingSum: (data['ratingSum'] as num?)?.toDouble() ?? 0.0,
       ratingCount: (data['ratingCount'] as num?)?.toInt() ?? 0,
       googleRating: (data['googleRating'] as num?)?.toDouble() ?? 0.0,
@@ -131,9 +136,15 @@ class PlaceModel {
         for (final t in (data['tags'] as List?) ?? const [])
           if (t is String) t,
       ],
-      expiresAt: (data['expiresAt'] as Timestamp?)?.toDate(),
+      expiresAt: _date(data['expiresAt']),
     );
   }
+
+  static DateTime? _date(Object? v) => v is Timestamp
+      ? v.toDate()
+      : v is int
+          ? DateTime.fromMillisecondsSinceEpoch(v)
+          : null;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -158,8 +169,18 @@ class PlaceModel {
       // OSM import) keeps exactly the doc shape it had before tags existed.
       if (tags.isNotEmpty) 'tags': tags,
       if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
+      // Server time, so the ride cache's `updatedAt > lastPull` pull can't
+      // miss a place written from a phone with a slow clock (issues §104.1).
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
+
+  /// [toFirestore] as plain JSON for the on-device ride cache.
+  Map<String, dynamic> toCacheJson() => {
+        ...toFirestore()..remove('updatedAt'),
+        'createdAt': createdAt.millisecondsSinceEpoch,
+        if (expiresAt != null) 'expiresAt': expiresAt!.millisecondsSinceEpoch,
+      };
 
   PlaceModel copyWith({
     String? id,

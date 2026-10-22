@@ -86,7 +86,7 @@ Future<void> _setSize(WidgetTester tester, Size size) async {
 }
 
 Future<void> _settle(WidgetTester tester) async {
-  // The spotlight's pulse is stopped under reduce-motion, so this settles.
+  // Entrance animations are skipped under reduce-motion, so this settles.
   await tester.pumpAndSettle(const Duration(milliseconds: 50));
 }
 

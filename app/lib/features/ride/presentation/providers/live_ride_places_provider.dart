@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../poi_directory/data/repositories/place_repository.dart';
+import '../../../poi_directory/data/ride_places_cache.dart';
 import '../../../poi_directory/domain/entities/place_entity.dart';
 import 'ride_recording_provider.dart';
 
@@ -13,7 +15,18 @@ final liveRidePlacesProvider =
 class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
   final Ref _ref;
   final PlaceRepository _placeRepository = PlaceRepository();
+  late final RidePlacesCache _cache = RidePlacesCache(
+    fetchCell: _placeRepository.getPlacesInCellFromServer,
+    fetchSince: _placeRepository.getPlacesUpdatedSince,
+  );
   LatLng? _lastFetchLocation;
+  // Refreshes run one at a time; they share the cache file.
+  Future<void> _refreshing = Future.value();
+
+  /// Places shown within this distance, refreshed every [refetchMeters]
+  /// (issues §104.1: was 25 km, every 5 km, straight from Firestore).
+  static const double radiusKm = 10;
+  static const double refetchMeters = 5000;
 
   LiveRidePlacesNotifier(this._ref) : super([]) {
     _ref.listen(rideRecordingProvider.select((s) => s.currentPosition),
@@ -40,27 +53,30 @@ class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
         current.latitude,
         current.longitude,
       );
-      if (distance > 5000) {
-        // 5km
+      if (distance > refetchMeters) {
         shouldFetch = true;
       }
     }
 
     if (shouldFetch) {
       _lastFetchLocation = current;
-      try {
-        final places = await _placeRepository.getNearbyPlaces(
-          latitude: current.latitude,
-          longitude: current.longitude,
-          radiusKm: 25, // 25km radius
-          category: null,
-        );
-        if (mounted) {
-          state = places;
-        }
-      } catch (e) {
-        // Silently ignore or log
-      }
+      _refreshing = _refreshing.then((_) => _fetch(current));
     }
+  }
+
+  Future<void> _fetch(LatLng at) async {
+    try {
+      // The cached places go up at once; the pull then fills in changes.
+      _show(await _cache.nearby(at.latitude, at.longitude, radiusKm));
+      await _cache.refresh(at.latitude, at.longitude, radiusKm);
+    } catch (e) {
+      // Offline or a failed pull: the cached places stay up.
+      debugPrint('[LiveRidePlaces] refresh failed: $e');
+    }
+    _show(await _cache.nearby(at.latitude, at.longitude, radiusKm));
+  }
+
+  void _show(List<PlaceEntity> places) {
+    if (mounted) state = places;
   }
 }

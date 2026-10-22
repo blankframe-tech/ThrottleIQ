@@ -117,6 +117,24 @@ keys events to the app-instance id).
 **Founder action:** the Play Console Data Safety form has to be updated to match this
 table before the next release that ships this code. Import the CSV or set it by hand.
 
+### Crash detection records (added 2026-10-22, issues §110.5)
+| Type | Collected? | Shared? | Optional? | Purpose |
+|---|---|---|---|---|
+| App activity → Other actions (impact records: the "Did you fall?" answer, surface and severity, motion-sensor figures and a 12 s sensor clip, phone placement, app on screen, charging) | Yes | No | No | App functionality, Analytics |
+| Location → Approximate location (the research copy's ~1.2 × 0.6 km map cell) | Yes | No | **Yes — opt-in** (Settings → Privacy & Safety → Help improve crash detection) | Analytics |
+
+Source: shadow-mode crash detection (2026-10-15). Every impact record is backed up to the
+rider's private `impactEvents` (only that account reads it; its precise position is already
+covered by Precise location → App functionality). With the opt-in on, an answered record is
+also copied to the `crashEvents` research set: no exact position, no sensor clip, no typed
+text, but the account ID, so it is de-identified, not anonymous. That copy is the Analytics
+purpose. Matches `public/privacy.html` §7.
+
+**Founder check:** Play has no "sensor data" type, so Other actions is the closest fit. Two
+calls for you (or the lawyer, needs_attention): whether the fall answer and severity count as
+Health info, and whether to tick Personal info → User IDs (the account ID rides on every
+cloud record, not just this one; the CSV leaves it unticked).
+
 **Firebase App Check** (issues §83.19) is not user data: it sends a Play Integrity /
 App Attest attestation. It is disclosed in `public/privacy.html`; nothing to declare on
 the form beyond what is already there.

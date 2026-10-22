@@ -21,7 +21,7 @@ const {
   assertSucceeds,
 } = require('@firebase/rules-unit-testing');
 
-const { doc, setDoc, Timestamp } = require('firebase/firestore');
+const { doc, setDoc, serverTimestamp, Timestamp } = require('firebase/firestore');
 
 const inHours = (h) => Timestamp.fromMillis(Date.now() + h * 3600 * 1000);
 
@@ -149,5 +149,17 @@ test('create with expiresAt more than two days out is denied', async () => {
       doc(aliceDb(), 'places', 'p11'),
       place({ category: 'police', expiresAt: inHours(24 * 365) })
     )
+  );
+});
+
+test('updatedAt as the server timestamp (what the app writes) is allowed', async () => {
+  await assertSucceeds(
+    setDoc(doc(aliceDb(), 'places', 'p12'), place({ updatedAt: serverTimestamp() }))
+  );
+});
+
+test('a backdated updatedAt, which would dodge the ride cache delta pull, is denied', async () => {
+  await assertFails(
+    setDoc(doc(aliceDb(), 'places', 'p13'), place({ updatedAt: inHours(-1) }))
   );
 });
