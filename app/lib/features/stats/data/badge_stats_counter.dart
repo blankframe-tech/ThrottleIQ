@@ -178,17 +178,18 @@ class BadgeStatsCounter {
   /// Call only for a badge with no earnedBadges doc yet.
   Future<void> recordEarnedBadge(String uid, String badgeId) async {
     try {
-      await ackOrQueued(
-          commit(BadgeStatsBatches.badgeCount(uid, badgeId, isNew: true)));
+      // Not ackOrQueued: a refusal after a timeout would skip the fallback
+      // below and lose the earnedBadges doc. Background sync, so waiting is fine.
+      await commit(BadgeStatsBatches.badgeCount(uid, badgeId, isNew: true));
     } on FirebaseException catch (e) {
       if (e.code != 'permission-denied') rethrow;
       // Rules not deployed yet, or another device already counted it. Keep
       // the durable record either way; a merge never touches countedAt.
       // The next self-count counts it if it's still uncounted.
-      await ackOrQueued(_db.doc('users/$uid/earnedBadges/$badgeId').set({
+      await _db.doc('users/$uid/earnedBadges/$badgeId').set({
         'badgeId': badgeId,
         'earnedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true)));
+      }, SetOptions(merge: true));
       await _clearDone(uid);
     }
   }

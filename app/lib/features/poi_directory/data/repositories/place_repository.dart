@@ -32,13 +32,16 @@ class PlaceRepository {
     return _uploadService.upload(file, folder: 'places/$uid');
   }
 
-  /// Add a new place
-  Future<String> addPlace(PlaceEntity place) async {
+  /// Add a new place. Returns after at most 8 s ([ackOrQueued]); with
+  /// [untilAcked], only on the server's ack, so a late refusal still throws
+  /// (for callers that don't await it).
+  Future<String> addPlace(PlaceEntity place, {bool untilAcked = false}) async {
     final model = PlaceModel.fromEntity(place);
     // doc() + set() rather than add(): same auto id, but known before the
     // ack, so a queued write can still return it.
     final docRef = _firestore.collection(_collection).doc();
-    await ackOrQueued(docRef.set(model.toFirestore()));
+    final write = docRef.set(model.toFirestore());
+    await (untilAcked ? write : ackOrQueued(write));
     return docRef.id;
   }
 
