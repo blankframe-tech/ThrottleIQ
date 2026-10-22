@@ -9,11 +9,11 @@ _Last updated: 2026-10-22._
 - In progress: `fix/reads-104` (a separate session: Firestore ack timeout, §104.6 follow-up).
 - Never merged: `indriyo` and `mayabi` (notes below). Three Dependabot branches exist on `origin` (owner item 16).
 
-**`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 6 commits ahead, last merged `main` 2026-10-17). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
+**`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 9 commits ahead, last merged `main` 2026-10-22). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
 
-**`mayabi`** (Maya Ride integration kit, worktree `.claude/worktrees/mayabi`, 6 commits ahead). The kit is `mayabi/` (package `throttleiq_mayabi`), plus `functions/src/partner-api/` on our side. Owner decision 2026-10-17: never merged into `main`, and no cherry-picks into `main` without asking. Details and go-live steps are in the HANDOFF on that branch and in its `mayabi_todos.md`; the pilot is owner item 7.
-- Keep it current: `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Expect conflicts in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts` and `scripts/check.sh`.
-- After a rebase that touches a vendored app file, copy it again into `mayabi/lib/src/vendor/` (`test/vendor_sync_test.dart` fails on drift).
+**`mayabi`** (Maya Ride integration kit, worktree `.claude/worktrees/mayabi`, 8 commits ahead, last merged `main` 2026-10-22). The kit is `mayabi/` (package `throttleiq_mayabi`), plus `functions/src/partner-api/` on our side. Owner decision 2026-10-17: never merged into `main`, and no cherry-picks into `main` without asking. Details and go-live steps are in the HANDOFF on that branch and in its `mayabi_todos.md`; the pilot is owner item 7.
+- Keep it current by merging `main` into it (since 2026-10-22; no rebase, so no force-push), then `scripts/check.sh`, then `git push origin mayabi`. Expect conflicts in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts` and `scripts/check.sh`.
+- After a merge that touches a vendored app file, copy it again into `mayabi/lib/src/vendor/` (`test/vendor_sync_test.dart` fails on drift).
 - Releases from that branch: its `scripts/deploy.sh` tags `<tag>-<branch>` and publishes a non-latest prerelease, so `releases/latest` stays a `main` build.
 
 ## Start here
