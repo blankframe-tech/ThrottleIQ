@@ -84,9 +84,8 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
 
     return LayoutBuilder(builder: (context, constraints) {
       final compact = constraints.maxHeight < kTourCompactHeight;
-      final previewHeight = compact
-          ? 220.0
-          : (constraints.maxHeight * 0.58).clamp(280.0, 420.0);
+      final previewHeight =
+          compact ? 220.0 : (constraints.maxHeight * 0.58).clamp(280.0, 420.0);
 
       return SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
@@ -313,9 +312,9 @@ class TourScreenPreview extends StatelessWidget {
                       slide.screenshot,
                       fit: BoxFit.cover,
                       // Decode at display size, not the asset's full size.
-                      cacheWidth: (width *
-                              MediaQuery.devicePixelRatioOf(context))
-                          .round(),
+                      cacheWidth:
+                          (width * MediaQuery.devicePixelRatioOf(context))
+                              .round(),
                     ),
                   ),
                 ),
