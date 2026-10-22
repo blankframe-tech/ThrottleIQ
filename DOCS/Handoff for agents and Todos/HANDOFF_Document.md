@@ -82,7 +82,9 @@ Everything after `5a935e93` (the 4.7.1 bump):
 - Moderation: `public/community.html`, findable reports, rules-checked report snapshots with 90-day retention (`DOCS/General/Files for Stores/moderation_policy.md`).
 - Chat anonymisation on account deletion (`functions/`, needs Blaze to run).
 - App Check sideload gate (`d92f694e`). A build with it must ship through Google Play: once App Check is set up, a sideloaded Android release build blocks itself. Settle owner items 17 and 32 before the next release.
+- Live-ride places from an on-device cache with `updatedAt > lastPull` pulls, 10 km around the rider every 5 km (was 25 km straight from Firestore; §104.1, `issues_fixed.md`).
 - Quota outage mode (§104.6), the `dispose()` fix (`4b914c10`, §106), and the dark-mode map filter (`fb3b9297`).
+- Feature tour v5: real-screen captures with pinned callouts, one accent colour, steps grouped by tab (`ea939409`, `features.md`).
 
 Shipping these is owner item 26.
 
@@ -90,8 +92,8 @@ Shipping these is owner item 26.
 
 | Part | State |
 |---|---|
-| Firestore rules and indexes | Behind `main`. `SECURITY.md` step 3 (rules, indexes, then the email migration in the same hour) is open: owner item 2. The 2026-10-21 report-snapshot rules go out with the same deploy (owner items 30, 31). |
-| Hosting | Matched the repo on 2026-10-19. Not deployed since: the 2026-10-21 `privacy.html` changes and `community.html` (owner item 30). |
+| Firestore rules and indexes | Deployed 2026-10-22 from `23139b60` (report-snapshot rules included). Since then `main` adds one rule: the places `updatedAt` must be server time (§104.1); redeploy rules with the next deploy. **The email migration (`SECURITY.md` step 3, second half) has not run:** until it does, old public profiles still carry emails. Owner item 2. |
+| Hosting | Deployed 2026-10-22 (`privacy.html` §1/§8/§9, `community.html`). `privacy.html` §5 still says other riders can read your email; change it and redeploy Hosting right after the email migration (`SECURITY.md` step 3). |
 | Cloud Functions | Never deployed: the project is on Spark (owner item 3). So `onUserAccountDeleted`, `purgeOldGpsTracks`, the report-snapshot purge and chat moderation don't run. Account deletion is manual: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`. |
 | Quota alert | Live since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, policy `alertPolicies/13055223357814148266`). Production used 3-14% of daily reads in the week before. |
 | `places` collection | 1,238 docs, including 717 from a Google Maps scrape (2026-10-19). Take-down decision: owner item 1 (`scripts/oneoff/revert_google_places.js`, ready, never run). |
@@ -215,6 +217,24 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-10-22 (tour): feature tour shows the real screens
+
+- Each step shows a capture of its real screen (`app/assets/images/tour_*.jpg`, 456 KB, from the dark UI screenshots) with the numbered callouts pinned on it. The schematic spotlight and the miniature nav bar are gone.
+- One accent (`tourAccent`: primary, body ink where primary fails 3:1) instead of five per-step colours.
+- Order walks the app once: Record, cockpit, Rides, Garage, Profile, Auto tracking, Maintenance, Places, Social. A manifest test fails if a tab comes up twice. `kOnboardingManifestVersion` 5.
+- Limits: the captures are dark mode only, so light-mode riders see dark screens; with ride tracking off or forums-only the captures still show the full app's nav and tabs. Recapture a step when its screen's layout changes and re-check its `SlidePointer.at` pins.
+
+### 2026-10-22 (engineering tasks): Gradle wrapper 8.14 & GPX export UTC fix
+
+- **§110.3 fixed:** Upgraded Gradle wrapper to 8.14 (`gradle-8.14-all.zip`) in `app/android/gradle/wrapper/gradle-wrapper.properties`. Verified with `./gradlew --version` and `./gradlew tasks --dry-run`.
+- **§109.3 fixed:** GPX and JSON exports write UTC ISO-8601 strings (`.toUtc().toIso8601String()`) for ride start/end time in `ride_summary_screen.dart` and normalized in `ExportService.generateGPX`, eliminating Strava timezone skew. Added unit tests in `export_service_test.dart` (4 passing).
+
+### 2026-10-22 (later): production deploy checked; places cache; Data Safety drafts
+
+- **Deploy:** the owner ran `firebase deploy --only firestore:rules,firestore:indexes,hosting` (no index-deletion prompt). Still open from `SECURITY.md` step 3: the email migration, then `privacy.html` §5 and Hosting again. Cloud Functions still wait on Blaze.
+- **§104.1 fixed:** `RidePlacesCache` keeps live-ride places on the phone and pulls only `updatedAt > lastPull`; whole geohash cells are re-read every 3 days. Radius 25 → 10 km, still every 5 km. New rule: places `updatedAt` must equal `request.time`. Details and limits in `issues_fixed.md` §104.1.
+- **§110.5 fixed:** the Data Safety CSV and notes cover impact records and the crash research copy. The owner fills the Play form (needs_attention).
 
 ### 2026-10-22: DOCS clean-up; branches retired and synced; no app change
 

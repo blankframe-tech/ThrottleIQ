@@ -116,7 +116,7 @@ service cloud.firestore {
     // a non-admin from deleting other riders' content.
     //
     // issues §24.9: prefers the `admin` custom claim
-    // (request.auth.token.admin) — set via scripts/set_admin_claim.js, which
+    // (request.auth.token.admin) — set via scripts/oneoff/set_admin_claim.js, which
     // only this project's own service-account credentials can run — over the
     // email-string comparison this used to be exclusively. A custom claim can
     // only ever be written server-side with the Admin SDK, never by a client
@@ -1366,7 +1366,19 @@ service cloud.firestore {
       // present it must be a short list of short strings (PlaceTag.maxPerPlace
       // in place_tags.dart), so nobody can hang an arbitrarily large payload
       // off a public place doc.
+      //
+      // `expiresAt` is optional, only permitted on temporary police checkposts
+      // (`category == 'police'`), and must lie in the next two days: the app
+      // only ever writes now + 24 h, and "permanent" is the field's absence,
+      // so a far-future value is just a permanent pin dodging the choice.
+      //
+      // `updatedAt` is the ride cache's delta watermark (issues §104.1), so it
+      // must be server time: a backdated value would hide the place from every
+      // `updatedAt > lastPull` pull. Optional, because builds before the cache
+      // don't write it.
       allow create: if request.auth != null &&
+        (!('updatedAt' in request.resource.data) ||
+          request.resource.data.updatedAt == request.time) &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.verified == false &&
         request.resource.data.ratingSum == 0 &&
@@ -1374,7 +1386,12 @@ service cloud.firestore {
         (!('tags' in request.resource.data) ||
           (request.resource.data.tags is list &&
            request.resource.data.tags.size() <= 12 &&
-           request.resource.data.tags.toSet().size() == request.resource.data.tags.size()));
+           request.resource.data.tags.toSet().size() == request.resource.data.tags.size())) &&
+        (!('expiresAt' in request.resource.data) ||
+          (request.resource.data.expiresAt is timestamp &&
+           request.resource.data.expiresAt > request.time &&
+           request.resource.data.expiresAt <= request.time + duration.value(2, 'd') &&
+           request.resource.data.category == 'police'));
 
       // No screen built in this phase calls updatePlace() /
       // updateVerification() / deletePlace() on PlaceRepository — they
@@ -1943,6 +1960,39 @@ service cloud.firestore {
     match /reports/{reportId} {
       // Admins can read/update/delete (update for status changes)
       allow read, update, delete: if isAdmin();
+
+      // Report evidence (owner decision 2026-10-21): a chat or post report may
+      // carry `snapshot`, a copy of the reported content that must equal the
+      // stored document right now, so it survives the author's later edit,
+      // delete or account erasure. chat: {text, senderId, sentAt}; post:
+      // {title, body, imageUrls, senderId, sentAt}. get() ignores the
+      // reporter's read access, so a chat reporter must also be in that chat
+      // (else the rule is an oracle for other riders' messages); posts are
+      // readable by every signed-in rider anyway. Riders can't read or update
+      // reports, so it can't be edited later. Shape: reportSnapshotOf() in
+      // report_model.dart. Retention: 90 days after review
+      // (DOCS/General/Files for Stores/moderation_policy.md, report-retention.ts).
+      function snapshotIsReal(d) {
+        let parts = d.contentId.split('/');
+        return d.reportedId == d.snapshot.get('senderId', null) &&
+          ((d.contentType == 'chat' &&
+            d.contentId.matches('chats/[^/]+/messages/[^/]+') &&
+            request.auth.uid in get(/databases/$(database)/documents/chats/$(parts[1])).data.participants &&
+            chatSnapshotMatches(d.snapshot,
+              get(/databases/$(database)/documents/chats/$(parts[1])/messages/$(parts[3])).data)) ||
+           (d.contentType == 'post' &&
+            d.contentId.matches('forums/[^/]+/posts/[^/]+') &&
+            postSnapshotMatches(d.snapshot,
+              get(/databases/$(database)/documents/forums/$(parts[1])/posts/$(parts[3])).data)));
+      }
+      function chatSnapshotMatches(s, m) {
+        return s == {'text': m.text, 'senderId': m.senderId, 'sentAt': m.createdAt};
+      }
+      function postSnapshotMatches(s, p) {
+        return s == {'title': p.title, 'body': p.body, 'imageUrls': p.get('imageUrls', []),
+                     'senderId': p.userId, 'sentAt': p.createdAt};
+      }
+
       // Any authenticated user can create a report, but only if they correctly
       // stamp themselves as the reporter, target a real (non-empty) id, and
       // leave it in the 'pending' state a real report always starts in —
@@ -1959,8 +2009,10 @@ service cloud.firestore {
       allow create: if request.auth != null &&
         request.resource.data.keys().hasOnly([
           'reporterId', 'reportedId', 'contentType', 'contentId', 'reason',
-          'additionalDetails', 'createdAt', 'status'
+          'additionalDetails', 'createdAt', 'status', 'snapshot'
         ]) &&
+        (!('snapshot' in request.resource.data) ||
+         snapshotIsReal(request.resource.data)) &&
         request.resource.data.reporterId == request.auth.uid &&
         request.resource.data.reportedId is string &&
         request.resource.data.reportedId.size() > 0 &&

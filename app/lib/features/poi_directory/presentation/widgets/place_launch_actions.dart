@@ -84,9 +84,26 @@ abstract final class PlaceLaunchActions {
       unawaited(ref.read(rideRecordingProvider.notifier).startRide());
     }
 
-    final google = googleMapsDirectionsUri(
+    if (!context.mounted) return;
+    await openDirectionsTo(
+      context,
       latitude: place.latitude,
       longitude: place.longitude,
+      label: place.name,
+    );
+  }
+
+  /// The launch half of [openDirections], for a point that isn't a place
+  /// (the parked bike): Google Maps, then Apple Maps on iOS, then a snackbar.
+  static Future<void> openDirectionsTo(
+    BuildContext context, {
+    required double latitude,
+    required double longitude,
+    required String label,
+  }) async {
+    final google = googleMapsDirectionsUri(
+      latitude: latitude,
+      longitude: longitude,
     );
 
     var launched = false;
@@ -100,9 +117,9 @@ abstract final class PlaceLaunchActions {
     // and adherence to Flutter platform checks.
     if (!launched && defaultTargetPlatform == TargetPlatform.iOS) {
       final apple = appleMapsDirectionsUri(
-        latitude: place.latitude,
-        longitude: place.longitude,
-        label: place.name,
+        latitude: latitude,
+        longitude: longitude,
+        label: label,
       );
       try {
         launched = await launchUrl(apple, mode: LaunchMode.externalApplication);

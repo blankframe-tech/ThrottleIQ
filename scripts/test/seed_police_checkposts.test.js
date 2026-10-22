@@ -17,7 +17,7 @@ const {
   EXPECTED_PROJECT_ID,
   COLLECTION,
   SEED_AUTHOR,
-} = require('../seed_police_checkposts.js');
+} = require('../oneoff/seed_police_checkposts.js');
 
 test('seed_police_checkposts has 30 major checkposts in Dhaka', () => {
   assert.equal(POLICE_CHECKPOSTS.length, 30);

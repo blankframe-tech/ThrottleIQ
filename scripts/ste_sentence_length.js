@@ -13,7 +13,8 @@
  * shortcut: "procedural" = first word is in IMPERATIVES below; add verbs there
  * when a doc uses a new one.
  *
- * Usage:  node scripts/ste_sentence_length.js DOCS/PRD.md   (exit 1 on a violation)
+ * Usage:  node scripts/ste_sentence_length.js "DOCS/For Devs and Contributors/architecture/PRD.md"
+ *         (exit 1 on a violation)
  */
 
 const fs = require('node:fs');

@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:flutter/foundation.dart' show debugPrint, visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:throttleiq/core/utils/num_cast.dart';
@@ -30,7 +30,8 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.json';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
@@ -60,7 +61,8 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.csv';
       final file = File('${directory.path}/$fileName');
 
       final points = await RideTrackLoader.load(rideId);
@@ -101,13 +103,14 @@ class ExportService {
       final directory = await _exportDir();
 
       final rideId = ride['id'] as String;
-      final fileName = 'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
+      final fileName =
+          'ride_${rideId}_${DateTime.now().millisecondsSinceEpoch}.gpx';
       final file = File('${directory.path}/$fileName');
 
       // Fetch ride points
       final points = await RideTrackLoader.load(rideId);
 
-      final gpxContent = _generateGPX(ride, points);
+      final gpxContent = generateGPX(ride, points);
       await file.writeAsString(gpxContent, flush: true);
       return file;
     } catch (e) {
@@ -116,10 +119,20 @@ class ExportService {
     }
   }
 
-  /// Generate GPX XML string from ride data
-  String _generateGPX(Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
-    final startTime = ride['startTime'] as String;
-    final distanceKm = (ride['distanceM'] as num) / 1000;
+  /// Generate GPX XML string from ride data.
+  ///
+  /// Guarantees that `<time>` in metadata and `<trkpt>` timestamps are output in
+  /// UTC (ISO-8601 with `Z`) to prevent timezone skew on services like Strava
+  /// (see issues_open.md §109.3).
+  @visibleForTesting
+  String generateGPX(
+      Map<String, dynamic> ride, List<Map<String, dynamic>> ridePoints) {
+    final rawStartTime = ride['startTime'] as String? ?? '';
+    final parsedStartTime = DateTime.tryParse(rawStartTime);
+    final startTime = parsedStartTime != null
+        ? parsedStartTime.toUtc().toIso8601String()
+        : rawStartTime;
+    final distanceKm = ((ride['distanceM'] as num?) ?? 0) / 1000;
 
     final buffer = StringBuffer();
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
@@ -138,19 +151,25 @@ class ExportService {
       final minLng = lngs.reduce((a, b) => a < b ? a : b);
       final maxLng = lngs.reduce((a, b) => a > b ? a : b);
 
-      buffer.writeln('    <bounds minlat="$minLat" minlon="$minLng" maxlat="$maxLat" maxlon="$maxLng" />');
+      buffer.writeln(
+          '    <bounds minlat="$minLat" minlon="$minLng" maxlat="$maxLat" maxlon="$maxLng" />');
     }
 
     buffer.writeln('  </metadata>');
     buffer.writeln('  <trk>');
     buffer.writeln('    <name>Motorcycle Ride</name>');
-    buffer.writeln('    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
+    buffer.writeln(
+        '    <desc>Distance: ${distanceKm.toStringAsFixed(2)} km</desc>');
     buffer.writeln('    <trkseg>');
 
     for (final point in ridePoints) {
       final lat = point['lat'] as num;
       final lng = point['lng'] as num;
-      final timestamp = point['timestamp'] as String;
+      final rawTimestamp = point['timestamp'] as String? ?? '';
+      final parsedTimestamp = DateTime.tryParse(rawTimestamp);
+      final timestamp = parsedTimestamp != null
+          ? parsedTimestamp.toUtc().toIso8601String()
+          : rawTimestamp;
       // DB column is snake_case
       final elevation = point['altitude_m'] as num?;
 

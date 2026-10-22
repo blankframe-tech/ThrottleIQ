@@ -35,7 +35,7 @@ void main() {
 
   test('shadow mode is on and the live alarm is off', () {
     // Flip crashAlertsEnabled only with the plan's targets met
-    // (DOCS/CRASH TESTING, section 10) and a delivery path decided.
+    // (DOCS/General/CRASH TESTING, section 10) and a delivery path decided.
     expect(SensorConstants.impactShadowEnabled, isTrue);
     expect(SensorConstants.crashAlertsEnabled, isFalse);
   });

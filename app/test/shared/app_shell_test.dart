@@ -1,5 +1,27 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:throttleiq/core/cloud/firestore_quota.dart';
+import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
+import 'package:throttleiq/features/ride/presentation/widgets/ride_in_progress_bar.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
 import 'package:throttleiq/shared/widgets/app_shell.dart';
+
+class _FakeRideRecordingNotifier extends StateNotifier<RideRecordingState>
+    implements RideRecordingNotifier {
+  _FakeRideRecordingNotifier(
+      {RecordingStatus initialStatus = RecordingStatus.idle})
+      : super(RideRecordingState(status: initialStatus));
+
+  void setStatus(RecordingStatus status) {
+    state = state.copyWith(status: status);
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('shellTabIndexForLocation', () {
@@ -52,6 +74,125 @@ void main() {
     test('does not match on a partial segment', () {
       expect(shellTabIndexForLocation('/home/recordings'), 2);
       expect(shellTabIndexForLocation('/home/socialite'), 2);
+    });
+  });
+
+  group('AppShell RideInProgressBar integration', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    testWidgets(
+        'the strip is hidden when idle, shows when active, and a tap goes to /ride/active',
+        (tester) async {
+      late _FakeRideRecordingNotifier fakeRecorder;
+
+      final router = GoRouter(
+        initialLocation: '/home/places',
+        routes: [
+          GoRoute(
+            path: '/home/places',
+            builder: (_, __) => const AppShell(
+              child: Scaffold(body: Text('Places Content')),
+            ),
+          ),
+          GoRoute(
+            path: '/ride/active',
+            builder: (_, __) => const Scaffold(body: Text('Active Cockpit')),
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            rideRecordingProvider.overrideWith((ref) {
+              fakeRecorder = _FakeRideRecordingNotifier(
+                  initialStatus: RecordingStatus.idle);
+              return fakeRecorder;
+            }),
+          ],
+          child: MaterialApp.router(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Hidden when idle
+      expect(find.textContaining('Recording ride'), findsNothing);
+      expect(find.textContaining('Ride paused'), findsNothing);
+
+      // Shows when active
+      fakeRecorder.setStatus(RecordingStatus.active);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Recording ride'), findsOneWidget);
+
+      // Tap goes to /ride/active
+      await tester.tap(find.byType(RideInProgressBar));
+      await tester.pumpAndSettle();
+      expect(find.text('Active Cockpit'), findsOneWidget);
+    });
+  });
+
+  /// §104: the strip that tells riders Firestore is over its daily quota.
+  group('AppShell OverQuotaBar', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Future<void> pumpShell(
+      WidgetTester tester, {
+      required bool paused,
+      Locale locale = const Locale('en'),
+    }) async {
+      final router = GoRouter(
+        initialLocation: '/home/places',
+        routes: [
+          GoRoute(
+            path: '/home/places',
+            builder: (_, __) => const AppShell(
+              child: Scaffold(body: Text('Places Content')),
+            ),
+          ),
+        ],
+      );
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            rideRecordingProvider
+                .overrideWith((ref) => _FakeRideRecordingNotifier()),
+            firestorePausedProvider.overrideWithValue(paused),
+          ],
+          child: MaterialApp.router(
+            locale: locale,
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            routerConfig: router,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('hidden while Firestore answers', (tester) async {
+      await pumpShell(tester, paused: false);
+      expect(find.textContaining('database is overloaded'), findsNothing);
+    });
+
+    testWidgets('shown while over quota', (tester) async {
+      await pumpShell(tester, paused: true);
+      expect(
+        find.textContaining('Your data is safe on this phone'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('shown in Bangla too', (tester) async {
+      await pumpShell(tester, paused: true, locale: const Locale('bn'));
+      expect(find.textContaining('এই ফোনে নিরাপদ'), findsOneWidget);
     });
   });
 }

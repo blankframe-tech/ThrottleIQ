@@ -12,13 +12,16 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`seed_police_checkposts.js`](#seed_police_checkpostsjs--seed-frequent-police-checkposts) | Populates the `places` collection with Dhaka's 30 frequent police checkpost & citation hotspots | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed'` |
 | [`seed_police_checkposts_v2.js`](#seed_police_checkposts_v2js--seed-additional-police-checkposts) | Populates the `places` collection with 25 additional DMP police checkposts across outer/corridor zones | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v2'` |
 | [`seed_police_checkposts_v3.js`](#seed_police_checkposts_v3js--seed-crowdsourced-police-checkposts) | Populates the `places` collection with 35 crowdsourced checkposts from Facebook Traffic groups & Waze | Yes — one query deletes `createdBy == 'system:dmp-checkpost-seed-v3'` |
-| [`update_places_google_ratings.js`](#update_places_google_ratingsjs--enrich-places-with-google-maps-ratings) | Enriches commercial places (fuel, garage, parts) with Google Maps ratings (`x`) alongside ThrottleIQ ratings (`y`) | Yes — re-running updates fields |
+| [`import_google_places.js`](oneoff/import_google_places.js) | From an Apify Google Maps Scraper export: adds missing Dhaka fuel/garage/parts places, fills phone/hours/generic names on nearby existing ones, and sets every Google rating to 0 (§105). Facts only, no ratings stored. `--from=<export.json>` (the 2026-10-19 export: `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`) | Creates and enrichments: yes, `revert_google_places.js`. Rating reset: no |
+| [`revert_google_places.js`](#revert_google_placesjs--take-the-google-maps-import-back-out) | Undoes `import_google_places.js`: deletes the `system:gmaps-seed-dhaka` places nobody has touched since (`--seeded-only`), and with `--from=<export.json>` also clears the Google-derived fields on the 80 enriched ones. Dry run by default; `--apply --backup=<file>` writes | Yes: `--restore=<backup> --apply`. Ratings set to 0 by the import: no |
 | [`seed_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Creates fabricated QA/test rider accounts with Bangladesh-market bikes, backdated rides, and forum posts. **Run — 30 accounts are live as of 2026-08-27** | Yes — `cleanup_qa_test_riders.js` |
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 | [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
 | [`backfill_users_visibility.js`](#backfill_users_visibilityjs--stamp-visibility-public-on-legacy-profiles) | One-off: sets `visibility: 'public'` on `users` docs that lack it, so legacy riders show up in search again. Takes a required `--project=<id>` | Yes — the field can be deleted again; single-doc reads already treated a missing field as public |
 | [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
 | [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
+| [`monitoring/firestore-quota-alert.yaml`](#monitoringfirestore-quota-alertyaml--the-quota-email-alert) | Cloud Monitoring alert: emails the owner at 80% of a daily Firestore limit and when requests start being refused (§104) | Yes — `gcloud monitoring policies delete` |
+| [`loadtest/quota_rehearsal.js`](#loadtestquota_rehearsaljs--rehearse-a-quota-outage) | Spends a **throwaway** Spark project's daily Firestore quota and records how the SDK reports it (§104). Refuses any project id without `quota-lab` | n/a — the lab project is deleted afterwards |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
 must be `throttleiqfb`, and each one is idempotent so an interrupted run can just
@@ -83,6 +86,76 @@ Runs, against the RTDB emulator (port 9000):
   `public/live-viewer-core.js` (no emulator needed; also picked up by
   `npm test`).
 
+## Firestore daily quota (§104)
+
+`throttleiqfb` is on Spark. Once a daily limit is used up (50,000 reads,
+20,000 writes or 20,000 deletes), Firestore refuses that kind of request for
+every rider until the reset around midnight Pacific (13:00 Dhaka in summer,
+14:00 in winter). The app then pauses its sync and shows a strip
+(`app/lib/core/cloud/firestore_quota.dart`).
+
+Both items below need the owner's Google account. The Play-publisher service
+account that gcloud uses on this Mac can't read Cloud Monitoring.
+
+```bash
+gcloud auth login blankframe.technologies@gmail.com   # the owner; opens a browser
+# Put the default back, or scripts/publish_release.sh uses the wrong account:
+gcloud config set account id-throttleiq-play-publisher@throttle-iq-gcc1.iam.gserviceaccount.com
+OWNER=blankframe.technologies@gmail.com
+```
+
+### `monitoring/firestore-quota-alert.yaml` — the quota email alert
+
+One policy, five conditions, each emailing the owner on its own: reads, writes
+or deletes above 80% of the daily limit, and reads or writes "used up" (99%).
+All use a rolling 24 h window. Refused requests never reach
+`api/request_count`, so there is no "requests refused" condition
+(`DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`). Emails arrive about 6-7
+minutes after a threshold is crossed. **Live on `throttleiqfb` since
+2026-10-21** (`alertPolicies/13055223357814148266`, channel
+`notificationChannels/9574270854457855850`). Apply it once per project
+(`PROJECT=throttleiqfb`):
+
+```bash
+TOKEN=$(gcloud auth print-access-token --account=$OWNER)
+# 1. The email channel (once). Note the "name" it returns.
+curl -s -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  "https://monitoring.googleapis.com/v3/projects/$PROJECT/notificationChannels" \
+  -d '{"type":"email","displayName":"Owner email","labels":{"email_address":"blankframe.technologies@gmail.com"}}'
+# 2. The policy.
+gcloud monitoring policies create --project=$PROJECT --account=$OWNER \
+  --policy-from-file=monitoring/firestore-quota-alert.yaml \
+  --notification-channels=projects/$PROJECT/notificationChannels/<id>
+```
+
+To change it, edit the YAML, delete the old policy
+(`gcloud monitoring policies list` / `policies delete`) and create it again.
+
+### `loadtest/quota_rehearsal.js` — rehearse a quota outage
+
+Spends a **throwaway** project's daily quota on purpose and prints, as markdown
+tables, how the client SDK answers before and after: `count()` (the app's
+probe), query and doc `get`, a listener, a plain `set`, a `set` behind a rules
+`get()`, and a transaction. It refuses any project id that doesn't contain
+`quota-lab`. Never run it against `throttleiqfb`: it would lock every rider out
+until the reset.
+
+```bash
+LAB=throttleiq-quota-lab-$(date +%Y%m%d)
+firebase projects:create $LAB
+firebase firestore:databases:create "(default)" --location=asia-south1 --project=$LAB
+firebase apps:create WEB quota-lab --project=$LAB
+firebase apps:sdkconfig WEB --project=$LAB          # gives apiKey and appId
+# Lab rules through a firebase.json outside the repo, so nothing can reach throttleiqfb:
+LABDIR=$(mktemp -d) && cp loadtest/quota_lab.rules $LABDIR/firestore.rules
+echo '{"firestore":{"rules":"firestore.rules"}}' > $LABDIR/firebase.json
+(cd $LABDIR && firebase deploy --only firestore:rules --project=$LAB)
+# Optional: the alert above with PROJECT=$LAB, to see the emails arrive.
+npm run loadtest:rehearsal -- --project=$LAB --api-key=<apiKey> --app-id=<appId>
+# Record the tables under "DOCS/For Devs and Contributors/load_test/", then:
+gcloud projects delete $LAB --account=$OWNER   # can be undone for 30 days
+```
+
 ---
 
 # `migrate_emails_private.js` — move emails off public profiles
@@ -94,8 +167,8 @@ covers riders who never open the app again.
 
 ```bash
 cd scripts
-node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
-node migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
+node oneoff/migrate_emails_private.js --service-account=/path/outside/the/repo/key.json                         # dry run: counts only
+node oneoff/migrate_emails_private.js --service-account=/path/outside/the/repo/key.json --yes-i-really-mean-it  # moves them
 ```
 
 It prints counts and uids, never an address, warns if one email sits on two
@@ -115,8 +188,8 @@ field as public, so no rider's privacy changes.
 ```bash
 cd scripts && npm install
 export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
-node backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
-node backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
+node oneoff/backfill_users_visibility.js --project=throttleiqfb                         # dry run: count + first uids
+node oneoff/backfill_users_visibility.js --project=throttleiqfb --yes-i-really-mean-it  # writes, after typing BACKFILL VISIBILITY
 ```
 
 `--project` is required and must match the key's `project_id`. Missing and
@@ -235,7 +308,7 @@ npm run reset:dry-run
 or equivalently:
 
 ```bash
-node reset_beta_data.js
+node oneoff/reset_beta_data.js
 ```
 
 Running the script with **no flags does a dry run**. It walks every collection,
@@ -258,7 +331,7 @@ npm run reset:execute
 or equivalently:
 
 ```bash
-node reset_beta_data.js --yes-i-really-mean-it
+node oneoff/reset_beta_data.js --yes-i-really-mean-it
 ```
 
 Nothing is deleted without that flag. The script pauses for five seconds before
@@ -309,7 +382,7 @@ the script moves on to the next, so one bad collection does not block the rest.
 ## Syntax check
 
 ```bash
-node --check reset_beta_data.js
+node --check oneoff/reset_beta_data.js
 ```
 
 or `npm run check`. This only parses the file; it does not connect to anything.
@@ -392,7 +465,7 @@ editing it is just deleting objects.
 ### Step 2 — dry run
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js --from=dhaka_places.json
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js --from=dhaka_places.json
 ```
 
 Reports how many of those places are already in the directory and how many are
@@ -407,7 +480,7 @@ FIREBASE_PROJECT_ID=throttleiqfb npm run seed:dhaka:dry-run
 ### Step 3 — write
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js \
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js \
   --from=dhaka_places.json --yes-i-really-mean-it
 ```
 
@@ -463,7 +536,7 @@ be tidier on paper and would cut exactly those edges.
 To seed another city, pass its box — for example Chattogram:
 
 ```bash
-FIREBASE_PROJECT_ID=throttleiqfb node seed_dhaka_places.js \
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_dhaka_places.js \
   --bbox=22.28,91.72,22.42,91.88 --dry-run
 ```
 
@@ -577,8 +650,8 @@ Firestore. Read that output before you ever point it at real credentials.
 
 ```bash
 cd scripts
-node seed_qa_test_riders.js               # dry run, no setup needed
-node seed_qa_test_riders.js --count=5     # smaller sample dry run
+node oneoff/seed_qa_test_riders.js               # dry run, no setup needed
+node oneoff/seed_qa_test_riders.js --count=5     # smaller sample dry run
 ```
 
 ## Running it for real
@@ -599,7 +672,7 @@ underlying project); logging in as the wrong one fails with
 
 ```bash
 cd scripts
-FIREBASE_PROJECT_ID=throttleiqfb node seed_qa_test_riders.js --yes-i-really-mean-it
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/seed_qa_test_riders.js --yes-i-really-mean-it
 ```
 
 Nothing is created without that flag, and it also requires typing the phrase
@@ -665,8 +738,8 @@ behind is harmless; deleting one a real rider is now using would not be.
 
 ```bash
 cd scripts
-FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js               # dry run
-FIREBASE_PROJECT_ID=throttleiqfb node cleanup_qa_test_riders.js --yes-i-really-mean-it
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js               # dry run
+FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js --yes-i-really-mean-it
 ```
 
 Requires the confirmation phrase `DELETE QA SEED DATA`, same as
@@ -732,8 +805,80 @@ forums — **Road Trips** (4 posts), **Maintenance** (11), **Mileage Talk**
 ## Syntax check
 
 ```bash
-node --check seed_qa_test_riders.js
-node --check cleanup_qa_test_riders.js
-node --check qa_seed_catalog.js
+node --check oneoff/seed_qa_test_riders.js
+node --check oneoff/cleanup_qa_test_riders.js
+node --check oneoff/qa_seed_catalog.js
 ```
 
+---
+
+# `revert_google_places.js` — take the Google Maps import back out
+
+Written 2026-10-21, **not run against production** (only against the emulator).
+Undoes the 2026-10-19 import (`import_google_places.js`, issues_open.md §105).
+
+**Which places.** Only docs the import wrote. Every place it created has
+`createdBy == 'system:gmaps-seed-dhaka'` (717 on 2026-10-19, all
+`verified: true`); `googlePlaceId` is written by nothing else, so a place with
+another author that carries one is one of the 80 it enriched. No other verified
+place is touched.
+
+**Two modes; the owner picks one:**
+
+- **B, `--seeded-only`:** deletes the seeded places. Needs no export.
+- **A, `--from=<export>`:** B, plus puts the 80 enriched places back: removes
+  `googlePlaceId` and clears each field that still equals the Google value in the
+  export (`phone`/`hours` → `null`, `address` → `''`, a renamed place →
+  `Fuel`/`Garage`/`Parts`). The import only filled empty fields and generic
+  names, so that is the pre-import state, reconstructed from the export (there
+  is **no pre-import snapshot**: Spark has no backups). A value that was already
+  there and happens to equal Google's is cleared too: read the dry-run list.
+  A after B is fine (A is a superset).
+
+Both modes skip and list a seeded place changed since the import
+(`updatedAt`/`updatedBy` set, or a rider review: `ratingCount > 0`); deleting it
+would orphan the review. **Not undoable** either way: the 69 Google ratings set
+to 0 stay 0. Saved places live in each phone's SQLite, so a rider who saved a
+deleted place keeps a dead entry.
+
+**The export** (needed for A only): `~/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json`
+(Apify dataset `7tcKVfmd9vYe3nGnS`, 897 rows, Google Maps content: never commit
+it). If the file is missing, download that dataset from Apify as JSON.
+
+```bash
+cd scripts
+export GOOGLE_APPLICATION_CREDENTIALS="$HOME/.secrets/throttleiqfb-admin.json"
+export FIREBASE_PROJECT_ID=throttleiqfb
+EXPORT="$HOME/.secrets/throttleiq/gmaps-dhaka-2026-10-19.json"
+BACKUP="$HOME/.secrets/throttleiq/places-revert-$(date +%F-%H%M).json"
+
+node oneoff/revert_google_places.js --seeded-only                 # B, dry run (reads only)
+node oneoff/revert_google_places.js --from="$EXPORT"              # A, dry run (reads only)
+node oneoff/revert_google_places.js --from="$EXPORT" --apply --backup="$BACKUP"   # writes (or --seeded-only)
+node oneoff/revert_google_places.js --from="$EXPORT"              # again: 0 to delete, 0 to clear
+
+node oneoff/revert_google_places.js --restore="$BACKUP"           # undo, dry run
+node oneoff/revert_google_places.js --restore="$BACKUP" --apply   # undo
+```
+
+- Dry run is the default. `--apply` needs `--backup=<new file>`; it refuses an
+  existing file. Before the first write the backup gets every deleted doc
+  whole (timestamps kept) and the old value of every cleared field.
+  `--restore` recreates the deleted docs (one that exists again is skipped) and
+  writes the cleared fields back.
+- Each write carries the doc's read time as a precondition (BulkWriter, like
+  `backfill_users_visibility.js`), so a place a rider reviews mid-run is skipped,
+  not deleted. Re-run to pick up skips. Outside the emulator the key's
+  `project_id` must be `throttleiqfb`.
+- Cost: one read per place (about 1,240) per run, one write per change.
+
+**Tested** (2026-10-21): 6 unit tests in `test/revert_google_places.test.js`
+(import then revert gives the pre-import places back, edited seeds skipped,
+only Google-derived fields cleared, idempotent, `--seeded-only`, backup
+round trip). Emulator round trip with the real 897-row export: 40 pre-import
+places + the real import (767 created, 30 enriched) + one rider review; B
+`--apply` deleted 766 and kept the reviewed one; A then cleared 30; all 40
+pre-import places matched their pre-import data (6 ratings stay 0); re-runs had
+nothing to do; restoring both backups gave back the post-import collection
+exactly; a reused backup path and `--apply` without `--backup` were refused.
+Not tested: a precondition skip (a review landing mid-run).

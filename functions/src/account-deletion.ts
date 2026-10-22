@@ -67,11 +67,13 @@ const CLOUDINARY_CLOUD_NAME = "vjvcigkt";
  * ({completedAt, failedSteps, ok, rtdbSkipped}), so a partial erasure is
  * visible after the fact and not only in the logs.
  *
- * Chats (critique 2026-10-14, B1): every DM the rider is in is deleted with
- * its messages, for both participants. The privacy page keeps messages "as
- * long as your account exists", and a half-deleted 1:1 thread with a rider
- * who no longer exists would still carry their words. Their email lookup
- * (emailLookup/{hash}) goes too.
+ * Chats (owner decision 2026-10-21, replacing the 2026-10-14 B1 "delete the
+ * whole DM"): the other rider keeps the conversation; the deleted rider's
+ * side is anonymised. Their uid becomes `deleted-rider` in `participants`,
+ * `lastMessage` and their messages, their message texts are blanked (the
+ * privacy page lists messages among the records deleted), and legacy
+ * per-uid name/photo copies go. A chat with nobody left is deleted. Their
+ * email lookup (emailLookup/{hash}) goes too.
  *
  * The body lives in account-erasure.ts (`deleteUserData`) so the emulator
  * suite in test/emulator/ can run it directly.

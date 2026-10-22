@@ -521,8 +521,13 @@ class _RideCardState extends ConsumerState<_RideCard> {
       await _loadComments();
     } catch (e) {
       if (!mounted) return;
+      // The field was cleared before sending: give the rider their words back.
+      if (_commentController.text.isEmpty) _commentController.text = text;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.failedPostComment(e))),
+        SnackBar(
+          content: Text(context.l10n
+              .failedPostComment(mapFirestoreError(e, context.l10n))),
+        ),
       );
     }
   }

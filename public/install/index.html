@@ -335,17 +335,6 @@
   }
   .sublink a:hover { color: #FFF; }
 
-  /* Countdown ticker */
-  .countdown-strip {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--warn);
-    font-weight: 600;
-    margin-bottom: 8px;
-  }
-
   /* Footer */
   footer {
     margin-top: auto;
@@ -431,10 +420,6 @@
       <div class="card-header">
         <div>
           <div class="card-title">Option 2: Google Play Store</div>
-          <div id="play-countdown" class="countdown-strip mono">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            <span id="countdown-days">14 DAYS</span> TESTER VERIFICATION PHASE
-          </div>
         </div>
         <span class="badge badge-rec">Recommended</span>
       </div>
@@ -465,17 +450,6 @@
         <div class="sublink" style="margin-top:6px;">
           <a href="https://play.google.com/store/apps/details?id=com.bft.throttleiq" target="_blank" rel="noopener">Already invited? Open Google Play directly →</a>
         </div>
-      </div>
-
-      <!-- Direct Play Store container (visible after 14 days) -->
-      <div id="play-direct-container" style="display:none;">
-        <div class="card-desc">
-          ThrottleIQ is live on Google Play Store! Click below to download and receive automatic updates:
-        </div>
-        <a href="https://play.google.com/store/apps/details?id=com.bft.throttleiq" target="_blank" rel="noopener" class="btn btn-primary">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3.609 1.814L13.792 12 3.61 22.186a2.43 2.43 0 01-.61-.318c-.604-.442-1-1.157-1-2.003V4.135c0-.846.396-1.56 1-2.003.18-.132.39-.243.609-.318zm11.604 11.607l2.67 2.67-11.89 6.786 9.22-9.456zm0-2.842L5.993 1.123 17.883 7.91l-2.67 2.67zm1.42 1.421l3.52-2.008c1.13-.645 1.13-1.7 0-2.345l-3.52-2.008-2.67 2.67 2.67 2.691z"/></svg>
-          Open in Google Play Store
-        </a>
       </div>
 
     </div>
@@ -567,23 +541,7 @@
   }
 
 
-  // 2. 14-Day Google Play testing timeline logic
-  // Testing start: 2026-09-06
-  const TEST_START = new Date('2026-09-06T00:00:00+06:00').getTime();
-  const TEST_DURATION_MS = 14 * 24 * 60 * 60 * 1000;
-  const TEST_END = TEST_START + TEST_DURATION_MS;
-  const now = Date.now();
-
-  if (now >= TEST_END) {
-    document.getElementById('play-invite-container').style.display = 'none';
-    document.getElementById('play-countdown').style.display = 'none';
-    document.getElementById('play-direct-container').style.display = 'block';
-  } else {
-    const daysLeft = Math.max(1, Math.ceil((TEST_END - now) / (1000 * 60 * 60 * 24)));
-    document.getElementById('countdown-days').textContent = daysLeft + (daysLeft === 1 ? ' DAY' : ' DAYS');
-  }
-
-  // 3. OS Detection
+  // 2. OS Detection
   function detectOS() {
     const ua = navigator.userAgent || navigator.vendor || window.opera;
     if (/android/i.test(ua)) {
@@ -605,7 +563,7 @@
   // Initialize view based on detected OS
   selectOS(detectOS());
 
-  // 4. Action Handlers
+  // 3. Action Handlers
   function sendPlayStoreWhatsApp() {
     const emailInput = document.getElementById('play-email');
     const email = emailInput.value.trim();

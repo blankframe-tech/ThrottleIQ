@@ -49,7 +49,7 @@ class SensorConstants {
 
   // The lower bar for tiers 0-1. A 20-50 Hz phone stream under-reads a
   // 10-50 ms impact, and a pocket or bag softens it; the 14 Oct 2026 crash
-  // (DOCS/CRASH TESTING) may never have reached 4 g. Also uncalibrated.
+  // (DOCS/General/CRASH TESTING) may never have reached 4 g. Also uncalibrated.
   static const double impactAskThreshold = 24.5; // m/s² (~2.5 g)
 
   // A run of samples pinned near the ride's max only counts as a saturated

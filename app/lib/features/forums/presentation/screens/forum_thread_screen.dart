@@ -698,7 +698,8 @@ class _PostCard extends ConsumerWidget {
                         context,
                         reportedId: post.userId,
                         contentType: 'post',
-                        contentId: post.id,
+                        // Full path so the reviewer can open it in the console.
+                        contentId: 'forums/${post.forumId}/posts/${post.id}',
                       );
                     }
                   },

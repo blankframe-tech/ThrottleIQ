@@ -53,6 +53,8 @@ Do these in order.
    least that build. Clients cannot write `config/*`. Every Android artifact
    carries the same number (split APKs too, see `scripts/deploy.sh`), so
    one value covers them all.
+   **Done 2026-10-19: `minBuild = 29`** (beta-v4.7.1). Step 3 is half done:
+   rules and indexes deployed 2026-10-22, the email migration not run.
 3. **Rules and indexes, then the email migration in the same hour.** Until
    the migration runs, the old public profiles still hold their emails and
    the new rules only slow a scraper down (N9). Rules work on Spark:
@@ -66,8 +68,8 @@ Do these in order.
    move it first):
    ```bash
    cd scripts
-   node migrate_emails_private.js --service-account=/path/key.json
-   node migrate_emails_private.js --service-account=/path/key.json --yes-i-really-mean-it
+   node oneoff/migrate_emails_private.js --service-account=/path/key.json
+   node oneoff/migrate_emails_private.js --service-account=/path/key.json --yes-i-really-mean-it
    ```
    The first command is a dry run. A second real run should report 0.
    The migration writes an `emailLookup` entry only for addresses that
@@ -95,47 +97,40 @@ Do these in order.
    `public/privacy.html` first (raw trails older than 12 months are deleted,
    ride summaries kept):
    `firebase deploy --only functions:purgeOldGpsTracks --project throttleiqfb`
+7. **Cloudinary upload preset (open).** The app ships the cloud name and the
+   unsigned preset `throttleiq_unsigned`
+   (`app/lib/core/services/cloudinary_upload_service.dart`), so anyone can
+   upload to the account with a plain HTTP POST; checks in the app don't stop
+   that. Until uploads are signed, limit the damage in the Cloudinary console,
+   Settings, Upload, `throttleiq_unsigned`: allowed formats
+   `jpg,jpeg,png,webp,heic,aac,m4a`; max file size 5 MB; turn off
+   overwrite and "use filename"; set a usage alert. The real fix needs Blaze:
+   a callable function that checks `request.auth` and returns a signature
+   made with `CLOUDINARY_API_SECRET`, an app build that sends it, and then the
+   preset switched to signed (switching it before that build ships breaks
+   every upload).
+
+8. **Report evidence (2026-10-21).** The `reports` snapshot rule (chat and
+   forum-post copies) rides on the step 3 rules deploy; until then the app
+   files those reports without the copy (it retries without it). Deploy
+   Hosting for the `privacy.html` §1/§8/§9 text with step 3. Retention (90
+   days after review) and anonymising a deleted rider's closed reports run
+   in the existing daily `purgeOldGpsTracks` (step 6's deploy, Blaze).
+   Deploying it also starts GPS retention; until then, do both by hand
+   (`DOCS/General/Files for Stores/moderation_policy.md` §5).
 
 ### App Check enforcement
 
-The app already sends tokens (`app/lib/main.dart`). Android release builds
-use Play Integrity, iOS uses App Attest with a DeviceCheck fallback, and
-debug builds use the debug provider. Nothing is enforced until you switch it
-on per service in the Firebase console (App Check, APIs).
+Decision 2026-10-21: enforce App Check on Cloud Firestore only. The runbook,
+in order, is `DOCS/For Devs and Contributors/guides/app_check.md`: finish step 3 above first, switch the iOS
+project to the paid team with App Attest set to `production`, register the
+apps (App Attest and DeviceCheck with the Team ID, Play Integrity with the
+Play app-signing SHA-256), ship the build through Google Play only, register
+debug tokens, watch the metrics for a few days, then enforce Firestore.
 
-Before you enforce anything:
-
-- **Expect Play Integrity to reject sideloaded APKs.** App Check's Play
-  Integrity provider expects an app installed from Google Play, so a build
-  from GitHub Releases should get no valid token, and enforcing Firestore
-  locks those riders out. Enforce only once riders install from Google Play (a testing track
-  counts). Register the app-signing key's SHA-256 (Play Console, App
-  integrity) in App Check, Apps, Android.
-- **iOS needs the paid Apple Developer Program.** App Attest and DeviceCheck
-  need a key and entitlement the personal team `NJ4675FFUX` cannot have.
-  Enforcement is per service, not per platform, so it also blocks iOS
-  builds that cannot attest.
-- **The web live viewer has no App Check.** `public/live-viewer.html` reads
-  Firestore directly. Add a reCAPTCHA Enterprise provider to that page
-  before you enforce Firestore, or partner live links stop working.
-
-Debug tokens, for development builds:
-
-1. Run a debug build. The token is in the log: Xcode console on iOS
-   ("App Check debug token"), `adb logcat` on Android (look for
-   `DebugAppCheckProvider`).
-2. Add it under App Check, Apps, (your app), Manage debug tokens. Name it
-   after the device.
-3. Never commit a token. Revoke it when the device is retired.
-
-Per-service switches, in this order:
-
-1. **Realtime Database:** enforce at any time. It denies everything anyway.
-2. **Cloud Firestore:** watch the metrics on its App Check page until
-   unverified requests are close to zero for a week. Then enforce.
-3. **Authentication**, if the console offers it: same test as Firestore.
-4. **Cloud Functions:** nothing to do. There are only triggers, no callable
-   or HTTP functions.
-
-To roll back, switch enforcement off for that service. It takes effect
-within minutes.
+Sideloaded Android builds from 2026-10-21 on show an "install from Google
+Play" screen once App Check rejects them; older sideloaded builds just fail
+once Firestore is enforced.
+The web live viewer (`public/live-viewer.html`) has no App Check yet: add a
+reCAPTCHA Enterprise provider before you enforce Firestore, or partner live
+links stop working.

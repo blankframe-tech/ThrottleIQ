@@ -56,8 +56,10 @@ enum PlaceCategory {
       this == PlaceCategory.aiCamera || this == PlaceCategory.police;
 
   /// The categories a rider browses as stops, in ribbon order.
-  static List<PlaceCategory> get destinations =>
-      [for (final c in values) if (!c.isSafetyPoint) c];
+  static List<PlaceCategory> get destinations => [
+        for (final c in values)
+          if (!c.isSafetyPoint) c
+      ];
 
   static PlaceCategory fromString(String value) {
     return PlaceCategory.values.firstWhere(
@@ -100,6 +102,10 @@ class PlaceEntity extends Equatable {
   /// place written before tags existed — see [PlaceTag.parseAll].
   final Set<PlaceTag> tags;
 
+  /// When this place ceases to be active (e.g. temporary cop checkpoints).
+  /// Null for permanent places.
+  final DateTime? expiresAt;
+
   const PlaceEntity({
     required this.id,
     required this.name,
@@ -120,7 +126,11 @@ class PlaceEntity extends Equatable {
     this.googleRatingCount = 0,
     this.osmId,
     this.tags = const {},
+    this.expiresAt,
   });
+
+  bool isExpiredAt(DateTime now) =>
+      expiresAt != null && !now.isBefore(expiresAt!);
 
   double get averageRating {
     if (ratingCount == 0) return 0;
@@ -178,24 +188,25 @@ class PlaceEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
-    name,
-    category,
-    latitude,
-    longitude,
-    geohash,
-    address,
-    phone,
-    hours,
-    photoUrls,
-    verified,
-    createdBy,
-    createdAt,
-    ratingSum,
-    ratingCount,
-    googleRating,
-    googleRatingCount,
-    osmId,
-    tags,
-  ];
+        id,
+        name,
+        category,
+        latitude,
+        longitude,
+        geohash,
+        address,
+        phone,
+        hours,
+        photoUrls,
+        verified,
+        createdBy,
+        createdAt,
+        ratingSum,
+        ratingCount,
+        googleRating,
+        googleRatingCount,
+        osmId,
+        tags,
+        expiresAt,
+      ];
 }

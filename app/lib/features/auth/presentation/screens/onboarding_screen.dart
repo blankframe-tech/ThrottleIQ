@@ -461,7 +461,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _slideCount = slides.length;
     _tourSlide = _tourSlide.clamp(0, _slideCount - 1);
     final slide = slides[_tourSlide];
-    final accent = slide.accent.resolve(context.palette);
+    final accent = tourAccent(context.palette);
 
     return Scaffold(
       backgroundColor: context.palette.background,

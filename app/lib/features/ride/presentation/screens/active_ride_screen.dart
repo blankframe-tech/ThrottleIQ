@@ -29,6 +29,8 @@ import '../../../social/data/repositories/route_repository.dart';
 import '../../domain/entities/ride_entity.dart';
 import '../../../routes/presentation/widgets/navigation_banner.dart';
 import '../../../social/presentation/providers/group_ride_providers.dart';
+import '../providers/parking_pin_provider.dart';
+import '../widgets/ride_actions_menu.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -66,6 +68,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         ref.watch(rideRecordingProvider.select((s) => s.currentPosition));
     final polyline = ref.read(rideRecordingProvider).polyline;
     final places = ref.watch(liveRidePlacesProvider);
+    final parkingPin = ref.watch(parkingPinProvider);
     // The saved route being followed, when there is one (issues §78.21).
     // Keyed on the route's id rather than watching the whole session: the
     // session's progress changes on every fix, and the line it draws does not.
@@ -137,6 +140,24 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
                   child: Text(
                     p.category.icon,
                     style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ),
+            if (parkingPin != null)
+              Marker(
+                point: parkingPin.point,
+                width: 32,
+                height: 32,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: context.palette.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: context.palette.border),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    '🅿',
+                    style: TextStyle(fontSize: 16),
                   ),
                 ),
               ),
@@ -594,6 +615,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
+                  const RideActionsMenu(),
                 ],
               ),
             ),

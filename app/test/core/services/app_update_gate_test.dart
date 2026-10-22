@@ -98,6 +98,6 @@ void main() {
     ));
     expect(find.text('Update required'), findsOneWidget);
     expect(find.text('Get the latest version'), findsOneWidget);
-    expect(kInstallUrl, startsWith('https://blankframe.tech/'));
+    expect(kInstallUrl, startsWith('https://throttleiqfb.web.app/'));
   });
 }

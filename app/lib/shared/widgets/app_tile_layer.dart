@@ -112,8 +112,23 @@ class AppTileLayer extends StatelessWidget {
   static final Uri _copyrightUrl =
       Uri.parse('https://www.openstreetmap.org/copyright');
 
+  /// Grayscale then invert: turns the bright OSM raster into a dark map, so
+  /// the map isn't a glare panel at night (CrtiQue_Oct15 §6). From the old
+  /// `test` branch (9f441688), moved here from its five per-screen copies.
+  static const _darkTileFilter = ColorFilter.matrix(<double>[
+    -0.2126, -0.7152, -0.0722, 0, 255, //
+    -0.2126, -0.7152, -0.0722, 0, 255, //
+    -0.2126, -0.7152, -0.0722, 0, 255, //
+    0, 0, 0, 1, 0,
+  ]);
+
+  static Widget _darkTile(
+          BuildContext context, Widget tileWidget, TileImage tile) =>
+      ColorFiltered(colorFilter: _darkTileFilter, child: tileWidget);
+
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -123,6 +138,7 @@ class AppTileLayer extends StatelessWidget {
           userAgentPackageName: _userAgentPackageName,
           tileProvider: _tileProvider,
           errorImage: MemoryImage(_BlankTileProvider._pixel),
+          tileBuilder: isDark ? _darkTile : null,
         ),
         // Hand-rolled rather than flutter_map's SimpleAttributionWidget,
         // which prefixes "flutter_map |" at full text size and overflows the
