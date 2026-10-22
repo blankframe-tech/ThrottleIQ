@@ -8,6 +8,7 @@
 ## 🚨 P0: Automated Regression Suites & CI Quality Gates
 
 - [ ] **1. Maintain 100% Green Quality Gate ([`scripts/check.sh`](../../../scripts/check.sh)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** check.sh green on the integration branch after all lane merges. New: bare `catch (_)` ratchet test (baseline 54, §83.14) and 21 widget tests (§83.28), which found and fixed the Sync issues Retry message bug.
   - **Context:** `scripts/check.sh` is the definitive repository quality gate enforcing analyzer rules, unit tests, and security rule validations.
   - **Verification Targets:**
     - 2,100+ Flutter unit, calculator, and domain tests passing green.
@@ -20,6 +21,7 @@
   - **Action:** Run E2E test suite on iOS and Android simulators; verify resolution of the Riverpod disposal crash (§106).
 
 - [ ] **3. Validate Database Migration & DAO Integrity Tests:**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** the database migration and DAO tests run inside check.sh's full `flutter test` and pass.
   - **Context:** SQLite migrations (v13 to v29 schema upgrade) govern data safety across app upgrades.
   - **Action:** Re-run migration test matrix (`app/test/database/database_migration_test.dart`, `schema_v29_merge_test.dart`) to guarantee zero data loss during schema backfills.
 
