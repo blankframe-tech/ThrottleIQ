@@ -1,0 +1,111 @@
+# Cloud Monitoring alert: emails the owner when Firestore nears or hits the
+# Spark plan's daily free quota (issues §104). Spark limits per day: 50,000
+# reads, 20,000 writes, 20,000 deletes, reset around midnight Pacific.
+#
+# Apply and re-apply steps: scripts/README.md, "monitoring/firestore-quota-alert.yaml".
+# The email channel is passed with --notification-channels, not kept here.
+#
+# The 80% conditions sum a rolling 24 h. That is always at least the usage
+# since the Pacific reset, so they never fire late; after two busy half-days
+# they can fire early. Alerting allows alignment periods up to 25 h.
+displayName: "ThrottleIQ: Firestore free daily quota"
+combiner: OR
+conditions:
+  - displayName: "reads above 80% of the daily 50,000"
+    conditionThreshold:
+      filter: >-
+        resource.type = "firestore.googleapis.com/Database"
+        AND metric.type = "firestore.googleapis.com/document/read_ops_count"
+      aggregations:
+        - alignmentPeriod: 86400s
+          perSeriesAligner: ALIGN_SUM
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 40000
+      duration: 0s
+      trigger:
+        count: 1
+  - displayName: "writes above 80% of the daily 20,000"
+    conditionThreshold:
+      filter: >-
+        resource.type = "firestore.googleapis.com/Database"
+        AND metric.type = "firestore.googleapis.com/document/write_ops_count"
+      aggregations:
+        - alignmentPeriod: 86400s
+          perSeriesAligner: ALIGN_SUM
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 16000
+      duration: 0s
+      trigger:
+        count: 1
+  - displayName: "deletes above 80% of the daily 20,000"
+    conditionThreshold:
+      filter: >-
+        resource.type = "firestore.googleapis.com/Database"
+        AND metric.type = "firestore.googleapis.com/document/delete_ops_count"
+      aggregations:
+        - alignmentPeriod: 86400s
+          perSeriesAligner: ALIGN_SUM
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 16000
+      duration: 0s
+      trigger:
+        count: 1
+  # The "it happened" emails. Refused requests never show up in
+  # api/request_count (rehearsal 2026-10-21), so "used up" is 99% of the
+  # daily limit instead. Deletes keep only the 80% warning: the app makes
+  # about 10 a day.
+  - displayName: "reads used up (99% of the daily 50,000)"
+    conditionThreshold:
+      filter: >-
+        resource.type = "firestore.googleapis.com/Database"
+        AND metric.type = "firestore.googleapis.com/document/read_ops_count"
+      aggregations:
+        - alignmentPeriod: 86400s
+          perSeriesAligner: ALIGN_SUM
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 49500
+      duration: 0s
+      trigger:
+        count: 1
+  - displayName: "writes used up (99% of the daily 20,000)"
+    conditionThreshold:
+      filter: >-
+        resource.type = "firestore.googleapis.com/Database"
+        AND metric.type = "firestore.googleapis.com/document/write_ops_count"
+      aggregations:
+        - alignmentPeriod: 86400s
+          perSeriesAligner: ALIGN_SUM
+          crossSeriesReducer: REDUCE_SUM
+      comparison: COMPARISON_GT
+      thresholdValue: 19800
+      duration: 0s
+      trigger:
+        count: 1
+alertStrategy:
+  autoClose: 86400s
+documentation:
+  mimeType: text/markdown
+  subject: "ThrottleIQ Firestore: ${condition.display_name}"
+  content: |
+    Firestore on the free Spark plan allows 50,000 reads, 20,000 writes and
+    20,000 deletes a day. The count resets at midnight Pacific: 13:00 Dhaka
+    from March to early November, 14:00 the rest of the year.
+
+    **80% conditions** are an early warning. All conditions use a rolling
+    24 h window, so they can fire a little early. Emails arrive about 6-7
+    minutes after a threshold is crossed.
+
+    **"Used up" (99%)** means Firestore is refusing requests. Riders see the
+    "database overloaded" strip and the app pauses its background sync.
+    Live listeners may keep working for a while. Their rides, fuel and
+    maintenance logs stay on their phones and upload by themselves within
+    about 30 minutes of the reset.
+
+    To unblock riders before the reset: Firebase console → Usage and billing
+    → Modify plan → Blaze. Phones resume within about 30 minutes.
+
+    Usage: Firebase console → Firestore → Usage. Background: issues_open.md §104.

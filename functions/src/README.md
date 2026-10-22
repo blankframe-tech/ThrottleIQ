@@ -5,7 +5,7 @@ Cloud Functions source. See `../README.md` for what each trigger does.
 - `index.ts`: entry point. Re-exports every module below.
 - `account-deletion.ts`: `onUserAccountDeleted`. Its body is
   `deleteUserData` in `account-erasure.ts` (not re-exported).
-- `track-retention.ts`: `purgeOldGpsTracks`, body `purgeOldTrackChunks`.
+- `track-retention.ts`: `purgeOldGpsTracks`, body `purgeOldTrackChunks` plus `purgeOldReportSnapshots` (`report-retention.ts`, also used by account erasure).
 - `ride-identity.ts`: `reconcileRideIdentity`.
 - `chat-moderation.ts`: `onMessageCreate`.
 - `crash-notifications.ts`: `onCrashNotification`, `escalateCrashAlert`. Also

@@ -301,7 +301,10 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   final _cadencePolicy = RecordingCadencePolicy();
 
   // Helper coordinators
-  late final _liveCoordinator =
+  /// Created on first use. dispose() must not create it: the initialiser
+  /// reads a provider, and the container is already disposing by then.
+  LiveSessionCoordinator? _liveCoordinatorOrNull;
+  LiveSessionCoordinator get _liveCoordinator => _liveCoordinatorOrNull ??=
       LiveSessionCoordinator(realtime: _ref.read(realtimeServicesProvider));
   final _crashCoordinator = CrashCoordinator();
   final _persistenceCoordinator = RidePersistenceCoordinator();
@@ -1589,7 +1592,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     unawaited(_subs.cancel());
     _elapsedTimer?.cancel();
     _crashCoordinator.dispose();
-    _liveCoordinator.dispose();
+    _liveCoordinatorOrNull?.dispose();
     _persistenceCoordinator.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();

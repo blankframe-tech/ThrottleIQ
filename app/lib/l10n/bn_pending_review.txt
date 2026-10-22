@@ -1730,3 +1730,33 @@ deleteSharedPostBody
 deleteRideConfirmTitle
 deleteRideConfirmBody
 couldNotSaveChanges
+# batch: ride actions menu, minimize, and ride in progress strip
+rideActionsTooltip
+copCheckpointHere
+parkingPinHere
+minimizeRide
+checkpointExpiresInDay
+checkpointPermanent
+checkpointSaved
+checkpointSaveFailed
+noGpsFixYet
+rideRecordingBar
+ridePausedBar
+directionsToBike
+placeReportedAt
+placeExpiresInHours
+placeReportExpired
+# batch: chat-anonymise (2026-10-21)
+deletedRider
+chatPeerDeleted
+messageDeleted
+reportReviewPromise
+communityRules
+# batch: App Check sideload screen
+sideloadBlockedTitle
+sideloadBlockedBody
+sideloadBlockedPlayAction
+sideloadBlockedTesting
+sideloadBlockedWhatsAppAction
+# batch: quota pause (2026-10-21)
+overQuotaBar

@@ -108,14 +108,14 @@ void main() {
       List<String> keys(AppModules m) =>
           onboardingSlides(en, modules: m).map((s) => s.featureKey).toList();
       expect(keys(const AppModules(rideTracking: false)),
-          ['garage', 'maintenance', 'places', 'social_forums', 'profile']);
+          ['garage', 'profile', 'maintenance', 'places', 'social_forums']);
       expect(keys(const AppModules(places: false)), isNot(contains('places')));
       expect(
           keys(const AppModules(
               community: CommunityMode.off,
               places: false,
               rideTracking: false)),
-          ['garage', 'maintenance', 'profile']);
+          ['garage', 'profile', 'maintenance']);
 
       // Forums only keeps the tab, renamed, and tells only about the forums.
       final forums = onboardingSlides(en,
@@ -200,22 +200,43 @@ void main() {
       expect(betas, hasLength(1));
     });
 
-    test('accent tokens stay visible on the surface in both themes', () {
-      // Accents are only used for graphics (icons, rings, badges) — text sits
-      // in textPrimary/textSecondary — so the bar is WCAG's 3:1 for non-text
-      // UI, checked on both palettes.
-      final failures = <String>[];
+    test('the tour accent stays visible on the surface in both themes', () {
+      // The accent only paints graphics (pins, rings, the progress bar) —
+      // text sits in textPrimary/textSecondary — so the bar is WCAG's 3:1
+      // for non-text UI, checked on both palettes.
       for (final brightness in Brightness.values) {
         final palette = AppColorPalette.forBrightness(brightness);
-        for (final accent in TourAccent.values) {
-          final ratio = _contrast(accent.resolve(palette), palette.surface);
-          if (ratio < 3) {
-            failures.add('${brightness.name}/${accent.name}: '
-                '${ratio.toStringAsFixed(2)}');
+        expect(_contrast(tourAccent(palette), palette.surface),
+            greaterThanOrEqualTo(3),
+            reason: brightness.name);
+      }
+    });
+
+    test('steps walk the app tab by tab: no tab is visited twice', () {
+      for (final m in _moduleMixes) {
+        final tabs = onboardingSlides(AppLocalizationsEn(), modules: m)
+            .map((s) => s.tab)
+            .toList();
+        final runs = [
+          for (var i = 0; i < tabs.length; i++)
+            if (i == 0 || tabs[i] != tabs[i - 1]) tabs[i],
+        ];
+        expect(runs.toSet(), hasLength(runs.length), reason: _describe(m));
+      }
+    });
+
+    test('every step shows a bundled screenshot, pins inside it', () {
+      for (final m in _moduleMixes) {
+        for (final slide in onboardingSlides(AppLocalizationsEn(),
+            showJamLabelling: true, modules: m)) {
+          expect(File(slide.screenshot).existsSync(), isTrue,
+              reason: slide.screenshot);
+          for (final at in slide.pointers.map((p) => p.at).nonNulls) {
+            expect(at.dx, inInclusiveRange(0, 1), reason: slide.featureKey);
+            expect(at.dy, inInclusiveRange(0, 1), reason: slide.featureKey);
           }
         }
       }
-      expect(failures, isEmpty);
     });
   });
 }

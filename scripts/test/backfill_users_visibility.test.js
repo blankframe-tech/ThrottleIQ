@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { needsBackfill, parseArgs } = require('../backfill_users_visibility.js');
+const { needsBackfill, parseArgs } = require('../oneoff/backfill_users_visibility.js');
 
 test('only a missing or null visibility needs the backfill', () => {
   assert.equal(needsBackfill({ displayName: 'A' }), true);

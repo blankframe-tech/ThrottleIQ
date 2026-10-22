@@ -1,7 +1,7 @@
 'use strict';
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { planForRide } = require('../cleanup_qa_engagement.js');
+const { planForRide } = require('../oneoff/cleanup_qa_engagement.js');
 
 test('removes seeded comments and lowers the parent tally by exactly that many', () => {
   const p = planForRide({

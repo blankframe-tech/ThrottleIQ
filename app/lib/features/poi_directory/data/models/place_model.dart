@@ -26,6 +26,10 @@ class PlaceModel {
   /// read back as an empty list.
   final List<String> tags;
 
+  /// When this place ceases to be active (e.g. temporary cop checkpoints).
+  /// Null for permanent places.
+  final DateTime? expiresAt;
+
   const PlaceModel({
     required this.id,
     required this.name,
@@ -46,6 +50,7 @@ class PlaceModel {
     this.googleRatingCount = 0,
     this.osmId,
     this.tags = const [],
+    this.expiresAt,
   });
 
   PlaceEntity toEntity() {
@@ -69,6 +74,7 @@ class PlaceModel {
       googleRatingCount: googleRatingCount,
       osmId: osmId,
       tags: PlaceTag.parseAll(tags),
+      expiresAt: expiresAt,
     );
   }
 
@@ -92,14 +98,23 @@ class PlaceModel {
       googleRating: entity.googleRating,
       googleRatingCount: entity.googleRatingCount,
       osmId: entity.osmId,
-      tags: [for (final t in PlaceTag.values) if (entity.tags.contains(t)) t.name],
+      tags: [
+        for (final t in PlaceTag.values)
+          if (entity.tags.contains(t)) t.name
+      ],
+      expiresAt: entity.expiresAt,
     );
   }
 
-  factory PlaceModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data()!;
+  factory PlaceModel.fromFirestore(
+          DocumentSnapshot<Map<String, dynamic>> doc) =>
+      PlaceModel.fromMap(doc.id, doc.data()!);
+
+  /// A Firestore doc's fields, or [toCacheJson]'s output (dates as epoch
+  /// millis instead of [Timestamp]s).
+  factory PlaceModel.fromMap(String id, Map<String, dynamic> data) {
     return PlaceModel(
-      id: doc.id,
+      id: id,
       name: data['name'] ?? '',
       category: data['category'] ?? 'fuel',
       latitude: (data['latitude'] as num?)?.toDouble() ?? 0.0,
@@ -111,7 +126,7 @@ class PlaceModel {
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       verified: data['verified'] ?? false,
       createdBy: data['createdBy'] ?? '',
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: _date(data['createdAt']) ?? DateTime.now(),
       ratingSum: (data['ratingSum'] as num?)?.toDouble() ?? 0.0,
       ratingCount: (data['ratingCount'] as num?)?.toInt() ?? 0,
       googleRating: (data['googleRating'] as num?)?.toDouble() ?? 0.0,
@@ -121,8 +136,15 @@ class PlaceModel {
         for (final t in (data['tags'] as List?) ?? const [])
           if (t is String) t,
       ],
+      expiresAt: _date(data['expiresAt']),
     );
   }
+
+  static DateTime? _date(Object? v) => v is Timestamp
+      ? v.toDate()
+      : v is int
+          ? DateTime.fromMillisecondsSinceEpoch(v)
+          : null;
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -146,8 +168,19 @@ class PlaceModel {
       // Only written when there's something to say, so a tagless place (every
       // OSM import) keeps exactly the doc shape it had before tags existed.
       if (tags.isNotEmpty) 'tags': tags,
+      if (expiresAt != null) 'expiresAt': Timestamp.fromDate(expiresAt!),
+      // Server time, so the ride cache's `updatedAt > lastPull` pull can't
+      // miss a place written from a phone with a slow clock (issues §104.1).
+      'updatedAt': FieldValue.serverTimestamp(),
     };
   }
+
+  /// [toFirestore] as plain JSON for the on-device ride cache.
+  Map<String, dynamic> toCacheJson() => {
+        ...toFirestore()..remove('updatedAt'),
+        'createdAt': createdAt.millisecondsSinceEpoch,
+        if (expiresAt != null) 'expiresAt': expiresAt!.millisecondsSinceEpoch,
+      };
 
   PlaceModel copyWith({
     String? id,
@@ -169,6 +202,7 @@ class PlaceModel {
     int? googleRatingCount,
     String? osmId,
     List<String>? tags,
+    DateTime? expiresAt,
   }) {
     return PlaceModel(
       id: id ?? this.id,
@@ -190,6 +224,7 @@ class PlaceModel {
       googleRatingCount: googleRatingCount ?? this.googleRatingCount,
       osmId: osmId ?? this.osmId,
       tags: tags ?? this.tags,
+      expiresAt: expiresAt ?? this.expiresAt,
     );
   }
 }

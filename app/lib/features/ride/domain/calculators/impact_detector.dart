@@ -113,7 +113,7 @@ class ImpactCandidate {
 /// Crash detection from the IMU, confirmed by GPS and by what the phone does
 /// afterwards. Every threshold is provisional and uncalibrated: see
 /// [SensorConstants.impactThreshold] and the plan in
-/// `DOCS/CRASH TESTING/crash_analysis_and_detection_plan.html`.
+/// `DOCS/General/CRASH TESTING/crash_analysis_and_detection_plan.html`.
 ///
 /// **Impact (tier 0).** Any of: the motion-filtered magnitude reaches
 /// [askThreshold]; the raw magnitude reaches 1 g + [askThreshold]; a run of

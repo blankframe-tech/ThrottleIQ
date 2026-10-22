@@ -2913,6 +2913,24 @@ abstract class AppLocalizations {
   /// **'You can\'t message this rider'**
   String get cantMessageThisRider;
 
+  /// Name shown in chats for a rider who deleted their account.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted rider'**
+  String get deletedRider;
+
+  /// Banner in place of the message box when the other rider's account is deleted.
+  ///
+  /// In en, this message translates to:
+  /// **'This rider deleted their account'**
+  String get chatPeerDeleted;
+
+  /// Chat bubble text for a message whose author deleted their account.
+  ///
+  /// In en, this message translates to:
+  /// **'Message deleted'**
+  String get messageDeleted;
+
   /// HintText in chat_room_screen.
   ///
   /// In en, this message translates to:
@@ -2966,6 +2984,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Why are you reporting this?'**
   String get whyReportingThis;
+
+  /// Line in report_bottom_sheet under the title. The 24 hours is the moderation policy's first-review time (DOCS/General/Files for Stores/moderation_policy.md).
+  ///
+  /// In en, this message translates to:
+  /// **'A person reads every report within 24 hours. Your name is not shown to the rider you report.'**
+  String get reportReviewPromise;
+
+  /// Link in report_bottom_sheet that opens the hosted community rules page (public/community.html).
+  ///
+  /// In en, this message translates to:
+  /// **'Community rules'**
+  String get communityRules;
 
   /// LabelText in report_bottom_sheet.
   ///
@@ -6516,11 +6546,17 @@ abstract class AppLocalizations {
   /// **'That could not be found — it may have been removed.'**
   String get errNotFound;
 
-  /// Error: rate limit / quota exhausted.
+  /// Error shown when Firestore refuses a request because the project's daily quota is used up (resets the next day). Used for any failed load or send, so it must not promise that anything was saved.
   ///
   /// In en, this message translates to:
-  /// **'Too many requests right now. Please try again in a moment.'**
+  /// **'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Please try again later.'**
   String get errTooManyRequests;
+
+  /// Strip above the bottom navigation while Firestore is over its daily quota and background sync is paused.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day.'**
+  String get overQuotaBar;
 
   /// Error: a required database index is missing or still building.
   ///
@@ -9900,6 +9936,36 @@ abstract class AppLocalizations {
   /// **'Get the latest version'**
   String get updateRequiredAction;
 
+  /// Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play.
+  ///
+  /// In en, this message translates to:
+  /// **'Install ThrottleIQ from Google Play'**
+  String get sideloadBlockedTitle;
+
+  /// Body of the sideload blocking screen.
+  ///
+  /// In en, this message translates to:
+  /// **'This copy of ThrottleIQ was not installed from Google Play, so it can\'t connect to the server. Install ThrottleIQ from the Play Store to keep using it.'**
+  String get sideloadBlockedBody;
+
+  /// Button on the sideload screen; opens ThrottleIQ on Google Play.
+  ///
+  /// In en, this message translates to:
+  /// **'Open the Play Store'**
+  String get sideloadBlockedPlayAction;
+
+  /// Line on the sideload screen for testers; keep the phone number as is.
+  ///
+  /// In en, this message translates to:
+  /// **'Want to test a build? Send a testing request on WhatsApp: 01327045005'**
+  String get sideloadBlockedTesting;
+
+  /// Button on the sideload screen; opens WhatsApp with a prefilled testing request.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a testing request'**
+  String get sideloadBlockedWhatsAppAction;
+
   /// Title of the re-authentication dialog before deleting an account.
   ///
   /// In en, this message translates to:
@@ -11387,6 +11453,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not save changes: {e}'**
   String couldNotSaveChanges(Object e);
+
+  /// Tooltip for the more actions dropdown button on the active ride screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride actions'**
+  String get rideActionsTooltip;
+
+  /// Menu option to drop a police checkpoint place at the current location.
+  ///
+  /// In en, this message translates to:
+  /// **'Cop checkpoint here'**
+  String get copCheckpointHere;
+
+  /// Menu option to mark bike parking location and pause the ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking pin'**
+  String get parkingPinHere;
+
+  /// Menu option to minimize the active ride screen to allow browsing other tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Minimize'**
+  String get minimizeRide;
+
+  /// Bottom sheet option for a temporary 24-hour cop checkpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expires in 24 h'**
+  String get checkpointExpiresInDay;
+
+  /// Bottom sheet option for a permanent cop checkpoint.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent'**
+  String get checkpointPermanent;
+
+  /// Snackbar shown when a cop checkpoint is successfully saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Checkpoint saved'**
+  String get checkpointSaved;
+
+  /// Snackbar shown when saving a cop checkpoint fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save checkpoint'**
+  String get checkpointSaveFailed;
+
+  /// Snackbar shown when trying to drop a pin or checkpoint without a GPS fix.
+  ///
+  /// In en, this message translates to:
+  /// **'No GPS fix yet'**
+  String get noGpsFixYet;
+
+  /// Strip shown when a ride is recording while minimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording ride · {distance} · {duration}'**
+  String rideRecordingBar(String distance, String duration);
+
+  /// Strip shown when a ride is paused while minimized.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride paused · {distance} · {duration}'**
+  String ridePausedBar(String distance, String duration);
+
+  /// Button on the minimized ride bar to navigate to the parked bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions to bike'**
+  String get directionsToBike;
+
+  /// When a temporary rider report (cop checkpoint) was made.
+  ///
+  /// In en, this message translates to:
+  /// **'Reported {time}'**
+  String placeReportedAt(String time);
+
+  /// Hours until a temporary cop checkpoint report expires.
+  ///
+  /// In en, this message translates to:
+  /// **'expires in {hours} h'**
+  String placeExpiresInHours(int hours);
+
+  /// Shown after 'Reported …' once a temporary cop checkpoint has expired.
+  ///
+  /// In en, this message translates to:
+  /// **'expired'**
+  String get placeReportExpired;
 }
 
 class _AppLocalizationsDelegate

@@ -3,6 +3,7 @@ import { getDatabase, type Database } from "firebase-admin/database";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "node:crypto";
 import { isOwnedPublicId } from "./cloudinary-ownership";
+import { anonymizedReportPatch, isPendingReport } from "./report-retention";
 
 /**
  * The body of `onUserAccountDeleted` (account-deletion.ts), split out so the
@@ -13,6 +14,14 @@ import { isOwnedPublicId } from "./cloudinary-ownership";
 
 /** Byline shown where a deleted rider's authored content is kept. */
 export const DELETED_RIDER = "Deleted rider";
+
+/**
+ * Stands in for a deleted rider's uid in a chat they were in (participants,
+ * lastMessage.senderId, their messages' senderId). The app shows it as
+ * "Deleted rider" (kDeletedChatParticipant in chat_entity.dart). Never a real
+ * uid: Firebase uids have no '-'.
+ */
+export const DELETED_PARTICIPANT = "deleted-rider";
 
 /** Firestore caps a write batch at 500 operations. */
 const ANONYMIZE_BATCH = 400;
@@ -278,8 +287,6 @@ export async function deleteUserData(
     // a rider who no longer exists.
     ["follows (out)", db.collection("follows").where("followerUid", "==", uid)],
     ["follows (in)", db.collection("follows").where("followeeUid", "==", uid)],
-    // Every DM the rider is in, with its messages (critique 2026-10-14).
-    ["chats", db.collection("chats").where("participants", "array-contains", uid)],
     // Find-by-email lookup (B2): emailLookup/{sha256(email)} -> {uid}.
     ["emailLookup", db.collection("emailLookup").where("uid", "==", uid)],
   ];
@@ -291,6 +298,13 @@ export async function deleteUserData(
         await db.recursiveDelete(doc.ref);
       }
     });
+  }
+
+  // Chats (owner decision 2026-10-21): the other rider keeps the
+  // conversation; the deleted rider's side is anonymised. One step per chat,
+  // so one failure doesn't strand the rest.
+  for (const chatId of chatIds) {
+    await step(`anonymize chat ${chatId}`, () => anonymizeChat(db, chatId, uid));
   }
 
   // Content in other people's spaces: strip the identity, keep the artefact.
@@ -358,6 +372,28 @@ export async function deleteUserData(
     });
   }
 
+  // Reports about the rider (owner decision 2026-10-21). A pending one is
+  // kept whole, uid and evidence copy (`snapshot`, chat-moderation's
+  // `originalText`) included, so it can still be reviewed; it is flagged, and
+  // report-retention.ts anonymises it once it is closed. A closed one loses
+  // the uid now; its copied text goes 90 days after review. Reports the
+  // deleted rider filed stay untouched, as before.
+  await step("anonymize reports", async () => {
+    const snap = await db.collection("reports").where("reportedId", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += ANONYMIZE_BATCH) {
+      const batch = db.batch();
+      for (const doc of snap.docs.slice(i, i + ANONYMIZE_BATCH)) {
+        batch.update(
+          doc.ref,
+          isPendingReport(doc.data())
+            ? { reportedAccountDeleted: true }
+            : anonymizedReportPatch(doc.data())
+        );
+      }
+      await batch.commit();
+    }
+  });
+
   // Cloudinary media. MUST run before the profile is recursively deleted —
   // the ledger it reads lives at users/{uid}/cloudinaryAssets.
   failedSteps.push(...(await destroyCloudinaryAssets(uid, db, opts.cloudinary)));
@@ -384,6 +420,53 @@ export async function deleteUserData(
   }
 
   return { failedSteps, rtdbSkipped };
+}
+
+/**
+ * Anonymises the rider's side of one chat. Their message texts are blanked,
+ * not kept: public/privacy.html §9 lists messages among the records deleted
+ * with the account. The other rider's messages and the doc id stay (moving
+ * the doc would re-fire chat moderation on every copied message). A chat with
+ * no live participant left is deleted outright. Idempotent: the rider's
+ * messages go first and `participants`, which is how a retry finds this chat,
+ * changes last.
+ */
+async function anonymizeChat(
+  db: FirebaseFirestore.Firestore,
+  chatId: string,
+  uid: string
+): Promise<void> {
+  const chatRef = db.collection("chats").doc(chatId);
+  const theirs = await chatRef.collection("messages").where("senderId", "==", uid).get();
+  for (let i = 0; i < theirs.docs.length; i += ANONYMIZE_BATCH) {
+    const batch = db.batch();
+    for (const doc of theirs.docs.slice(i, i + ANONYMIZE_BATCH)) {
+      batch.update(doc.ref, { senderId: DELETED_PARTICIPANT, text: "" });
+    }
+    await batch.commit();
+  }
+
+  const nobodyLeft = await db.runTransaction(async (txn) => {
+    const snap = await txn.get(chatRef);
+    if (!snap.exists) return false;
+    const before: unknown[] = snap.get("participants") ?? [];
+    const participants = before.map((p) => (p === uid ? DELETED_PARTICIPANT : p));
+    if (participants.every((p) => p === DELETED_PARTICIPANT)) return true;
+    // A transaction, so a message the other rider sends meanwhile can't have
+    // its inbox preview overwritten.
+    const lastFromRider = snap.get("lastMessage.senderId") === uid;
+    txn.update(chatRef, {
+      participants,
+      ...(lastFromRider
+        ? { "lastMessage.senderId": DELETED_PARTICIPANT, "lastMessage.text": "" }
+        : {}),
+      // Legacy chats may carry denormalised profile copies keyed by uid.
+      [`participantNames.${uid}`]: FieldValue.delete(),
+      [`participantPhotos.${uid}`]: FieldValue.delete(),
+    });
+    return false;
+  });
+  if (nobodyLeft) await db.recursiveDelete(chatRef);
 }
 
 /** How long one RTDB multi-path remove may take before it counts as failed. */

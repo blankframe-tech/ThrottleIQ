@@ -33,9 +33,11 @@ String customForumSlug(String name) => 'c-${generalForumSlug(name)}';
 /// only ever merges upward (model → brand); a brand forum's own posts never
 /// appear inside a narrower model forum — see [ForumRepository.getPosts]'s
 /// doc comment for why that direction is deliberate.
-List<ForumEntity> modelForumsToMergeInto(String brand, List<ForumEntity> candidates) {
+List<ForumEntity> modelForumsToMergeInto(
+    String brand, List<ForumEntity> candidates) {
   return candidates
-      .where((f) => f.type == ForumType.bikeModel && f.brand == brand && f.postCount > 0)
+      .where((f) =>
+          f.type == ForumType.bikeModel && f.brand == brand && f.postCount > 0)
       .toList();
 }
 
@@ -158,7 +160,8 @@ class ForumRepository {
   /// loser re-reads, sees the doc now exists, and just returns it instead of
   /// racing a second `create` against the rules (which would otherwise be
   /// evaluated as an `update` and rejected).
-  Future<ForumEntity> getOrCreateForum({required String brand, String? model}) async {
+  Future<ForumEntity> getOrCreateForum(
+      {required String brand, String? model}) async {
     final slug = bikeForumSlug(brand, model: model);
     final docRef = _forums.doc(slug);
 
@@ -167,7 +170,8 @@ class ForumRepository {
     // and "FZ-S V2" both slug to the same forum, so the stored model/display
     // name must say "FZS" too, not whichever rider's raw text happened to
     // create the doc first.
-    final normalizedModel = hasModel ? normalizeModelFamily(brand, model) : null;
+    final normalizedModel =
+        hasModel ? normalizeModelFamily(brand, model) : null;
     final type = hasModel ? ForumType.bikeModel : ForumType.brand;
     final displayName = hasModel ? '$brand $normalizedModel' : brand;
 
@@ -239,7 +243,8 @@ class ForumRepository {
     final trimmed = name.trim();
     final slug = customForumSlug(trimmed);
     if (slug == 'c-') {
-      throw ArgumentError('Forum name must contain at least one letter or digit');
+      throw ArgumentError(
+          'Forum name must contain at least one letter or digit');
     }
 
     final docRef = _forums.doc(slug);
@@ -256,7 +261,9 @@ class ForumRepository {
         'topic': null,
         'displayName': trimmed,
         'description':
-            (trimmedDescription == null || trimmedDescription.isEmpty) ? null : trimmedDescription,
+            (trimmedDescription == null || trimmedDescription.isEmpty)
+                ? null
+                : trimmedDescription,
         'createdBy': userId,
         'maintainerIds': [userId],
         'followerCount': 0,
@@ -365,7 +372,8 @@ class ForumRepository {
   /// can tie the -1 to that post actually being deleted in this same batch
   /// (issues §90.D5/§90.D11). The rule used to allow -1 only for moderators,
   /// so a rider deleting their OWN post had the whole batch refused.
-  Future<void> deletePost({required String forumId, required String postId}) async {
+  Future<void> deletePost(
+      {required String forumId, required String postId}) async {
     final batch = _firestore.batch();
     batch.delete(_forums.doc(forumId).collection('posts').doc(postId));
     batch.update(_forums.doc(forumId), {
@@ -443,7 +451,8 @@ class ForumRepository {
   /// Ids of the forums [userId] follows — the follow docs only, no forum doc
   /// reads (Pulse needs ids to page posts, not each forum's metadata).
   Future<List<String>> getFollowedForumIds(String userId) async {
-    final follows = await _forumFollows.where('userId', isEqualTo: userId).get();
+    final follows =
+        await _forumFollows.where('userId', isEqualTo: userId).get();
     return follows.docs
         .map((d) => d.data()['forumId'] as String?)
         .whereType<String>()
@@ -484,11 +493,17 @@ class ForumRepository {
   /// Every forum whose `brand` is one of [brands] — the brand docs and the
   /// model forums under them — for the brand paddocks' aggregate counts.
   /// One single-field `whereIn` query (auto-indexed), capped at [limit].
-  Future<List<ForumEntity>> getForumsForBrands(List<String> brands, {int limit = 300}) async {
+  Future<List<ForumEntity>> getForumsForBrands(List<String> brands,
+      {int limit = 300}) async {
     final unique = brands.where((b) => b.trim().isNotEmpty).toSet().toList();
     if (unique.isEmpty) return const [];
-    final snap = await _forums.where('brand', whereIn: unique.take(30).toList()).limit(limit).get();
-    return snap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
+    final snap = await _forums
+        .where('brand', whereIn: unique.take(30).toList())
+        .limit(limit)
+        .get();
+    return snap.docs
+        .map((doc) => ForumModel.fromFirestore(doc).toEntity())
+        .toList();
   }
 
   /// Creates a post in a forum and bumps its `postCount`.
@@ -584,10 +599,15 @@ class ForumRepository {
   /// from a cursor, merging them without holes ([mergeForumPostPages]).
   Future<List<String>> postSourceForumIds(String forumId) async {
     final forumDoc = await _forums.doc(forumId).get();
-    final forum = forumDoc.exists ? ForumModel.fromFirestore(forumDoc).toEntity() : null;
+    final forum =
+        forumDoc.exists ? ForumModel.fromFirestore(forumDoc).toEntity() : null;
     if (forum == null || forum.type != ForumType.brand) return [forumId];
     final modelForums = await _modelForumsUnder(forum.brand);
-    return [forumId, for (final f in modelForums) if (f.id != forumId) f.id];
+    return [
+      forumId,
+      for (final f in modelForums)
+        if (f.id != forumId) f.id
+    ];
   }
 
   /// One page of posts across [forumIds] (see [postSourceForumIds]), newest
@@ -619,7 +639,9 @@ class ForumRepository {
         .orderBy('createdAt', descending: true);
     if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
     final snapshot = await q.limit(limit).get();
-    return snapshot.docs.map((doc) => ForumPostModel.fromFirestore(doc).toEntity()).toList();
+    return snapshot.docs
+        .map((doc) => ForumPostModel.fromFirestore(doc).toEntity())
+        .toList();
   }
 
   /// The model forums whose posts merge into a brand forum — see the
@@ -631,15 +653,16 @@ class ForumRepository {
   /// `modelForumsToMergeInto` does the `type`/`postCount` filtering
   /// client-side instead (same "fetch broader, filter in memory" shape as
   /// [searchForums] above). `cleanup_qa_test_riders.js`
-  /// (`scripts/qa_seed_catalog.js`) hit exactly this the hard way: a
+  /// (`scripts/oneoff/qa_seed_catalog.js`) hit exactly this the hard way: a
   /// `collectionGroup('posts').where('qaSeed', '==', true)` query failed
   /// outright with `FAILED_PRECONDITION` because this project has no
   /// composite index for it — not worth risking here too.
   Future<List<ForumEntity>> _modelForumsUnder(String brand) async {
     if (brand.trim().isEmpty) return const [];
     final candidatesSnap = await _forums.where('brand', isEqualTo: brand).get();
-    final candidates =
-        candidatesSnap.docs.map((doc) => ForumModel.fromFirestore(doc).toEntity()).toList();
+    final candidates = candidatesSnap.docs
+        .map((doc) => ForumModel.fromFirestore(doc).toEntity())
+        .toList();
     return modelForumsToMergeInto(brand, candidates);
   }
 
@@ -647,7 +670,8 @@ class ForumRepository {
     required String forumId,
     required String postId,
   }) async {
-    final doc = await _forums.doc(forumId).collection('posts').doc(postId).get();
+    final doc =
+        await _forums.doc(forumId).collection('posts').doc(postId).get();
     if (!doc.exists) return null;
     final post = ForumPostModel.fromFirestore(doc).toEntity();
     final hydrated = await _hydrateVotes([post]);
@@ -661,14 +685,16 @@ class ForumRepository {
   /// Reads each vote from the post's OWN `forumId`, not a shared one for the
   /// whole list — required since [getPosts] can now return posts merged in
   /// from several different model forums at once.
-  Future<List<ForumPostEntity>> _hydrateVotes(List<ForumPostEntity> posts) async {
+  Future<List<ForumPostEntity>> _hydrateVotes(
+      List<ForumPostEntity> posts) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || posts.isEmpty) return posts;
 
-    final votes =
-        await Future.wait(posts.map((p) => getMyPostVote(p.forumId, p.id, uid)));
+    final votes = await Future.wait(
+        posts.map((p) => getMyPostVote(p.forumId, p.id, uid)));
     return [
-      for (var i = 0; i < posts.length; i++) posts[i].copyWith(myVote: votes[i]),
+      for (var i = 0; i < posts.length; i++)
+        posts[i].copyWith(myVote: votes[i]),
     ];
   }
 
@@ -688,7 +714,8 @@ class ForumRepository {
   /// Casts, changes, or clears a vote on a post. Same bounded ±1-per-field
   /// transaction shape as RideShareRepository.vote, applied to
   /// `upvotes`/`downvotes` on the post doc.
-  Future<void> votePost(String forumId, String postId, String uid, int value) async {
+  Future<void> votePost(
+      String forumId, String postId, String uid, int value) async {
     assert(value == 1 || value == -1);
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
     final voteRef = postRef.collection('votes').doc(uid);

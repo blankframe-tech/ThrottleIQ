@@ -1,8 +1,38 @@
-# 🏍️ ThrottleIQ — Machine Memory for Motorcycles
+<div align="center">
 
-**ThrottleIQ** is an offline-first ride tracker, garage and rider community for motorcycles. It records every ride (speed, braking, cornering, elevation, route), remembers what each bike needs next, and connects riders with each other. Built in Bangladesh, in English and Bangla.
+<img src="DOCS/General/Files%20for%20Stores/store_listing/throttleiq_playstore_icon_512.png" width="112" alt="ThrottleIQ app icon" />
 
-![License](https://img.shields.io/badge/license-TSAL-blue) ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-blue) ![Firebase](https://img.shields.io/badge/Firebase-Firestore-orange)
+# ThrottleIQ
+
+### Machine memory for motorcycles 🏍️
+
+Every ride recorded. Every service remembered. Every rider connected.<br/>
+Offline-first. Built in Bangladesh, in English and বাংলা.
+
+[![License](https://img.shields.io/badge/license-TSAL-blue?style=for-the-badge)](LICENSE)
+![Flutter](https://img.shields.io/badge/Flutter-Dart%203-02569B?style=for-the-badge&logo=flutter&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
+![Tests](https://img.shields.io/badge/tests-2100%2B-C6F432?style=for-the-badge)
+[![Release](https://img.shields.io/badge/beta-v4.7.1-C6F432?style=for-the-badge)](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.7.1)
+
+<br/>
+
+<table>
+  <tr>
+    <td align="center"><img src="DOCS/General/readme_screenshots/record.jpg" width="230" alt="Record screen"/><br/><b>Hold to ride</b></td>
+    <td align="center"><img src="DOCS/General/readme_screenshots/ride-summary.jpg" width="230" alt="Ride summary"/><br/><b>Ride summary &amp; score</b></td>
+    <td align="center"><img src="DOCS/General/readme_screenshots/stats.jpg" width="230" alt="Rides analytics"/><br/><b>Your journey, charted</b></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="DOCS/General/readme_screenshots/garage.jpg" width="230" alt="Garage"/><br/><b>Your garage</b></td>
+    <td align="center"><img src="DOCS/General/readme_screenshots/maintenance.jpg" width="230" alt="Maintenance"/><br/><b>What's due next</b></td>
+    <td align="center"><img src="DOCS/General/readme_screenshots/places.jpg" width="230" alt="Places map"/><br/><b>1,100+ places for riders</b></td>
+  </tr>
+</table>
+
+</div>
+
+---
 
 > **Status:** pre-launch beta `1.0.0-beta.4.7.1+29`, tagged
 > [`beta-v4.7.1`](https://github.com/blankframe-tech/ThrottleIQ/releases/tag/beta-v4.7.1).
@@ -89,4 +119,4 @@ Branch from `experimental`, keep commits focused, write tests for new logic, nev
 
 ---
 
-*Built for riders. Ride safe. 🏍️ · Last updated: 2026-10-09*
+*Built for riders. Ride safe. 🏍️ · Last updated: 2026-10-22*

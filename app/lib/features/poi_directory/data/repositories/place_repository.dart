@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 import 'package:throttleiq/core/utils/geo_math.dart';
 import 'package:throttleiq/core/utils/geohash_util.dart';
 import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
@@ -36,8 +35,8 @@ class PlaceRepository {
   Future<String> addPlace(PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);
     final docRef = await _firestore.collection(_collection).add(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
     return docRef.id;
   }
 
@@ -48,8 +47,7 @@ class PlaceRepository {
   /// `osm_node_123` (a `/` in a doc id would be read as a path separator).
   /// Two imports of the same OSM feature land on the same doc instead of
   /// creating a duplicate.
-  static String osmDocId(String osmId) =>
-      'osm_${osmId.replaceAll('/', '_')}';
+  static String osmDocId(String osmId) => 'osm_${osmId.replaceAll('/', '_')}';
 
   /// Adds many places in [importBatchSize]-write batches (the OSM import
   /// used to await one `add()` per place, sequentially). Places with an
@@ -63,7 +61,9 @@ class PlaceRepository {
     for (var i = 0; i < places.length; i += importBatchSize) {
       final chunk = places.sublist(
         i,
-        i + importBatchSize > places.length ? places.length : i + importBatchSize,
+        i + importBatchSize > places.length
+            ? places.length
+            : i + importBatchSize,
       );
       final batch = _firestore.batch();
       for (final place in chunk) {
@@ -81,8 +81,8 @@ class PlaceRepository {
   Future<void> updatePlace(String placeId, PlaceEntity place) async {
     final model = PlaceModel.fromEntity(place);
     await _firestore.collection(_collection).doc(placeId).update(
-      model.toFirestore(),
-    );
+          model.toFirestore(),
+        );
   }
 
   /// Update place verification (admin only)
@@ -180,7 +180,8 @@ class PlaceRepository {
     if (osmIds.isEmpty) return {};
     final found = <String>{};
     for (var i = 0; i < osmIds.length; i += 30) {
-      final chunk = osmIds.sublist(i, i + 30 > osmIds.length ? osmIds.length : i + 30);
+      final chunk =
+          osmIds.sublist(i, i + 30 > osmIds.length ? osmIds.length : i + 30);
       final snap = await _firestore
           .collection(_collection)
           .where('osmId', whereIn: chunk)
@@ -207,20 +208,50 @@ class PlaceRepository {
     required double longitude,
     required double radiusKm,
     PlaceCategory? category,
+    DateTime? now,
   }) {
     return nearbyViaGeohashRanges(
       latitude: latitude,
       longitude: longitude,
       radiusKm: radiusKm,
       category: category,
+      now: now,
       fetchRange: _fetchGeohashRange,
+    );
+  }
+
+  /// Every place in geohash cell [prefix], from the server only: a
+  /// cache-only answer while offline would look complete but miss places.
+  Future<List<PlaceEntity>> getPlacesInCellFromServer(String prefix) =>
+      _fetchGeohashRange(prefix, null, source: Source.server);
+
+  /// Places written after [since] (server `updatedAt`), with the newest
+  /// `updatedAt` among them: the ride cache's next watermark. A single-field
+  /// range filter, served by Firestore's automatic index. Server only, for the
+  /// same reason as [getPlacesInCellFromServer].
+  Future<(List<PlaceEntity>, DateTime?)> getPlacesUpdatedSince(
+    DateTime since,
+  ) async {
+    final snap = await _firestore
+        .collection(_collection)
+        .where('updatedAt', isGreaterThan: Timestamp.fromDate(since))
+        .get(const GetOptions(source: Source.server));
+    DateTime? newest;
+    for (final doc in snap.docs) {
+      final t = (doc.data()['updatedAt'] as Timestamp?)?.toDate();
+      if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+    }
+    return (
+      [for (final doc in snap.docs) PlaceModel.fromFirestore(doc).toEntity()],
+      newest,
     );
   }
 
   Future<List<PlaceEntity>> _fetchGeohashRange(
     String prefix,
-    PlaceCategory? category,
-  ) async {
+    PlaceCategory? category, {
+    Source source = Source.serverAndCache,
+  }) async {
     Query<Map<String, dynamic>> query = _firestore.collection(_collection);
     if (category != null) {
       query = query.where('category', isEqualTo: category.name);
@@ -228,21 +259,21 @@ class PlaceRepository {
     final snap = await query
         .where('geohash', isGreaterThanOrEqualTo: prefix)
         .where('geohash', isLessThan: '$prefix~')
-        .get();
+        .get(GetOptions(source: source));
     return snap.docs
         .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
         .toList();
   }
 
-  /// The query plan behind [getNearbyPlaces], with the Firestore read
-  /// injected as [fetchRange] (every place whose geohash starts with the
-  /// given prefix) so tests can run it against an in-memory fake.
-  @visibleForTesting
+  /// The query plan behind [getNearbyPlaces], with the read injected as
+  /// [fetchRange] (every place whose geohash starts with the given prefix):
+  /// Firestore, the ride cache (`RidePlacesCache`), or a test fake.
   static Future<List<PlaceEntity>> nearbyViaGeohashRanges({
     required double latitude,
     required double longitude,
     required double radiusKm,
     PlaceCategory? category,
+    DateTime? now,
     required Future<List<PlaceEntity>> Function(
       String prefix,
       PlaceCategory? category,
@@ -252,9 +283,11 @@ class PlaceRepository {
     final batches =
         await Future.wait(cells.map((cell) => fetchRange(cell, category)));
 
+    final currentTime = now ?? DateTime.now();
     final seen = <String>{};
     final withDistance = <(PlaceEntity, double)>[];
     for (final place in batches.expand((batch) => batch)) {
+      if (place.isExpiredAt(currentTime)) continue;
       if (!seen.add(place.id)) continue;
       final km = haversineMeters(
             latitude,
@@ -310,5 +343,3 @@ class PlaceRepository {
     });
   }
 }
-
-

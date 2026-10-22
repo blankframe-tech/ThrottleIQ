@@ -118,7 +118,9 @@ tests() { (cd app && flutter test --reporter=failures-only); }
 rules_if_changed() {
   if [ -z "$(changed firestore.rules database.rules.json 'scripts/test/rules/*')" ]; then
     echo "Rules unchanged; skipped."; return 0; fi
-  (cd scripts && npm run --silent test:rules); }
+  # CHECK_FIREBASE_CONFIG: a firebase.json with other emulator ports, for a
+  # machine where 8080 is taken (the suites read FIRESTORE_EMULATOR_HOST).
+  (cd scripts && npm run --silent test:rules -- ${CHECK_FIREBASE_CONFIG:+--config "$CHECK_FIREBASE_CONFIG"}); }
 
 functions_if_changed() {
   if [ -z "$(changed 'functions/src/*' 'functions/test/*' functions/package.json)" ]; then

@@ -7,9 +7,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Release and deploy
 
-- [ ] **Deploy in order (#30, #31):** Firestore rules and indexes, then Hosting (`privacy.html` §9,
-      the community rules page), then Cloud Functions once on Blaze. `main` holds the 2026-10-21
-      moderation, deletion and App Check work, none of it deployed.
+- [ ] **Deploy (#30, #31):** rules, indexes and Hosting went out 2026-10-22. Left: Cloud Functions
+      once on Blaze (deletion, retention, chat moderation), and the rules again for the places
+      `updatedAt` check added after that deploy (issues §104.1; safe to deploy any time).
 - [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
       Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
       (`For Devs and Contributors/guides/app_check.md`).
@@ -25,8 +25,9 @@ number. Done items are deleted, not ticked; git history keeps them._
       (decided 2026-10-21).
 - [ ] **Data Safety form** from `General/Files for Stores/store_listing/throttleiq_data_safety.csv`:
       app interactions (analytics on by default with a disclosed opt-out, decided 2026-10-22), audio,
-      precise location, crash logs. The drafts don't yet cover the opt-in crash research sharing;
-      an agent fixes the drafts first (issues §110.5).
+      precise location, crash logs, plus (2026-10-22) Other actions for impact records and
+      Approximate location, opt-in, for the crash research copy. Decide the two open calls in
+      `data_safety_and_permissions.md` ("Crash detection records") first: Health info, User IDs.
 - [ ] **Terms of Service and a PDPO 2025 review by a lawyer (new 2026-10-22).** No terms exist in
       `public/` or the app (issues §109.14).
 - [ ] **Before any App Store submission:** enrol in the Apple Developer Program (#21), then the
@@ -34,8 +35,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Accounts and security
 
-- [ ] **SECURITY step 3 (#2):** deploy rules and indexes and run the email migration in the same
-      hour. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
+- [ ] **SECURITY step 3 (#2), urgent:** rules and indexes are live since 2026-10-22, so run the
+      email migration now (dry run, then `--yes-i-really-mean-it`), then fix `privacy.html` §5
+      and deploy Hosting. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
       `isAdmin()` can be removed (issues §110.4).
 - [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
       Firebase API keys.
@@ -90,5 +92,6 @@ number. Done items are deleted, not ticked; git history keeps them._
 - hello@blankframe.tech delivery confirmed (2026-10-22). Analytics: on by default with a disclosed
   opt-out (2026-10-22).
 - Crash detection runs in shadow mode only: nothing is sent to anyone.
+- `gov-pitch/` materials aligned with `iDEA_PITCH_SUBMISSION.md` and `marketing.md` (2026-10-22): crash detection framed as uncalibrated shadow-mode research; claims of live crash detection and automated SMS alerting removed; "Do not submit" banners removed.
 - Deleting a bike archives it; the Profile tab is "Garage"; Bangla dates use English-style digits
   in the Bangla font.

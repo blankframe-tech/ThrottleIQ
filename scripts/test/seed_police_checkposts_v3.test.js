@@ -8,7 +8,7 @@ const {
   EXPECTED_PROJECT_ID,
   COLLECTION,
   SEED_AUTHOR,
-} = require('../seed_police_checkposts_v3');
+} = require('../oneoff/seed_police_checkposts_v3');
 
 let passed = 0;
 let failed = 0;

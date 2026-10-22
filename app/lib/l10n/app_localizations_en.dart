@@ -1592,6 +1592,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cantMessageThisRider => 'You can\'t message this rider';
 
   @override
+  String get deletedRider => 'Deleted rider';
+
+  @override
+  String get chatPeerDeleted => 'This rider deleted their account';
+
+  @override
+  String get messageDeleted => 'Message deleted';
+
+  @override
   String get messageHint => 'Message...';
 
   @override
@@ -1620,6 +1629,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get whyReportingThis => 'Why are you reporting this?';
+
+  @override
+  String get reportReviewPromise =>
+      'A person reads every report within 24 hours. Your name is not shown to the rider you report.';
+
+  @override
+  String get communityRules => 'Community rules';
 
   @override
   String get additionalDetailsOptional => 'Additional details (optional)';
@@ -3714,7 +3730,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get errTooManyRequests =>
-      'Too many requests right now. Please try again in a moment.';
+      'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Please try again later.';
+
+  @override
+  String get overQuotaBar =>
+      'ThrottleIQ\'s database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day.';
 
   @override
   String get errNotReady =>
@@ -5780,6 +5800,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRequiredAction => 'Get the latest version';
 
   @override
+  String get sideloadBlockedTitle => 'Install ThrottleIQ from Google Play';
+
+  @override
+  String get sideloadBlockedBody =>
+      'This copy of ThrottleIQ was not installed from Google Play, so it can\'t connect to the server. Install ThrottleIQ from the Play Store to keep using it.';
+
+  @override
+  String get sideloadBlockedPlayAction => 'Open the Play Store';
+
+  @override
+  String get sideloadBlockedTesting =>
+      'Want to test a build? Send a testing request on WhatsApp: 01327045005';
+
+  @override
+  String get sideloadBlockedWhatsAppAction => 'Send a testing request';
+
+  @override
   String get reauthRequiredTitle => 'Confirm it\'s you';
 
   @override
@@ -6656,4 +6693,57 @@ class AppLocalizationsEn extends AppLocalizations {
   String couldNotSaveChanges(Object e) {
     return 'Could not save changes: $e';
   }
+
+  @override
+  String get rideActionsTooltip => 'Ride actions';
+
+  @override
+  String get copCheckpointHere => 'Cop checkpoint here';
+
+  @override
+  String get parkingPinHere => 'Parking pin';
+
+  @override
+  String get minimizeRide => 'Minimize';
+
+  @override
+  String get checkpointExpiresInDay => 'Expires in 24 h';
+
+  @override
+  String get checkpointPermanent => 'Permanent';
+
+  @override
+  String get checkpointSaved => 'Checkpoint saved';
+
+  @override
+  String get checkpointSaveFailed => 'Could not save checkpoint';
+
+  @override
+  String get noGpsFixYet => 'No GPS fix yet';
+
+  @override
+  String rideRecordingBar(String distance, String duration) {
+    return 'Recording ride · $distance · $duration';
+  }
+
+  @override
+  String ridePausedBar(String distance, String duration) {
+    return 'Ride paused · $distance · $duration';
+  }
+
+  @override
+  String get directionsToBike => 'Directions to bike';
+
+  @override
+  String placeReportedAt(String time) {
+    return 'Reported $time';
+  }
+
+  @override
+  String placeExpiresInHours(int hours) {
+    return 'expires in $hours h';
+  }
+
+  @override
+  String get placeReportExpired => 'expired';
 }

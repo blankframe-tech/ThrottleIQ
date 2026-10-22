@@ -14,6 +14,7 @@ import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../domain/place_tags.dart';
 import '../place_category_l10n.dart';
+import '../place_report_l10n.dart';
 import '../place_tag_l10n.dart';
 import '../widgets/place_card.dart';
 import '../widgets/place_launch_actions.dart';
@@ -115,7 +116,8 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
         ],
       ),
       body: placeAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(placeDetailProvider(widget.placeId)),
@@ -123,7 +125,8 @@ class _PlaceDetailScreenState extends ConsumerState<PlaceDetailScreen> {
         data: (place) {
           if (place == null) {
             return Center(
-              child: Text(context.l10n.placeNotFound, style: TextStyle(color: context.palette.textSecondary)),
+              child: Text(context.l10n.placeNotFound,
+                  style: TextStyle(color: context.palette.textSecondary)),
             );
           }
           return _PlaceDetailBody(
@@ -196,7 +199,10 @@ class _PlaceDetailBody extends ConsumerWidget {
         const SizedBox(height: 24),
         Text(
           context.l10n.addReview,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: context.palette.textPrimary),
         ),
         const SizedBox(height: 8),
         Row(
@@ -233,7 +239,8 @@ class _PlaceDetailBody extends ConsumerWidget {
                   ? const SizedBox(
                       height: 20,
                       width: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : Text(context.l10n.submitReview),
             );
@@ -242,11 +249,15 @@ class _PlaceDetailBody extends ConsumerWidget {
         const SizedBox(height: 24),
         Text(
           context.l10n.reviews,
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+          style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: context.palette.textPrimary),
         ),
         const SizedBox(height: 12),
         reviewsAsync.when(
-          loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+          loading: () => Center(
+              child: CircularProgressIndicator(color: context.palette.primary)),
           error: (e, _) => ErrorView(
             error: e,
             onRetry: () => ref.invalidate(reviewsForPlaceProvider(place.id)),
@@ -255,7 +266,8 @@ class _PlaceDetailBody extends ConsumerWidget {
             if (reviews.isEmpty) {
               return Text(
                 context.l10n.noReviewsYetBe,
-                style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
+                style: TextStyle(
+                    color: context.palette.textSecondary, fontSize: 13),
               );
             }
             return Column(
@@ -293,7 +305,8 @@ class _PlaceHeader extends StatelessWidget {
                   color: context.palette.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Text(place.category.icon, style: const TextStyle(fontSize: 20)),
+                child: Text(place.category.icon,
+                    style: const TextStyle(fontSize: 20)),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -303,17 +316,22 @@ class _PlaceHeader extends StatelessWidget {
                     Text(
                       place.name,
                       style: TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.textPrimary),
                     ),
                     Text(place.category.localizedName(context.l10n),
-                        style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                        style: TextStyle(
+                            fontSize: 13,
+                            color: context.palette.textSecondary)),
                   ],
                 ),
               ),
               if (place.verified)
                 Tooltip(
                   message: context.l10n.placesVerifiedOnlyHint,
-                  child: Icon(Icons.verified, size: 20, color: context.palette.success),
+                  child: Icon(Icons.verified,
+                      size: 20, color: context.palette.success),
                 ),
             ],
           ),
@@ -329,7 +347,8 @@ class _PlaceHeader extends StatelessWidget {
                   if (place.tags.contains(tag))
                     Chip(
                       visualDensity: VisualDensity.compact,
-                      label: Text('${tag.icon} ${tag.localizedName(context.l10n)}',
+                      label: Text(
+                          '${tag.icon} ${tag.localizedName(context.l10n)}',
                           style: const TextStyle(fontSize: 12)),
                     ),
               ],
@@ -345,21 +364,41 @@ class _PlaceHeader extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.location_on_outlined, size: 16, color: context.palette.textSecondary),
+                Icon(Icons.location_on_outlined,
+                    size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(place.address,
-                      style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                      style: TextStyle(
+                          fontSize: 13, color: context.palette.textSecondary)),
                 ),
               ],
             ),
+          if (placeReportLabel(place, context.l10n) case final report?) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.schedule,
+                    size: 16, color: context.palette.textSecondary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(report,
+                      style: TextStyle(
+                          fontSize: 13, color: context.palette.textSecondary)),
+                ),
+              ],
+            ),
+          ],
           if (place.phone != null && place.phone!.isNotEmpty) ...[
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.phone_outlined, size: 16, color: context.palette.textSecondary),
+                Icon(Icons.phone_outlined,
+                    size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.phone!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                Text(place.phone!,
+                    style: TextStyle(
+                        fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ],
@@ -367,9 +406,12 @@ class _PlaceHeader extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.access_time, size: 16, color: context.palette.textSecondary),
+                Icon(Icons.access_time,
+                    size: 16, color: context.palette.textSecondary),
                 const SizedBox(width: 8),
-                Text(place.hours!, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                Text(place.hours!,
+                    style: TextStyle(
+                        fontSize: 13, color: context.palette.textSecondary)),
               ],
             ),
           ],
@@ -384,47 +426,51 @@ class _PlaceHeader extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.map_outlined, size: 13, color: context.palette.textSecondary),
-                            const SizedBox(width: 4),
-                            Text('Google Maps',
-                                style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: context.palette.textSecondary)),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          place.hasGoogleRating
-                              ? '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})'
-                              : context.l10n.n0NotGoogle,
-                          style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: context.palette.textPrimary),
-                        ),
-                      ],
+                  // Google ratings were dropped (issues_open §105); the column only shows if one is ever set again.
+                  if (place.hasGoogleRating) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.map_outlined,
+                                  size: 13,
+                                  color: context.palette.textSecondary),
+                              const SizedBox(width: 4),
+                              Text('Google Maps',
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '★ ${place.googleRating.toStringAsFixed(1)} (${place.googleRatingCount})',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: context.palette.textPrimary),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    width: 1,
-                    height: 28,
-                    color: context.palette.border,
-                  ),
-                  const SizedBox(width: 12),
+                    Container(
+                      width: 1,
+                      height: 28,
+                      color: context.palette.border,
+                    ),
+                    const SizedBox(width: 12),
+                  ],
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.two_wheeler, size: 13, color: context.palette.primary),
+                            Icon(Icons.two_wheeler,
+                                size: 13, color: context.palette.primary),
                             const SizedBox(width: 4),
                             Text('ThrottleIQ',
                                 style: TextStyle(
@@ -478,7 +524,8 @@ class _PlaceActions extends ConsumerWidget {
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () => PlaceLaunchActions.openDirections(context, ref, place),
+            onPressed: () =>
+                PlaceLaunchActions.openDirections(context, ref, place),
             icon: const Icon(Icons.directions, size: 18),
             label: Text(context.l10n.directions),
           ),
@@ -528,18 +575,24 @@ class _ReviewTile extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 isOwn ? context.l10n.youLabel : context.l10n.riderFallbackName,
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: context.palette.textPrimary),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: context.palette.textPrimary),
               ),
               const Spacer(),
               Text(
                 '${review.createdAt.day}/${review.createdAt.month}/${review.createdAt.year}',
-                style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+                style: TextStyle(
+                    fontSize: 11, color: context.palette.textTertiary),
               ),
             ],
           ),
           if (review.text.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(review.text, style: TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+            Text(review.text,
+                style: TextStyle(
+                    fontSize: 13, color: context.palette.textSecondary)),
           ],
         ],
       ),

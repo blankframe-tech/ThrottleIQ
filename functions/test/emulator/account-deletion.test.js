@@ -15,7 +15,7 @@ const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 
 const { db, rtdb, clearEmulators } = require('./setup');
-const { deleteUserData, DELETED_RIDER } = require('../../lib/account-erasure');
+const { deleteUserData, DELETED_RIDER, DELETED_PARTICIPANT } = require('../../lib/account-erasure');
 
 const UID = 'deletedRiderUid000000000001';
 const OTHER = 'otherRiderUid0000000000002';
@@ -102,10 +102,28 @@ async function seed() {
   set(`liveSessions/${TOKEN}`, { uid: UID });
   set('crashEvents/ev-1', { ownerUid: UID, label: 'crash' });
   set(`livePointers/${UID}`, { token: TOKEN });
-  set(`chats/${CHAT_ID}`, { participants: [UID, OTHER].sort() });
-  set(`chats/${CHAT_ID}/messages/m1`, { senderId: UID, text: 'see you at 6' });
-  set(`chats/${CHAT_ID}/messages/m2`, { senderId: OTHER, text: 'ok' });
+  set(`chats/${CHAT_ID}`, {
+    participants: [UID, OTHER].sort(),
+    lastMessage: { senderId: UID, text: 'see you at 6', createdAt: 5 },
+    updatedAt: 5,
+    participantNames: { [UID]: 'Gone', [OTHER]: 'Other' },
+    participantPhotos: { [UID]: 'x' },
+  });
+  set(`chats/${CHAT_ID}/messages/m1`, { senderId: UID, text: 'see you at 6', createdAt: 5 });
+  set(`chats/${CHAT_ID}/messages/m2`, { senderId: OTHER, text: 'ok', createdAt: 4 });
   set(`chats/${OTHER}_zzz`, { participants: [OTHER, 'zzz'] });
+  // A chat whose other side was deleted earlier: nobody is left after this.
+  set('chats/orphan', { participants: [DELETED_PARTICIPANT, UID] });
+  set('chats/orphan/messages/o1', { senderId: UID, text: 'anyone?' });
+  // The moderation report holding a copy of one of the rider's messages.
+  set('reports/auto_chat_1', { reportedId: UID, contentType: 'chat', originalText: 'you idiot', reporterId: 'system', status: 'actioned' });
+  set('reports/other', { reportedId: OTHER, contentType: 'chat', originalText: 'hm' });
+  // Rider reports with a snapshot (2026-10-21): against the rider, pending
+  // (kept whole) and closed (uid anonymised, text kept until the retention
+  // purge), and one by the rider (untouched).
+  set('reports/against', { reporterId: OTHER, reportedId: UID, contentType: 'chat', status: 'pending', snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 } });
+  set('reports/againstClosed', { reporterId: OTHER, reportedId: UID, contentType: 'post', status: 'dismissed', snapshot: { title: 't', body: 'b', imageUrls: [], senderId: UID, sentAt: 3 } });
+  set('reports/by', { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
   await batch.commit();
 
   await rtdb.ref().set({
@@ -172,11 +190,37 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal(await exists(`follows/${UID}_${OTHER}`), false);
   assert.equal(await exists(`follows/${OTHER}_${UID}`), false);
 
-  // Chats: the rider's DM and all its messages are gone; others' chats stay.
-  assert.equal(await exists(`chats/${CHAT_ID}`), false);
-  assert.equal(await exists(`chats/${CHAT_ID}/messages/m1`), false);
-  assert.equal(await exists(`chats/${CHAT_ID}/messages/m2`), false);
+  // Chats (2026-10-21): the other rider keeps the DM; the rider's side is
+  // anonymised and their text blanked. A chat with nobody left goes.
+  const chat = (await db.doc(`chats/${CHAT_ID}`).get()).data();
+  assert.deepEqual(chat.participants, [UID, OTHER].sort().map((p) => (p === UID ? DELETED_PARTICIPANT : p)));
+  assert.deepEqual(chat.lastMessage, { senderId: DELETED_PARTICIPANT, text: '', createdAt: 5 });
+  assert.equal(chat.updatedAt, 5, 'list order unchanged');
+  assert.deepEqual(chat.participantNames, { [OTHER]: 'Other' });
+  assert.deepEqual(chat.participantPhotos, {});
+  assert.deepEqual((await db.doc(`chats/${CHAT_ID}/messages/m1`).get()).data(),
+    { senderId: DELETED_PARTICIPANT, text: '', createdAt: 5 });
+  assert.deepEqual((await db.doc(`chats/${CHAT_ID}/messages/m2`).get()).data(),
+    { senderId: OTHER, text: 'ok', createdAt: 4 });
+  assert.equal(JSON.stringify(chat).includes(UID), false, 'no uid left in the chat doc');
+  // The survivor's inbox query still finds it.
+  const inbox = await db.collection('chats').where('participants', 'array-contains', OTHER).get();
+  assert.ok(inbox.docs.some((d) => d.id === CHAT_ID));
   assert.equal(await exists(`chats/${OTHER}_zzz`), true);
+  assert.equal(await exists('chats/orphan'), false);
+  assert.equal(await exists('chats/orphan/messages/o1'), false);
+  const report = (await db.doc('reports/auto_chat_1').get()).data();
+  assert.equal(report.reportedId, '');
+  assert.equal(report.originalText, '');
+  assert.equal((await db.doc('reports/other').get()).get('originalText'), 'hm');
+  assert.deepEqual((await db.doc('reports/against').get()).data(), {
+    reporterId: OTHER, reportedId: UID, contentType: 'chat', status: 'pending', reportedAccountDeleted: true,
+    snapshot: { text: 'you idiot', senderId: UID, sentAt: 1 },
+  });
+  const closed = (await db.doc('reports/againstClosed').get()).data();
+  assert.equal(closed.reportedId, '');
+  assert.deepEqual(closed.snapshot, { title: 't', body: 'b', imageUrls: [], senderId: DELETED_PARTICIPANT, sentAt: 3 });
+  assert.deepEqual((await db.doc('reports/by').get()).data(), { reporterId: UID, reportedId: OTHER, contentType: 'chat', snapshot: { text: 'hm', senderId: OTHER, sentAt: 2 } });
 
   // Forum follows: the rider's are gone, the other rider's stays, and the
   // live forum's count drops by exactly one. The deleted forum is not
@@ -251,6 +295,7 @@ test('deleteUserData is safe to re-run', async () => {
   const result = await deleteUserData(db, UID, { rtdb });
   assert.deepEqual(result.failedSteps, []);
   assert.equal((await db.doc('forums/f1').get()).get('followerCount'), 1);
+  assert.equal((await db.doc(`chats/${CHAT_ID}/messages/m2`).get()).get('text'), 'ok');
 });
 
 test('a partial erasure is recorded as failed steps, not just logged', async () => {

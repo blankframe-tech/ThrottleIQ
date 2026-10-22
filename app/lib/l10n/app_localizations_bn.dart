@@ -1594,6 +1594,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get cantMessageThisRider => 'আপনি এই রাইডারকে মেসেজ করতে পারবেন না';
 
   @override
+  String get deletedRider => 'মুছে ফেলা রাইডার';
+
+  @override
+  String get chatPeerDeleted => 'এই রাইডার তার অ্যাকাউন্ট মুছে ফেলেছেন';
+
+  @override
+  String get messageDeleted => 'মেসেজ মুছে ফেলা হয়েছে';
+
+  @override
   String get messageHint => 'মেসেজ...';
 
   @override
@@ -1622,6 +1631,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get whyReportingThis => 'কেন এটি রিপোর্ট করছেন?';
+
+  @override
+  String get reportReviewPromise =>
+      'প্রতিটি রিপোর্ট 24 ঘণ্টার মধ্যে একজন মানুষ পড়েন। আপনি যাকে রিপোর্ট করছেন, তিনি আপনার নাম দেখতে পান না।';
+
+  @override
+  String get communityRules => 'কমিউনিটি নিয়ম';
 
   @override
   String get additionalDetailsOptional => 'অতিরিক্ত বিবরণ (ঐচ্ছিক)';
@@ -3696,7 +3712,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get errTooManyRequests =>
-      'এই মুহূর্তে অনেক বেশি অনুরোধ। একটু পরে আবার চেষ্টা করুন।';
+      'অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। পরে আবার চেষ্টা করুন।';
+
+  @override
+  String get overQuotaBar =>
+      'অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। আপনার ডেটা এই ফোনে নিরাপদ, এবং সাধারণত এক দিনের মধ্যে নিজে থেকেই আপলোড হয়ে যাবে।';
 
   @override
   String get errNotReady =>
@@ -5746,6 +5766,23 @@ class AppLocalizationsBn extends AppLocalizations {
   String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
 
   @override
+  String get sideloadBlockedTitle => 'Google Play থেকে ThrottleIQ ইনস্টল করুন';
+
+  @override
+  String get sideloadBlockedBody =>
+      'ThrottleIQ-এর এই কপিটি Google Play থেকে ইনস্টল করা হয়নি, তাই এটি সার্ভারের সঙ্গে যুক্ত হতে পারছে না। অ্যাপটি ব্যবহার চালিয়ে যেতে Play Store থেকে ThrottleIQ ইনস্টল করুন।';
+
+  @override
+  String get sideloadBlockedPlayAction => 'Play Store খুলুন';
+
+  @override
+  String get sideloadBlockedTesting =>
+      'কোনো বিল্ড পরীক্ষা করতে চান? WhatsApp-এ টেস্টিং অনুরোধ পাঠান: 01327045005';
+
+  @override
+  String get sideloadBlockedWhatsAppAction => 'টেস্টিং অনুরোধ পাঠান';
+
+  @override
   String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';
 
   @override
@@ -6621,4 +6658,57 @@ class AppLocalizationsBn extends AppLocalizations {
   String couldNotSaveChanges(Object e) {
     return 'পরিবর্তন সংরক্ষণ করা যায়নি: $e';
   }
+
+  @override
+  String get rideActionsTooltip => 'রাইড অ্যাকশন';
+
+  @override
+  String get copCheckpointHere => 'এখানে পুলিশ চেকপয়েন্ট';
+
+  @override
+  String get parkingPinHere => 'পার্কিং পিন';
+
+  @override
+  String get minimizeRide => 'মিনিমাইজ';
+
+  @override
+  String get checkpointExpiresInDay => '24 ঘণ্টায় মেয়াদ শেষ';
+
+  @override
+  String get checkpointPermanent => 'স্থায়ী';
+
+  @override
+  String get checkpointSaved => 'চেকপয়েন্ট সংরক্ষিত হয়েছে';
+
+  @override
+  String get checkpointSaveFailed => 'চেকপয়েন্ট সংরক্ষণ করা যায়নি';
+
+  @override
+  String get noGpsFixYet => 'এখনও জিপিএস সংযোগ পাওয়া যায়নি';
+
+  @override
+  String rideRecordingBar(String distance, String duration) {
+    return 'রাইড রেকর্ড হচ্ছে · $distance · $duration';
+  }
+
+  @override
+  String ridePausedBar(String distance, String duration) {
+    return 'রাইড থামানো হয়েছে · $distance · $duration';
+  }
+
+  @override
+  String get directionsToBike => 'বাইকে যাওয়ার দিকনির্দেশনা';
+
+  @override
+  String placeReportedAt(String time) {
+    return 'রিপোর্ট $time';
+  }
+
+  @override
+  String placeExpiresInHours(int hours) {
+    return '$hours ঘণ্টা পর মেয়াদ শেষ';
+  }
+
+  @override
+  String get placeReportExpired => 'মেয়াদ শেষ';
 }

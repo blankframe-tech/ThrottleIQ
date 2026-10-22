@@ -17,6 +17,7 @@ import '../database/daos/impact_event_dao.dart';
 import '../services/crash_detection_settings.dart';
 import 'impact_event_payload.dart';
 import '../../features/maintenance/data/models/fuel_log_model.dart';
+import 'firestore_quota.dart';
 import 'last_writer_wins.dart';
 import 'pull_watermark.dart';
 import 'ride_track_codec.dart';
@@ -159,6 +160,9 @@ class CloudRepository {
         debugPrint('[CloudRepository] $collection/$id: a newer copy from '
             'another device replaced this one');
       } catch (e) {
+        // Over quota, every later row fails the same way: stop the pass so
+        // SyncManager pauses sync (§104) instead of retrying row by row.
+        if (isQuotaError(e)) rethrow;
         debugPrint('[CloudRepository] $collection upload rejected for $id: $e');
       }
     }

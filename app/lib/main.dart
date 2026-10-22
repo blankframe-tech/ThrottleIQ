@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'core/analytics/analytics_service.dart';
+import 'core/services/app_check_gate.dart';
 import 'core/services/auto_tracking_service.dart';
 import 'core/services/home_widget_service.dart';
 import 'core/services/notification_service.dart';
@@ -28,15 +29,18 @@ import 'core/utils/bike_image_resolver.dart';
 /// This is inert until **enforcement** is switched on in the Firebase console,
 /// and that switch must wait until a release containing this code is what riders
 /// actually run — enforcing earlier locks out every older build (the same
-/// ship-the-client-first rule as issues §78.27). Debug builds use the debug
-/// provider; its token is printed to the log and has to be registered in the
-/// console. A failure here must never stop the app from launching.
+/// ship-the-client-first rule as issues §78.27). Debug builds, and release
+/// builds with `--dart-define=APP_CHECK_DEBUG=true`, use the debug provider;
+/// its token is printed to the log and has to be registered in the console
+/// (DOCS/For Devs and Contributors/guides/app_check.md).
+/// A failure here must never stop the app from launching.
 Future<void> _activateAppCheck() async {
   try {
     await FirebaseAppCheck.instance.activate(
-      androidProvider:
-          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      appleProvider: kDebugMode
+      androidProvider: kUsesAppCheckDebugProvider
+          ? AndroidProvider.debug
+          : AndroidProvider.playIntegrity,
+      appleProvider: kUsesAppCheckDebugProvider
           ? AppleProvider.debug
           : AppleProvider.appAttestWithDeviceCheckFallback,
     );
@@ -67,8 +71,7 @@ void main() async {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark, // dark icons on light paper
-      statusBarBrightness:
-          Brightness.light, // iOS: light status bar background
+      statusBarBrightness: Brightness.light, // iOS: light status bar background
     ));
 
     try {
