@@ -12,7 +12,10 @@ number. Done items are deleted, not ticked; git history keeps them._
       `updatedAt` check added after that deploy (issues §104.1; safe to deploy any time).
 - [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
       Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
-      (`For Devs and Contributors/guides/app_check.md`).
+      (`For Devs and Contributors/guides/app_check.md`). Since 2026-10-22 it also carries the §104 read
+      savings, the 8 s screen-write timeout, hour-rounded crash timestamps and the legacy-likes removal.
+- [ ] **Legacy likes, steps 2-3 (#45, new 2026-10-22):** after that release, raise
+      `config/app.minBuild`, then delete the `likes` rule and deploy rules (issues §80).
 - [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.
       Enforcing early locks out every older build.
 - [ ] **Check that the Firestore quota alert emails reach you (#24).** The rehearsal sent 6 to
@@ -28,8 +31,14 @@ number. Done items are deleted, not ticked; git history keeps them._
       precise location, crash logs, plus (2026-10-22) Other actions for impact records and
       Approximate location, opt-in, for the crash research copy. Decide the two open calls in
       `data_safety_and_permissions.md` ("Crash detection records") first: Health info, User IDs.
+      Draft answers for review (2026-10-22): `throttleiq_data_safety.DRAFT.csv` and
+      `data_safety_review.DRAFT.md` in the same folder (23 answers change, 7 calls for you).
+- [ ] **privacy.html is behind the app (#46, new 2026-10-22):** bike photos are uploaded, and the
+      camera permission, Nominatim lookups and group-ride positions aren't disclosed; the app has no
+      link to the policy (`data_safety_review.DRAFT.md`).
 - [ ] **Terms of Service and a PDPO 2025 review by a lawyer (new 2026-10-22).** No terms exist in
-      `public/` or the app (issues §109.14).
+      `public/` or the app (issues §109.14). Draft for the lawyer: `public/.terms.DRAFT.html` (2026-10-22,
+      never served).
 - [ ] **Before any App Store submission:** enrol in the Apple Developer Program (#21), then the
       widget extension's privacy manifest and Sign in with Apple.
 
@@ -41,6 +50,8 @@ number. Done items are deleted, not ticked; git history keeps them._
       `isAdmin()` can be removed (issues §110.4).
 - [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
       Firebase API keys.
+- [ ] **CodeQL (#49, new 2026-10-22):** the push of `a0bf4f4f` bypassed the main ruleset while CodeQL
+      was pending; check its result.
 - [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are
       locked). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
       the deletion sweep's ownership check skips every asset.
@@ -69,8 +80,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Decisions
 
-- [ ] **Google Maps data in production (#1):** take it down or keep it.
-- [ ] **Blaze (#3)**, or how far to go on Spark. Blocked without Blaze: Firestore TTL policies
+- [ ] **Google Maps data in production (#1):** take it down or keep it. Decision card:
+      `DOCS/agent_rooms/drafts/decision_card_scraped_places.md` (2026-10-22).
+- [ ] **Blaze (#3)**, or how far to go on Spark (decision card: `DOCS/agent_rooms/drafts/decision_card_blaze_upgrade.md`). Blocked without Blaze: Firestore TTL policies
       (`liveSessions.expiresAt`, and `places.expiresAt` for expired checkpoints, issues §107.4;
       tried 2026-10-08: 403 billing disabled), real SMS and escalation, signed Cloudinary uploads,
       account deletion (a Spark workaround is issues §109.12), rate limits. Cloud Functions Node 20
@@ -84,7 +96,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 - [ ] **Smaller calls:** reports filed by a deleted rider (#29), report rate limit and retention
       (#33), the public WhatsApp number on the install page (#34), ranking the forum ideas (#35, the
       front-plate guide only helps before 15 Nov), the badge-tier prize promotion (new), the beta-only
-      order-parts button: keep it for a partner or remove it (new, issues §95.11).
+      order-parts button: keep it for a partner or remove it (new, issues §95.11), "Verified" places vs
+      the SafeSpot flyer (#47), the Maya pricing in the public repo (#48), and the WCAG palette on
+      branch `lane/f-wcag-contrast` (#23, review before merging).
 
 ## Settled, don't re-ask
 
