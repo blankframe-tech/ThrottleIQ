@@ -277,6 +277,29 @@ Remaining:
 presentation layer thinly, which is where the UX defects in this section
 lived. Same root cause as 83.13.
 
+**2026-10-22 (lane H), now covered** (the §107.2 order):
+- Active ride: `test/features/ride/presentation/screens/active_ride_screen_test.dart`.
+  Pause/resume, pause disabled during a transition, End Ride hold → summary (not
+  the idle redirect), Keep riding, Discard ride (keep / confirm), crash takeover
+  stays hidden while `crashAlertsEnabled` is off, restored-ride banner, idle →
+  Record. Fake recorder via `implements RideRecordingNotifier`.
+- Sign-in: `test/features/auth/login_screen_test.dart`. Validation, trimmed
+  email, a Firebase error shown in words, password eye, Sign Up link.
+- Sync issues: `test/features/profile/sync_issues_screen_test.dart`, real
+  in-memory SQLite outbox. Account scoping, Retry (delivered / failed again),
+  Discard (cancel / confirm). **Bug it found, fixed:** the Retry SnackBar never
+  showed. `retryDead` revives the row, the list reloads without it, the card
+  unmounts, and `if (!mounted) return` swallowed the result.
+- Maintenance already had screen tests (`test/features/maintenance/`).
+
+**Still open:** `RecordScreen` (its `initState` reads `FirebaseAuth.instance`,
+§83.13, so it can't be pumped without Firebase); the crash countdown overlay
+itself (private and unreachable while `SensorConstants.crashAlertsEnabled` is
+a `const false`; test it when tier 2 ships); settings and onboarding steps
+beyond `onboarding_tour_test.dart`; register; 0 goldens. The `_endingRide`
+guard in `_cancelRide` has no test of its own (its redirect lands on the same
+`/home/record`); the one in `_stopRide` is covered.
+
 ---
 
 ## 84. Four orphan-candidate Firestore indexes (2026-09-21)
