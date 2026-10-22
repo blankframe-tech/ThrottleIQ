@@ -40,12 +40,6 @@ export const onMessageCreate = onDocumentCreated(
     if (isToxic) {
       logger.info(`Toxic message detected in chat ${event.params.chatId}, hiding message.`);
       
-      // We can update the message to be hidden or flagged
-      await snapshot.ref.update({
-        isToxic: true,
-        text: "*** This message was hidden by automated moderation ***",
-      });
-
       // File an automated report for admin review. Status is 'pending', not
       // 'actioned' (issues §62.5 — this used to auto-mark it
       // 'actioned' even though nothing was actually reviewed, so downstream
@@ -56,8 +50,8 @@ export const onMessageCreate = onDocumentCreated(
       //
       // issues §90.D12: the report now carries what a reviewer needs — the
       // chat id (contentId alone can't locate a message nested under
-      // chats/{chatId}) and the original text, which the update above has
-      // just overwritten on the message itself. Reports are admin-only in
+      // chats/{chatId}) and the original text, which the update below
+      // overwrites on the message itself. Reports are admin-only in
       // firestore.rules. The id is deterministic, so a retried trigger
       // rewrites one report instead of filing a duplicate.
       await getFirestore()
@@ -75,6 +69,13 @@ export const onMessageCreate = onDocumentCreated(
           createdAt: FieldValue.serverTimestamp(),
           status: "pending",
         });
+
+      // Hidden only after the report holds the original text: hiding first
+      // overwrote the only copy, so a failed report write lost the evidence.
+      await snapshot.ref.update({
+        isToxic: true,
+        text: "*** This message was hidden by automated moderation ***",
+      });
     }
   }
 );

@@ -86,18 +86,12 @@ export async function deleteUserData(
     }
   }
 
-  const username = await step("read profile", async () => {
-    const profileSnap = await db.collection("users").doc(uid).get();
-    return profileSnap.exists
-      ? (profileSnap.data()?.username as string | undefined)
-      : undefined;
+  // By the claim's own uid, not the profile's `username`: a re-run after the
+  // profile was deleted (or a stale handle on it) must still release it.
+  await step("release username", async () => {
+    const claims = await db.collection("usernames").where("uid", "==", uid).get();
+    await Promise.all(claims.docs.map((doc) => doc.ref.delete()));
   });
-
-  if (username) {
-    await step("release username", () =>
-      db.collection("usernames").doc(username.toLowerCase()).delete()
-    );
-  }
 
   // ---- Gather what the RTDB cleanup needs, BEFORE the Firestore docs that
   // name it are deleted below. RTDB has no index on `uid` (and adding one is

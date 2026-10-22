@@ -298,6 +298,40 @@ test('deleteUserData is safe to re-run', async () => {
   assert.equal((await db.doc(`chats/${CHAT_ID}/messages/m2`).get()).get('text'), 'ok');
 });
 
+test('a re-run after a partial chat anonymisation finishes it', async () => {
+  await clearEmulators();
+  // State left by a run that failed mid-chat: one of the rider's messages is
+  // already anonymised, one is not, and participants (changed last) still
+  // name the rider. The profile and its `username` are already gone, but the
+  // username claim was not released.
+  const batch = db.batch();
+  const set = (path, data) => batch.set(db.doc(path), data);
+  set('usernames/gonerider', { uid: UID });
+  set('usernames/someoneelse', { uid: OTHER });
+  set(`chats/${CHAT_ID}`, {
+    participants: [UID, OTHER].sort(),
+    lastMessage: { senderId: OTHER, text: 'still there?', createdAt: 9 },
+    updatedAt: 9,
+  });
+  set(`chats/${CHAT_ID}/messages/m1`, { senderId: DELETED_PARTICIPANT, text: '', createdAt: 5 });
+  set(`chats/${CHAT_ID}/messages/m2`, { senderId: UID, text: 'call me', createdAt: 6 });
+  set(`chats/${CHAT_ID}/messages/m3`, { senderId: OTHER, text: 'still there?', createdAt: 9 });
+  await batch.commit();
+
+  for (let run = 0; run < 2; run++) {
+    const result = await deleteUserData(db, UID, { rtdb });
+    assert.deepEqual(result.failedSteps, [], `run ${run}`);
+    const chat = (await db.doc(`chats/${CHAT_ID}`).get()).data();
+    assert.deepEqual(chat.participants, [UID, OTHER].sort().map((p) => (p === UID ? DELETED_PARTICIPANT : p)));
+    assert.deepEqual(chat.lastMessage, { senderId: OTHER, text: 'still there?', createdAt: 9 }, "the other rider's preview is kept");
+    assert.deepEqual((await db.doc(`chats/${CHAT_ID}/messages/m1`).get()).data(), { senderId: DELETED_PARTICIPANT, text: '', createdAt: 5 });
+    assert.deepEqual((await db.doc(`chats/${CHAT_ID}/messages/m2`).get()).data(), { senderId: DELETED_PARTICIPANT, text: '', createdAt: 6 });
+    assert.deepEqual((await db.doc(`chats/${CHAT_ID}/messages/m3`).get()).data(), { senderId: OTHER, text: 'still there?', createdAt: 9 });
+    assert.equal(await exists('usernames/gonerider'), false, 'claim released without the profile');
+    assert.equal(await exists('usernames/someoneelse'), true);
+  }
+});
+
 test('a partial erasure is recorded as failed steps, not just logged', async () => {
   await clearEmulators();
   // Media in the ledger, but no Cloudinary credentials configured.

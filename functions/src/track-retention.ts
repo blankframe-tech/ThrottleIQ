@@ -1,7 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { purgeOldReportSnapshots, REPORT_SNAPSHOT_RETENTION_DAYS } from "./report-retention";
+import { PURGE_BUDGET_MS, purgeOldReportSnapshots, REPORT_SNAPSHOT_RETENTION_DAYS } from "./report-retention";
 
 /**
  * Cloud retention for raw GPS trails (critique 2026-10-14, section 5): the
@@ -29,14 +29,16 @@ const RIDE_TRACK = /^users\/[^/]+\/rides\/[^/]+\/track\/[^/]+$/;
 /** Deletes trail chunks older than the retention window. Returns the count. */
 export async function purgeOldTrackChunks(
   db: FirebaseFirestore.Firestore,
-  now: Date = new Date()
+  now: Date = new Date(),
+  deadline: number = Date.now() + PURGE_BUDGET_MS
 ): Promise<number> {
   const cutoff = new Date(now);
   cutoff.setMonth(cutoff.getMonth() - TRACK_RETENTION_MONTHS);
 
   let deleted = 0;
   let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
-  for (;;) {
+  // Stops at the deadline so a large backlog ends cleanly; the next run resumes.
+  while (Date.now() < deadline) {
     let q = db
       .collectionGroup("track")
       .where("syncedAt", "<", cutoff)
