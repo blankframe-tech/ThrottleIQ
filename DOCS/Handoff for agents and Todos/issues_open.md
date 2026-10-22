@@ -182,6 +182,10 @@ and a list on a path with no rule is denied even when it would return
 nothing. A 2026-09-21 sweep found no like documents anywhere. Order: drop
 the sweep from the app, raise `config/app.minBuild` past that build, then
 delete the rules block (ship the app before the rules, §78.27).
+- **Step 1 done 2026-10-22 (branch `lane/a-reads-likes`, not on `main` or in a release yet):**
+  `deleteSharedRide` no longer lists or deletes `likes`. **Owner actions left:** once a build
+  with this change is out, raise `config/app.minBuild` past it, then delete the `likes` block
+  from `firestore.rules` and deploy the rules.
 
 ---
 
