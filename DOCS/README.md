@@ -13,15 +13,29 @@ is still broken or undecided). What only the founder can close (accounts,
 money, devices, decisions) is in
 [`needs_attention.md`](Handoff%20for%20agents%20and%20Todos/needs_attention.md).
 
-**Layout (2026-10-22):** five folders.
+**Layout (2026-10-22):** six folders.
 
 | Folder | For |
 |---|---|
+| [`agent_rooms/`](agent_rooms) | Autonomous and collaborating agent action hubs: specific todos for Architect, PM, Operations Manager, Chief of Staff, and QA. |
 | [`Handoff for agents and Todos/`](Handoff%20for%20agents%20and%20Todos) | Coding agents and contributors: status, features, open and fixed issues, owner to-dos. Five living files, nothing else. |
 | [`Handoffs for Non Coding Agents/`](Handoffs%20for%20Non%20Coding%20Agents) | Marketing, pitch, posters and social art. |
 | [`For Devs and Contributors/`](For%20Devs%20and%20Contributors) | Architecture, how-to guides, load-test reports. |
 | [`General/`](General) | Store files (listing, data safety, moderation policy) and the crash-test evidence. |
 | [`old/`](old) | Frozen history. Not maintained; don't cite it as current. |
+
+## Agent Rooms
+
+Task assignments and role-bounded action hubs for autonomous and collaborating agents:
+
+| File | What it's for |
+|---|---|
+| [`agent_rooms/README.md`](agent_rooms/README.md) | Agent directory, roster, communication protocol, and status index. |
+| [`agent_rooms/architect_todo.md`](agent_rooms/architect_todo.md) | Principal Software Architect: Firestore reads optimization, rules/indexes, Cloud Functions migration, and sensor telemetry. |
+| [`agent_rooms/product_manager_todo.md`](agent_rooms/product_manager_todo.md) | Product Manager: PRD metrics, store listings, forum ideas, and B2B pilot definitions. |
+| [`agent_rooms/operations_manager_todo.md`](agent_rooms/operations_manager_todo.md) | Operations Manager: Security execution, Data Safety forms, runbooks, release governance, and localization review. |
+| [`agent_rooms/chief_of_staff_todo.md`](agent_rooms/chief_of_staff_todo.md) | Chief of Staff: Executive owner decision triage, real-bike/hardware test scheduling, and cross-agent alignment. |
+| [`agent_rooms/qa_engineer_todo.md`](agent_rooms/qa_engineer_todo.md) | QA Specialist: Automated test suite maintenance, emulator E2E suites, and manual physical device verification protocols. |
 
 ## Handoff for agents and Todos
 
