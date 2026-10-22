@@ -15,6 +15,7 @@ import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Doc id of `emailLookup/{id}`: lowercase hex SHA-256 of the trimmed,
 /// lowercased email. firestore.rules recomputes it from the token email, and
@@ -326,7 +327,8 @@ class ProfileRepository {
         // Archived bikes are out of the rider's own garage; they shouldn't
         // be on show in it to anyone else either.
         if (!bike.isArchived) bikes.add(bike);
-      } catch (_) {
+      } catch (e, st) {
+        reportSilently(e, st, where: 'profile.parseBike');
         continue;
       }
     }

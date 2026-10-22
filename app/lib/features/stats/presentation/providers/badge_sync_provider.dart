@@ -4,6 +4,7 @@ import '../../../../core/utils/badges.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/badge_stats_counter.dart';
 import 'rider_stats_provider.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Keeps the `stats/badges` counters; overridable in tests.
 final badgeStatsCounterProvider = Provider<BadgeStatsCounter>(
@@ -37,7 +38,8 @@ final badgeSyncProvider = FutureProvider<void>((ref) async {
     }
     // Docs written by older app versions that were never counted.
     await counter.countHeldBadges(uid, held);
-  } catch (_) {
+  } catch (e, st) {
     // Best-effort background sync — badge display never depends on this.
+    reportSilently(e, st, where: 'badges.sync');
   }
 });

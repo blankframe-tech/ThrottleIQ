@@ -219,13 +219,34 @@ injected Firestore, so the pattern was known, and the notifier calls the
 no-arg constructor anyway. **Same root cause as 83.28:** nothing that touches
 I/O is injectable, so nothing that touches I/O is tested.
 
-### 83.14 — 66 bare `catch (_)` blocks
+### 83.14 — 54 bare `catch (_)` blocks — PARTLY FIXED 2026-10-22
 
-66 in `app/lib` (2026-10-22), held there by the ratchet in
-`scripts/check.sh:101-107` (`CATCH_MAX=66`, §90.B6). Many carry a justifying
+54 in `app/lib` (2026-10-22, down from 65), held there by the ratchet test
+`app/test/core/utils/error_reporter_test.dart` (`_bareCatchBaseline = 54`; it
+replaced the `CATCH_MAX` grep in `scripts/check.sh`). Many carry a justifying
 comment and several are legitimate, but in a Crashlytics-instrumented app
 each is a failure mode that never reaches the dashboard and gets reported as
-"it just didn't work". Lower the ratchet as they are replaced.
+"it just didn't work".
+
+Done 2026-10-22: `reportSilently(e, st, where:)` in
+`core/utils/error_reporter.dart` (non-fatal via `reportNonFatal`, no-op in
+debug and tests and for Firestore `unavailable` / `deadline-exceeded`, never
+throws). 11 swallowed catches now report it, behaviour
+unchanged: auth (seed profile, display-name sync, local wipe on account
+delete), ride (start-failure cleanup, public stats push), outbox payload
+decode (`outbox_dao.dart`, `database_helper.dart`), badge sync, malformed
+cloud bike, corrupt medical info, Cloudinary ledger write.
+
+**Still open:** triage the other 54. Non-UI first: `features/ride/`
+(`ride_recording_provider.dart` battery-opt prompt and wakelock,
+`ride_summary_screen.dart` 2, `active_ride_screen.dart` 1),
+`bug_report_service.dart`, `privacy_zone_salt.dart`, `nominatim_service.dart`.
+Then UI (`group_ride_map_screen.dart` 8, social providers and screens,
+`place_launch_actions.dart`). Some are expected and may stay (Google
+sign-out, "already gone" deletes in `group_ride_repository.dart`,
+`isServiceRunning`). `outbox.decodePayload` and `profile.parseBike` report
+again on every read of the same broken row; add a once-per-key guard if that
+gets noisy. Lower the baseline as they are replaced.
 
 ### 83.16 (part) — the Cloudinary preset is still an open upload endpoint
 
@@ -336,8 +357,8 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
 - **90.B5 — MEDIUM — layering is partly nominal.** 7 presentation files still import
   `cloud_firestore`/`firebase_auth` directly. The other 2026-10-06 counts (presentation files
   importing `data/`, domain leaks, `core/` files importing features) were not re-measured.
-- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 66 bare `catch (_)`,
-  exactly the `scripts/check.sh` ratchet (`CATCH_MAX=66`). Many catches only `debugPrint`,
+- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 54 bare `catch (_)` (2026-10-22),
+  held by the ratchet test in `error_reporter_test.dart`. Many catches only `debugPrint`,
   which is invisible in release (about 42 on 2026-10-06; not re-counted). *Fix:* route
   them to `reportNonFatal` (`core/utils/error_reporter.dart`), then lower the ratchet.
 - **90.B7 — MEDIUM — god files.** Over 1,000 lines on 2026-10-22: `ride_recording_provider.dart`

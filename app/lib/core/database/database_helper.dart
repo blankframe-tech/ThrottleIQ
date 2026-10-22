@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 class DatabaseHelper {
   DatabaseHelper._();
@@ -1253,7 +1254,8 @@ class DatabaseHelper {
       final decoded = jsonDecode(rawPayload);
       if (decoded is! Map) return null;
       return (decoded['userId'] ?? decoded['uid']) as String?;
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'db.outboxPayloadOwner');
       return null;
     }
   }
