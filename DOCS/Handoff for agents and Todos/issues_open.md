@@ -668,7 +668,7 @@ review (102.7, deferred to November 2026) is in `needs_attention.md`. Still open
   may still reach the speed panel's fixed `bottom: 160` (`active_ride_screen.dart:790`; not
   checked on a device).
 
-## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/For Devs and Contributors/load_test/load-test-2026-10-15.md`)
+## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/Handoff for agents and Todos/load_test/load-test-2026-10-15.md`)
 
 Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.js`, `npm run loadtest:quota`). Verdict: fail. Reads run out first, at about 18 daily active riders (about 9 at the 50% target).
 
@@ -676,7 +676,7 @@ Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.
 - **104.3 MEDIUM — feed vote hydration costs 40 of 63 base reads per page.** 20 vote `get()`s, each with a rules `get()` on the ride (`ride_share_repository.dart:350`). *Fix:* one per-user votes doc or one query.
 - **104.4 LOW — the per-author restricted query costs 3 reads even when the author has no such posts** (query + 2 rules `exists()`). The `hasRestrictedPosts` flag from §90.A1 was never built.
 - **104.5 Founder:** real per-user usage from Firebase console → Usage. The local gcloud account (Play publisher SA) cannot read Cloud Monitoring.
-- **104.6 Outage mode:** merged to `main` in `c751968e` (2026-10-22), not in a release yet. What it does, the rehearsal and the alerting are in `issues_fixed.md` §104; rehearsal report: `DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`. Still open:
+- **104.6 Outage mode:** merged to `main` in `c751968e` (2026-10-22), not in a release yet. What it does, the rehearsal and the alerting are in `issues_fixed.md` §104; rehearsal report: `DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`. Still open:
   - About 20 transaction-based social actions (forums, comments, votes, group-ride join/leave, new chats, reviews, onboarding username) fail with the overload message.
   - About 20 screens await plain writes without a timeout and hang if the *write* limit runs out (the write lands at the reset).
   - A write-only outage is caught only when a transactional upload or outbox delivery fails; until then `SyncManager` can sit on an untimed write.

@@ -7505,7 +7505,7 @@ From `issues_open.md` §104.6. Branch `feat/quota-outage` was merged to `main` i
     - `OverQuotaBar` and the reworded `errTooManyRequests` tell riders.
     - The owner gets an email from the Cloud Monitoring policy `scripts/monitoring/firestore-quota-alert.yaml`.
   - **Before the pause:** the outbox retired an entry after 20 attempts (about 7.5 h), shorter than a quota day. Every retry also stacked another copy of the same write in the SDK queue.
-  - **Rehearsed 2026-10-21** on a throwaway Spark project (`DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`):
+  - **Rehearsed 2026-10-21** on a throwaway Spark project (`DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`):
     - `count()` and transactions answer `resource-exhausted` once reads run out.
     - Gets and listeners kept being served 8 min past the limit (100,169 reads counted on a 50,000 day).
     - Writes past the limit are queued or accepted, never rejected.

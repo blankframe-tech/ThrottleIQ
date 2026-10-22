@@ -216,7 +216,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **Quota outage mode (§104.6), merged 2026-10-22, not released, not on a device:**
   - When the Spark daily quota runs out, sync and the outbox pause, riders see `OverQuotaBar`, and sync resumes after the reset.
   - The owner email alert is live: re-apply steps in `scripts/README.md` "Firestore daily quota".
-  - Rehearsal on a throwaway project: `DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`. `count()` and transactions fail once reads run out, which triggers the pause; gets and listeners keep working; nothing is lost.
+  - Rehearsal on a throwaway project: `DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`. `count()` and transactions fail once reads run out, which triggers the pause; gets and listeners keep working; nothing is lost.
   - E2E 4/4 on an iPhone 17 simulator with `4b914c10`.
   - Left: the release (owner item 26) and the Bangla review of `overQuotaBar` and `errTooManyRequests` (owner item 28).
 - **Moderation, deletion and App Check (details: `judge.md`, 2026-10-21 updates), pushed, nothing deployed:**
@@ -251,7 +251,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **Releases `beta-v4.6.0` (+27) and `beta-v4.7.0` (+28):** `scripts/deploy.sh --skip-ios`, then `flutter run --release` to the iPhone separately. Neither was uploaded to Play.
 - **Every fix branch merged (`1349db5`):** all `fix/oct14-tiq-*`, `fix/oct15-throttleiq`, `oct14-int` and `merge/oct15-origin-main`, plus `feat/crash-shadow-mode`. Three sessions shared one tree that day, which is where the "one session commits" rule comes from.
 - **Live-share writes (`ce82025`):** `shouldWriteLiveSession` (`live_session_coordinator.dart`) writes `liveSessions/{token}` only on a new token, a status change, 100 m of movement or 15 s since the last write. A stopped rider writes every 20 s, inside the viewer's 30 s "updates delayed" warning. The Spark ceiling rose from about 55 to at most 111 live-share hours a day. The real fix is owner item 3.
-- **Spark load test:** `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota`). Reads run out at about 18 daily riders. Report: `DOCS/For Devs and Contributors/load_test/load-test-2026-10-15.md`; issues §104.
+- **Spark load test:** `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota`). Reads run out at about 18 daily riders. Report: `DOCS/Handoff for agents and Todos/load_test/load-test-2026-10-15.md`; issues §104.
 - **Agent round:**
   - PRD style check closed (PRD §13).
   - The `publicStatsValid` compile warning is gone; `scripts/test/rules/rules_compile.test.js` fails on any compiler issue.

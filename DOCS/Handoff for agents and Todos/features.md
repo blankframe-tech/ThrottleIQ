@@ -206,7 +206,7 @@ Built after the first real field crash (2026-10-14, a walking-pace fall at a rai
 - **What riders see:** when the Spark daily Firestore quota runs out, a strip above the bottom nav (`OverQuotaBar`, EN + BN) says the database is overloaded and their data is safe on the phone. `resource-exhausted` errors say the same. A comment or forum reply that fails to send stays in the text field.
 - **What the app does:** `SyncManager` asks Firestore with one `count()` (1 read) at most every 15 min. On `resource-exhausted`, sync and the outbox pause (`FirestoreQuota`), so no queued entry burns its 20 attempts and no duplicates pile up. The first answer after the reset resumes everything. Rides, tracks, bikes, maintenance and fuel stay in SQLite and upload then.
 - **Owner alert:** a Cloud Monitoring email at 80% of daily reads, writes or deletes, and again when reads or writes are used up (99%), live on `throttleiqfb` since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, steps in `scripts/README.md`).
-- **Rehearsed** on a throwaway Spark project (`DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`): once reads run out, only transactions and `count()` fail; gets and listeners keep working, and nothing is lost. Details and limits: `issues_open.md` §104.6.
+- **Rehearsed** on a throwaway Spark project (`DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`): once reads run out, only transactions and `count()` fail; gets and listeners keep working, and nothing is lost. Details and limits: `issues_open.md` §104.6.
 
 ## Known gaps
 
