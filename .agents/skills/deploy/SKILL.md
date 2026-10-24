@@ -2,8 +2,8 @@
 name: deploy
 description: >
   ThrottleIQ deployment automation runner. Standardizes building, testing,
-  deploying release to connected iPhone, compiling the Android release AAB,
-  and publishing to GitHub Releases. Use whenever user asks to deploy, ddeploy,
+  deploying release to connected iPhone (no Android build: Android ships
+  only through Google Play, uploaded by hand), and publishing to GitHub Releases. Use whenever user asks to deploy, ddeploy,
   or publish a release.
 ---
 
@@ -14,7 +14,6 @@ Standardized runbook for deploying ThrottleIQ.
 ## Prerequisites
 - Working tree clean or ready for release commit.
 - iOS device (Abraar's iPhone) connected via USB or wireless pairing.
-- Android release keystore located at repo root (`throttleiq-release.keystore`).
 - `gh` CLI authenticated.
 
 ## Apple account constraints
@@ -49,13 +48,9 @@ bash scripts/deploy.sh
    cd app && flutter run --release -d 00008120-001E5D190A85A01E
    ```
 
-4. **Build the Android AAB** (APKs are no longer built or published; Android ships through Google Play only):
-   ```bash
-   cd app && flutter build appbundle --release
-   ```
-   The AAB stays local for a manual Play Console upload. Its versionCode is the pubspec build
-   number after `+`; the `config/app.minBuild` gate compares it, and Play rejects a reused one,
-   so bump it for every release.
+4. **No Android build.** Android installs come only from Google Play; no APK or AAB is built here.
+   The Play upload is manual. Its versionCode is the pubspec build number after `+`; the
+   `config/app.minBuild` gate compares it, and Play rejects a reused one, so bump it every release.
 
 5. **GitHub Release** (notes only, no binaries):
    ```bash

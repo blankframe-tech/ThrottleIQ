@@ -819,5 +819,5 @@ Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). 
 ## 112. Password link /r/@handle follow-ups (2026-10-25)
 - Background auto-detected rides (AutoTrackingService isolate) don't share to the password link; only rides recorded through RideRecordingNotifier do.
 - No rate limit on password guesses (rules-only, doc id = hash). Mitigated by the 8-char minimum; a Cloud Function check would be needed for real limiting.
-- Needs deploy: firestore.rules, hosting (public/live-viewer.html), new app build. Viewer page not yet tried in a browser; not tried on a device.
+- Deployed 2026-10-25: firestore.rules and hosting (live `/r/` page asks for the password). NOT deployed: functions (account-erasure deletes `handleLinks`); the standalone `firebase` binary's bundled npm crashes in the functions predeploy (`Cannot read properties of undefined (reading 'stdin')`), so the owner deploys functions by hand. Not tried end to end on a device.
 - BN strings for the new keys await native review (bn_pending_review.txt).

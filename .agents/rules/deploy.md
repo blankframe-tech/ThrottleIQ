@@ -21,12 +21,7 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
      cd app && flutter run --release -d <device_id>
      ```
 
-4. **Build Android Release AAB**
-   - APKs are no longer built or published: Android installs come only from Google Play (the install page has only the Play invite flow).
-     ```bash
-     cd app && flutter build appbundle --release
-     ```
-     Binary output: `app/build/app/outputs/bundle/release/app-release.aab`. The owner uploads it to Play Console by hand.
+4. **No Android build.** Android installs come only from Google Play; the deploy pipeline builds no APK or AAB. The Play upload is done by hand outside this pipeline.
    - **versionCode:** the pubspec build number (after `+`). The `config/app.minBuild` gate compares it and Play rejects a reused code, so bump it every release.
 
 5. **Publish GitHub Release Tag (notes only, no binaries)**
@@ -39,4 +34,4 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
      ```bash
      bash scripts/deploy.sh
      ```
-   - Flags available: `--skip-qa`, `--skip-ios`, `--skip-android`, `--skip-github`, `--device <id>`, `--tag <tag>`.
+   - Flags available: `--skip-qa`, `--skip-ios`, `--skip-github`, `--device <id>`, `--tag <tag>`.
