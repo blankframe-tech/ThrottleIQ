@@ -648,9 +648,43 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 **Founder items:** the S2 index deploy; GitHub secret scanning (S10, a
 repo setting); move local secrets out of the repo tree (S13) and restrict the Firebase API keys
 (S14); the Play declarations (B4); a valid App Store marketing version (B7: `pubspec.yaml` is
-`1.0.0-beta.4.7.1+29`) once the Apple Developer Program enrolment is done; darken `textTertiary`
-and the light `success`/`warning` colours (P2, a design call); keep or delete the reports a
-deleted rider filed (S4).
+`1.0.0-beta.4.7.1+29`) once the Apple Developer Program enrolment is done; keep or delete the
+reports a deleted rider filed (S4).
+
+- **101.P2 WCAG AA contrast: tokens FIXED on `lane/f-wcag-contrast` (2026-10-22), look needs the
+  owner's eye.** Each failing token was moved along its own hue (HSL lightness only) to just past
+  4.5:1 on its worst pair (`app_theme_style.dart`). Pairs checked: text tokens on background,
+  surface and surfaceVariant. Status tokens on those three, plus on an 18% tint of themselves over
+  background/surface, because the forum tags and place badges draw them that way. Primary (links)
+  on background/surface. onInk/onInkMuted on ink. Worst pair before → after:
+
+  | Theme | Token | Old → new | Worst ratio before → after |
+  |---|---|---|---|
+  | light | textTertiary | `#898680` → `#6C6964` | 3.05 → 4.59 (on surfaceVariant) |
+  | light | success | `#5D9669` → `#416849` | 2.67 → 4.56 (pill tint) |
+  | light | warning | `#CD995C` → `#7F5727` | 2.02 → 4.56 (pill tint) |
+  | light | attention | `#B88255` → `#7E5635` | 2.54 → 4.57 (pill tint) |
+  | light | danger | `#C34F4B` → `#A33A36` | 3.36 → 4.56 (pill tint) |
+  | light | primary (links) | `#537D5C` → `#517959` | 4.33 → 4.56 on background (white on it 4.71 → 4.97) |
+  | dark | textTertiary | `#6F6F6F` → `#8D8D8D` | 3.01 → 4.56 (on surfaceVariant) |
+  | dark | onInkMuted (on ink) | `#6F6F6F` → `#757575` | 4.18 → 4.56 |
+  | dark | danger | `#FA4D56` → `#FA5A62` | 4.34 → 4.57 (pill tint) |
+
+  Dark success/warning/attention already passed, so they are unchanged. The guard is
+  `test/core/theme/palette_contrast_test.dart`. **Still open:**
+  - Light `secondary` (brand tan `#BD8D65`) is 2.69:1 as text. Its one text use is the forum
+    "Gear" tag. Darkening it would turn the tan into the same brown as `attention`.
+  - The forum "Guide" tag draws `primary` on its own tint, at 4.05:1 light. Fixing that at
+    token level would darken the brand sage to about `#44674C`.
+  - White on dark `danger` is 3.35:1: the notification badge count, the report submit button,
+    and Material's `onError: Colors.white`. It can't be fixed at token level, because danger
+    must stay light enough to read as text on the dark surfaces. Those widgets need a dark
+    foreground. `onSecondary: Colors.white` is 2.93 light / 3.64 dark, but nothing in lib
+    uses it directly.
+  - Light `textTertiary` is now 1.10:1 against `textSecondary` (`#66635D`), so the two levels
+    differ mostly by size.
+  - Light warning and attention are now near-identical dark browns (they were near-twins
+    before as well).
 
 ---
 
