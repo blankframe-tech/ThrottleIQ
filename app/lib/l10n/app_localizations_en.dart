@@ -2963,51 +2963,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get placeSaveFailed => 'Couldn\'t update your saved places';
 
   @override
-  String get radarTitle => 'Highway Radar';
-
-  @override
-  String radarCameras(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count speed cameras',
-      one: '1 speed camera',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String radarPolice(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count police checkposts',
-      one: '1 police checkpost',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String radarWithin(String km) {
     return 'within $km km';
   }
-
-  @override
-  String radarNearest(String distance) {
-    return 'Nearest $distance away';
-  }
-
-  @override
-  String get radarShowOnMap => 'Show on map';
-
-  @override
-  String get radarHideOnMap => 'Hide on map';
-
-  @override
-  String get radarDismiss => 'Dismiss radar';
-
-  @override
-  String get radarListTitle => 'Safety points near you';
 
   @override
   String get placesScanOsmTitle => 'Nothing mapped here yet';
@@ -5564,9 +5522,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startDiscussion => 'Start a discussion';
 
   @override
-  String get startDiscussionPickForum => 'Where should this go?';
-
-  @override
   String get createRiderClub => 'Create club';
 
   @override
@@ -5745,9 +5700,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareToForum => 'Share to forum';
-
-  @override
-  String get shareToForumPick => 'Share to which forum?';
 
   @override
   String rideAttachmentTitle(String date) {
@@ -6746,4 +6698,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get placeReportExpired => 'expired';
+
+  @override
+  String get placesCacheTitle => 'Offline places';
+
+  @override
+  String get placesCacheSubtitle =>
+      'Fuel pumps, garages and other places saved on this phone from your rides, so they load without data.';
+
+  @override
+  String get placesCacheClear => 'Clear';
+
+  @override
+  String get placesCacheCleared => 'Saved places cleared';
+
+  @override
+  String get placesCacheClearFailed => 'Couldn\'t clear saved places';
+
+  @override
+  String get forumShare => 'Share';
+
+  @override
+  String get forumShareToGroupsTitle => 'Share to groups';
+
+  @override
+  String forumShareAllRidersNote(int max) {
+    return 'Every post appears in All Riders. You can also pick up to $max groups.';
+  }
+
+  @override
+  String get allRidersGroup => 'All Riders';
+
+  @override
+  String get allRidersGroupSubtitle => 'Every post from every group';
+
+  @override
+  String get forumShareYourGroups => 'Your groups';
+
+  @override
+  String forumShareCount(int count, int max) {
+    return '$count of $max groups';
+  }
 }

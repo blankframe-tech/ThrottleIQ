@@ -1106,6 +1106,15 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.isPublic == true;
     }
 
+    // Collection-group read for forum posts: the All Riders feed
+    // (collectionGroup('posts'), every post in every group) and cross-posts
+    // (where('alsoIn', array-contains-any, ...)). Same audience as the
+    // path rule below: any signed-in rider. Only forums have a `posts`
+    // subcollection; a new one elsewhere would need its own rule here.
+    match /{path=**}/posts/{postId} {
+      allow read: if request.auth != null;
+    }
+
     // Bike forums (Phase 3 — per-brand and per-model discussion boards).
     match /forums/{forumId} {
       allow read: if request.auth != null;
@@ -1194,8 +1203,17 @@ service cloud.firestore {
           request.resource.data.keys().hasOnly([
             'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
             'createdAt', 'replyCount', 'upvotes', 'downvotes',
-            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls'
+            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls',
+            'alsoIn'
           ]) &&
+          // Share-to-groups (2026-10-25): up to four more groups besides
+          // this home forum, never the home itself.
+          // shortcut: the ids aren't checked to exist (four get()s per
+          // post); a bogus id only lands the post in a feed nobody reads.
+          (request.resource.data.get('alsoIn', null) == null ||
+           (request.resource.data.alsoIn is list &&
+            request.resource.data.alsoIn.size() <= 4 &&
+            !(forumId in request.resource.data.alsoIn))) &&
           (request.resource.data.get('imageUrls', null) == null ||
            forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
           request.resource.data.get('postType', 'general') in

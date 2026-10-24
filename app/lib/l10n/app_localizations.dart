@@ -5304,56 +5304,8 @@ abstract class AppLocalizations {
   /// Places hub redesign (Places | Routes | Saved).
   ///
   /// In en, this message translates to:
-  /// **'Highway Radar'**
-  String get radarTitle;
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 speed camera} other{{count} speed cameras}}'**
-  String radarCameras(int count);
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{1 police checkpost} other{{count} police checkposts}}'**
-  String radarPolice(int count);
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
   /// **'within {km} km'**
   String radarWithin(String km);
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'Nearest {distance} away'**
-  String radarNearest(String distance);
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'Show on map'**
-  String get radarShowOnMap;
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'Hide on map'**
-  String get radarHideOnMap;
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'Dismiss radar'**
-  String get radarDismiss;
-
-  /// Places hub redesign (Places | Routes | Saved).
-  ///
-  /// In en, this message translates to:
-  /// **'Safety points near you'**
-  String get radarListTitle;
 
   /// Places hub redesign (Places | Routes | Saved).
   ///
@@ -9549,12 +9501,6 @@ abstract class AppLocalizations {
   /// Forums Pit Wall redesign.
   ///
   /// In en, this message translates to:
-  /// **'Where should this go?'**
-  String get startDiscussionPickForum;
-
-  /// Forums Pit Wall redesign.
-  ///
-  /// In en, this message translates to:
   /// **'Create club'**
   String get createRiderClub;
 
@@ -9863,12 +9809,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Share to forum'**
   String get shareToForum;
-
-  /// Forums Pit Wall redesign.
-  ///
-  /// In en, this message translates to:
-  /// **'Share to which forum?'**
-  String get shareToForumPick;
 
   /// Forums Pit Wall redesign.
   ///
@@ -11543,6 +11483,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'expired'**
   String get placeReportExpired;
+
+  /// Settings row: places kept on the phone from rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline places'**
+  String get placesCacheTitle;
+
+  /// Settings row subtitle for the offline places cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel pumps, garages and other places saved on this phone from your rides, so they load without data.'**
+  String get placesCacheSubtitle;
+
+  /// Button that empties the offline places cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get placesCacheClear;
+
+  /// Snackbar after the offline places cache is emptied.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved places cleared'**
+  String get placesCacheCleared;
+
+  /// Snackbar when emptying the offline places cache fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t clear saved places'**
+  String get placesCacheClearFailed;
+
+  /// Button on the new-post page and in the group picker that publishes the post.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get forumShare;
+
+  /// Title of the sheet that picks which groups a new post goes to.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to groups'**
+  String get forumShareToGroupsTitle;
+
+  /// Explains the group picker: the master group always gets the post.
+  ///
+  /// In en, this message translates to:
+  /// **'Every post appears in All Riders. You can also pick up to {max} groups.'**
+  String forumShareAllRidersNote(int max);
+
+  /// Name of the master forum group that shows every post from every group.
+  ///
+  /// In en, this message translates to:
+  /// **'All Riders'**
+  String get allRidersGroup;
+
+  /// Subtitle of the All Riders group on the forums hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Every post from every group'**
+  String get allRidersGroupSubtitle;
+
+  /// Group picker section: the rider's garage and followed forums.
+  ///
+  /// In en, this message translates to:
+  /// **'Your groups'**
+  String get forumShareYourGroups;
+
+  /// How many groups are picked out of the maximum.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {max} groups'**
+  String forumShareCount(int count, int max);
 }
 
 class _AppLocalizationsDelegate

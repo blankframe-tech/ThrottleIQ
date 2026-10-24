@@ -114,4 +114,34 @@ void main() {
     now = now.add(const Duration(hours: 2));
     expect((await c.nearby(lat, lng, 10)).map((p) => p.id), ['a']);
   });
+
+  test('clear forgets everything, on disk too', () async {
+    final c = cache();
+    await c.refresh(lat, lng, 10);
+    await c.clear();
+    expect(await c.nearby(lat, lng, 10), isEmpty);
+    expect(await cache().nearby(lat, lng, 10), isEmpty,
+        reason: 'a fresh instance reads the (deleted) file');
+    cellReads.clear();
+    await c.refresh(lat, lng, 10);
+    expect(cellReads, isNotEmpty, reason: 'cleared cells are read again');
+  });
+
+  test('a fresh coarse cell covers the finer cells inside it', () async {
+    final c = cache();
+    await c.refresh(lat, lng, 25); // Places tab: coarser cells
+    cellReads.clear();
+    await c.refresh(lat, lng, 5); // ride: finer cells, same area
+    expect(cellReads, isEmpty);
+  });
+
+  test('refreshes and clears run one at a time', () async {
+    final c = cache();
+    await Future.wait([
+      c.refresh(lat, lng, 10),
+      c.clear(),
+      c.refresh(lat, lng, 10),
+    ]);
+    expect((await c.nearby(lat, lng, 10)).map((p) => p.id), ['a']);
+  });
 }

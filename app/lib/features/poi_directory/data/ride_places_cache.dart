@@ -13,6 +13,14 @@ import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.d
 /// Firestore at the start and after each 5 km. Now each geohash cell is read
 /// whole once, and later refreshes pull only the places written since the
 /// last pull (`updatedAt > lastPull`, like the ride sync's `syncedAt`).
+///
+/// One instance (`placesCacheProvider`) serves both the live ride (10 km
+/// around the rider, every 5 km of riding, so a regular route stays cached
+/// well past 5 km either side) and the Places tab. Settings clears it.
+///
+/// shortcut: a rating change doesn't touch `updatedAt`, so a cached list
+/// card can show a rating up to [cellMaxAge] old (the detail screen streams
+/// it live); bump `updatedAt` in the review write if that matters.
 class RidePlacesCache {
   RidePlacesCache({
     required this.fetchCell,
@@ -39,6 +47,8 @@ class RidePlacesCache {
   static const cellMaxAge = Duration(days: 3);
 
   DateTime? _lastPull;
+  // Refreshes and clears run one at a time: they share the file and maps.
+  Future<void> _queue = Future.value();
   final Map<String, DateTime> _cellReadAt = {};
   final Map<String, PlaceEntity> _places = {};
   bool _loaded = false;
@@ -66,7 +76,36 @@ class RidePlacesCache {
   /// Pulls what changed since the last pull, then reads whole any cell
   /// around ([lat], [lng]) that is new or older than [cellMaxAge]. Throws
   /// when offline; what was pulled before the failure is kept.
-  Future<void> refresh(double lat, double lng, double radiusKm) async {
+  Future<void> refresh(double lat, double lng, double radiusKm) =>
+      _serial(() => _refresh(lat, lng, radiusKm));
+
+  /// Forgets every cached place, on the device and on disk.
+  Future<void> clear() => _serial(() async {
+        _loaded = true;
+        _lastPull = null;
+        _cellReadAt.clear();
+        _places.clear();
+        final file = await _file;
+        if (await file.exists()) await file.delete();
+      });
+
+  Future<void> _serial(Future<void> Function() job) {
+    final next = _queue.then((_) => job());
+    _queue = next.catchError((_) {});
+    return next;
+  }
+
+  /// When [cell] or any coarser cell containing it was last read whole.
+  DateTime? _readAt(String cell) {
+    DateTime? newest;
+    for (var i = 1; i <= cell.length; i++) {
+      final t = _cellReadAt[cell.substring(0, i)];
+      if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+    }
+    return newest;
+  }
+
+  Future<void> _refresh(double lat, double lng, double radiusKm) async {
     await _load();
     final now = _clock();
     try {
@@ -80,7 +119,8 @@ class RidePlacesCache {
       _lastPull = newest ?? since;
 
       for (final cell in GeohashUtil.coverCircle(lat, lng, radiusKm)) {
-        final readAt = _cellReadAt[cell];
+        // The Places tab reads coarser cells than the ride; either counts.
+        final readAt = _readAt(cell);
         if (readAt != null && now.difference(readAt) < cellMaxAge) continue;
         final places = await fetchCell(cell);
         // Whole-cell read: drops places deleted on the server.

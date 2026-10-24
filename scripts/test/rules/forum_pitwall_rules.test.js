@@ -19,7 +19,9 @@ const {
   assertSucceeds,
 } = require('@firebase/rules-unit-testing');
 
-const { doc, setDoc, updateDoc, serverTimestamp } = require('firebase/firestore');
+const {
+  doc, setDoc, updateDoc, serverTimestamp, collectionGroup, getDocs, query, where,
+} = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
   path.join(__dirname, '..', '..', '..', 'firestore.rules'),
@@ -249,4 +251,47 @@ test('the solution update cannot smuggle other fields', async () => {
       upvotes: 99,
     })
   );
+});
+
+// ---------------------------------------------------------------------------
+// share to groups (alsoIn) and the All Riders collection-group read
+// ---------------------------------------------------------------------------
+
+test('a post can be shared to up to four more groups', async () => {
+  await assertSucceeds(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g1'),
+      newPost(ALICE, { alsoIn: ['a', 'b', 'c', 'd'] }))
+  );
+});
+
+test('five more groups is one too many', async () => {
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g2'),
+      newPost(ALICE, { alsoIn: ['a', 'b', 'c', 'd', 'e'] }))
+  );
+});
+
+test('alsoIn cannot name the home forum', async () => {
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g3'),
+      newPost(ALICE, { alsoIn: [FORUM_ID] }))
+  );
+});
+
+test('alsoIn must be a list', async () => {
+  await assertFails(
+    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g4'),
+      newPost(ALICE, { alsoIn: 'a' }))
+  );
+});
+
+test('signed-in riders can read every post across groups', async () => {
+  await assertSucceeds(getDocs(collectionGroup(dbFor(ALICE), 'posts')));
+  await assertSucceeds(getDocs(query(collectionGroup(dbFor(ALICE), 'posts'),
+    where('alsoIn', 'array-contains-any', ['a']))));
+});
+
+test('signed-out visitors cannot read posts across groups', async () => {
+  await assertFails(
+    getDocs(collectionGroup(testEnv.unauthenticatedContext().firestore(), 'posts')));
 });

@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/place_repository.dart';
+import '../../data/ride_places_cache.dart';
 import '../../data/repositories/review_repository.dart';
 import '../../data/services/overpass_service.dart';
 import '../../data/utils/geohash_utils.dart';
@@ -20,7 +22,11 @@ final _overpassService = OverpassService();
 /// Places screen can offer the one button that actually fixes each case
 /// (ask again / open app settings / open location settings) instead of
 /// pattern-matching message text.
-enum PlaceLocationProblem { permissionDenied, permissionDeniedForever, serviceDisabled }
+enum PlaceLocationProblem {
+  permissionDenied,
+  permissionDeniedForever,
+  serviceDisabled
+}
 
 class PlaceLocationException implements Exception {
   final PlaceLocationProblem problem;
@@ -56,7 +62,8 @@ final currentPositionProvider = FutureProvider<Position>((ref) async {
     permission = await Geolocator.requestPermission();
   }
   if (permission == LocationPermission.deniedForever) {
-    throw const PlaceLocationException(PlaceLocationProblem.permissionDeniedForever);
+    throw const PlaceLocationException(
+        PlaceLocationProblem.permissionDeniedForever);
   }
   if (permission == LocationPermission.denied) {
     throw const PlaceLocationException(PlaceLocationProblem.permissionDenied);
@@ -88,22 +95,38 @@ const currentPositionTimeLimit = Duration(seconds: 15);
 /// Every nearby place within [radiusKm] (a [placesRadiusOptionsKm] value),
 /// all categories, safety points included. The Places hub filters by
 /// category, search text and tags client-side (`applyPlacesQuery`) and pulls
-/// the cameras/checkposts out for the Highway Radar, so one fetch per radius
-/// serves the chips, the list, the map and the radar together: switching a
+/// the cameras/checkposts out, so one fetch per radius serves the chips, the
+/// list and the map together: switching a
 /// chip costs no reads, only changing the radius refetches.
 ///
 /// IMPORTANT: a mutation that changes a place's rating or adds a place must
 /// invalidate the *whole family* — `ref.invalidate(nearbyPlacesProvider)`
 /// with no argument — so no other radius keeps showing the stale copy.
+/// Answers come from [placesCacheProvider]; a refetch pulls new and edited
+/// places (by `updatedAt`), so an added place shows at once.
 final nearbyPlacesProvider =
     FutureProvider.family<List<PlaceEntity>, double>((ref, radiusKm) async {
   final position = await ref.watch(currentPositionProvider.future);
-  return _placeRepository.getNearbyPlaces(
-    latitude: position.latitude,
-    longitude: position.longitude,
-    radiusKm: radiusKm,
-  );
+  final cache = ref.watch(placesCacheProvider);
+  final (lat, lng) = (position.latitude, position.longitude);
+  try {
+    // Reads only cells not read in the last few days, plus what changed.
+    await cache.refresh(lat, lng, radiusKm);
+  } catch (e, st) {
+    // Offline: the cached places stand in, unless there are none.
+    final cached = await cache.nearby(lat, lng, radiusKm);
+    if (cached.isEmpty) rethrow;
+    reportSilently(e, st, where: 'places cache refresh');
+    return cached;
+  }
+  return cache.nearby(lat, lng, radiusKm);
 });
+
+/// The on-device places cache shared by the Places tab and the live ride.
+final placesCacheProvider = Provider<RidePlacesCache>((ref) => RidePlacesCache(
+      fetchCell: _placeRepository.getPlacesInCellFromServer,
+      fetchSince: _placeRepository.getPlacesUpdatedSince,
+    ));
 
 /// A single place's current data — used by the detail screen's header (name,
 /// category, address, rating). Backed by `streamPlace` (rather than the
@@ -123,8 +146,8 @@ final placeDetailProvider =
 /// screen — or by another rider — appears without an explicit refresh.
 ///
 /// autoDispose for the same reason as [placeDetailProvider].
-final reviewsForPlaceProvider =
-    StreamProvider.autoDispose.family<List<ReviewEntity>, String>((ref, placeId) {
+final reviewsForPlaceProvider = StreamProvider.autoDispose
+    .family<List<ReviewEntity>, String>((ref, placeId) {
   return _reviewRepository.streamReviewsForPlace(placeId);
 });
 
@@ -162,13 +185,15 @@ Future<int> importNearbyOsmPlaces(
     latitude: position.latitude,
     longitude: position.longitude,
     radiusMeters:
-        (radiusKm > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radiusKm) * 1000,
+        (radiusKm > osmImportMaxRadiusKm ? osmImportMaxRadiusKm : radiusKm) *
+            1000,
   );
   if (candidates.isEmpty) return 0;
 
-  final existingOsmIds =
-      await _placeRepository.getExistingOsmIds(candidates.map((c) => c.osmId).toList());
-  final newCandidates = candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
+  final existingOsmIds = await _placeRepository
+      .getExistingOsmIds(candidates.map((c) => c.osmId).toList());
+  final newCandidates =
+      candidates.where((c) => !existingOsmIds.contains(c.osmId)).toList();
 
   // One batched write per 400 places (ids `osm_<type>_<id>`) instead of an
   // awaited add() per place.

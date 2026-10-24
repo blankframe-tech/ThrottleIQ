@@ -20,11 +20,13 @@ import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/public_live_link_setting.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../ride/presentation/providers/auto_tracking_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../poi_directory/presentation/providers/places_provider.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -426,6 +428,10 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
 
+              const SizedBox(height: 24),
+
+              // ── Offline places cache ───────────────────────────────────────
+              const _PlacesCacheTile(),
               const SizedBox(height: 24),
 
               // ── Sync issues (§69.O4) ───────────────────────────────────────
@@ -908,6 +914,66 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
           child: Text(l10n.addAction),
         ),
       ],
+    );
+  }
+}
+
+/// Places (fuel pumps, garages, ...) kept on the device from rides and the
+/// Places tab, with a button to drop them all.
+class _PlacesCacheTile extends ConsumerWidget {
+  const _PlacesCacheTile();
+
+  Future<void> _clear(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final cleared = context.l10n.placesCacheCleared;
+    final failed = context.l10n.placesCacheClearFailed;
+    try {
+      await ref.read(placesCacheProvider).clear();
+      ref.invalidate(nearbyPlacesProvider);
+      messenger.showSnackBar(SnackBar(content: Text(cleared)));
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'clear places cache');
+      messenger.showSnackBar(SnackBar(content: Text(failed)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.offline_pin_outlined,
+              color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.placesCacheTitle,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(l10n.placesCacheSubtitle,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          TextButton(
+            key: const Key('settings_clear_places_cache'),
+            onPressed: () => _clear(context, ref),
+            child: Text(l10n.placesCacheClear),
+          ),
+        ],
+      ),
     );
   }
 }

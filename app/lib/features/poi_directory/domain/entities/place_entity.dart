@@ -49,9 +49,8 @@ enum PlaceCategory {
   }
 
   /// Speed cameras and police checkposts are road-safety hazards, not
-  /// destinations: the Places hub keeps them out of the category ribbon and
-  /// surfaces them through the Highway Radar instead, and they carry no
-  /// ratings (nobody "rates" a checkpost).
+  /// destinations: the Places hub keeps them out of the category ribbon, the
+  /// list and the map, and they carry no ratings (nobody "rates" a checkpost).
   bool get isSafetyPoint =>
       this == PlaceCategory.aiCamera || this == PlaceCategory.police;
 

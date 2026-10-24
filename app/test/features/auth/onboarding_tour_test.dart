@@ -191,13 +191,13 @@ void main() {
     await _settle(tester);
     await _tap(tester, 'tour-next'); // → cockpit
     expect(find.text(_en.tourCockpitTitle), findsOneWidget);
-    await tester.scrollUntilVisible(find.text(_en.tourCockpitJamTitle), 80,
-        scrollable: find
-            .descendant(
-                of: find.byKey(const ValueKey('ride_cockpit')),
-                matching: find.byType(Scrollable))
-            .first);
-    expect(find.text(_en.tourCockpitJamTitle), findsOneWidget);
+    // No scrolling: the step fits on one screen (owner, 2026-10-25).
+    expect(
+        find.descendant(
+            of: find.byKey(const ValueKey('ride_cockpit')),
+            matching: find.byType(Scrollable)),
+        findsNothing);
+    expect(find.text(_en.tourCockpitJamTitle).hitTestable(), findsOneWidget);
     expect(find.text(_en.jamLabelBetaTag), findsOneWidget);
   });
 

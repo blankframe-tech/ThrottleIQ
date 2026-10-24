@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
-import '../../../../shared/widgets/app_card.dart';
 import '../screens/onboarding_manifest.dart';
 
 /// Below this many logical pixels of height the tour switches to its compact
@@ -82,69 +81,95 @@ class _OnboardingSlidePageState extends State<OnboardingSlidePage>
     final palette = context.palette;
     final accent = tourAccent(palette);
 
+    // Screenshot left, text right, no scrolling (owner, 2026-10-25): the
+    // capture takes up to 42% of the width at its own aspect, and the text
+    // column is laid out at its real width and then scaled down to fit the
+    // height if a long step (or a big text scale) would overflow.
     return LayoutBuilder(builder: (context, constraints) {
-      final compact = constraints.maxHeight < kTourCompactHeight;
+      const pad = EdgeInsets.fromLTRB(16, 4, 16, 12);
+      const gap = 14.0;
+      final innerWidth = constraints.maxWidth - pad.horizontal;
+      final innerHeight = constraints.maxHeight - pad.vertical;
+      final compact = innerHeight < kTourCompactHeight;
       final previewHeight =
-          compact ? 220.0 : (constraints.maxHeight * 0.58).clamp(280.0, 420.0);
+          math.min(innerHeight, innerWidth * 0.42 / TourScreenPreview.aspect);
+      final textWidth =
+          innerWidth - previewHeight * TourScreenPreview.aspect - gap;
 
-      return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      return Padding(
+        padding: pad,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             _staggered(
               0,
-              TourScreenPreview(
-                slide: slide,
-                height: previewHeight,
-              ),
+              TourScreenPreview(slide: slide, height: previewHeight),
             ),
-            SizedBox(height: compact ? 14 : 20),
-            _staggered(
-              1,
-              Text(
-                slide.location.toUpperCase(),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.8,
-                  color: palette.textSecondary,
-                ),
-              ),
-            ),
-            const SizedBox(height: 4),
-            _staggered(
-              1,
-              Text(
-                slide.title,
-                style: AppTypography.display(context, compact ? 22 : 26,
-                    weight: FontWeight.w800, height: 1.15),
-              ),
-            ),
-            const SizedBox(height: 6),
-            _staggered(
-              1,
-              Text(
-                slide.subtitle,
-                style: TextStyle(
-                  fontSize: compact ? 13 : 14,
-                  height: 1.4,
-                  color: palette.textSecondary,
-                ),
-              ),
-            ),
-            SizedBox(height: compact ? 12 : 16),
-            for (var i = 0; i < slide.pointers.length; i++)
-              _staggered(
-                i + 2,
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: _PointerTile(
-                    pointer: slide.pointers[i],
-                    accent: accent,
+            const SizedBox(width: gap),
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: SizedBox(
+                    width: textWidth,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _staggered(
+                          1,
+                          Text(
+                            slide.location.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.8,
+                              color: palette.textSecondary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _staggered(
+                          1,
+                          Text(
+                            slide.title,
+                            style: AppTypography.display(
+                                context, compact ? 19 : 22,
+                                weight: FontWeight.w800, height: 1.15),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        _staggered(
+                          1,
+                          Text(
+                            slide.subtitle,
+                            style: TextStyle(
+                              fontSize: 13,
+                              height: 1.35,
+                              color: palette.textSecondary,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: compact ? 10 : 14),
+                        for (var i = 0; i < slide.pointers.length; i++)
+                          _staggered(
+                            i + 2,
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 10),
+                              child: _PointerTile(
+                                pointer: slide.pointers[i],
+                                accent: accent,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
+            ),
           ],
         ),
       );
@@ -163,67 +188,64 @@ class _PointerTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final shape = context.shape;
-    return AppCard(
-      padding: const EdgeInsets.fromLTRB(12, 12, 14, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _NumberBadge(number: pointer.number, accent: accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(pointer.icon, size: 16, color: accent),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _NumberBadge(number: pointer.number, accent: accent, size: 22),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(pointer.icon, size: 16, color: accent),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      pointer.title,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: palette.textPrimary,
+                      ),
+                    ),
+                  ),
+                  if (pointer.isBeta) ...[
                     const SizedBox(width: 6),
-                    Flexible(
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(shape.radiusSm),
+                        border: Border.all(color: palette.textSecondary),
+                      ),
                       child: Text(
-                        pointer.title,
+                        context.l10n.jamLabelBetaTag,
                         style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: palette.textPrimary,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.6,
+                          color: palette.textSecondary,
                         ),
                       ),
                     ),
-                    if (pointer.isBeta) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(shape.radiusSm),
-                          border: Border.all(color: palette.textSecondary),
-                        ),
-                        child: Text(
-                          context.l10n.jamLabelBetaTag,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.6,
-                            color: palette.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
                   ],
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                pointer.description,
+                style: TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: palette.textSecondary,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  pointer.description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: palette.textSecondary,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -279,14 +301,14 @@ class TourScreenPreview extends StatelessWidget {
   final double height;
 
   // Width / height of the cropped captures in assets/images/tour_*.jpg.
-  static const double _aspect = 540 / 1098;
+  static const double aspect = 540 / 1098;
   static const double _pinSize = 22;
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     final accent = tourAccent(palette);
-    final width = height * _aspect;
+    final width = height * aspect;
     return Center(
       child: Semantics(
         container: true,

@@ -2966,39 +2966,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get placeSaveFailed => 'সংরক্ষিত জায়গা আপডেট করা যায়নি';
 
   @override
-  String get radarTitle => 'হাইওয়ে রাডার';
-
-  @override
-  String radarCameras(int count) {
-    return '$countটি স্পিড ক্যামেরা';
-  }
-
-  @override
-  String radarPolice(int count) {
-    return '$countটি পুলিশ চেকপোস্ট';
-  }
-
-  @override
   String radarWithin(String km) {
     return '$km কিমির মধ্যে';
   }
-
-  @override
-  String radarNearest(String distance) {
-    return 'সবচেয়ে কাছেরটি $distance দূরে';
-  }
-
-  @override
-  String get radarShowOnMap => 'ম্যাপে দেখুন';
-
-  @override
-  String get radarHideOnMap => 'ম্যাপ থেকে লুকান';
-
-  @override
-  String get radarDismiss => 'রাডার বন্ধ করুন';
-
-  @override
-  String get radarListTitle => 'আপনার কাছের সতর্কতার জায়গা';
 
   @override
   String get placesScanOsmTitle => 'এখানে এখনো কিছু ম্যাপ করা নেই';
@@ -5548,9 +5518,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get startDiscussion => 'আলোচনা শুরু করুন';
 
   @override
-  String get startDiscussionPickForum => 'এটি কোথায় পোস্ট করবেন?';
-
-  @override
   String get createRiderClub => 'ক্লাব তৈরি করুন';
 
   @override
@@ -5717,9 +5684,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get shareToForum => 'ফোরামে শেয়ার করুন';
-
-  @override
-  String get shareToForumPick => 'কোন ফোরামে শেয়ার করবেন?';
 
   @override
   String rideAttachmentTitle(String date) {
@@ -6711,4 +6675,45 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get placeReportExpired => 'মেয়াদ শেষ';
+
+  @override
+  String get placesCacheTitle => 'অফলাইন জায়গা';
+
+  @override
+  String get placesCacheSubtitle =>
+      'আপনার রাইড থেকে এই ফোনে রাখা পাম্প, গ্যারেজ ও অন্যান্য জায়গা, যাতে ডেটা ছাড়াই দেখা যায়।';
+
+  @override
+  String get placesCacheClear => 'মুছুন';
+
+  @override
+  String get placesCacheCleared => 'রাখা জায়গাগুলো মুছে ফেলা হয়েছে';
+
+  @override
+  String get placesCacheClearFailed => 'রাখা জায়গাগুলো মোছা যায়নি';
+
+  @override
+  String get forumShare => 'শেয়ার';
+
+  @override
+  String get forumShareToGroupsTitle => 'গ্রুপে শেয়ার করুন';
+
+  @override
+  String forumShareAllRidersNote(int max) {
+    return 'প্রতিটি পোস্ট অল রাইডার্সে দেখা যায়। চাইলে সর্বোচ্চ $maxটি গ্রুপও বেছে নিতে পারেন।';
+  }
+
+  @override
+  String get allRidersGroup => 'অল রাইডার্স';
+
+  @override
+  String get allRidersGroupSubtitle => 'সব গ্রুপের সব পোস্ট';
+
+  @override
+  String get forumShareYourGroups => 'আপনার গ্রুপ';
+
+  @override
+  String forumShareCount(int count, int max) {
+    return '$maxটির মধ্যে $countটি গ্রুপ';
+  }
 }

@@ -184,6 +184,11 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ## Recent sessions (newest first)
 
+### 2026-10-25
+
+- **On `main`, `check.sh` green:** tour steps lay out screenshot left and text right with no scrolling; Highway Radar banner and map pins removed; the Places tab now shares the on-device places cache, with **Settings → Offline places → Clear**; new forum post page (`/forums/new`): write first, then **Share** picks All Riders plus up to 5 groups (`alsoIn`, `collectionGroup('posts')`). Details in `features.md`. Owner item 50: deploy rules and indexes before releasing it. Not checked on a device.
+- **check.sh with port 8080 taken:** another local app held 8080, so the rules emulator could not start. `CHECK_FIREBASE_CONFIG` pointing at a copy of `firebase.json` with other emulator ports (and absolute rules/index paths) works.
+
 ### 2026-10-24
 
 - **Release `beta-v4.8.0` (+30):** `scripts/deploy.sh --skip-ios` from `007c3593`, shipping everything merged since `beta-v4.7.1` (quota outage mode, moderation, places cache, tour v5, ride actions menu, the 2026-10-22 agent-room lanes). The AAB was handed to the owner for a Play Console upload. `config/app.minBuild` stays 29.

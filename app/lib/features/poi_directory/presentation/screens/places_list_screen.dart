@@ -15,7 +15,6 @@ import '../place_category_style.dart';
 import '../place_tag_l10n.dart';
 import '../providers/places_provider.dart';
 import '../providers/places_search_provider.dart';
-import '../widgets/highway_radar_banner.dart';
 import '../widgets/place_card.dart';
 import '../widgets/places_filter_sheet.dart';
 import '../widgets/places_map_view.dart';
@@ -27,15 +26,14 @@ enum PlacesHubTab { places, routes, saved }
 
 /// Places bottom-nav tab — the rider's waypoint & exploration hub.
 ///
-/// * **Places**: search, a horizontal category ribbon with counts, the
-///   Highway Radar alert, and a map (default) or list of nearby stops, each
+/// * **Places**: search, a horizontal category ribbon with counts, and a map (default) or list of nearby stops, each
 ///   with one-tap Directions / Call / Save.
 /// * **Routes**: the saved/discoverable routes browser, which used to hang
 ///   off a lone "Browse routes" button between the chips and the list.
 /// * **Saved**: local bookmarks (work offline) and the places the rider added.
 ///
-/// Speed cameras and police checkposts are no longer categories here; they
-/// live in the Highway Radar. The OpenStreetMap import moved from an
+/// Speed cameras and police checkposts are not shown here (their warning
+/// banner was removed 2026-10-25 as noise). The OpenStreetMap import moved from an
 /// unexplained AppBar icon to an explained empty-state action and the
 /// overflow menu.
 class PlacesListScreen extends ConsumerStatefulWidget {
@@ -281,7 +279,7 @@ class _PlacesListScreenState extends ConsumerState<PlacesListScreen> {
   }
 }
 
-/// The Places tab: search, ribbon, radar, and the map or list.
+/// The Places tab: search, ribbon, and the map or list.
 class _PlacesExplorer extends ConsumerWidget {
   final TextEditingController searchController;
   final bool importing;
@@ -423,12 +421,6 @@ class _PlacesExplorer extends ConsumerWidget {
           )),
           if (fullMap) filterButton,
         ]),
-        if (!fullMap)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(
-                AppDimensions.paddingMd, 0, AppDimensions.paddingMd, 6),
-            child: HighwayRadarBanner(),
-          ),
         Expanded(
           child: batchAsync.when(
             loading: () => Center(
@@ -448,7 +440,6 @@ class _PlacesExplorer extends ConsumerWidget {
                 categoryLabel: categoryLabel,
                 tagLabel: (t) => t.localizedName(l10n),
               );
-              final radar = ref.watch(highwayRadarProvider);
               final nextRadius = placesRadiusOptionsKm
                   .where((km) => km > query.radiusKm)
                   .firstOrNull;
@@ -515,7 +506,6 @@ class _PlacesExplorer extends ConsumerWidget {
               } else if (viewMode == PlacesViewMode.map) {
                 content = PlacesMapView(
                   hits: hits,
-                  radarPoints: radar.all,
                   origin: position == null
                       ? null
                       : LatLng(position.latitude, position.longitude),
