@@ -83,7 +83,7 @@ void main() {
 
     test('the two themes keep their identities', () {
       expect(AppColorPalette.calmingLight.background, const Color(0xFFF8F5EF));
-      expect(AppColorPalette.calmingLight.primary, const Color(0xFF537D5C));
+      expect(AppColorPalette.calmingLight.primary, const Color(0xFF517959));
       expect(
           AppColorPalette.carbonMonoDark.background, const Color(0xFF0D0D0D));
       expect(AppColorPalette.carbonMonoDark.primary, const Color(0xFFC8FF3D));

@@ -8,8 +8,10 @@ set -euo pipefail
 #   1. Commit release changes
 #   2. Quality gate (scripts/check.sh) and push the current branch
 #   3. Build and launch release build on connected iPhone
-#   4. Build the Android AAB (kept local, uploaded to Play Console by hand)
-#   5. Create GitHub Release with tag and notes only (no binaries; Android ships through Play)
+#   4. Create GitHub Release with tag and notes only (no binaries)
+#
+# No Android build: Android installs come only from Google Play, and the
+# Play upload (versionCode = pubspec build number) is done by hand.
 #
 # Usage:
 #   bash scripts/deploy.sh [OPTIONS]
@@ -17,7 +19,6 @@ set -euo pipefail
 # Options:
 #   --skip-qa         Skip static analysis and unit test suite
 #   --skip-ios        Skip building and installing on connected iPhone
-#   --skip-android    Skip building the Android AAB
 #   --skip-github     Skip creating GitHub release tag
 #   --device <id>     Specify iOS device id (defaults to auto-detect connected iPhone)
 #   --tag <tag>       Specify release tag (defaults to derived from pubspec.yaml)
@@ -29,7 +30,6 @@ APP_DIR="${REPO_ROOT}/app"
 
 SKIP_QA=false
 SKIP_IOS=false
-SKIP_ANDROID=false
 SKIP_GITHUB=false
 IOS_DEVICE_ID=""
 RELEASE_TAG=""
@@ -43,10 +43,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-ios)
       SKIP_IOS=true
-      shift
-      ;;
-    --skip-android)
-      SKIP_ANDROID=true
       shift
       ;;
     --skip-github)
@@ -66,7 +62,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --help|-h)
-      sed -n '3,24p' "$0" | sed 's/^# \?//'
+      sed -n '3,25p' "$0" | sed 's/^# \?//'
       exit 0
       ;;
     *)
@@ -106,7 +102,7 @@ echo "🏷️ Target Release Tag: ${RELEASE_TAG}"
 
 # 2. Commit (before the gate, so the gate stamps the exact commit pushed)
 echo ""
-echo "==> [1/5] Committing release changes..."
+echo "==> [1/4] Committing release changes..."
 cd "${REPO_ROOT}"
 # Never auto-stage new files (issues §101.S9): a stray secret dropped in the
 # tree (.env.production, a .p12, a service-account key) would otherwise be
@@ -131,12 +127,12 @@ fi
 # the pre-push hook). It stamps the commit, so the push below doesn't re-run it.
 if [ "$SKIP_QA" = false ]; then
   echo ""
-  echo "==> [2/5] Running quality gate (scripts/check.sh)..."
+  echo "==> [2/4] Running quality gate (scripts/check.sh)..."
   bash "${REPO_ROOT}/scripts/check.sh"
   echo "✅ QA Gate Passed!"
 else
   echo ""
-  echo "==> [2/5] QA Gate skipped (--skip-qa)"
+  echo "==> [2/4] QA Gate skipped (--skip-qa)"
 fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -164,7 +160,7 @@ fi
 # 4. iOS Release run
 if [ "$SKIP_IOS" = false ]; then
   echo ""
-  echo "==> [3/5] Deploying Release build to connected iPhone..."
+  echo "==> [3/4] Deploying Release build to connected iPhone..."
   cd "${APP_DIR}"
   if [ -z "$IOS_DEVICE_ID" ]; then
     # Auto-detect connected iOS device ID
@@ -182,34 +178,13 @@ if [ "$SKIP_IOS" = false ]; then
   echo "✅ iOS Release run complete!"
 else
   echo ""
-  echo "==> [3/5] iOS release run skipped (--skip-ios)"
+  echo "==> [3/4] iOS release run skipped (--skip-ios)"
 fi
 
-# 5. Android build (AAB only)
-if [ "$SKIP_ANDROID" = false ]; then
-  echo ""
-  echo "==> [4/5] Building Android Release AAB..."
-  cd "${APP_DIR}"
-  # APKs are no longer published: Android installs come only from Google Play.
-  echo "--- Building release AAB ---"
-  flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
-  AAB_PATH="${APP_DIR}/build/app/outputs/bundle/release/app-release.aab"
-  if [ ! -f "$AAB_PATH" ]; then
-    echo "❌ AAB build failed — file not found: $AAB_PATH" >&2
-    exit 1
-  fi
-  echo "AAB ready: $AAB_PATH ($(du -h "$AAB_PATH" | cut -f1))"
-  cd "${REPO_ROOT}"
-  echo "✅ Android builds complete!"
-else
-  echo ""
-  echo "==> [4/5] Android build skipped (--skip-android)"
-fi
-
-# 6. GitHub Release
+# 5. GitHub Release
 if [ "$SKIP_GITHUB" = false ]; then
   echo ""
-  echo "==> [5/5] Creating GitHub Release (${RELEASE_TAG})..."
+  echo "==> [4/4] Creating GitHub Release (${RELEASE_TAG})..."
   cd "${REPO_ROOT}"
   
   if [ -z "$RELEASE_NOTES" ]; then
@@ -241,7 +216,7 @@ EOF
   echo "✅ GitHub Release created: https://github.com/blankframe-tech/ThrottleIQ/releases/tag/${RELEASE_TAG}"
 else
   echo ""
-  echo "==> [5/5] GitHub release skipped (--skip-github)"
+  echo "==> [4/4] GitHub release skipped (--skip-github)"
 fi
 
 echo ""

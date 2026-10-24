@@ -100,8 +100,7 @@ number. Done items are deleted, not ticked; git history keeps them._
       (#33), the public WhatsApp number on the install page (#34), ranking the forum ideas (#35, the
       front-plate guide only helps before 15 Nov), the badge-tier prize promotion (new), the beta-only
       order-parts button: keep it for a partner or remove it (new, issues §95.11), "Verified" places vs
-      the SafeSpot flyer (#47), the Maya pricing in the public repo (#48), and the WCAG palette on
-      branch `lane/f-wcag-contrast` (#23, review before merging).
+      the SafeSpot flyer (#47), and the Maya pricing in the public repo (#48).
 
 ## Settled, don't re-ask
 

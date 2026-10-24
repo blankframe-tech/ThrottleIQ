@@ -20,6 +20,8 @@ import '../widgets/sos_sheet.dart';
 import '../../domain/sos_message.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
+import '../../../indriyo/presentation/providers/indriyo_provider.dart';
+import '../../../indriyo/presentation/widgets/indriyo_mirror_hud.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/i18n/l10n_context.dart';
@@ -615,11 +617,43 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
+                  if (kIndriyoEnabled) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: () =>
+                          ref.read(indriyoProvider.notifier).toggleHud(),
+                      icon: Icon(
+                        Icons.radar_rounded,
+                        color: ref.watch(indriyoSettingsProvider).isHudVisible
+                            ? context.palette.primary
+                            : context.palette.textPrimary,
+                      ),
+                      tooltip: 'Toggle Indriyo ADAS Mirror',
+                    ),
+                  ],
                   const RideActionsMenu(),
                 ],
               ),
             ),
           ),
+
+          // ── Indriyo Digital Rearview Mirror HUD ───────────────────────────
+          if (kIndriyoEnabled &&
+              ref.watch(indriyoSettingsProvider).isHudVisible)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 54,
+              left: 0,
+              right: 0,
+              // Select only the speed so the HUD, not the whole screen, repaints.
+              child: Consumer(
+                builder: (context, ref, _) => IndriyoMirrorHud(
+                  currentSpeedKmh: ref.watch(rideRecordingProvider
+                          .select((s) => s.currentSpeedMs)) *
+                      3.6,
+                  onClose: () => ref.read(indriyoProvider.notifier).toggleHud(),
+                ),
+              ),
+            ),
 
           // ── Speed + sensor display ────────────────────────────────────────
           const _SpeedPanel(),

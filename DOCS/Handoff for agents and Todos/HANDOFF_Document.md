@@ -1,16 +1,13 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-23._
+_Last updated: 2026-10-25._
 
-**Branches (2026-10-22):**
-- `main` (`a0bf4f4f`, pushed 2026-10-22) includes the Firestore quota outage mode (merge `c751968e`, §104.6), the `scripts/oneoff/` move (`03a209b5`) and the 2026-10-22 agent run (see Recent sessions). `scripts/check.sh` passed on `a0bf4f4f`'s parent merge `0568c1ec`.
-- `experimental` is 39 commits behind `main` since that run (last fast-forwarded 2026-10-22).
-- Waiting for owner review: `lane/f-wcag-contrast` (pushed, palette contrast fix, owner item 24).
-- Retired 2026-10-22, all fully in `main`: `feat/crash-shadow-mode`, `feat/quota-outage`, `data/apify-dhaka-places`.
-- Merged into `main` 2026-10-22: `fix/reads-104` (via `lane/a-reads-likes`).
-- Never merged: `indriyo` and `mayabi` (notes below). Three Dependabot branches exist on `origin` (owner item 16).
+**Branches (2026-10-25):**
+- `main` and `mayabi` are the only long-lived branches (plus `experimental`, which trails `main`). On 2026-10-25 every lane, `worktree-agent-*`, `fix/reads-104`, `integration/agent-rooms-2026-10-22` and `indriyo` branch was merged into `main` (or already in it) and deleted locally and on `origin`.
+- `lane/f-wcag-contrast` (WCAG AA palette, owner item 24) was merged into `main` on the owner's instruction, 2026-10-25.
+- Three Dependabot branches exist on `origin` (owner item 16).
 
-**`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 9 commits ahead, last merged `main` 2026-10-22). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
+**Indriyo** (digital rearview mirror / ADAS HUD, `app/lib/features/indriyo/`) lives in `main` since 2026-10-25. It is compiled out unless the build passes `--dart-define=INDRIYO=true` (`kIndriyoEnabled` in `indriyo_provider.dart`), because its HUD defaults to a simulation with fake collision alerts. Store builds never pass the flag; `active_ride_screen_test.dart` checks that the toggle is hidden. The HUD has never run on a device.
 
 **`mayabi`** (Maya Ride integration kit, worktree `.claude/worktrees/mayabi`, 8 commits ahead, last merged `main` 2026-10-22). The kit is `mayabi/` (package `throttleiq_mayabi`), plus `functions/src/partner-api/` on our side. Owner decision 2026-10-17: never merged into `main`, and no cherry-picks into `main` without asking. Details and go-live steps are in the HANDOFF on that branch and in its `mayabi_todos.md`; the pilot is owner item 7.
 - Keep it current by merging `main` into it (since 2026-10-22; no rebase, so no force-push), then `scripts/check.sh`, then `git push origin mayabi`. Expect conflicts in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts` and `scripts/check.sh`.
@@ -222,6 +219,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 ### 2026-10-25
 
 - **Password link /r/@handle (uncommitted, not deployed):** the Settings toggle now asks for a password (8+ chars); every in-app ride auto-shares to `/r/<handle>`; the viewer asks for the password and shows the last ride's end point after the ride. Doc `handleLinks/{sha256("throttleiq-r:uid:password")}`; `livePointers/{uid}` is owner-only now; erasure deletes `handleLinks`. check.sh green apart from the rules step (port 8080), which passed on 8181 (326/326); functions emulator 15/15. Needs rules + hosting deploy and an app build. Marketing brief + poster: `Handoffs for Non Coding Agents/marketing/lost_phone_password_link.DRAFT.md`, `posters/batch_four/`. Follow-ups in issues_open §112.
+- **Release beta-v4.9.0 (+31):** rules + hosting deployed; functions pending (owner, see §112). `deploy.sh` no longer builds any Android artifact (no `--skip-android`): Android ships only through Play, uploaded by hand.
 - **On `main`, `check.sh` green:** tour steps lay out screenshot left and text right with no scrolling; Highway Radar banner and map pins removed; the Places tab now shares the on-device places cache, with **Settings → Offline places → Clear**; new forum post page (`/forums/new`): write first, then **Share** picks All Riders plus up to 5 groups (`alsoIn`, `collectionGroup('posts')`). Details in `features.md`. Rules and indexes deployed 2026-10-25; owner item 50 is confirming the `posts` indexes are Enabled. Not checked on a device.
 - **check.sh with port 8080 taken:** another local app held 8080, so the rules emulator could not start. `CHECK_FIREBASE_CONFIG` pointing at a copy of `firebase.json` with other emulator ports (and absolute rules/index paths) works.
 

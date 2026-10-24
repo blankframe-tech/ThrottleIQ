@@ -166,21 +166,23 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     ink: Color(0xFF2B2823),
     onInk: Color(0xFFF8F5EF),
     onInkMuted: Color(0xFFB1ADA7),
-    // Darker sage so white button text clears WCAG AA (4.71:1). The old,
-    // lighter #84A98B only reached 2.62:1, so it now lives on as the
-    // non-text highlight fill. See test/core/theme/palette_contrast_test.dart.
-    primary: Color(0xFF537D5C),
+    // Darker sage so white button text (4.97:1) and sage link text on the
+    // cream background (4.56:1) clear WCAG AA. The old, lighter #84A98B only
+    // reached 2.62:1, so it now lives on as the non-text highlight fill.
+    // Text and status tokens below are tuned to AA the same way (2026-10-22);
+    // test/core/theme/palette_contrast_test.dart keeps them there.
+    primary: Color(0xFF517959),
     primaryHighlight: Color(0xFF84A98B),
     primaryDark: Color(0xFF3D5E45),
     secondary: Color(0xFFBD8D65),
     secondaryLight: Color(0xFFDBB597),
-    attention: Color(0xFFB88255),
-    success: Color(0xFF5D9669),
-    warning: Color(0xFFCD995C),
-    danger: Color(0xFFC34F4B),
+    attention: Color(0xFF7E5635),
+    success: Color(0xFF416849),
+    warning: Color(0xFF7F5727),
+    danger: Color(0xFFA33A36),
     textPrimary: Color(0xFF2B2823),
     textSecondary: Color(0xFF66635D),
-    textTertiary: Color(0xFF898680),
+    textTertiary: Color(0xFF6C6964),
     overlayDark: Color(0xCC24211C),
     shimmerBase: Color(0xFFE7E4DF),
     shimmerHighlight: Color(0xFFF5F1EC),
@@ -195,7 +197,7 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     surfaceVariant: Color(0xFF262626),
     ink: Color(0xFF000000),
     onInk: Color(0xFFF4F4F4),
-    onInkMuted: Color(0xFF6F6F6F),
+    onInkMuted: Color(0xFF757575),
     primary: Color(0xFFC8FF3D), // lime
     primaryHighlight: Color(0xFFE4FF8F),
     primaryDark: Color(0xFF9FCC1F),
@@ -204,10 +206,10 @@ class AppColorPalette extends ThemeExtension<AppColorPalette> {
     attention: Color(0xFFFF7A45),
     success: Color(0xFF42BE65),
     warning: Color(0xFFFF7A45),
-    danger: Color(0xFFFA4D56),
+    danger: Color(0xFFFA5A62),
     textPrimary: Color(0xFFF4F4F4),
     textSecondary: Color(0xFFA8A8A8),
-    textTertiary: Color(0xFF6F6F6F),
+    textTertiary: Color(0xFF8D8D8D),
     overlayDark: Color(0xCC000000),
     shimmerBase: Color(0xFF262626),
     shimmerHighlight: Color(0xFF393939),
