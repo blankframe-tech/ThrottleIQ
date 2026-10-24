@@ -1,6 +1,8 @@
 @Timeout(Duration(seconds: 20))
 library;
 
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
@@ -105,6 +107,31 @@ void main() {
       expect(ids, {
         liveTeardownEntryId('u1', 'T1'),
         liveTeardownEntryId('u1', 'T2'),
+      });
+      service.dispose();
+    });
+
+    test('carries the password link key and the last position (§90.D7)',
+        () async {
+      final dao = OutboxDao();
+      final service = OutboxService(dao: dao, currentUid: () => 'u1');
+      await service.enqueueLiveSessionTeardown(
+          uid: 'u1',
+          token: 'T1',
+          linkKey: 'K',
+          lastLat: 23.73,
+          lastLng: 90.39,
+          attemptNow: false);
+
+      final payload = jsonDecode(
+          (await db.query('outbox', columns: ['payload'])).single['payload']
+              as String) as Map;
+      expect(payload, {
+        'uid': 'u1',
+        'token': 'T1',
+        'linkKey': 'K',
+        'lastLat': 23.73,
+        'lastLng': 90.39
       });
       service.dispose();
     });

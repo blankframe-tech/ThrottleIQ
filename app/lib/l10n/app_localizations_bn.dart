@@ -2371,11 +2371,27 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get publicLiveLinkTitle => 'পাবলিক লিংক (/r/@handle)';
+  String get publicLiveLinkTitle => 'পাসওয়ার্ড লিংক (/r/@handle)';
 
   @override
   String get publicLiveLinkDesc =>
-      'লাইভ রাইড শেয়ার করার সময় আপনার @ইউজারনেম জানা যে কেউ /r/@username লিংকে রাইডটি দেখতে পারবে — অ্যাপ বা সাইন-ইন লাগবে না। শুরুতে বন্ধ থাকে। আপনার ব্যক্তিগত লাইভ লিংক দুই ক্ষেত্রেই কাজ করবে।';
+      'প্রতিটি রাইড /r/@username লিংকে শেয়ার হবে, আর শেষ রাইড যেখানে থেমেছে সেই জায়গাটা থেকে যাবে (ফোন পড়ে গেলে কাজে লাগে)। শুধু আপনার পাসওয়ার্ড জানা মানুষই এটা খুলতে পারবে। শুরুতে বন্ধ থাকে। রাইডের সময় শেয়ার বাটন আগের মতোই শুধু ওই রাইডের লিংক দেয়।';
+
+  @override
+  String get publicLiveLinkPasswordTitle => 'লিংকের পাসওয়ার্ড';
+
+  @override
+  String get publicLiveLinkPasswordBody =>
+      'আপনার লিংক খুলতে এই পাসওয়ার্ড দিতে হবে। কমপক্ষে 8 অক্ষর দিন, আর শুধু বিশ্বস্ত মানুষদের জানান। নতুন পাসওয়ার্ড দিলে পুরনোটা আর কাজ করবে না।';
+
+  @override
+  String get publicLiveLinkPasswordTooShort => 'কমপক্ষে 8 অক্ষর দিন।';
+
+  @override
+  String get publicLiveLinkChangePassword => 'পাসওয়ার্ড বদলান';
+
+  @override
+  String get publicLiveLinkSave => 'সেভ করুন';
 
   @override
   String get audienceAnyFollower => 'আপনার যেকোনো ফলোয়ার';

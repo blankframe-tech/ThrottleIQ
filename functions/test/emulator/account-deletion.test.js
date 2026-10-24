@@ -102,6 +102,7 @@ async function seed() {
   set(`liveSessions/${TOKEN}`, { uid: UID });
   set('crashEvents/ev-1', { ownerUid: UID, label: 'crash' });
   set(`livePointers/${UID}`, { token: TOKEN });
+  set(`handleLinks/${'b'.repeat(64)}`, { uid: UID, token: null, lastLat: 23.7, lastLng: 90.4 });
   set(`chats/${CHAT_ID}`, {
     participants: [UID, OTHER].sort(),
     lastMessage: { senderId: UID, text: 'see you at 6', createdAt: 5 },
@@ -271,6 +272,7 @@ test('deleteUserData erases the rider everywhere and records a complete marker',
   assert.equal(await exists(`liveSessions/${TOKEN}`), false);
   assert.equal(await exists('crashEvents/ev-1'), false);
   assert.equal(await exists(`livePointers/${UID}`), false);
+  assert.equal(await exists(`handleLinks/${'b'.repeat(64)}`), false);
 
   // RTDB.
   assert.equal(await rtdbVal(`live_shares/${TOKEN}`), null);

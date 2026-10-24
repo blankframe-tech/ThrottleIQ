@@ -2364,11 +2364,27 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get publicLiveLinkTitle => 'Public link (/r/@handle)';
+  String get publicLiveLinkTitle => 'Password link (/r/@handle)';
 
   @override
   String get publicLiveLinkDesc =>
-      'While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.';
+      'Every ride shares to /r/@username, and it keeps the spot where your last ride ended (handy if your phone falls). Only people with your password can open it. Off by default. The Share button during a ride still makes a one-ride link.';
+
+  @override
+  String get publicLiveLinkPasswordTitle => 'Link password';
+
+  @override
+  String get publicLiveLinkPasswordBody =>
+      'Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.';
+
+  @override
+  String get publicLiveLinkPasswordTooShort => 'Use at least 8 characters.';
+
+  @override
+  String get publicLiveLinkChangePassword => 'Change password';
+
+  @override
+  String get publicLiveLinkSave => 'Save';
 
   @override
   String get audienceAnyFollower => 'Anyone who follows you';

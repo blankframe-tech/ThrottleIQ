@@ -564,6 +564,11 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _startTimer();
       _persistenceCoordinator.startFlushTimer();
       _sessionLive = true;
+      // Password link on: every ride shares to it, no Share tap needed (a
+      // phone that falls out of a pocket can't tap Share).
+      if (await _liveCoordinator.publicLinkOn()) {
+        unawaited(enableLiveSharing());
+      }
     } catch (e, stack) {
       // §90.C9: a throw anywhere above used to leave status stuck at
       // `starting` — Start was then blocked until the app was restarted.
@@ -1587,6 +1592,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     await _liveCoordinator.tearDownLiveShare(
       uid: _ref.read(currentUserProvider)?.uid,
       outbox: _ref.read(outboxServiceProvider),
+      // A restored ride has no _lastPoint, only the reloaded track.
+      lastLat: _lastPoint?.lat ?? state.currentPosition?.latitude,
+      lastLng: _lastPoint?.lng ?? state.currentPosition?.longitude,
     );
   }
 

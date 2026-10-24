@@ -1763,3 +1763,11 @@ allRidersGroup
 allRidersGroupSubtitle
 forumShareYourGroups
 forumShareCount
+# batch: password link /r/@handle (2026-10-25)
+publicLiveLinkTitle
+publicLiveLinkDesc
+publicLiveLinkPasswordTitle
+publicLiveLinkPasswordBody
+publicLiveLinkPasswordTooShort
+publicLiveLinkChangePassword
+publicLiveLinkSave

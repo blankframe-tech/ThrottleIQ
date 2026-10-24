@@ -186,6 +186,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-10-25
 
+- **Password link /r/@handle (uncommitted, not deployed):** the Settings toggle now asks for a password (8+ chars); every in-app ride auto-shares to `/r/<handle>`; the viewer asks for the password and shows the last ride's end point after the ride. Doc `handleLinks/{sha256("throttleiq-r:uid:password")}`; `livePointers/{uid}` is owner-only now; erasure deletes `handleLinks`. check.sh green apart from the rules step (port 8080), which passed on 8181 (326/326); functions emulator 15/15. Needs rules + hosting deploy and an app build. Marketing brief + poster: `Handoffs for Non Coding Agents/marketing/lost_phone_password_link.DRAFT.md`, `posters/batch_four/`. Follow-ups in issues_open §112.
 - **On `main`, `check.sh` green:** tour steps lay out screenshot left and text right with no scrolling; Highway Radar banner and map pins removed; the Places tab now shares the on-device places cache, with **Settings → Offline places → Clear**; new forum post page (`/forums/new`): write first, then **Share** picks All Riders plus up to 5 groups (`alsoIn`, `collectionGroup('posts')`). Details in `features.md`. Rules and indexes deployed 2026-10-25; owner item 50 is confirming the `posts` indexes are Enabled. Not checked on a device.
 - **check.sh with port 8080 taken:** another local app held 8080, so the rules emulator could not start. `CHECK_FIREBASE_CONFIG` pointing at a copy of `firebase.json` with other emulator ports (and absolute rules/index paths) works.
 

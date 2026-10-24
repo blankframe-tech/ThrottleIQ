@@ -51,7 +51,8 @@ Filters below are console query-builder filters.
 | `usernames/{handle}` | Username reservation (handle = lowercased username) |
 | `rides` where `userId == uid` (recursive) | Shared feed rides with their `likes`, `votes`, `comments` |
 | `liveSessions` where `uid == uid` | Live-share sessions (note each doc id: it is the RTDB token) |
-| `livePointers/{uid}` | Pointer to the current live session |
+| `livePointers/{uid}` | Pointer to the current live session (legacy, owner-only) |
+| `handleLinks/{hash}` (where `uid` matches) | Password `/r/@handle` link: current session + last known location |
 | `crashNotifications` where `uid == uid` | Crash alert records |
 | `follows` where `followerUid == uid`, and where `followeeUid == uid` | Follow edges both ways |
 | `forum_follows` where `userId == uid` | Forum follows; take 1 off `forums/{forumId}.followerCount` for each |

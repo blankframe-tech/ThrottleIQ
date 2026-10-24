@@ -1572,17 +1572,42 @@ service cloud.firestore {
     // below is then a straight path match with no profile lookup, and it is
     // structurally impossible for one rider to write another's pointer.
     //
-    // `get: if true`, not `read`, for the same reason as `usernames` and
-    // `liveSessions`: the public viewer page reads this without signing in,
-    // and only a keyed lookup is ever done — granting `list` would let a
-    // client enumerate every rider's on/off-riding status for free.
+    // RETIRED by the password link (`handleLinks` below, issues §90.D7):
+    // anyone who knew a @handle could resolve it to the rider's uid and
+    // follow them through this doc. Owner-only now; still writable so old app
+    // builds don't error, but nothing public reads it.
     match /livePointers/{uid} {
-      allow get: if true;
+      allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid &&
         request.resource.data.uid == uid;
       allow update: if request.auth != null && request.auth.uid == uid &&
         request.resource.data.uid == uid;
       allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Password link — `handleLinks/{key}` → { uid, token, active, lastLat,
+    // lastLng, lastSeenAt }. Backs `/r/{username}`: key is the hex SHA-256 of
+    // "throttleiq-r:{uid}:{password}" (PublicLiveLinkSetting.linkKey, and
+    // the same in live-viewer.html), so the doc id IS the capability, like a
+    // liveSessions token. `get` only: no `list`, so keys can't be enumerated
+    // and a guess costs one round trip. Rules can't rate-limit those, which
+    // is why the app requires 8+ character passwords.
+    //
+    // A rider can create a doc only for themselves, and update/delete only
+    // their own. Taking over someone else's key would need their password.
+    match /handleLinks/{key} {
+      allow get: if true;
+      allow create: if request.auth != null &&
+        key.matches('^[0-9a-f]{64}$') &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+      allow update: if request.auth != null &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Follow graph — one edge doc per (follower → followee) at

@@ -4260,14 +4260,44 @@ abstract class AppLocalizations {
   /// Settings switch title. /r/@handle is a literal URL path; keep it unchanged.
   ///
   /// In en, this message translates to:
-  /// **'Public link (/r/@handle)'**
+  /// **'Password link (/r/@handle)'**
   String get publicLiveLinkTitle;
 
-  /// Settings switch subtitle explaining the permanent public live link.
+  /// Settings switch subtitle explaining the permanent password-protected live link.
   ///
   /// In en, this message translates to:
-  /// **'While you share a live ride, anyone who knows your @username can watch it at /r/@username — no app or sign-in needed. Off by default. Your private live link works either way.'**
+  /// **'Every ride shares to /r/@username, and it keeps the spot where your last ride ended (handy if your phone falls). Only people with your password can open it. Off by default. The Share button during a ride still makes a one-ride link.'**
   String get publicLiveLinkDesc;
+
+  /// Dialog title for setting the password of the /r/@handle link.
+  ///
+  /// In en, this message translates to:
+  /// **'Link password'**
+  String get publicLiveLinkPasswordTitle;
+
+  /// Dialog body explaining the /r/@handle link password.
+  ///
+  /// In en, this message translates to:
+  /// **'Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.'**
+  String get publicLiveLinkPasswordBody;
+
+  /// Validation error under the link password field.
+  ///
+  /// In en, this message translates to:
+  /// **'Use at least 8 characters.'**
+  String get publicLiveLinkPasswordTooShort;
+
+  /// Button on the /r/@handle link setting to set a new password.
+  ///
+  /// In en, this message translates to:
+  /// **'Change password'**
+  String get publicLiveLinkChangePassword;
+
+  /// Confirms the link password dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get publicLiveLinkSave;
 
   /// Ride share audience pill: anyone who follows the rider, with no approval step.
   ///

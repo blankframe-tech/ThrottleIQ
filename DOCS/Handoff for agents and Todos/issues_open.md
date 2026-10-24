@@ -815,3 +815,9 @@ Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). 
 - **The report purge re-reads every old report on each run.** Pass 1 pages through all reports reviewed before the 90-day cutoff, including those already purged. At very high volume it could use the whole 480 s budget, and pass 2 (closed reports about deleted riders) would then never run. Already marked `shortcut:` in `report-retention.ts`. *Fix when needed:* a `purged` flag plus a composite index.
 - **The auto-report can reopen a reviewed report.** `onMessageCreate` writes `reports/auto_chat_<chat>_<msg>` with `set` and `status: "pending"`. If the trigger were ever retried after an admin closed it, the report would go back to pending and lose its review fields. v2 Firestore triggers don't retry by default, so this can't happen today. *Fix if retries are turned on:* `create()`, treating ALREADY_EXISTS as done.
 - **Erasure loads each query fully into memory.** The owned-query, anonymise, report and chat-message steps `.get()` all matching docs before batching. That's fine for one rider's data, but not bounded. Not changed.
+
+## 112. Password link /r/@handle follow-ups (2026-10-25)
+- Background auto-detected rides (AutoTrackingService isolate) don't share to the password link; only rides recorded through RideRecordingNotifier do.
+- No rate limit on password guesses (rules-only, doc id = hash). Mitigated by the 8-char minimum; a Cloud Function check would be needed for real limiting.
+- Needs deploy: firestore.rules, hosting (public/live-viewer.html), new app build. Viewer page not yet tried in a browser; not tried on a device.
+- BN strings for the new keys await native review (bn_pending_review.txt).

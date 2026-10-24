@@ -1374,9 +1374,9 @@ class _ModuleSwitchTile extends StatelessWidget {
   }
 }
 
-/// Settings → Privacy & Safety: whether a live share also publishes the
-/// permanent `/r/@handle` link (issues §90.D7). Off by default; persisted by
-/// [PublicLiveLinkSetting] and read by LiveSessionCoordinator on each share.
+/// Settings → Privacy & Safety: the password-protected `/r/@handle` link
+/// (issues §90.D7). Off by default; turning it on asks for the password.
+/// Persisted by [PublicLiveLinkSetting], read by LiveSessionCoordinator.
 class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
   const _PublicLiveLinkToggleTile();
 
@@ -1388,6 +1388,20 @@ class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
 class _PublicLiveLinkToggleTileState
     extends ConsumerState<_PublicLiveLinkToggleTile> {
   bool _enabled = false;
+
+  /// Asks for a password and turns the link on with it (or changes it).
+  /// Cancelling leaves the setting as it was.
+  Future<void> _setPassword() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    final password = await showDialog<String>(
+      context: context,
+      builder: (_) => const _LinkPasswordDialog(),
+    );
+    if (password == null) return;
+    await PublicLiveLinkSetting.enable(uid: uid, password: password);
+    if (mounted) setState(() => _enabled = true);
+  }
 
   @override
   void initState() {
@@ -1423,19 +1437,89 @@ class _PublicLiveLinkToggleTileState
                 Text(context.l10n.publicLiveLinkDesc,
                     style: TextStyle(
                         fontSize: 12, color: context.palette.textSecondary)),
+                if (_enabled)
+                  TextButton(
+                    onPressed: _setPassword,
+                    child: Text(context.l10n.publicLiveLinkChangePassword),
+                  ),
               ],
             ),
           ),
           Switch(
             value: _enabled,
-            onChanged: (v) {
-              setState(() => _enabled = v);
-              PublicLiveLinkSetting.setEnabled(v,
-                  uid: ref.read(currentUserProvider)?.uid);
+            onChanged: (v) async {
+              if (v) return _setPassword();
+              setState(() => _enabled = false);
+              await PublicLiveLinkSetting.disable();
             },
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LinkPasswordDialog extends StatefulWidget {
+  const _LinkPasswordDialog();
+
+  @override
+  State<_LinkPasswordDialog> createState() => _LinkPasswordDialogState();
+}
+
+class _LinkPasswordDialogState extends State<_LinkPasswordDialog> {
+  final _controller = TextEditingController();
+  bool _tooShort = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text;
+    if (text.length < PublicLiveLinkSetting.minPasswordLength) {
+      setState(() => _tooShort = true);
+      return;
+    }
+    Navigator.of(context).pop(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: context.palette.surface,
+      title: Text(context.l10n.publicLiveLinkPasswordTitle,
+          style: TextStyle(color: context.palette.textPrimary)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.l10n.publicLiveLinkPasswordBody,
+              style: TextStyle(color: context.palette.textSecondary)),
+          TextField(
+            controller: _controller,
+            obscureText: true,
+            autofocus: true,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: context.l10n.password,
+              errorText: _tooShort
+                  ? context.l10n.publicLiveLinkPasswordTooShort
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.cancelAction),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(context.l10n.publicLiveLinkSave),
+        ),
+      ],
     );
   }
 }

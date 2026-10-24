@@ -1,6 +1,6 @@
 # ThrottleIQ posters: layout, batches, regenerating
 
-`posters/` holds four things:
+`posters/` holds five things:
 
 - `batch_one/`: 61 posters, one SVG each, numbered 1-61 (`1_jam-time-counter.svg` ...
   `61_jam-time-split.svg`). Read-only archive. Posters 1-31 are street posters,
@@ -10,6 +10,9 @@
 - `batch_three/`: 18 new posters (2026-10-22), 1080x1350, one checked feature each,
   built from real app screens. **Use these first.** `batch_three/CRITIQUE.md` explains
   why batch_two could not be posted. Generator: `batch_three.py`.
+- `batch_four/`: **DRAFT** (2026-10-25), the password-link (/r/@handle) lost-phone poster,
+  same layout as batch three, for a feature not shipped yet. Notes: `batch_four/README.md`.
+  Generator: `batch_four.py` (reuses `batch_three.py`).
 - `generator_helper_files/`: this folder. `posters_v3.py` and `social/social.py` are the
   live generators; `lib.py` and `bn.py` are shared drawing and Bangla shaping; `fonts/`.
 

@@ -97,17 +97,22 @@ export async function deleteUserData(
   // name it are deleted below. RTDB has no index on `uid` (and adding one is
   // a rules change), so the paths are derived from Firestore instead.
 
-  // Live-share tokens: the doc ids of liveSessions, plus the one livePointers
-  // names. Both are deleted further down.
+  // Live-share tokens: the doc ids of liveSessions, plus the ones the
+  // pointers (livePointers, handleLinks) name. All are deleted further down.
   const tokens = new Set<string>();
+  const handleLinks: FirebaseFirestore.DocumentReference[] = [];
   await step("read live share tokens", async () => {
-    const [sessions, pointer] = await Promise.all([
+    const [sessions, pointer, links] = await Promise.all([
       db.collection("liveSessions").where("uid", "==", uid).get(),
       db.collection("livePointers").doc(uid).get(),
+      db.collection("handleLinks").where("uid", "==", uid).get(),
     ]);
     for (const doc of sessions.docs) tokens.add(doc.id);
-    const pointed = pointer.get("token");
-    if (typeof pointed === "string" && pointed.length > 0) tokens.add(pointed);
+    for (const doc of [pointer, ...links.docs]) {
+      const pointed = doc.get("token");
+      if (typeof pointed === "string" && pointed.length > 0) tokens.add(pointed);
+    }
+    for (const doc of links.docs) handleLinks.push(doc.ref);
   });
 
   // Every group ride the rider created, joined, or was invited to.
@@ -135,6 +140,10 @@ export async function deleteUserData(
 
   await step("delete livePointers", () =>
     db.collection("livePointers").doc(uid).delete()
+  );
+  // The password link holds the rider's last known location.
+  await step("delete handleLinks", () =>
+    Promise.all(handleLinks.map((ref) => ref.delete()))
   );
 
   // ---- Realtime Database (issues §101.S4): the 1 Hz live-share channel, the
