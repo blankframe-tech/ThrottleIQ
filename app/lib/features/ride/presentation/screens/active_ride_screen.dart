@@ -584,18 +584,20 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
-                  const SizedBox(width: 4),
-                  IconButton(
-                    onPressed: () =>
-                        ref.read(indriyoProvider.notifier).toggleHud(),
-                    icon: Icon(
-                      Icons.radar_rounded,
-                      color: ref.watch(indriyoSettingsProvider).isHudVisible
-                          ? context.palette.primary
-                          : context.palette.textPrimary,
+                  if (kIndriyoEnabled) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      onPressed: () =>
+                          ref.read(indriyoProvider.notifier).toggleHud(),
+                      icon: Icon(
+                        Icons.radar_rounded,
+                        color: ref.watch(indriyoSettingsProvider).isHudVisible
+                            ? context.palette.primary
+                            : context.palette.textPrimary,
+                      ),
+                      tooltip: 'Toggle Indriyo ADAS Mirror',
                     ),
-                    tooltip: 'Toggle Indriyo ADAS Mirror',
-                  ),
+                  ],
                   const RideActionsMenu(),
                 ],
               ),
@@ -603,7 +605,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
 
           // ── Indriyo Digital Rearview Mirror HUD ───────────────────────────
-          if (ref.watch(indriyoSettingsProvider).isHudVisible)
+          if (kIndriyoEnabled &&
+              ref.watch(indriyoSettingsProvider).isHudVisible)
             Positioned(
               top: MediaQuery.of(context).padding.top + 54,
               left: 0,

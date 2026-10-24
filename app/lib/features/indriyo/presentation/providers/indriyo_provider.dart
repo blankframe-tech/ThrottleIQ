@@ -2,6 +2,11 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/indriyo_models.dart';
 
+/// Off unless built with `--dart-define=INDRIYO=true`: riders without the
+/// mirror hardware never see the HUD, whose default simulation draws fake
+/// collision alerts.
+const bool kIndriyoEnabled = bool.fromEnvironment('INDRIYO');
+
 class IndriyoSettings {
   final bool isHudVisible;
   final bool isSimulationMode;
