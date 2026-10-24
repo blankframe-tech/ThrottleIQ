@@ -33,7 +33,7 @@ _Last updated: 2026-10-23._
 
 ### Release
 
-- **Latest release:** `beta-v4.7.1` (`1.0.0-beta.4.7.1+29`, 2026-10-16) on GitHub, with the universal and split APKs plus the AAB. The release notes are the GitHub release bodies. The install page https://throttleiqfb.web.app/install/ serves it.
+- **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, with the universal and split APKs plus the AAB. The release notes are the GitHub release bodies. The install page https://throttleiqfb.web.app/install/ serves it.
 - **`config/app.minBuild = 29`** is live (set 2026-10-18). Builds 27 and 28 see the update screen; builds 26 and older have no gate.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. The last build on record on the internal track is `1.0.0-beta.1+3` (2026-08-29, no update gate). Owner item 4.
@@ -131,7 +131,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 |---|---|
 | Firebase project | `throttleiqfb` (asia-south1), Spark plan |
 | App id | `com.bft.throttleiq` (Android and iOS) |
-| Version, schema | `1.0.0-beta.4.7.1+29`; local DB schema v29 (`database_helper.dart`) |
+| Version, schema | `1.0.0-beta.4.8.0+30`; local DB schema v29 (`database_helper.dart`) |
 | Tests | 2026-10-21/22: about 2,300 Flutter tests, 315 rules tests, functions unit and emulator suites. All through `scripts/check.sh`. |
 | File storage | Cloudinary, cloud `vjvcigkt`, unsigned preset `throttleiq_unsigned` (limits: owner item 11). No Firebase Storage. |
 | Signing | `throttleiq-release.keystore` (repo root, gitignored, backed up 2026-09-21) and `app/android/key.properties`. Moving it out of the Drive-synced repo: owner item 9. |
@@ -183,6 +183,10 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-10-24
+
+- **Release `beta-v4.8.0` (+30):** `scripts/deploy.sh --skip-ios` from `007c3593`, shipping everything merged since `beta-v4.7.1` (quota outage mode, moderation, places cache, tour v5, ride actions menu, the 2026-10-22 agent-room lanes). The AAB was handed to the owner for a Play Console upload. `config/app.minBuild` stays 29.
 
 ### 2026-10-22 (agent rooms run): eight lanes from `DOCS/agent_rooms/`, merged and pushed
 
