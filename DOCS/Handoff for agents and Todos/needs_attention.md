@@ -14,10 +14,9 @@ number. Done items are deleted, not ticked; git history keeps them._
       Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
       (`For Devs and Contributors/guides/app_check.md`). Since 2026-10-22 it also carries the §104 read
       savings, the 8 s screen-write timeout, hour-rounded crash timestamps and the legacy-likes removal.
-- [ ] **Rules and indexes for share-to-groups (#50, new 2026-10-25):** before releasing the new-post
-      flow, run `firebase deploy --only firestore:rules,firestore:indexes --project throttleiqfb` and
-      wait for the two new `posts` indexes to show Enabled. Without them the All Riders feed errors and
-      cross-posts are missing from group feeds.
+- [ ] **Rules and indexes for share-to-groups (#50, new 2026-10-25):** deployed 2026-10-25. Left:
+      confirm the two new `posts` indexes show Enabled (Firebase console › Firestore › Indexes) before
+      releasing; until then the All Riders feed errors and cross-posts are missing from group feeds.
 - [ ] **Legacy likes, steps 2-3 (#45, new 2026-10-22):** after that release, raise
       `config/app.minBuild`, then delete the `likes` rule and deploy rules (issues §80).
 - [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.
