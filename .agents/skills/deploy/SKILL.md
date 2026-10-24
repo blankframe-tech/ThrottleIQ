@@ -2,7 +2,7 @@
 name: deploy
 description: >
   ThrottleIQ deployment automation runner. Standardizes building, testing,
-  deploying release to connected iPhone, compiling Android release APK & AAB,
+  deploying release to connected iPhone, compiling the Android release AAB,
   and publishing to GitHub Releases. Use whenever user asks to deploy, ddeploy,
   or publish a release.
 ---
@@ -49,18 +49,15 @@ bash scripts/deploy.sh
    cd app && flutter run --release -d 00008120-001E5D190A85A01E
    ```
 
-4. **Build Android APKs & AAB**:
+4. **Build the Android AAB** (APKs are no longer built or published; Android ships through Google Play only):
    ```bash
-   cd app && flutter build apk --release
-   flutter build apk --release --split-per-abi
-   flutter build appbundle --release
+   cd app && flutter build appbundle --release
    ```
-   Every artifact gets the same versionCode: the pubspec build number after `+`.
-   `build.gradle.kts` undoes Flutter's `abi * 1000 + build` for splits, and
-   `deploy.sh` refuses to release if any APK differs. The `config/app.minBuild`
-   gate compares that number, so bump it for every release and never reuse it.
+   The AAB stays local for a manual Play Console upload. Its versionCode is the pubspec build
+   number after `+`; the `config/app.minBuild` gate compares it, and Play rejects a reused one,
+   so bump it for every release.
 
-5. **GitHub Release**:
+5. **GitHub Release** (notes only, no binaries):
    ```bash
-   gh release create <tag> app/build/app/outputs/flutter-apk/app-*-release.apk app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes>"
+   gh release create <tag> --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes + https://throttleiqfb.web.app/install>"
    ```

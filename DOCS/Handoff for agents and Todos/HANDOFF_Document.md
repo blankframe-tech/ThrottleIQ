@@ -33,7 +33,7 @@ _Last updated: 2026-10-23._
 
 ### Release
 
-- **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, with the universal and split APKs plus the AAB. The release notes are the GitHub release bodies. The install page https://throttleiqfb.web.app/install/ serves it.
+- **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, notes only. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
 - **`config/app.minBuild = 29`** is live (set 2026-10-18). Builds 27 and 28 see the update screen; builds 26 and older have no gate.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. The last build on record on the internal track is `1.0.0-beta.1+3` (2026-08-29, no update gate). Owner item 4.
@@ -141,8 +141,8 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 | Privacy policy | https://throttleiqfb.web.app/privacy.html |
 | Judgement calls | `DOCS/For Devs and Contributors/architecture/assumptions.md` |
 | Offline writes | A write the rider asked for goes through `app/lib/core/cloud/outbox_service.dart`, never a bare `await` on Firestore: an awaited write with no connection never completes (and doesn't throw). Optional telemetry uses a best-effort write with a timeout. |
-| Android version codes | Every APK and AAB carries the pubspec build number (`build.gradle.kts` resets the split codes; `deploy.sh` checks with `aapt2`). Bump the build number for every release. |
-| Release assets | Keep the APKs on each GitHub release: the install page links `app-release.apk`. |
+| Android version codes | The AAB carries the pubspec build number. Bump it for every release; Play rejects a reused code. |
+| Release assets | None. `deploy.sh` builds the AAB locally for a manual Play Console upload; GitHub releases hold notes and the install link only. |
 
 ## Operational notes
 
@@ -187,6 +187,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 ### 2026-10-24
 
 - **Release `beta-v4.8.0` (+30):** `scripts/deploy.sh --skip-ios` from `007c3593`, shipping everything merged since `beta-v4.7.1` (quota outage mode, moderation, places cache, tour v5, ride actions menu, the 2026-10-22 agent-room lanes). The AAB was handed to the owner for a Play Console upload. `config/app.minBuild` stays 29.
+- **APKs retired:** every APK/AAB asset deleted from GitHub releases, every release body now opens with the Play install link, the APK card removed from `public/install/index.html`, and `deploy.sh` builds only the AAB and attaches nothing.
 
 ### 2026-10-22 (agent rooms run): eight lanes from `DOCS/agent_rooms/`, merged and pushed
 

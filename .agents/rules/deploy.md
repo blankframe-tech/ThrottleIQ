@@ -21,24 +21,17 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
      cd app && flutter run --release -d <device_id>
      ```
 
-4. **Build Android Release Artifacts**
-   - Build release APKs (universal, which the install page links, and per-ABI):
-     ```bash
-     cd app && flutter build apk --release
-     flutter build apk --release --split-per-abi
-     ```
-     Binary output: `app/build/app/outputs/flutter-apk/app-release.apk` and `app-<abi>-release.apk`
-   - **One versionCode on every artifact:** the pubspec build number (after `+`). `app/android/app/build.gradle.kts` resets Flutter's split codes (`abi * 1000 + build`), and `deploy.sh` checks every APK with `aapt2`. The `config/app.minBuild` gate compares this number, and Android refuses a lower code over a higher one, so bump it every release and never reuse it.
-   - Build release AAB:
+4. **Build Android Release AAB**
+   - APKs are no longer built or published: Android installs come only from Google Play (the install page has only the Play invite flow).
      ```bash
      cd app && flutter build appbundle --release
      ```
-     Binary output: `app/build/app/outputs/bundle/release/app-release.aab`
+     Binary output: `app/build/app/outputs/bundle/release/app-release.aab`. The owner uploads it to Play Console by hand.
+   - **versionCode:** the pubspec build number (after `+`). The `config/app.minBuild` gate compares it and Play rejects a reused code, so bump it every release.
 
-5. **Publish GitHub Release Tag**
-   - Create the release and tag on GitHub via `gh release create`:
+5. **Publish GitHub Release Tag (notes only, no binaries)**
      ```bash
-     gh release create <tag> app/build/app/outputs/flutter-apk/app-*-release.apk app/build/app/outputs/flutter-apk/app-release.apk app/build/app/outputs/bundle/release/app-release.aab --title "ThrottleIQ — <tag> (v<version>)" --notes "<changelog>"
+     gh release create <tag> --title "ThrottleIQ — <tag> (v<version>)" --notes "<changelog + https://throttleiqfb.web.app/install>"
      ```
 
 6. **Repeatable Script Alternative**
