@@ -1106,6 +1106,15 @@ service cloud.firestore {
       allow read: if request.auth != null && resource.data.isPublic == true;
     }
 
+    // Collection-group read for forum posts: the All Riders feed
+    // (collectionGroup('posts'), every post in every group) and cross-posts
+    // (where('alsoIn', array-contains-any, ...)). Same audience as the
+    // path rule below: any signed-in rider. Only forums have a `posts`
+    // subcollection; a new one elsewhere would need its own rule here.
+    match /{path=**}/posts/{postId} {
+      allow read: if request.auth != null;
+    }
+
     // Bike forums (Phase 3 — per-brand and per-model discussion boards).
     match /forums/{forumId} {
       allow read: if request.auth != null;
@@ -1194,8 +1203,17 @@ service cloud.firestore {
           request.resource.data.keys().hasOnly([
             'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
             'createdAt', 'replyCount', 'upvotes', 'downvotes',
-            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls'
+            'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls',
+            'alsoIn'
           ]) &&
+          // Share-to-groups (2026-10-25): up to four more groups besides
+          // this home forum, never the home itself.
+          // shortcut: the ids aren't checked to exist (four get()s per
+          // post); a bogus id only lands the post in a feed nobody reads.
+          (request.resource.data.get('alsoIn', null) == null ||
+           (request.resource.data.alsoIn is list &&
+            request.resource.data.alsoIn.size() <= 4 &&
+            !(forumId in request.resource.data.alsoIn))) &&
           (request.resource.data.get('imageUrls', null) == null ||
            forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
           request.resource.data.get('postType', 'general') in
@@ -1554,17 +1572,42 @@ service cloud.firestore {
     // below is then a straight path match with no profile lookup, and it is
     // structurally impossible for one rider to write another's pointer.
     //
-    // `get: if true`, not `read`, for the same reason as `usernames` and
-    // `liveSessions`: the public viewer page reads this without signing in,
-    // and only a keyed lookup is ever done — granting `list` would let a
-    // client enumerate every rider's on/off-riding status for free.
+    // RETIRED by the password link (`handleLinks` below, issues §90.D7):
+    // anyone who knew a @handle could resolve it to the rider's uid and
+    // follow them through this doc. Owner-only now; still writable so old app
+    // builds don't error, but nothing public reads it.
     match /livePointers/{uid} {
-      allow get: if true;
+      allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid &&
         request.resource.data.uid == uid;
       allow update: if request.auth != null && request.auth.uid == uid &&
         request.resource.data.uid == uid;
       allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Password link — `handleLinks/{key}` → { uid, token, active, lastLat,
+    // lastLng, lastSeenAt }. Backs `/r/{username}`: key is the hex SHA-256 of
+    // "throttleiq-r:{uid}:{password}" (PublicLiveLinkSetting.linkKey, and
+    // the same in live-viewer.html), so the doc id IS the capability, like a
+    // liveSessions token. `get` only: no `list`, so keys can't be enumerated
+    // and a guess costs one round trip. Rules can't rate-limit those, which
+    // is why the app requires 8+ character passwords.
+    //
+    // A rider can create a doc only for themselves, and update/delete only
+    // their own. Taking over someone else's key would need their password.
+    match /handleLinks/{key} {
+      allow get: if true;
+      allow create: if request.auth != null &&
+        key.matches('^[0-9a-f]{64}$') &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+      allow update: if request.auth != null &&
+        resource.data.uid == request.auth.uid &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.keys().hasOnly(
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // Follow graph — one edge doc per (follower → followee) at

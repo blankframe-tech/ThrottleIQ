@@ -1230,7 +1230,6 @@ savePost
 unsavePost
 searchForumsHint
 startDiscussion
-startDiscussionPickForum
 createRiderClub
 yourGarageHubs
 garageHubEmpty
@@ -1283,7 +1282,6 @@ forumMarkSolved
 forumReopen
 forumCouldNotUpdateSolution
 shareToForum
-shareToForumPick
 rideAttachmentTitle
 
 # batch: places-hub
@@ -1329,15 +1327,7 @@ placeSavedLabel
 placeSavedSnack
 placeUnsavedSnack
 placeSaveFailed
-radarTitle
-radarCameras
-radarPolice
 radarWithin
-radarNearest
-radarShowOnMap
-radarHideOnMap
-radarDismiss
-radarListTitle
 placesScanOsmTitle
 placesScanOsmBody
 placesScanOsm
@@ -1782,3 +1772,24 @@ sideloadBlockedTesting
 sideloadBlockedWhatsAppAction
 # batch: quota pause (2026-10-21)
 overQuotaBar
+# batch: offline places cache, forum share-to-groups (2026-10-25)
+placesCacheTitle
+placesCacheSubtitle
+placesCacheClear
+placesCacheCleared
+placesCacheClearFailed
+forumShare
+forumShareToGroupsTitle
+forumShareAllRidersNote
+allRidersGroup
+allRidersGroupSubtitle
+forumShareYourGroups
+forumShareCount
+# batch: password link /r/@handle (2026-10-25)
+publicLiveLinkTitle
+publicLiveLinkDesc
+publicLiveLinkPasswordTitle
+publicLiveLinkPasswordBody
+publicLiveLinkPasswordTooShort
+publicLiveLinkChangePassword
+publicLiveLinkSave

@@ -5,23 +5,45 @@ import 'package:throttleiq/core/services/public_live_link_setting.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('the public /r/@handle link is OFF by default (issues §90.D7)', () async {
+  test('the /r/@handle link is OFF by default (issues §90.D7)', () async {
     SharedPreferences.setMockInitialValues({});
     expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
   });
 
-  test('turning it on persists', () async {
-    SharedPreferences.setMockInitialValues({});
-    await PublicLiveLinkSetting.setEnabled(true);
-    expect(await PublicLiveLinkSetting.isEnabled(), isTrue);
-    final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getBool(PublicLiveLinkSetting.prefsKey), isTrue);
+  test('the old password-less "on" flag does not turn the link on', () async {
+    SharedPreferences.setMockInitialValues(
+        {PublicLiveLinkSetting.legacyPrefsKey: true});
+    expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
   });
 
-  test('turning it off again persists (no uid → no Firestore write)', () async {
+  test('linkKey matches the viewer page (live-viewer.html linkKey)', () {
+    // sha256("throttleiq-r:u1:hunter22"); the page must hash the same string.
+    expect(PublicLiveLinkSetting.linkKey('u1', 'hunter22'),
+        '7d4dbde7ff972b126dba87e79932c15e0a816c780197f45d7b65fd1feeca53ed');
+  });
+
+  test('enabling stores only the key, never the password', () async {
+    SharedPreferences.setMockInitialValues({});
+    await PublicLiveLinkSetting.enable(uid: 'u1', password: 'hunter22');
+    expect(await PublicLiveLinkSetting.currentKey(),
+        PublicLiveLinkSetting.linkKey('u1', 'hunter22'));
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getKeys().map(prefs.get).any((v) => '$v'.contains('hunter22')),
+        isFalse);
+  });
+
+  test('a password under 8 characters is refused', () async {
+    SharedPreferences.setMockInitialValues({});
+    await expectLater(
+        PublicLiveLinkSetting.enable(uid: 'u1', password: 'short12'),
+        throwsArgumentError);
+    expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
+  });
+
+  test('disabling with no link set needs no Firestore write', () async {
     SharedPreferences.setMockInitialValues(
-        {PublicLiveLinkSetting.prefsKey: true});
-    await PublicLiveLinkSetting.setEnabled(false);
+        {PublicLiveLinkSetting.legacyPrefsKey: true});
+    await PublicLiveLinkSetting.disable();
     expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
   });
 }

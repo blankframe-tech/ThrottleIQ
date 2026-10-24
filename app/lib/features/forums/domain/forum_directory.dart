@@ -53,6 +53,29 @@ enum TopicBoard {
   bool get featured => index < 4;
 }
 
+/// The master group: its feed is every post from every group (a
+/// `collectionGroup('posts')` read), so a post needs no group to be seen. A
+/// post shared to no group lives here.
+const String kAllRidersTopic = 'All Riders';
+final String kAllRidersForumId = generalForumSlug(kAllRidersTopic);
+
+/// Most groups one post can be shared to (owner, 2026-10-25). The first is
+/// the post's home (its `posts` subcollection, its count, its moderators);
+/// the rest are listed in the post's `alsoIn`, and their feeds pick it up.
+const int kForumPostMaxGroups = 5;
+
+/// Splits the groups the rider picked into the post's home forum and its
+/// `alsoIn` list: no pick means the master group, the master never goes in
+/// `alsoIn` (its feed already holds everything), and repeats are dropped.
+(String home, List<String> alsoIn) forumPostTargets(List<String> picked) {
+  final groups = <String>{
+    for (final id in picked)
+      if (id != kAllRidersForumId) id,
+  }.take(kForumPostMaxGroups).toList();
+  if (groups.isEmpty) return (kAllRidersForumId, const []);
+  return (groups.first, groups.sublist(1));
+}
+
 /// Every directory forum id — the ids the Hubs view reads stats for in one
 /// bounded `documentId in [...]` query.
 List<String> directoryForumIds() => [
@@ -93,6 +116,7 @@ Map<String, BrandPaddockStats> aggregateBrandPaddockStats(
   }
   return {
     for (final slug in {...riders.keys, ...posts.keys})
-      slug: BrandPaddockStats(riders: riders[slug] ?? 0, posts: posts[slug] ?? 0),
+      slug:
+          BrandPaddockStats(riders: riders[slug] ?? 0, posts: posts[slug] ?? 0),
   };
 }

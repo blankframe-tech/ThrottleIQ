@@ -68,7 +68,8 @@ class PlacesQuery extends Equatable {
   }
 
   @override
-  List<Object?> get props => [text, category, radiusKm, verifiedOnly, sort, tags];
+  List<Object?> get props =>
+      [text, category, radiusKm, verifiedOnly, sort, tags];
 }
 
 /// A place plus its distance from the rider, computed once per list build
@@ -94,7 +95,8 @@ PlaceHit toHit(PlaceEntity place, {double? originLat, double? originLng}) {
   if (originLat == null || originLng == null) return PlaceHit(place, null);
   return PlaceHit(
     place,
-    haversineMeters(originLat, originLng, place.latitude, place.longitude) / 1000,
+    haversineMeters(originLat, originLng, place.latitude, place.longitude) /
+        1000,
   );
 }
 
@@ -111,7 +113,8 @@ bool matchesSearch(
   String Function(PlaceCategory)? categoryLabel,
   String Function(PlaceTag)? tagLabel,
 }) {
-  final tokens = _normalize(text).split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
+  final tokens =
+      _normalize(text).split(RegExp(r'\s+')).where((t) => t.isNotEmpty);
   if (tokens.isEmpty) return true;
   final haystack = _normalize([
     place.name,
@@ -143,8 +146,7 @@ bool _passesRefinements(
 
 /// Filters and sorts [places] for the Places list/map.
 ///
-/// Safety points (cameras, checkposts) never appear here — they belong to
-/// the Highway Radar ([computeHighwayRadar]), not the list of stops.
+/// Safety points (cameras, checkposts) never appear here: they are not stops.
 List<PlaceHit> applyPlacesQuery(
   Iterable<PlaceEntity> places,
   PlacesQuery query, {
@@ -158,8 +160,10 @@ List<PlaceHit> applyPlacesQuery(
       if (!place.category.isSafetyPoint &&
           (query.category == null || place.category == query.category))
         toHit(place, originLat: originLat, originLng: originLng),
-  ].where((hit) => _passesRefinements(hit, query,
-      categoryLabel: categoryLabel, tagLabel: tagLabel)).toList();
+  ]
+      .where((hit) => _passesRefinements(hit, query,
+          categoryLabel: categoryLabel, tagLabel: tagLabel))
+      .toList();
 
   int byDistance(PlaceHit a, PlaceHit b) {
     final da = a.distanceKm, db = b.distanceKm;

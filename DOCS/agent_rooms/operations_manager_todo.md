@@ -17,6 +17,7 @@
     5. Update `public/privacy.html` §5 to state that email addresses are strictly private, then deploy Hosting: `firebase deploy --only hosting`.
 
 - [ ] **2. Finalize Google Play Data Safety Form ([`owner_works_now.html #8`](../../../../housekeeping/owner_works_now.html), [`data_safety_and_permissions.md`](../General/Files%20for%20Stores/store_listing/data_safety_and_permissions.md)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** draft: `DOCS/General/Files for Stores/store_listing/throttleiq_data_safety.DRAFT.csv` + `data_safety_review.DRAFT.md` (23 answers changed, 7 owner decisions, `privacy.html` gaps listed).
   - **Context:** Play Console requires exact declarations matching app behavior. Decisions settled: Analytics on by default with disclosed opt-out; Crash research data opt-in.
   - **Action Steps:**
     - Complete entries in `General/Files for Stores/store_listing/throttleiq_data_safety.csv`.
@@ -25,6 +26,7 @@
     - Finalize legal position on Health info (SafeQR blood group stored on-device only, never uploaded) and User IDs.
 
 - [ ] **3. Terms of Service & PDPO 2025 Compliance Review ([`owner_works_now.html #30`](../../../../housekeeping/owner_works_now.html)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** draft: `public/.terms.DRAFT.html` (dot-prefixed, so Hosting never serves it), with `[LAWYER REVIEW]` markers.
   - **Context:** No formal Terms of Service document exists in the repo or on the web. Apple App Store Guideline 1.2 requires an explicit zero-tolerance policy for user-generated content (posts/chats). Bangladesh Personal Data Protection Ordinance 2025 requires baseline governance.
   - **Action:** Draft `public/terms.html` incorporating standard consumer safety and zero-tolerance harassment clauses; coordinate lawyer review; link terms from app Settings and signup screen.
 

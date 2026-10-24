@@ -97,7 +97,7 @@ class RideActionsMenu extends ConsumerWidget {
     // locally, so confirm now and only speak up again if it's rejected. The
     // rider may have minimized by then, hence the root messenger.
     final failedText = context.l10n.checkpointSaveFailed;
-    unawaited(_repo.addPlace(place).then((_) {
+    unawaited(_repo.addPlace(place, untilAcked: true).then((_) {
       ref.invalidate(nearbyPlacesProvider);
     }).catchError((Object _) {
       rootScaffoldMessengerKey.currentState

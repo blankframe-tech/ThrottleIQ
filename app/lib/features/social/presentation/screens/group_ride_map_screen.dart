@@ -59,6 +59,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   static const _fallbackCenter = LatLng(23.8103, 90.4125);
 
   Timer? _broadcastTimer;
+  Duration _broadcastEvery = kGroupRideBroadcastInterval;
 
   /// What this device last published, for the movement/heartbeat gate
   /// ([shouldBroadcastPosition]).
@@ -150,6 +151,14 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       (locations) {
         if (!mounted) return;
         setState(() => _locations = locations);
+        // Bigger group, slower ticks (§104.2); restart only on a change,
+        // and never after _leave() stopped publishing (timer null).
+        final every = groupRideBroadcastInterval(locations.length);
+        if (every != _broadcastEvery && _broadcastTimer != null) {
+          _broadcastEvery = every;
+          _broadcastTimer?.cancel();
+          _broadcastTimer = Timer.periodic(every, (_) => _broadcastPosition());
+        }
       },
       onError: (Object e) {
         if (!mounted) return;
@@ -162,7 +171,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     // without waiting a full interval, then keep it ticking.
     unawaited(_broadcastPosition());
     _broadcastTimer = Timer.periodic(
-      kGroupRideBroadcastInterval,
+      _broadcastEvery,
       (_) => _broadcastPosition(),
     );
     _staleTicker = Timer.periodic(const Duration(seconds: 5), (_) {

@@ -18,6 +18,7 @@
   - **Action:** Sign off on baseline targets for the closed beta or specify calibrated adjustments.
 
 - [ ] **2. Resolve Open UX & Feature Edge Cases ([`owner_works_now.html #22`](../../../../housekeeping/owner_works_now.html), [`needs_attention.md:82–85`](../Handoff%20for%20agents%20and%20Todos/needs_attention.md)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** Call C (WCAG): palette fix on branch `lane/f-wcag-contrast`, not merged; it changes the light theme's status colours, so it needs the owner's eye. Gear tag, Guide tag and white-on-dark-danger still fail.
   - **Call A (Live Share Expiry):** When a rider rides past 24 hours, should the link hard-expire or dynamically refresh `expiresAt` while the ride remains active?
   - **Call B (Group-Ride Location Polling):** The RTDB location check requires Cloud Functions on Blaze; client code is parked. Confirm keeping parked until Blaze upgrade.
   - **Call C (Accessibility / WCAG AA Contrast):** Darken `textTertiary` and bright success/warning tokens that fail WCAG AA contrast ratios in dark mode.
@@ -25,6 +26,7 @@
   - **Call E (Marketing Copy Claims):** Review Record screen inspirational quotes and clarify that the app makes no active promise of "all badges = free engine oil".
 
 - [ ] **3. Google Play Store Listing & Review Documentation ([`owner_works_now.html #8, #20`](../../../../housekeeping/owner_works_now.html)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** Play reviewer video script drafted: `DOCS/General/Files for Stores/store_listing/play_reviewer_video_script.DRAFT.md`. Full-screen intent can't be shown honestly (crash alert is off); the draft suggests dropping it.
   - **Context:** Play Console internal/closed track submission requires finalized text, localization, screenshots, and permission declarations.
   - **Action:**
     - Finalize English and Bangla store descriptions ([`store_listing.md`](../General/Files%20for%20Stores/store_listing/store_listing.md), [`store_listing_bn_addendum.md`](../General/Files%20for%20Stores/store_listing/store_listing_bn_addendum.md)).
@@ -40,10 +42,12 @@
   - **Action:** Decide deliverable format by 1 November: a dedicated in-app modal/guide in Forums vs. a viral Facebook/blog guide that funnels riders to ThrottleIQ.
 
 - [ ] **5. Brand Forum Cold-Start Seeding ([`marketing.md §4`](../Handoffs%20for%20Non%20Coding%20Agents/marketing/marketing.md)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** draft: `DOCS/Handoffs for Non Coding Agents/marketing/forum_starter_posts.DRAFT.md` (EN + BN, Bangla needs native review).
   - **Context:** Places, feed, and brand forums cannot launch with empty screens.
   - **Action:** Prepare 2–3 high-value starter posts and discussion prompts for top brand forums: Yamaha FZ/R15, Bajaj Pulsar, Suzuki Gixxer, Honda Hornet, and Royal Enfield Bangladesh.
 
 - [ ] **6. Verified SafeSpot Garage Partner Framework:**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** flyer and terms drafted: `DOCS/Handoffs for Non Coding Agents/marketing/safespot_garage_flyer.DRAFT.md`. SafeSpot doesn't exist in the app yet, and every seeded place already shows Verified.
   - **Context:** Over 500 local mechanics and workshops need a clear onboarding value proposition.
   - **Action:** Finalize the SafeSpot partner flyer and terms: free verified digital listing in exchange for displaying a ThrottleIQ counter sticker and recommending the app for service reminders.
 
@@ -52,9 +56,11 @@
 ## 💼 P2: Commercial Pilots & Monetization
 
 - [ ] **7. Maya Ride B2B Pilot Structuring ([`owner_works_now.html #7`](../../../../housekeeping/owner_works_now.html), [`maya-ride-partnership.md`](../General/partnerships/maya-ride-partnership.md)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** meeting prep drafted locally in `DOCS/General/partnerships/` (git-excluded, not in the repo). The BDT pricing in this item is public; owner decides if it stays.
   - **Context:** Commercial ride-sharing pilot with Maya Ride offers potential BDT 150–300/rider/month SaaS revenue.
   - **Action:** Review the 10 strategic questions in §13 of `maya-ride-partnership.md`; define data sharing boundaries, SOS dispatch protocols, and revenue share terms before the founder meeting.
 
 - [ ] **8. Badge-Tier Physical Prize Promotion Feasibility ([`owner_works_now.html #24`](../../../../housekeeping/owner_works_now.html)):**
+  - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** plan drafted: `DOCS/agent_rooms/drafts/``prize_delivery_plan.md`.
   - **Context:** "First to badge tier wins a maintenance kit" promotion was conceived to accelerate viral word-of-mouth.
   - **Action:** Defer launch until 100 active organic riders are reached; draft fulfillment SOP (courier logistics, address verification, anti-fraud telemetry check).

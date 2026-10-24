@@ -110,7 +110,7 @@ One policy, five conditions, each emailing the owner on its own: reads, writes
 or deletes above 80% of the daily limit, and reads or writes "used up" (99%).
 All use a rolling 24 h window. Refused requests never reach
 `api/request_count`, so there is no "requests refused" condition
-(`DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`). Emails arrive about 6-7
+(`DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`). Emails arrive about 6-7
 minutes after a threshold is crossed. **Live on `throttleiqfb` since
 2026-10-21** (`alertPolicies/13055223357814148266`, channel
 `notificationChannels/9574270854457855850`). Apply it once per project
@@ -152,7 +152,7 @@ echo '{"firestore":{"rules":"firestore.rules"}}' > $LABDIR/firebase.json
 (cd $LABDIR && firebase deploy --only firestore:rules --project=$LAB)
 # Optional: the alert above with PROJECT=$LAB, to see the emails arrive.
 npm run loadtest:rehearsal -- --project=$LAB --api-key=<apiKey> --app-id=<appId>
-# Record the tables under "DOCS/For Devs and Contributors/load_test/", then:
+# Record the tables under "DOCS/Handoff for agents and Todos/load_test/", then:
 gcloud projects delete $LAB --account=$OWNER   # can be undone for 30 days
 ```
 

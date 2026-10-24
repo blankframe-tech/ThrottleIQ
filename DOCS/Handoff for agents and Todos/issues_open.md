@@ -182,6 +182,10 @@ and a list on a path with no rule is denied even when it would return
 nothing. A 2026-09-21 sweep found no like documents anywhere. Order: drop
 the sweep from the app, raise `config/app.minBuild` past that build, then
 delete the rules block (ship the app before the rules, §78.27).
+- **Step 1 done 2026-10-22 (branch `lane/a-reads-likes`, not on `main` or in a release yet):**
+  `deleteSharedRide` no longer lists or deletes `likes`. **Owner actions left:** once a build
+  with this change is out, raise `config/app.minBuild` past it, then delete the `likes` block
+  from `firestore.rules` and deploy the rules.
 
 ---
 
@@ -215,13 +219,34 @@ injected Firestore, so the pattern was known, and the notifier calls the
 no-arg constructor anyway. **Same root cause as 83.28:** nothing that touches
 I/O is injectable, so nothing that touches I/O is tested.
 
-### 83.14 — 66 bare `catch (_)` blocks
+### 83.14 — 54 bare `catch (_)` blocks — PARTLY FIXED 2026-10-22
 
-66 in `app/lib` (2026-10-22), held there by the ratchet in
-`scripts/check.sh:101-107` (`CATCH_MAX=66`, §90.B6). Many carry a justifying
+54 in `app/lib` (2026-10-22, down from 65), held there by the ratchet test
+`app/test/core/utils/error_reporter_test.dart` (`_bareCatchBaseline = 54`; it
+replaced the `CATCH_MAX` grep in `scripts/check.sh`). Many carry a justifying
 comment and several are legitimate, but in a Crashlytics-instrumented app
 each is a failure mode that never reaches the dashboard and gets reported as
-"it just didn't work". Lower the ratchet as they are replaced.
+"it just didn't work".
+
+Done 2026-10-22: `reportSilently(e, st, where:)` in
+`core/utils/error_reporter.dart` (non-fatal via `reportNonFatal`, no-op in
+debug and tests and for Firestore `unavailable` / `deadline-exceeded`, never
+throws). 11 swallowed catches now report it, behaviour
+unchanged: auth (seed profile, display-name sync, local wipe on account
+delete), ride (start-failure cleanup, public stats push), outbox payload
+decode (`outbox_dao.dart`, `database_helper.dart`), badge sync, malformed
+cloud bike, corrupt medical info, Cloudinary ledger write.
+
+**Still open:** triage the other 54. Non-UI first: `features/ride/`
+(`ride_recording_provider.dart` battery-opt prompt and wakelock,
+`ride_summary_screen.dart` 2, `active_ride_screen.dart` 1),
+`bug_report_service.dart`, `privacy_zone_salt.dart`, `nominatim_service.dart`.
+Then UI (`group_ride_map_screen.dart` 8, social providers and screens,
+`place_launch_actions.dart`). Some are expected and may stay (Google
+sign-out, "already gone" deletes in `group_ride_repository.dart`,
+`isServiceRunning`). `outbox.decodePayload` and `profile.parseBike` report
+again on every read of the same broken row; add a once-per-key guard if that
+gets noisy. Lower the baseline as they are replaced.
 
 ### 83.16 (part) — the Cloudinary preset is still an open upload endpoint
 
@@ -272,6 +297,29 @@ Remaining:
 (2026-10-22). The tests cover the pure calculators exhaustively and the
 presentation layer thinly, which is where the UX defects in this section
 lived. Same root cause as 83.13.
+
+**2026-10-22 (lane H), now covered** (the §107.2 order):
+- Active ride: `test/features/ride/presentation/screens/active_ride_screen_test.dart`.
+  Pause/resume, pause disabled during a transition, End Ride hold → summary (not
+  the idle redirect), Keep riding, Discard ride (keep / confirm), crash takeover
+  stays hidden while `crashAlertsEnabled` is off, restored-ride banner, idle →
+  Record. Fake recorder via `implements RideRecordingNotifier`.
+- Sign-in: `test/features/auth/login_screen_test.dart`. Validation, trimmed
+  email, a Firebase error shown in words, password eye, Sign Up link.
+- Sync issues: `test/features/profile/sync_issues_screen_test.dart`, real
+  in-memory SQLite outbox. Account scoping, Retry (delivered / failed again),
+  Discard (cancel / confirm). **Bug it found, fixed:** the Retry SnackBar never
+  showed. `retryDead` revives the row, the list reloads without it, the card
+  unmounts, and `if (!mounted) return` swallowed the result.
+- Maintenance already had screen tests (`test/features/maintenance/`).
+
+**Still open:** `RecordScreen` (its `initState` reads `FirebaseAuth.instance`,
+§83.13, so it can't be pumped without Firebase); the crash countdown overlay
+itself (private and unreachable while `SensorConstants.crashAlertsEnabled` is
+a `const false`; test it when tier 2 ships); settings and onboarding steps
+beyond `onboarding_tour_test.dart`; register; 0 goldens. The `_endingRide`
+guard in `_cancelRide` has no test of its own (its redirect lands on the same
+`/home/record`); the one in `_stopRide` is covered.
 
 ---
 
@@ -332,8 +380,8 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
 - **90.B5 — MEDIUM — layering is partly nominal.** 7 presentation files still import
   `cloud_firestore`/`firebase_auth` directly. The other 2026-10-06 counts (presentation files
   importing `data/`, domain leaks, `core/` files importing features) were not re-measured.
-- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 66 bare `catch (_)`,
-  exactly the `scripts/check.sh` ratchet (`CATCH_MAX=66`). Many catches only `debugPrint`,
+- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 54 bare `catch (_)` (2026-10-22),
+  held by the ratchet test in `error_reporter_test.dart`. Many catches only `debugPrint`,
   which is invisible in release (about 42 on 2026-10-06; not re-counted). *Fix:* route
   them to `reportNonFatal` (`core/utils/error_reporter.dart`), then lower the ratchet.
 - **90.B7 — MEDIUM — god files.** Over 1,000 lines on 2026-10-22: `ride_recording_provider.dart`
@@ -668,17 +716,20 @@ review (102.7, deferred to November 2026) is in `needs_attention.md`. Still open
   may still reach the speed panel's fixed `bottom: 160` (`active_ride_screen.dart:790`; not
   checked on a device).
 
-## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/For Devs and Contributors/load_test/load-test-2026-10-15.md`)
+## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/Handoff for agents and Todos/load_test/load-test-2026-10-15.md`)
 
 Emulator simulation of the app's real query shapes (`scripts/loadtest/quota_sim.js`, `npm run loadtest:quota`). Verdict: fail. Reads run out first, at about 18 daily active riders (about 9 at the 50% target).
 
 - **104.2 HIGH — group-ride reads grow with N².** Measured: N² + N reads per 20 s tick. A 20-rider ride uses the whole daily read quota in about 40 min. The RTDB relay is gone (`4cb96a8f`, `8872feff`), so the fix is a wider interval and move gate, or one shared positions doc per ride.
+  - **Mitigated 2026-10-22 (branch `fix/reads-104`):** the publish interval now grows with the ride size (20-40 s); details in `issues_fixed.md` §104.2. **Still open:** reads still grow with N² per tick; the real fix (one shared positions doc per ride) needs a rules change, a rules deploy and a data-model move.
 - **104.3 MEDIUM — feed vote hydration costs 40 of 63 base reads per page.** 20 vote `get()`s, each with a rules `get()` on the ride (`ride_share_repository.dart:350`). *Fix:* one per-user votes doc or one query.
+  - **Partly fixed 2026-10-22 (branch `fix/reads-104`):** rides nobody voted on cost no vote reads now; details in `issues_fixed.md` §104.3. **Still open:** a voted ride still costs 2 reads. One read per page needs a per-user votes doc or a `uid` field plus a collection-group rule and a backfill of production vote docs.
 - **104.4 LOW — the per-author restricted query costs 3 reads even when the author has no such posts** (query + 2 rules `exists()`). The `hasRestrictedPosts` flag from §90.A1 was never built.
+  - **Not done (2026-10-22, branch `fix/reads-104`):** the flag is a data-model change. Sharing a followers/mutual ride must set it on the author's profile (a rules change for that field), and every existing author needs a production backfill before the feed may skip anyone; skipping before the backfill would hide their followers-only posts. Needs a founder-approved backfill and a rules deploy. Cost today: 3 reads per followed author per first page (`ride_feed_provider.dart`, `restricted:<author>` sources; exhausted authors are not re-queried on later pages).
 - **104.5 Founder:** real per-user usage from Firebase console → Usage. The local gcloud account (Play publisher SA) cannot read Cloud Monitoring.
-- **104.6 Outage mode:** merged to `main` in `c751968e` (2026-10-22), not in a release yet. What it does, the rehearsal and the alerting are in `issues_fixed.md` §104; rehearsal report: `DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`. Still open:
+- **104.6 Outage mode:** merged to `main` in `c751968e` (2026-10-22), not in a release yet. What it does, the rehearsal and the alerting are in `issues_fixed.md` §104; rehearsal report: `DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`. Still open:
   - About 20 transaction-based social actions (forums, comments, votes, group-ride join/leave, new chats, reviews, onboarding username) fail with the overload message.
-  - About 20 screens await plain writes without a timeout and hang if the *write* limit runs out (the write lands at the reset).
+  - The `SyncManager` writes (`deleteBikeRemote`, `deleteRideRemote`, `deleteMaintenanceRemote`, `deleteFuelLogRemote`, `uploadTrack`, `uploadImpactEvents`) await without a timeout. There a timeout needs a per-write choice between "done" (a later refusal is lost) and "retry" (stacks duplicate writes). The screen writes were fixed on branch `fix/reads-104` (`issues_fixed.md` §104.6, screen writes).
   - A write-only outage is caught only when a transactional upload or outbox delivery fails; until then `SyncManager` can sit on an untimed write.
   - Whether realtime reads get refused later in a spent day.
   - The native Android/iOS SDKs weren't rehearsed (same design as the JS SDK).
@@ -758,3 +809,15 @@ Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). 
 
 - **Where:** the row is a `SizedBox(height: 140)` in `app/lib/features/social/presentation/screens/social_people_tab.dart:172-173`; the card is `_SuggestedRiderCard` (same file, `:254`), whose column comes out 1 px taller than the row.
 - *Fix:* let the row size to the card (or raise the height by the 1 px, or trim one gap), then check at 1.3× text scale and in Bangla, where the name line runs taller.
+
+## Cloud Functions audit leftovers, architect to-do #5 (2026-10-22, lane C)
+
+- **The report purge re-reads every old report on each run.** Pass 1 pages through all reports reviewed before the 90-day cutoff, including those already purged. At very high volume it could use the whole 480 s budget, and pass 2 (closed reports about deleted riders) would then never run. Already marked `shortcut:` in `report-retention.ts`. *Fix when needed:* a `purged` flag plus a composite index.
+- **The auto-report can reopen a reviewed report.** `onMessageCreate` writes `reports/auto_chat_<chat>_<msg>` with `set` and `status: "pending"`. If the trigger were ever retried after an admin closed it, the report would go back to pending and lose its review fields. v2 Firestore triggers don't retry by default, so this can't happen today. *Fix if retries are turned on:* `create()`, treating ALREADY_EXISTS as done.
+- **Erasure loads each query fully into memory.** The owned-query, anonymise, report and chat-message steps `.get()` all matching docs before batching. That's fine for one rider's data, but not bounded. Not changed.
+
+## 112. Password link /r/@handle follow-ups (2026-10-25)
+- Background auto-detected rides (AutoTrackingService isolate) don't share to the password link; only rides recorded through RideRecordingNotifier do.
+- No rate limit on password guesses (rules-only, doc id = hash). Mitigated by the 8-char minimum; a Cloud Function check would be needed for real limiting.
+- Needs deploy: firestore.rules, hosting (public/live-viewer.html), new app build. Viewer page not yet tried in a browser; not tried on a device.
+- BN strings for the new keys await native review (bn_pending_review.txt).

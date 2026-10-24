@@ -3275,13 +3275,33 @@
       }
     }
   },
-  "publicLiveLinkTitle": "Public link (/r/@handle)",
+  "publicLiveLinkTitle": "Password link (/r/@handle)",
   "@publicLiveLinkTitle": {
     "description": "Settings switch title. /r/@handle is a literal URL path; keep it unchanged."
   },
-  "publicLiveLinkDesc": "While you share a live ride, anyone who knows your @username can watch it at /r/@username \u2014 no app or sign-in needed. Off by default. Your private live link works either way.",
+  "publicLiveLinkDesc": "Every ride shares to /r/@username, and it keeps the spot where your last ride ended (handy if your phone falls). Only people with your password can open it. Off by default. The Share button during a ride still makes a one-ride link.",
   "@publicLiveLinkDesc": {
-    "description": "Settings switch subtitle explaining the permanent public live link."
+    "description": "Settings switch subtitle explaining the permanent password-protected live link."
+  },
+  "publicLiveLinkPasswordTitle": "Link password",
+  "@publicLiveLinkPasswordTitle": {
+    "description": "Dialog title for setting the password of the /r/@handle link."
+  },
+  "publicLiveLinkPasswordBody": "Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.",
+  "@publicLiveLinkPasswordBody": {
+    "description": "Dialog body explaining the /r/@handle link password."
+  },
+  "publicLiveLinkPasswordTooShort": "Use at least 8 characters.",
+  "@publicLiveLinkPasswordTooShort": {
+    "description": "Validation error under the link password field."
+  },
+  "publicLiveLinkChangePassword": "Change password",
+  "@publicLiveLinkChangePassword": {
+    "description": "Button on the /r/@handle link setting to set a new password."
+  },
+  "publicLiveLinkSave": "Save",
+  "@publicLiveLinkSave": {
+    "description": "Confirms the link password dialog."
   },
   "audienceAnyFollower": "Anyone who follows you",
   "@audienceAnyFollower": {
@@ -4056,28 +4076,6 @@
   "@placeSaveFailed": {
     "description": "Places hub redesign (Places | Routes | Saved)."
   },
-  "radarTitle": "Highway Radar",
-  "@radarTitle": {
-    "description": "Places hub redesign (Places | Routes | Saved)."
-  },
-  "radarCameras": "{count, plural, =1{1 speed camera} other{{count} speed cameras}}",
-  "@radarCameras": {
-    "description": "Places hub redesign (Places | Routes | Saved).",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "radarPolice": "{count, plural, =1{1 police checkpost} other{{count} police checkposts}}",
-  "@radarPolice": {
-    "description": "Places hub redesign (Places | Routes | Saved).",
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "radarWithin": "within {km} km",
   "@radarWithin": {
     "description": "Places hub redesign (Places | Routes | Saved).",
@@ -4086,31 +4084,6 @@
         "type": "String"
       }
     }
-  },
-  "radarNearest": "Nearest {distance} away",
-  "@radarNearest": {
-    "description": "Places hub redesign (Places | Routes | Saved).",
-    "placeholders": {
-      "distance": {
-        "type": "String"
-      }
-    }
-  },
-  "radarShowOnMap": "Show on map",
-  "@radarShowOnMap": {
-    "description": "Places hub redesign (Places | Routes | Saved)."
-  },
-  "radarHideOnMap": "Hide on map",
-  "@radarHideOnMap": {
-    "description": "Places hub redesign (Places | Routes | Saved)."
-  },
-  "radarDismiss": "Dismiss radar",
-  "@radarDismiss": {
-    "description": "Places hub redesign (Places | Routes | Saved)."
-  },
-  "radarListTitle": "Safety points near you",
-  "@radarListTitle": {
-    "description": "Places hub redesign (Places | Routes | Saved)."
   },
   "placesScanOsmTitle": "Nothing mapped here yet",
   "@placesScanOsmTitle": {
@@ -7830,10 +7803,6 @@
   "@startDiscussion": {
     "description": "Forums Pit Wall redesign."
   },
-  "startDiscussionPickForum": "Where should this go?",
-  "@startDiscussionPickForum": {
-    "description": "Forums Pit Wall redesign."
-  },
   "createRiderClub": "Create club",
   "@createRiderClub": {
     "description": "Forums Pit Wall redesign."
@@ -8065,10 +8034,6 @@
   },
   "shareToForum": "Share to forum",
   "@shareToForum": {
-    "description": "Forums Pit Wall redesign."
-  },
-  "shareToForumPick": "Share to which forum?",
-  "@shareToForumPick": {
     "description": "Forums Pit Wall redesign."
   },
   "rideAttachmentTitle": "Ride on {date}",
@@ -9360,5 +9325,69 @@
   "placeReportExpired": "expired",
   "@placeReportExpired": {
     "description": "Shown after 'Reported …' once a temporary cop checkpoint has expired."
+  },
+  "placesCacheTitle": "Offline places",
+  "@placesCacheTitle": {
+    "description": "Settings row: places kept on the phone from rides."
+  },
+  "placesCacheSubtitle": "Fuel pumps, garages and other places saved on this phone from your rides, so they load without data.",
+  "@placesCacheSubtitle": {
+    "description": "Settings row subtitle for the offline places cache."
+  },
+  "placesCacheClear": "Clear",
+  "@placesCacheClear": {
+    "description": "Button that empties the offline places cache."
+  },
+  "placesCacheCleared": "Saved places cleared",
+  "@placesCacheCleared": {
+    "description": "Snackbar after the offline places cache is emptied."
+  },
+  "placesCacheClearFailed": "Couldn't clear saved places",
+  "@placesCacheClearFailed": {
+    "description": "Snackbar when emptying the offline places cache fails."
+  },
+  "forumShare": "Share",
+  "@forumShare": {
+    "description": "Button on the new-post page and in the group picker that publishes the post."
+  },
+  "forumShareToGroupsTitle": "Share to groups",
+  "@forumShareToGroupsTitle": {
+    "description": "Title of the sheet that picks which groups a new post goes to."
+  },
+  "forumShareAllRidersNote": "Every post appears in All Riders. You can also pick up to {max} groups.",
+  "@forumShareAllRidersNote": {
+    "description": "Explains the group picker: the master group always gets the post.",
+    "placeholders": {
+      "max": {
+        "type": "int",
+        "example": "5"
+      }
+    }
+  },
+  "allRidersGroup": "All Riders",
+  "@allRidersGroup": {
+    "description": "Name of the master forum group that shows every post from every group."
+  },
+  "allRidersGroupSubtitle": "Every post from every group",
+  "@allRidersGroupSubtitle": {
+    "description": "Subtitle of the All Riders group on the forums hub."
+  },
+  "forumShareYourGroups": "Your groups",
+  "@forumShareYourGroups": {
+    "description": "Group picker section: the rider's garage and followed forums."
+  },
+  "forumShareCount": "{count} of {max} groups",
+  "@forumShareCount": {
+    "description": "How many groups are picked out of the maximum.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "5"
+      },
+      "max": {
+        "type": "int",
+        "example": "5"
+      }
+    }
   }
 }

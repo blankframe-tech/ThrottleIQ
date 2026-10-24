@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import '../../../poi_directory/data/repositories/place_repository.dart';
 import '../../../poi_directory/data/ride_places_cache.dart';
 import '../../../poi_directory/domain/entities/place_entity.dart';
+import '../../../poi_directory/presentation/providers/places_provider.dart';
 import 'ride_recording_provider.dart';
 
 final liveRidePlacesProvider =
@@ -14,11 +14,7 @@ final liveRidePlacesProvider =
 
 class LiveRidePlacesNotifier extends StateNotifier<List<PlaceEntity>> {
   final Ref _ref;
-  final PlaceRepository _placeRepository = PlaceRepository();
-  late final RidePlacesCache _cache = RidePlacesCache(
-    fetchCell: _placeRepository.getPlacesInCellFromServer,
-    fetchSince: _placeRepository.getPlacesUpdatedSince,
-  );
+  late final RidePlacesCache _cache = _ref.read(placesCacheProvider);
   LatLng? _lastFetchLocation;
   // Refreshes run one at a time; they share the cache file.
   Future<void> _refreshing = Future.value();

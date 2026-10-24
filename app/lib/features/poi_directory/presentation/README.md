@@ -8,7 +8,7 @@ This directory contains the following submodules:
 
 - **[providers](./providers)**: Contains Riverpod state management providers and notifiers for this feature. These manage state and bind data to the UI.
 - **[screens](./screens)**: Contains Flutter UI screen widgets for this feature. These are the main views presented to the user.
-- **[widgets](./widgets)**: The Places hub's pieces: place card and rating badges, map view, filter sheet, Highway Radar banner, Saved tab, status panels, and the shared Directions/Call launchers.
+- **[widgets](./widgets)**: The Places hub's pieces: place card and rating badges, map view, filter sheet, Saved tab, status panels, and the shared Directions/Call launchers.
 
 ## Files
 

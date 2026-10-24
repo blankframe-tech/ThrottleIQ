@@ -6,6 +6,7 @@ import 'package:throttleiq/core/utils/geohash_util.dart';
 import 'package:throttleiq/core/services/cloudinary_upload_service.dart';
 import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 class PlaceRepository {
   final FirebaseFirestore _firestore;
@@ -31,12 +32,16 @@ class PlaceRepository {
     return _uploadService.upload(file, folder: 'places/$uid');
   }
 
-  /// Add a new place
-  Future<String> addPlace(PlaceEntity place) async {
+  /// Add a new place. Returns after at most 8 s ([ackOrQueued]); with
+  /// [untilAcked], only on the server's ack, so a late refusal still throws
+  /// (for callers that don't await it).
+  Future<String> addPlace(PlaceEntity place, {bool untilAcked = false}) async {
     final model = PlaceModel.fromEntity(place);
-    final docRef = await _firestore.collection(_collection).add(
-          model.toFirestore(),
-        );
+    // doc() + set() rather than add(): same auto id, but known before the
+    // ack, so a queued write can still return it.
+    final docRef = _firestore.collection(_collection).doc();
+    final write = docRef.set(model.toFirestore());
+    await (untilAcked ? write : ackOrQueued(write));
     return docRef.id;
   }
 
@@ -73,7 +78,7 @@ class PlaceRepository {
             : collection.doc();
         batch.set(ref, PlaceModel.fromEntity(place).toFirestore());
       }
-      await batch.commit();
+      await ackOrQueued(batch.commit());
     }
   }
 

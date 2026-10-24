@@ -43,7 +43,7 @@ import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../maintenance/presentation/widgets/ride_cost_card.dart';
 import '../../../forums/domain/entities/forum_post_entity.dart';
-import '../../../forums/presentation/widgets/forum_picker_sheet.dart';
+import '../../../forums/presentation/screens/new_forum_post_screen.dart';
 
 enum _ExportFormat { json, gpx, csv }
 
@@ -245,9 +245,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
               key: const Key('ride_share_to_forum'),
               tooltip: context.l10n.shareToForum,
               icon: const Icon(Icons.forum_outlined),
-              onPressed: () => showForumPickerSheet(
+              onPressed: () => openNewForumPost(
                 context,
-                title: context.l10n.shareToForumPick,
                 attachment: ForumAttachment(
                   kind: ForumAttachmentKind.ride,
                   refId: rideVal.id,

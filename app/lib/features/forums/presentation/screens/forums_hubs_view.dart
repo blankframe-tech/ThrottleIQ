@@ -16,7 +16,7 @@ import '../../domain/entities/forum_entity.dart';
 import '../../domain/forum_author_bike.dart';
 import '../../domain/forum_directory.dart';
 import '../providers/forum_providers.dart';
-import '../widgets/forum_picker_sheet.dart';
+import 'new_forum_post_screen.dart';
 import '../widgets/forum_topic_style.dart';
 
 /// The Hubs lens: the rider's garage hubs, brand paddocks, topic boards and
@@ -38,7 +38,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
   // "reads as broken rather than loading").
   String? _resolving;
 
-  Future<void> _resolveAndOpen(String slug, Future<ForumEntity> Function() resolve) async {
+  Future<void> _resolveAndOpen(
+      String slug, Future<ForumEntity> Function() resolve) async {
     if (_resolving != null) return;
     setState(() => _resolving = slug);
     try {
@@ -64,7 +65,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
 
   @override
   Widget build(BuildContext context) {
-    final stats = ref.watch(directoryForumStatsProvider).valueOrNull ?? const {};
+    final stats =
+        ref.watch(directoryForumStatsProvider).valueOrNull ?? const {};
     final paddockStats = ref.watch(brandPaddockStatsProvider).valueOrNull;
 
     return RefreshIndicator(
@@ -76,8 +78,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
         await refreshGarageForums(ref);
       },
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(
-            AppDimensions.paddingMd, 4, AppDimensions.paddingMd, AppDimensions.paddingLg),
+        padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
+            AppDimensions.paddingMd, AppDimensions.paddingLg),
         children: [
           _SearchShortcut(onTap: widget.onOpenSearch),
           const SizedBox(height: 12),
@@ -86,9 +88,10 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
               Expanded(
                 child: FilledButton.icon(
                   key: const Key('hubs_start_discussion'),
-                  onPressed: () => showForumPickerSheet(context),
+                  onPressed: () => openNewForumPost(context),
                   icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(context.l10n.startDiscussion, overflow: TextOverflow.ellipsis),
+                  label: Text(context.l10n.startDiscussion,
+                      overflow: TextOverflow.ellipsis),
                 ),
               ),
               const SizedBox(width: 10),
@@ -96,10 +99,40 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
                 child: OutlinedButton.icon(
                   onPressed: _createClub,
                   icon: const Icon(Icons.group_add_outlined, size: 18),
-                  label: Text(context.l10n.createRiderClub, overflow: TextOverflow.ellipsis),
+                  label: Text(context.l10n.createRiderClub,
+                      overflow: TextOverflow.ellipsis),
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          // The master group: every post from every group.
+          Card(
+            key: const Key('hubs_all_riders'),
+            margin: EdgeInsets.zero,
+            color: context.palette.surface,
+            child: ListTile(
+              leading: Icon(Icons.public, color: context.palette.primary),
+              title: Text(context.l10n.allRidersGroup,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: context.palette.textPrimary)),
+              subtitle: Text(context.l10n.allRidersGroupSubtitle,
+                  style: TextStyle(color: context.palette.textSecondary)),
+              trailing: _resolving == kAllRidersForumId
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: context.palette.primary))
+                  : Icon(Icons.chevron_right,
+                      color: context.palette.textTertiary),
+              onTap: () => _resolveAndOpen(
+                kAllRidersForumId,
+                () => ForumRepository()
+                    .getOrCreateGeneralForum(topic: kAllRidersTopic),
+              ),
+            ),
           ),
           const SizedBox(height: 24),
           _SectionTitle(context.l10n.yourGarageHubs),
@@ -125,7 +158,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
                   resolving: _resolving == paddock.slug,
                   onTap: () => _resolveAndOpen(
                     paddock.slug,
-                    () => ForumRepository().getOrCreateForum(brand: paddock.brand),
+                    () => ForumRepository()
+                        .getOrCreateForum(brand: paddock.brand),
                   ),
                 );
               },
@@ -139,7 +173,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
             resolving: _resolving,
             onTap: (board) => _resolveAndOpen(
               board.slug,
-              () => ForumRepository().getOrCreateGeneralForum(topic: board.topic),
+              () =>
+                  ForumRepository().getOrCreateGeneralForum(topic: board.topic),
             ),
           ),
           const SizedBox(height: 24),
@@ -149,7 +184,8 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
               TextButton.icon(
                 onPressed: _createClub,
                 icon: Icon(Icons.add, size: 18, color: context.palette.primary),
-                label: Text(context.l10n.create, style: TextStyle(color: context.palette.primary)),
+                label: Text(context.l10n.create,
+                    style: TextStyle(color: context.palette.primary)),
               ),
             ],
           ),
@@ -169,7 +205,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) => Text(
         text,
         style: TextStyle(
-            fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: context.palette.textPrimary),
       );
 }
 
@@ -197,7 +235,8 @@ class _SearchShortcut extends StatelessWidget {
                 child: Text(context.l10n.searchForumsHint,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: context.palette.textTertiary, fontSize: 14)),
+                    style: TextStyle(
+                        color: context.palette.textTertiary, fontSize: 14)),
               ),
             ],
           ),
@@ -217,8 +256,10 @@ class _GarageHubs extends ConsumerWidget {
     final bikes = ref.watch(garageProvider).valueOrNull ?? const <BikeEntity>[];
 
     return forumsAsync.when(
-      loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-      error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(forumsForGarageProvider)),
+      loading: () => Center(
+          child: CircularProgressIndicator(color: context.palette.primary)),
+      error: (e, _) => ErrorView(
+          error: e, onRetry: () => ref.invalidate(forumsForGarageProvider)),
       data: (forums) {
         if (forums.isEmpty) return const _GarageEmptyBanner();
         return SizedBox(
@@ -250,7 +291,9 @@ class _GarageHubs extends ConsumerWidget {
 BikeEntity? bikeForForum(String forumId, List<BikeEntity> bikes) {
   final matches = [
     for (final b in bikes)
-      if (b.model.trim().isNotEmpty && bikeForumSlug(b.brand, model: b.model) == forumId) b,
+      if (b.model.trim().isNotEmpty &&
+          bikeForumSlug(b.brand, model: b.model) == forumId)
+        b,
   ];
   if (matches.isEmpty) return null;
   return matches.where((b) => b.isActive).firstOrNull ?? matches.first;
@@ -272,7 +315,8 @@ class _GarageEmptyBanner extends StatelessWidget {
               children: [
                 Text(
                   context.l10n.garageHubEmpty,
-                  style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 OutlinedButton(
@@ -295,9 +339,11 @@ class _GarageHeroCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isFollowing = ref.watch(forumFollowingProvider(forum.id)).valueOrNull ?? false;
+    final isFollowing =
+        ref.watch(forumFollowingProvider(forum.id)).valueOrNull ?? false;
     final accent = bike?.color ?? context.palette.primary;
-    final odometer = bike == null ? null : formatOdometerKm(bike!.currentOdometerKm);
+    final odometer =
+        bike == null ? null : formatOdometerKm(bike!.currentOdometerKm);
 
     return Container(
       key: Key('garage_hub_${forum.id}'),
@@ -306,7 +352,10 @@ class _GarageHeroCard extends ConsumerWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [context.palette.ink, Color.lerp(context.palette.ink, accent, 0.45)!],
+          colors: [
+            context.palette.ink,
+            Color.lerp(context.palette.ink, accent, 0.45)!
+          ],
         ),
       ),
       padding: const EdgeInsets.all(AppDimensions.paddingMd),
@@ -323,14 +372,20 @@ class _GarageHeroCard extends ConsumerWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.w800, color: context.palette.onInk),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: context.palette.onInk),
                 ),
               ),
               IconButton(
-                tooltip: isFollowing ? context.l10n.unfollow : context.l10n.follow,
-                onPressed: () => setForumFollowing(context, ref, forum.id, follow: !isFollowing),
+                tooltip:
+                    isFollowing ? context.l10n.unfollow : context.l10n.follow,
+                onPressed: () => setForumFollowing(context, ref, forum.id,
+                    follow: !isFollowing),
                 icon: Icon(
-                  isFollowing ? Icons.notifications_active : Icons.notifications_none,
+                  isFollowing
+                      ? Icons.notifications_active
+                      : Icons.notifications_none,
                   color: context.palette.onInk,
                 ),
               ),
@@ -354,9 +409,10 @@ class _GarageHeroCard extends ConsumerWidget {
                     backgroundColor: context.palette.onInk,
                     foregroundColor: context.palette.ink,
                   ),
-                  onPressed: () => openForumComposer(context, forum.id),
+                  onPressed: () => openNewForumPost(context, group: forum.id),
                   icon: const Icon(Icons.help_outline, size: 18),
-                  label: Text(context.l10n.askOwners, overflow: TextOverflow.ellipsis),
+                  label: Text(context.l10n.askOwners,
+                      overflow: TextOverflow.ellipsis),
                 ),
               ),
               const SizedBox(width: 8),
@@ -367,7 +423,8 @@ class _GarageHeroCard extends ConsumerWidget {
                     side: BorderSide(color: context.palette.onInkMuted),
                   ),
                   onPressed: () => context.push('/forums/${forum.id}'),
-                  child: Text(context.l10n.browseModelBoard, overflow: TextOverflow.ellipsis),
+                  child: Text(context.l10n.browseModelBoard,
+                      overflow: TextOverflow.ellipsis),
                 ),
               ),
             ],
@@ -424,14 +481,17 @@ class _BrandPaddockCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800, color: context.palette.textPrimary),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: context.palette.textPrimary),
                 ),
                 const Spacer(),
                 if (resolving)
                   SizedBox(
                     width: 14,
                     height: 14,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: accent),
                   )
                 else
                   ..._activityLines(context),
@@ -442,12 +502,16 @@ class _BrandPaddockCard extends StatelessWidget {
       ),
     );
   }
+
   List<Widget> _activityLines(BuildContext context) {
     final riders = activity?.riders ?? forum?.followerCount ?? 0;
     final posts = activity?.posts ?? forum?.postCount ?? 0;
     final style = TextStyle(fontSize: 11, color: context.palette.textSecondary);
     if (riders == 0 && posts == 0) {
-      return [Text(context.l10n.openPaddock, maxLines: 1, overflow: TextOverflow.ellipsis, style: style)];
+      return [
+        Text(context.l10n.openPaddock,
+            maxLines: 1, overflow: TextOverflow.ellipsis, style: style)
+      ];
     }
     return [
       if (posts > 0)
@@ -467,14 +531,16 @@ class _TopicBento extends StatelessWidget {
   final String? resolving;
   final void Function(TopicBoard) onTap;
 
-  const _TopicBento({required this.stats, required this.resolving, required this.onTap});
+  const _TopicBento(
+      {required this.stats, required this.resolving, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     const boards = TopicBoard.values;
     final rows = <Widget>[];
     for (var i = 0; i < boards.length; i += 2) {
-      final pair = boards.sublist(i, i + 2 > boards.length ? boards.length : i + 2);
+      final pair =
+          boards.sublist(i, i + 2 > boards.length ? boards.length : i + 2);
       rows.add(IntrinsicHeight(
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -545,7 +611,8 @@ class _TopicTile extends StatelessWidget {
                     SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: accent),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: accent),
                     ),
                 ],
               ),
@@ -562,14 +629,16 @@ class _TopicTile extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   topicBoardBlurb(context.l10n, board),
-                  style: TextStyle(fontSize: 11, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 11, color: context.palette.textSecondary),
                 ),
               ],
               if (forum != null) ...[
                 const SizedBox(height: 4),
                 Text(
                   context.l10n.forumThreadsCount(forum!.postCount),
-                  style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+                  style: TextStyle(
+                      fontSize: 11, color: context.palette.textTertiary),
                 ),
               ],
             ],
@@ -588,13 +657,16 @@ class _RiderClubs extends ConsumerWidget {
     final clubsAsync = ref.watch(customForumsProvider);
     final user = ref.watch(currentUserProvider);
     return clubsAsync.when(
-      loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
-      error: (e, _) => ErrorView(error: e, onRetry: () => ref.invalidate(customForumsProvider)),
+      loading: () => Center(
+          child: CircularProgressIndicator(color: context.palette.primary)),
+      error: (e, _) => ErrorView(
+          error: e, onRetry: () => ref.invalidate(customForumsProvider)),
       data: (clubs) {
         if (clubs.isEmpty) {
           return Text(
             context.l10n.noRiderMadeForums,
-            style: TextStyle(color: context.palette.textSecondary, fontSize: 13),
+            style:
+                TextStyle(color: context.palette.textSecondary, fontSize: 13),
           );
         }
         return Column(
@@ -611,7 +683,8 @@ class _RiderClubs extends ConsumerWidget {
                         color: context.palette.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(Icons.groups_outlined, color: context.palette.primary),
+                      child: Icon(Icons.groups_outlined,
+                          color: context.palette.primary),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -636,14 +709,16 @@ class _RiderClubs extends ConsumerWidget {
                               // maintains none of them.
                               if (user != null &&
                                   (club.createdBy == user.uid ||
-                                      club.maintainerIds.contains(user.uid))) ...[
+                                      club.maintainerIds
+                                          .contains(user.uid))) ...[
                                 const SizedBox(width: 6),
                                 Icon(Icons.shield_outlined,
                                     size: 14, color: context.palette.success),
                                 const SizedBox(width: 2),
                                 Text(context.l10n.clubMaintainerBadge,
                                     style: TextStyle(
-                                        fontSize: 11, color: context.palette.success)),
+                                        fontSize: 11,
+                                        color: context.palette.success)),
                               ],
                             ],
                           ),
@@ -653,16 +728,21 @@ class _RiderClubs extends ConsumerWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(
-                                  fontSize: 12, color: context.palette.textSecondary),
+                                  fontSize: 12,
+                                  color: context.palette.textSecondary),
                             ),
                           Text(
-                            context.l10n.postsFollowers(club.postCount, club.followerCount),
-                            style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
+                            context.l10n.postsFollowers(
+                                club.postCount, club.followerCount),
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: context.palette.textTertiary),
                           ),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: context.palette.textTertiary),
+                    Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary),
                   ],
                 ),
               ),

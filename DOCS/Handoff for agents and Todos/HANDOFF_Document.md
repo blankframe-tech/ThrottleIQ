@@ -1,19 +1,20 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-22._
+_Last updated: 2026-10-23._
 
 **Branches (2026-10-22):**
-- `main` includes the Firestore quota outage mode (merge `c751968e`, §104.6) and the `scripts/oneoff/` move (`03a209b5`). `scripts/check.sh` passed on `9df0365a`.
-- `experimental` = `main` (fast-forwarded 2026-10-22).
+- `main` (`a0bf4f4f`, pushed 2026-10-22) includes the Firestore quota outage mode (merge `c751968e`, §104.6), the `scripts/oneoff/` move (`03a209b5`) and the 2026-10-22 agent run (see Recent sessions). `scripts/check.sh` passed on `a0bf4f4f`'s parent merge `0568c1ec`.
+- `experimental` is 39 commits behind `main` since that run (last fast-forwarded 2026-10-22).
+- Waiting for owner review: `lane/f-wcag-contrast` (pushed, palette contrast fix, owner item 24).
 - Retired 2026-10-22, all fully in `main`: `feat/crash-shadow-mode`, `feat/quota-outage`, `data/apify-dhaka-places`.
-- In progress: `fix/reads-104` (a separate session: Firestore ack timeout, §104.6 follow-up).
+- Merged into `main` 2026-10-22: `fix/reads-104` (via `lane/a-reads-likes`).
 - Never merged: `indriyo` and `mayabi` (notes below). Three Dependabot branches exist on `origin` (owner item 16).
 
-**`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 6 commits ahead, last merged `main` 2026-10-17). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
+**`indriyo`** (Indriyo digital rearview mirror / ADAS HUD, 9 commits ahead, last merged `main` 2026-10-22). Keep it current by merging `main` into it (that is how it has been kept, not rebased), then run `scripts/check.sh`. After each merge, check the HUD wiring in `active_ride_screen.dart` against the current palette (`context.palette`) and ride state (a narrow `rideRecordingProvider` select). The HUD has never run on a device.
 
-**`mayabi`** (Maya Ride integration kit, worktree `.claude/worktrees/mayabi`, 6 commits ahead). The kit is `mayabi/` (package `throttleiq_mayabi`), plus `functions/src/partner-api/` on our side. Owner decision 2026-10-17: never merged into `main`, and no cherry-picks into `main` without asking. Details and go-live steps are in the HANDOFF on that branch and in its `mayabi_todos.md`; the pilot is owner item 7.
-- Keep it current: `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Expect conflicts in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts` and `scripts/check.sh`.
-- After a rebase that touches a vendored app file, copy it again into `mayabi/lib/src/vendor/` (`test/vendor_sync_test.dart` fails on drift).
+**`mayabi`** (Maya Ride integration kit, worktree `.claude/worktrees/mayabi`, 8 commits ahead, last merged `main` 2026-10-22). The kit is `mayabi/` (package `throttleiq_mayabi`), plus `functions/src/partner-api/` on our side. Owner decision 2026-10-17: never merged into `main`, and no cherry-picks into `main` without asking. Details and go-live steps are in the HANDOFF on that branch and in its `mayabi_todos.md`; the pilot is owner item 7.
+- Keep it current by merging `main` into it (since 2026-10-22; no rebase, so no force-push), then `scripts/check.sh`, then `git push origin mayabi`. Expect conflicts in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts` and `scripts/check.sh`.
+- After a merge that touches a vendored app file, copy it again into `mayabi/lib/src/vendor/` (`test/vendor_sync_test.dart` fails on drift).
 - Releases from that branch: its `scripts/deploy.sh` tags `<tag>-<branch>` and publishes a non-latest prerelease, so `releases/latest` stays a `main` build.
 
 ## Branch `mayabi`: Maya Ride integration kit, never merged into `main`
@@ -67,7 +68,7 @@ _Last updated: 2026-10-22._
 
 ### Release
 
-- **Latest release:** `beta-v4.7.1` (`1.0.0-beta.4.7.1+29`, 2026-10-16) on GitHub, with the universal and split APKs plus the AAB. The release notes are the GitHub release bodies. The install page https://throttleiqfb.web.app/install/ serves it.
+- **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, notes only. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
 - **`config/app.minBuild = 29`** is live (set 2026-10-18). Builds 27 and 28 see the update screen; builds 26 and older have no gate.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. The last build on record on the internal track is `1.0.0-beta.1+3` (2026-08-29, no update gate). Owner item 4.
@@ -165,7 +166,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 |---|---|
 | Firebase project | `throttleiqfb` (asia-south1), Spark plan |
 | App id | `com.bft.throttleiq` (Android and iOS) |
-| Version, schema | `1.0.0-beta.4.7.1+29`; local DB schema v29 (`database_helper.dart`) |
+| Version, schema | `1.0.0-beta.4.8.0+30`; local DB schema v29 (`database_helper.dart`) |
 | Tests | 2026-10-21/22: about 2,300 Flutter tests, 315 rules tests, functions unit and emulator suites. All through `scripts/check.sh`. |
 | File storage | Cloudinary, cloud `vjvcigkt`, unsigned preset `throttleiq_unsigned` (limits: owner item 11). No Firebase Storage. |
 | Signing | `throttleiq-release.keystore` (repo root, gitignored, backed up 2026-09-21) and `app/android/key.properties`. Moving it out of the Drive-synced repo: owner item 9. |
@@ -175,8 +176,8 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 | Privacy policy | https://throttleiqfb.web.app/privacy.html |
 | Judgement calls | `DOCS/For Devs and Contributors/architecture/assumptions.md` |
 | Offline writes | A write the rider asked for goes through `app/lib/core/cloud/outbox_service.dart`, never a bare `await` on Firestore: an awaited write with no connection never completes (and doesn't throw). Optional telemetry uses a best-effort write with a timeout. |
-| Android version codes | Every APK and AAB carries the pubspec build number (`build.gradle.kts` resets the split codes; `deploy.sh` checks with `aapt2`). Bump the build number for every release. |
-| Release assets | Keep the APKs on each GitHub release: the install page links `app-release.apk`. |
+| Android version codes | The AAB carries the pubspec build number. Bump it for every release; Play rejects a reused code. |
+| Release assets | None. `deploy.sh` builds the AAB locally for a manual Play Console upload; GitHub releases hold notes and the install link only. |
 
 ## Operational notes
 
@@ -218,6 +219,25 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ## Recent sessions (newest first)
 
+### 2026-10-25
+
+- **Password link /r/@handle (uncommitted, not deployed):** the Settings toggle now asks for a password (8+ chars); every in-app ride auto-shares to `/r/<handle>`; the viewer asks for the password and shows the last ride's end point after the ride. Doc `handleLinks/{sha256("throttleiq-r:uid:password")}`; `livePointers/{uid}` is owner-only now; erasure deletes `handleLinks`. check.sh green apart from the rules step (port 8080), which passed on 8181 (326/326); functions emulator 15/15. Needs rules + hosting deploy and an app build. Marketing brief + poster: `Handoffs for Non Coding Agents/marketing/lost_phone_password_link.DRAFT.md`, `posters/batch_four/`. Follow-ups in issues_open §112.
+- **On `main`, `check.sh` green:** tour steps lay out screenshot left and text right with no scrolling; Highway Radar banner and map pins removed; the Places tab now shares the on-device places cache, with **Settings → Offline places → Clear**; new forum post page (`/forums/new`): write first, then **Share** picks All Riders plus up to 5 groups (`alsoIn`, `collectionGroup('posts')`). Details in `features.md`. Rules and indexes deployed 2026-10-25; owner item 50 is confirming the `posts` indexes are Enabled. Not checked on a device.
+- **check.sh with port 8080 taken:** another local app held 8080, so the rules emulator could not start. `CHECK_FIREBASE_CONFIG` pointing at a copy of `firebase.json` with other emulator ports (and absolute rules/index paths) works.
+
+### 2026-10-24
+
+- **Release `beta-v4.8.0` (+30):** `scripts/deploy.sh --skip-ios` from `007c3593`, shipping everything merged since `beta-v4.7.1` (quota outage mode, moderation, places cache, tour v5, ride actions menu, the 2026-10-22 agent-room lanes). The AAB was handed to the owner for a Play Console upload. `config/app.minBuild` stays 29.
+- **APKs retired:** every APK/AAB asset deleted from GitHub releases, every release body now opens with the Play install link, the APK card removed from `public/install/index.html`, and `deploy.sh` builds only the AAB and attaches nothing.
+
+### 2026-10-22 (agent rooms run): eight lanes from `DOCS/agent_rooms/`, merged and pushed
+
+- Coordinator branch `integration/agent-rooms-2026-10-22`, one worktree per lane, a fresh reviewer per lane, `check.sh` once after the last merge; `main` fast-forwarded to `a0bf4f4f`. Nothing deployed, nothing on a device.
+- Code: `fix/reads-104` merged, keeping main's §104.1 places cache (§104.2 interval, §104.3 vote skip, §104.6 screen-write `ackOrQueued`); §80 step 1 (no legacy likes sweep); `crashEvents.createdAt` floored to the UTC hour; functions: bounded purges with a time budget, retry-safe erasure, report-first moderation (`ba11d594`); `reportSilently` plus a bare-`catch (_)` ratchet at 54 (§83.14); 21 widget tests (§83.28) that found and fixed the Sync issues Retry message.
+- Branches: `main` merged into `mayabi` and `indriyo` (no rebase), pushed. WCAG palette on `lane/f-wcag-contrast`, not merged.
+- Drafts for the owner (all marked DRAFT): `DOCS/agent_rooms/drafts/` (deploy/test rules, §84 index audit, prize plan, decision cards for the Maps data and Blaze), signed-upload design, `public/.terms.DRAFT.html`, Data Safety CSV and review, forum starter posts, SafeSpot flyer, Play reviewer video script. Maya meeting prep is local only (`DOCS/General/partnerships/`).
+- Owner page items 46-50 added (likes steps 2-3, privacy.html gaps, Verified vs SafeSpot, Maya pricing in public, CodeQL check). Room to-dos carry dated status lines.
+
 ### 2026-10-22 (tour): feature tour shows the real screens
 
 - Each step shows a capture of its real screen (`app/assets/images/tour_*.jpg`, 456 KB, from the dark UI screenshots) with the numbered callouts pinned on it. The schematic spotlight and the miniature nav bar are gone.
@@ -251,7 +271,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **Quota outage mode (§104.6), merged 2026-10-22, not released, not on a device:**
   - When the Spark daily quota runs out, sync and the outbox pause, riders see `OverQuotaBar`, and sync resumes after the reset.
   - The owner email alert is live: re-apply steps in `scripts/README.md` "Firestore daily quota".
-  - Rehearsal on a throwaway project: `DOCS/For Devs and Contributors/load_test/quota-rehearsal-2026-10-21.md`. `count()` and transactions fail once reads run out, which triggers the pause; gets and listeners keep working; nothing is lost.
+  - Rehearsal on a throwaway project: `DOCS/Handoff for agents and Todos/load_test/quota-rehearsal-2026-10-21.md`. `count()` and transactions fail once reads run out, which triggers the pause; gets and listeners keep working; nothing is lost.
   - E2E 4/4 on an iPhone 17 simulator with `4b914c10`.
   - Left: the release (owner item 26) and the Bangla review of `overQuotaBar` and `errTooManyRequests` (owner item 28).
 - **Moderation, deletion and App Check (details: `judge.md`, 2026-10-21 updates), pushed, nothing deployed:**
@@ -286,7 +306,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **Releases `beta-v4.6.0` (+27) and `beta-v4.7.0` (+28):** `scripts/deploy.sh --skip-ios`, then `flutter run --release` to the iPhone separately. Neither was uploaded to Play.
 - **Every fix branch merged (`1349db5`):** all `fix/oct14-tiq-*`, `fix/oct15-throttleiq`, `oct14-int` and `merge/oct15-origin-main`, plus `feat/crash-shadow-mode`. Three sessions shared one tree that day, which is where the "one session commits" rule comes from.
 - **Live-share writes (`ce82025`):** `shouldWriteLiveSession` (`live_session_coordinator.dart`) writes `liveSessions/{token}` only on a new token, a status change, 100 m of movement or 15 s since the last write. A stopped rider writes every 20 s, inside the viewer's 30 s "updates delayed" warning. The Spark ceiling rose from about 55 to at most 111 live-share hours a day. The real fix is owner item 3.
-- **Spark load test:** `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota`). Reads run out at about 18 daily riders. Report: `DOCS/For Devs and Contributors/load_test/load-test-2026-10-15.md`; issues §104.
+- **Spark load test:** `scripts/loadtest/quota_sim.js` (`npm run loadtest:quota`). Reads run out at about 18 daily riders. Report: `DOCS/Handoff for agents and Todos/load_test/load-test-2026-10-15.md`; issues §104.
 - **Agent round:**
   - PRD style check closed (PRD §13).
   - The `publicStatsValid` compile warning is gone; `scripts/test/rules/rules_compile.test.js` fails on any compiler issue.

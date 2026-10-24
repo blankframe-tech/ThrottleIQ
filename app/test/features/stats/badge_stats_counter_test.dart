@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/stats/data/badge_stats_counter.dart';
@@ -114,4 +116,30 @@ void main() {
       expect(badgesNeedingCount(const {}), isEmpty);
     });
   });
+
+  // §104.6: a batch the server never acks (offline, write quota spent) is
+  // treated as unfinished, and the rest wait for a later app start instead of
+  // each stalling another 8 s.
+  testWidgets('countHeldBadges stops at the first unacked batch',
+      (tester) async {
+    final counter = _NeverAcked();
+    bool? result;
+    unawaited(counter.countHeldBadges(uid, {
+      'first_ride': {'badgeId': 'first_ride'},
+      'night_1': {'badgeId': 'night_1'},
+    }).then((r) => result = r));
+    await tester.pump(const Duration(seconds: 9));
+    expect(result, isFalse);
+    expect(counter.commits, 1);
+  });
+}
+
+class _NeverAcked extends BadgeStatsCounter {
+  int commits = 0;
+
+  @override
+  Future<void> commit(List<PlannedWrite> writes) {
+    commits++;
+    return Completer<void>().future;
+  }
 }

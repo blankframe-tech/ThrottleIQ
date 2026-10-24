@@ -17,6 +17,7 @@ import 'package:throttleiq/features/profile/data/repositories/profile_repository
 import 'package:throttleiq/features/ride/data/models/ride_model.dart';
 import 'package:throttleiq/features/ride/domain/calculators/segment_speed_aggregator.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Coordinates local storage persistence (SQLite batching, SharedPreferences interruption recovery)
 /// and post-ride baseline telemetry publishing.
@@ -198,7 +199,9 @@ class RidePersistenceCoordinator {
         totalRides: stats.totalRides,
         badgeIds: earnedIds,
       );
-    } catch (_) {/* non-fatal */}
+    } catch (e, st) {
+      reportSilently(e, st, where: 'ride.updatePublicStats');
+    }
   }
 
   Future<void> _bestEffortWrite(

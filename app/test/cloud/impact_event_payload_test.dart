@@ -86,26 +86,38 @@ void main() {
   group('crashEventCloudPayload (research copy)', () {
     test('null until answered, and null without consent', () {
       expect(
-          crashEventCloudPayload(row(),
-              ownerUid: 'u1', platform: 'ios', consentVersion: 1),
-          isNull);
+        crashEventCloudPayload(
+          row(),
+          ownerUid: 'u1',
+          platform: 'ios',
+          consentVersion: 1,
+        ),
+        isNull,
+      );
       expect(
-          crashEventCloudPayload(row(extra: {'label': 'crash'}),
-              ownerUid: 'u1', platform: 'ios', consentVersion: 1),
-          isNull);
+        crashEventCloudPayload(
+          row(extra: {'label': 'crash'}),
+          ownerUid: 'u1',
+          platform: 'ios',
+          consentVersion: 1,
+        ),
+        isNull,
+      );
     });
 
     test('de-identified: a 6-char geohash, no position, no free text', () {
       final p = crashEventCloudPayload(
-        row(extra: {
-          'label': 'crash',
-          'consent_research': 1,
-          'label_detail': jsonEncode({
-            'severity': 'minor',
-            'surface': 'rail_crossing',
-            'note': 'should never travel',
-          }),
-        }),
+        row(
+          extra: {
+            'label': 'crash',
+            'consent_research': 1,
+            'label_detail': jsonEncode({
+              'severity': 'minor',
+              'surface': 'rail_crossing',
+              'note': 'should never travel',
+            }),
+          },
+        ),
         ownerUid: 'u1',
         platform: 'ios',
         consentVersion: 1,
@@ -138,11 +150,13 @@ void main() {
 
     test('an unknown surface or severity is dropped, not passed through', () {
       final p = crashEventCloudPayload(
-        row(extra: {
-          'label': 'fall',
-          'consent_research': 1,
-          'label_detail': jsonEncode({'surface': 'ice', 'severity': 'bad'}),
-        }),
+        row(
+          extra: {
+            'label': 'fall',
+            'consent_research': 1,
+            'label_detail': jsonEncode({'surface': 'ice', 'severity': 'bad'}),
+          },
+        ),
         ownerUid: 'u1',
         platform: 'ios',
         consentVersion: 1,
@@ -150,17 +164,58 @@ void main() {
       expect(p.containsKey('surface'), isFalse);
       expect(p.containsKey('severity'), isFalse);
     });
+
+    Object? createdAt(Object? local) => crashEventCloudPayload(
+          row(
+            extra: {
+              'label': 'crash',
+              'consent_research': 1,
+              'created_at': local
+            },
+          ),
+          ownerUid: 'u1',
+          platform: 'ios',
+          consentVersion: 1,
+        )!['createdAt'];
+
+    test('createdAt is floored to the UTC hour; the private copy is exact', () {
+      expect(row()['created_at'], '2026-10-14T15:29:30.000Z');
+      expect(createdAt('2026-10-14T15:29:30.000Z'), '2026-10-14T15:00:00.000Z');
+      expect(
+        impactEventCloudPayload(row())['createdAt'],
+        '2026-10-14T15:29:30.000Z',
+      );
+    });
+
+    test('createdAt edges: on the hour, 59:59.999, offset, unparseable', () {
+      expect(createdAt('2026-10-14T15:00:00.000Z'), '2026-10-14T15:00:00.000Z');
+      expect(createdAt('2026-10-14T15:59:59.999Z'), '2026-10-14T15:00:00.000Z');
+      expect(createdAt('2026-12-31T23:59:59.999Z'), '2026-12-31T23:00:00.000Z');
+      // +06:00 (Dhaka) is converted to UTC before flooring.
+      expect(
+        createdAt('2026-10-15T00:30:00.000+06:00'),
+        '2026-10-14T18:00:00.000Z',
+      );
+      expect(createdAt('not a date'), isNull);
+      expect(createdAt(null), isNull);
+    });
   });
 
   group('bikeClassFor', () {
     test('catalogue examples', () {
       expect(
-          bikeClassFor(brand: 'Honda', model: 'CG 125', cc: 125), 'commuter');
+        bikeClassFor(brand: 'Honda', model: 'CG 125', cc: 125),
+        'commuter',
+      );
       expect(bikeClassFor(brand: 'Yamaha', model: 'R15', cc: 155), 'sport');
       expect(
-          bikeClassFor(brand: 'Yamaha', model: 'Ray ZR', cc: 125), 'scooter');
+        bikeClassFor(brand: 'Yamaha', model: 'Ray ZR', cc: 125),
+        'scooter',
+      );
       expect(
-          bikeClassFor(brand: 'Hero', model: 'Xpulse 200 4v Pro'), 'adventure');
+        bikeClassFor(brand: 'Hero', model: 'Xpulse 200 4v Pro'),
+        'adventure',
+      );
       expect(bikeClassFor(brand: 'KTM', model: 'RC 390'), 'sport');
       expect(bikeClassFor(model: 'Anything', isEbike: true), 'ebike');
       expect(bikeClassFor(model: 'Unknown big twin', cc: 650), 'sport');

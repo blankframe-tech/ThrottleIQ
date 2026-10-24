@@ -57,7 +57,8 @@ Map<String, Object?> impactEventCloudPayload(Map<String, Object?> row) {
 /// Null unless the rider answered and opted in (`consent_research = 1`).
 /// No uid in the content beyond [ownerUid] (needed so the rider can delete
 /// it, and never readable by clients), no exact position (a ~1.2 × 0.6 km
-/// geohash cell), no free text.
+/// geohash cell), no exact time (`createdAt` is floored to the UTC hour),
+/// no free text.
 Map<String, Object?>? crashEventCloudPayload(
   Map<String, Object?> row, {
   required String ownerUid,
@@ -78,7 +79,8 @@ Map<String, Object?>? crashEventCloudPayload(
 
   final out = <String, Object?>{
     'ownerUid': ownerUid,
-    'createdAt': row['created_at'],
+    // Floored to the UTC hour: an exact ms next to ownerUid re-identifies.
+    'createdAt': _hourUtc(row['created_at']),
     'platform': platform,
     'label': label,
     'detectedTier': tier >= 0 ? tier : null,
@@ -98,8 +100,10 @@ Map<String, Object?>? crashEventCloudPayload(
       isEbike: _bool(row['bike_is_ebike']) ?? false,
     ),
     'surface': _oneOf(detail['surface'], RoadSurface.values.map((s) => s.wire)),
-    'severity':
-        _oneOf(detail['severity'], ImpactSeverity.values.map((s) => s.wire)),
+    'severity': _oneOf(
+      detail['severity'],
+      ImpactSeverity.values.map((s) => s.wire),
+    ),
     'geohash6': lat == null || lng == null
         ? null
         : GeohashUtil.encode(lat, lng, precision: 6),
@@ -115,8 +119,12 @@ Map<String, Object?>? crashEventCloudPayload(
 /// A coarse bike class from the garage entry, for breakdowns ("sport bikes
 /// vs commuters"). A heuristic over the Bangladesh catalogue
 /// (bike_catalog.dart); anything unrecognised is a commuter.
-String bikeClassFor(
-    {int? cc, String? brand, String? model, bool isEbike = false}) {
+String bikeClassFor({
+  int? cc,
+  String? brand,
+  String? model,
+  bool isEbike = false,
+}) {
   if (isEbike) return 'ebike';
   final name = '${brand ?? ''} ${model ?? ''}'.toLowerCase();
   bool any(List<String> keys) => keys.any(name.contains);
@@ -132,7 +140,7 @@ String bikeClassFor(
     'vespa',
     'nmax',
     'aerox',
-    'pcx'
+    'pcx',
   ])) {
     return 'scooter';
   }
@@ -152,7 +160,7 @@ String bikeClassFor(
     'ninja',
     'sr 250',
     'sr 300',
-    'kpr'
+    'kpr',
   ])) {
     return 'sport';
   }
@@ -170,6 +178,13 @@ Map<String, Object?>? _json(Object? v) {
   } on FormatException {
     return null;
   }
+}
+
+String? _hourUtc(Object? v) {
+  final t = v is String ? DateTime.tryParse(v)?.toUtc() : null;
+  return t == null
+      ? null
+      : DateTime.utc(t.year, t.month, t.day, t.hour).toIso8601String();
 }
 
 String? _oneOf(Object? v, Iterable<String> allowed) =>

@@ -357,16 +357,30 @@ class OutboxService {
   /// replace-on-conflict, so two rides ended offline left only the second's
   /// teardown — the first session was never revoked and stayed publicly
   /// readable until its 24 h expiry.
+  ///
+  /// [linkKey] names the rider's `/r/{username}` password link doc; it is
+  /// parked on [lastLat]/[lastLng] ("last seen here") instead of emptied.
   Future<bool> enqueueLiveSessionTeardown({
     required String uid,
     required String? token,
+    String? linkKey,
+    double? lastLat,
+    double? lastLng,
     bool attemptNow = true,
   }) async {
     final entryId = liveTeardownEntryId(uid, token);
     await _dao.enqueue(
       id: entryId,
       kind: OutboxKind.liveSessionTeardown,
-      payload: {'uid': uid, 'token': token},
+      payload: {
+        'uid': uid,
+        'token': token,
+        if (linkKey != null) 'linkKey': linkKey,
+        if (lastLat != null && lastLng != null) ...{
+          'lastLat': lastLat,
+          'lastLng': lastLng,
+        },
+      },
     );
     _changes.add(null);
     if (!attemptNow) return false;
@@ -642,6 +656,11 @@ class OutboxService {
     final uid = entry.payload['uid'] as String?;
     if (uid == null) return OutboxDeliveryResult.discarded;
     final token = entry.payload['token'] as String?;
+    // Absent on entries queued before the password link: their uid-keyed
+    // pointer is owner-only now, so there is nothing public to clear.
+    final linkKey = entry.payload['linkKey'] as String?;
+    final lastLat = (entry.payload['lastLat'] as num?)?.toDouble();
+    final lastLng = (entry.payload['lastLng'] as num?)?.toDouble();
 
     try {
       if (token != null) {
@@ -671,27 +690,41 @@ class OutboxService {
       // concurrent re-share can't slip in between. The pointer may not exist
       // at all (sharing never turned on, or the public link is off) — then
       // there is nothing to clear.
-      final pointerRef = _firestore.collection('livePointers').doc(uid);
-      await _firestore.runTransaction((tx) async {
-        final snap = await tx.get(pointerRef);
-        final data = snap.data();
-        final updatedAt = data?['updatedAt'];
-        if (!shouldClearLivePointer(
-          pointerExists: snap.exists,
-          pointerToken: data?['token'] as String?,
-          pointerUpdatedAt: updatedAt is Timestamp ? updatedAt.toDate() : null,
-          entryToken: token,
-          entryCreatedAt: entry.createdAt,
-        )) {
-          return;
-        }
-        tx.set(pointerRef, {
-          'uid': uid,
-          'token': null,
-          'active': false,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      }).timeout(kOutboxAttemptTimeout);
+      final pointerRef = linkKey == null
+          ? null
+          : _firestore.collection('handleLinks').doc(linkKey);
+      if (pointerRef != null) {
+        await _firestore.runTransaction((tx) async {
+          final snap = await tx.get(pointerRef);
+          final data = snap.data();
+          final updatedAt = data?['updatedAt'];
+          if (!shouldClearLivePointer(
+            pointerExists: snap.exists,
+            pointerToken: data?['token'] as String?,
+            pointerUpdatedAt:
+                updatedAt is Timestamp ? updatedAt.toDate() : null,
+            entryToken: token,
+            entryCreatedAt: entry.createdAt,
+          )) {
+            return;
+          }
+          tx.set(
+              pointerRef,
+              {
+                'uid': uid,
+                'token': null,
+                'active': false,
+                // Merge keeps the previous ride's spot when this one had no fix.
+                if (lastLat != null && lastLng != null) ...{
+                  'lastLat': lastLat,
+                  'lastLng': lastLng,
+                  'lastSeenAt': Timestamp.fromDate(entry.createdAt),
+                },
+                'updatedAt': FieldValue.serverTimestamp(),
+              },
+              SetOptions(merge: true));
+        }).timeout(kOutboxAttemptTimeout);
+      }
       // Last, so the RTDB node can never hold up the revoke or the pointer.
       final realtime = _realtime;
       if (token != null && realtime != null) {

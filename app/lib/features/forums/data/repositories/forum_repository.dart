@@ -5,13 +5,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/utils/slugify.dart';
+import '../../domain/forum_directory.dart';
 import '../../domain/entities/forum_entity.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/entities/forum_reply_entity.dart';
 import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Deterministic doc id for a rider-created forum.
 ///
@@ -347,15 +350,15 @@ class ForumRepository {
   /// this idempotent — re-adding an existing maintainer is a no-op rather
   /// than a duplicate entry.
   Future<void> addMaintainer(String forumId, String uid) async {
-    await _forums.doc(forumId).update({
+    await ackOrQueued(_forums.doc(forumId).update({
       'maintainerIds': FieldValue.arrayUnion([uid]),
-    });
+    }));
   }
 
   Future<void> removeMaintainer(String forumId, String uid) async {
-    await _forums.doc(forumId).update({
+    await ackOrQueued(_forums.doc(forumId).update({
       'maintainerIds': FieldValue.arrayRemove([uid]),
-    });
+    }));
   }
 
   /// Deletes a post and rolls back the forum's `postCount`.
@@ -380,7 +383,7 @@ class ForumRepository {
       'postCount': FieldValue.increment(-1),
       'lastPostId': postId,
     });
-    await batch.commit();
+    await ackOrQueued(batch.commit());
   }
 
   /// Deletes a reply and rolls back its post's `replyCount`.
@@ -522,6 +525,7 @@ class ForumRepository {
     String? authorBike,
     ForumAttachment? attachment,
     List<String> imageUrls = const [],
+    List<String> alsoIn = const [],
   }) async {
     final postRef = _forums.doc(forumId).collection('posts').doc();
 
@@ -543,6 +547,7 @@ class ForumRepository {
         authorBike: authorBike,
         attachment: attachment,
         imageUrls: imageUrls,
+        alsoIn: alsoIn,
       ),
       'createdAt': FieldValue.serverTimestamp(),
     });
@@ -550,7 +555,7 @@ class ForumRepository {
       'postCount': FieldValue.increment(1),
       'lastPostId': postRef.id,
     });
-    await batch.commit();
+    await ackOrQueued(batch.commit());
 
     return postRef.id;
   }
@@ -565,10 +570,11 @@ class ForumRepository {
     required bool isSolved,
     String? solutionReplyId,
   }) async {
-    await _forums.doc(forumId).collection('posts').doc(postId).update({
+    await ackOrQueued(
+        _forums.doc(forumId).collection('posts').doc(postId).update({
       'isSolved': isSolved,
       'solutionReplyId': solutionReplyId,
-    });
+    }));
   }
 
   /// The forums whose posts make up [forumId]'s post list: itself, plus —
@@ -618,8 +624,21 @@ class ForumRepository {
     int limit = kForumPostsPageSize,
     DateTime? before,
   }) async {
-    final perForum = await Future.wait(
-        forumIds.map((id) => _postsIn(id, limit: limit, before: before)));
+    final List<List<ForumPostEntity>> perForum;
+    if (forumIds.length == 1 && forumIds.first == kAllRidersForumId) {
+      // The master group's feed: every post in every group.
+      perForum = [
+        await _postsFrom(_firestore.collectionGroup('posts'),
+            limit: limit, before: before)
+      ];
+    } else {
+      perForum = await Future.wait([
+        for (final id in forumIds)
+          _postsFrom(_forums.doc(id).collection('posts'),
+              limit: limit, before: before),
+        _crossPostsInto(forumIds, limit: limit, before: before),
+      ]);
+    }
     final page = mergeForumPostPages(perForum, limit: limit);
     return ForumPostsPage(
       posts: await _hydrateVotes(page.posts),
@@ -628,15 +647,37 @@ class ForumRepository {
     );
   }
 
-  Future<List<ForumPostEntity>> _postsIn(
-    String forumId, {
+  /// Posts whose home is another group but that were also shared to one of
+  /// [forumIds] (their `alsoIn`). A failure here (say the index is still
+  /// building) costs only the cross-posts, never the forum's own list.
+  Future<List<ForumPostEntity>> _crossPostsInto(
+    List<String> forumIds, {
     required int limit,
     DateTime? before,
   }) async {
-    var q = _forums
-        .doc(forumId)
-        .collection('posts')
-        .orderBy('createdAt', descending: true);
+    if (forumIds.isEmpty) return const [];
+    try {
+      // shortcut: array-contains-any takes 30 values; a Pulse following more
+      // than 30 groups misses cross-posts into the rest. Split into chunks
+      // if riders get there.
+      return await _postsFrom(
+          _firestore
+              .collectionGroup('posts')
+              .where('alsoIn', arrayContainsAny: forumIds.take(30).toList()),
+          limit: limit,
+          before: before);
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'forum cross-posts');
+      return const [];
+    }
+  }
+
+  Future<List<ForumPostEntity>> _postsFrom(
+    Query<Map<String, dynamic>> source, {
+    required int limit,
+    DateTime? before,
+  }) async {
+    var q = source.orderBy('createdAt', descending: true);
     if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
     final snapshot = await q.limit(limit).get();
     return snapshot.docs

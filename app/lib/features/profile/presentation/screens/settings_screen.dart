@@ -20,11 +20,13 @@ import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/public_live_link_setting.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../ride/presentation/providers/auto_tracking_provider.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
+import '../../../poi_directory/presentation/providers/places_provider.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -426,6 +428,10 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
 
+              const SizedBox(height: 24),
+
+              // ── Offline places cache ───────────────────────────────────────
+              const _PlacesCacheTile(),
               const SizedBox(height: 24),
 
               // ── Sync issues (§69.O4) ───────────────────────────────────────
@@ -912,6 +918,66 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   }
 }
 
+/// Places (fuel pumps, garages, ...) kept on the device from rides and the
+/// Places tab, with a button to drop them all.
+class _PlacesCacheTile extends ConsumerWidget {
+  const _PlacesCacheTile();
+
+  Future<void> _clear(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final cleared = context.l10n.placesCacheCleared;
+    final failed = context.l10n.placesCacheClearFailed;
+    try {
+      await ref.read(placesCacheProvider).clear();
+      ref.invalidate(nearbyPlacesProvider);
+      messenger.showSnackBar(SnackBar(content: Text(cleared)));
+    } catch (e, st) {
+      reportNonFatal(e, st, reason: 'clear places cache');
+      messenger.showSnackBar(SnackBar(content: Text(failed)));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.palette.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.offline_pin_outlined,
+              color: context.palette.primary, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.placesCacheTitle,
+                    style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: context.palette.textPrimary)),
+                const SizedBox(height: 2),
+                Text(l10n.placesCacheSubtitle,
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textSecondary)),
+              ],
+            ),
+          ),
+          TextButton(
+            key: const Key('settings_clear_places_cache'),
+            onPressed: () => _clear(context, ref),
+            child: Text(l10n.placesCacheClear),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 /// One tappable segment of a label-plus-description segmented control. Used
 /// by the Language control (three segments) and by Appearance's Vibe and
 /// Brightness controls (two segments each) — Color has too many options for
@@ -1308,9 +1374,9 @@ class _ModuleSwitchTile extends StatelessWidget {
   }
 }
 
-/// Settings → Privacy & Safety: whether a live share also publishes the
-/// permanent `/r/@handle` link (issues §90.D7). Off by default; persisted by
-/// [PublicLiveLinkSetting] and read by LiveSessionCoordinator on each share.
+/// Settings → Privacy & Safety: the password-protected `/r/@handle` link
+/// (issues §90.D7). Off by default; turning it on asks for the password.
+/// Persisted by [PublicLiveLinkSetting], read by LiveSessionCoordinator.
 class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
   const _PublicLiveLinkToggleTile();
 
@@ -1322,6 +1388,20 @@ class _PublicLiveLinkToggleTile extends ConsumerStatefulWidget {
 class _PublicLiveLinkToggleTileState
     extends ConsumerState<_PublicLiveLinkToggleTile> {
   bool _enabled = false;
+
+  /// Asks for a password and turns the link on with it (or changes it).
+  /// Cancelling leaves the setting as it was.
+  Future<void> _setPassword() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    final password = await showDialog<String>(
+      context: context,
+      builder: (_) => const _LinkPasswordDialog(),
+    );
+    if (password == null) return;
+    await PublicLiveLinkSetting.enable(uid: uid, password: password);
+    if (mounted) setState(() => _enabled = true);
+  }
 
   @override
   void initState() {
@@ -1357,19 +1437,89 @@ class _PublicLiveLinkToggleTileState
                 Text(context.l10n.publicLiveLinkDesc,
                     style: TextStyle(
                         fontSize: 12, color: context.palette.textSecondary)),
+                if (_enabled)
+                  TextButton(
+                    onPressed: _setPassword,
+                    child: Text(context.l10n.publicLiveLinkChangePassword),
+                  ),
               ],
             ),
           ),
           Switch(
             value: _enabled,
-            onChanged: (v) {
-              setState(() => _enabled = v);
-              PublicLiveLinkSetting.setEnabled(v,
-                  uid: ref.read(currentUserProvider)?.uid);
+            onChanged: (v) async {
+              if (v) return _setPassword();
+              setState(() => _enabled = false);
+              await PublicLiveLinkSetting.disable();
             },
           ),
         ],
       ),
+    );
+  }
+}
+
+class _LinkPasswordDialog extends StatefulWidget {
+  const _LinkPasswordDialog();
+
+  @override
+  State<_LinkPasswordDialog> createState() => _LinkPasswordDialogState();
+}
+
+class _LinkPasswordDialogState extends State<_LinkPasswordDialog> {
+  final _controller = TextEditingController();
+  bool _tooShort = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text;
+    if (text.length < PublicLiveLinkSetting.minPasswordLength) {
+      setState(() => _tooShort = true);
+      return;
+    }
+    Navigator.of(context).pop(text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: context.palette.surface,
+      title: Text(context.l10n.publicLiveLinkPasswordTitle,
+          style: TextStyle(color: context.palette.textPrimary)),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(context.l10n.publicLiveLinkPasswordBody,
+              style: TextStyle(color: context.palette.textSecondary)),
+          TextField(
+            controller: _controller,
+            obscureText: true,
+            autofocus: true,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: context.l10n.password,
+              errorText: _tooShort
+                  ? context.l10n.publicLiveLinkPasswordTooShort
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(context.l10n.cancelAction),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(context.l10n.publicLiveLinkSave),
+        ),
+      ],
     );
   }
 }

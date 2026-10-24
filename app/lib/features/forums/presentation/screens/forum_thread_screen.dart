@@ -1,9 +1,6 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
@@ -19,27 +16,15 @@ import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../../core/utils/error_reporter.dart';
-import '../../../garage/presentation/providers/garage_provider.dart';
-import '../../domain/forum_author_bike.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
+import 'new_forum_post_screen.dart';
 
-/// Post list for a single forum, with a "New post" FAB.
-///
-/// [compose] opens the new-post sheet as soon as the screen appears ("Ask
-/// owners", "Start a discussion", "Share to forum"), pre-filled with
-/// [attachment] when one is being shared.
+/// Post list for a single forum, with a "New post" FAB that opens the
+/// new-post page with this forum ticked.
 class ForumThreadScreen extends ConsumerStatefulWidget {
   final String forumId;
-  final bool compose;
-  final ForumAttachment? attachment;
-  const ForumThreadScreen({
-    super.key,
-    required this.forumId,
-    this.compose = false,
-    this.attachment,
-  });
+  const ForumThreadScreen({super.key, required this.forumId});
 
   @override
   ConsumerState<ForumThreadScreen> createState() => _ForumThreadScreenState();
@@ -47,41 +32,6 @@ class ForumThreadScreen extends ConsumerStatefulWidget {
 
 class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
   String get forumId => widget.forumId;
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.compose) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-          _showNewPostSheet(context, ref, attachment: widget.attachment);
-        }
-      });
-    }
-  }
-
-  void _showNewPostSheet(BuildContext context, WidgetRef ref,
-      {ForumAttachment? attachment}) {
-    showModalBottomSheet<bool>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: context.palette.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
-      ),
-      builder: (_) =>
-          _NewPostSheet(forumId: forumId, initialAttachment: attachment),
-    ).then((posted) {
-      // Not a forumPostsProvider invalidate — see _NewPostSheetState._submit,
-      // which inserts the new post into forumPostsNotifierProvider directly
-      // instead (issues §54).
-      if (posted == true && mounted) {
-        ref.invalidate(forumsForGarageProvider);
-        ref.invalidate(forumsPulseFeedProvider);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,7 +75,7 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showNewPostSheet(context, ref),
+        onPressed: () => openNewForumPost(context, group: forumId),
         backgroundColor: context.palette.primary,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(context.l10n.newPost,
@@ -208,344 +158,6 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
             }),
           );
         },
-      ),
-    );
-  }
-}
-
-/// The "New post" sheet's content, as its own [ConsumerStatefulWidget]
-/// rather than inline closures over locally-created controllers.
-///
-/// Root cause of the actual crash here (confirmed from a real stack trace,
-/// after two earlier attempts diagnosed the wrong thing — see git history):
-/// the previous version created `TextEditingController`s in
-/// `_showNewPostSheet` and disposed them in `showModalBottomSheet(...)
-/// .then(...)`. That `.then()` fires as soon as `Navigator.pop` is called
-/// — NOT once the sheet's exit *animation* has finished rendering — so
-/// disposing the controllers there raced the still-playing transition,
-/// which was still rebuilding the `TextField`s referencing them:
-/// "A TextEditingController was used after being disposed." Everything
-/// else in the crash (the `_dependents.isEmpty` InheritedElement assertion,
-/// a RenderFlex overflow, "Looking up a deactivated widget's ancestor is
-/// unsafe") was a cascading symptom of that one root exception corrupting
-/// the tree mid-rebuild, not a separate bug — which is why two earlier
-/// fixes aimed at the invalidate/pop *ordering* never actually changed
-/// anything: they never touched the disposal code that was the real
-/// problem. Owning the controllers as State fields, disposed in
-/// State.dispose(), sidesteps the whole class of "when exactly is it safe
-/// to dispose" guessing — Flutter guarantees dispose() only runs once this
-/// widget is actually gone for good, not merely "popped."
-class _NewPostSheet extends ConsumerStatefulWidget {
-  final String forumId;
-  final ForumAttachment? initialAttachment;
-  const _NewPostSheet({required this.forumId, this.initialAttachment});
-
-  @override
-  ConsumerState<_NewPostSheet> createState() => _NewPostSheetState();
-}
-
-class _NewPostSheetState extends ConsumerState<_NewPostSheet> {
-  final _titleController = TextEditingController();
-  final _bodyController = TextEditingController();
-  bool _submitting = false;
-  // A shared maintenance visit is usually a "here's what I did" write-up,
-  // so it starts as a DIY guide; the rider can still change it.
-  late ForumPostType _postType =
-      widget.initialAttachment?.kind == ForumAttachmentKind.maintenance
-          ? ForumPostType.diyGuide
-          : ForumPostType.general;
-  late ForumAttachment? _attachment = widget.initialAttachment;
-  bool _attachBike = true;
-  // Local paths of photos picked for the post; uploaded on submit.
-  final List<String> _photoPaths = [];
-  // Only set once the rider has tried to submit — an empty field isn't an
-  // error until then (issues §54: submitting blank/title-only used
-  // to just silently do nothing, with no inline error, shake, or disabled
-  // button to say the tap even registered).
-  bool _titleError = false;
-  bool _bodyError = false;
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    _bodyController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickPhoto() async {
-    if (_photoPaths.length >= kForumPostMaxImages) return;
-    final source = await showModalBottomSheet<ImageSource>(
-      context: context,
-      backgroundColor: context.palette.surface,
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(Icons.photo_camera_outlined,
-                  color: sheetContext.palette.primary),
-              title: Text(sheetContext.l10n.takeAPhoto,
-                  style: TextStyle(color: sheetContext.palette.textPrimary)),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.camera),
-            ),
-            ListTile(
-              leading: Icon(Icons.photo_library_outlined,
-                  color: sheetContext.palette.primary),
-              title: Text(sheetContext.l10n.chooseFromGallery,
-                  style: TextStyle(color: sheetContext.palette.textPrimary)),
-              onTap: () => Navigator.of(sheetContext).pop(ImageSource.gallery),
-            ),
-          ],
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
-    try {
-      final picker = ImagePicker();
-      final remaining = kForumPostMaxImages - _photoPaths.length;
-      final List<XFile> picked;
-      if (source == ImageSource.gallery && remaining > 1) {
-        picked = await picker.pickMultiImage(
-            imageQuality: 80,
-            maxWidth: 2048,
-            maxHeight: 2048,
-            limit: remaining);
-      } else {
-        final one = await picker.pickImage(
-            source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048);
-        picked = [if (one != null) one];
-      }
-      if (picked.isEmpty || !mounted) return;
-      setState(() {
-        _photoPaths.addAll(picked.take(remaining).map((x) => x.path));
-      });
-    } catch (e, st) {
-      // issues §101.P7: log the raw exception; riders get plain text.
-      reportNonFatal(e, st, reason: 'image picker');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.couldNotOpenCamera)),
-      );
-    }
-  }
-
-  Future<void> _submit() async {
-    if (_submitting) return;
-    final title = _titleController.text.trim();
-    final body = _bodyController.text.trim();
-    if (title.isEmpty || body.isEmpty) {
-      setState(() {
-        _titleError = title.isEmpty;
-        _bodyError = body.isEmpty;
-      });
-      return;
-    }
-    final user = ref.read(currentUserProvider);
-    if (user == null) return;
-
-    final bike = _attachBike ? ref.read(activeBikeProvider) : null;
-    final authorBike = bike == null ? null : authorBikeLabel(bike);
-
-    setState(() => _submitting = true);
-    final String postId;
-    final List<String> imageUrls;
-    try {
-      final repo = ForumRepository();
-      try {
-        imageUrls = [
-          for (final path in _photoPaths)
-            await repo.uploadPostPhoto(user.uid, File(path)),
-        ];
-      } catch (e) {
-        if (!mounted) return;
-        setState(() => _submitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
-        );
-        return;
-      }
-      postId = await repo.createPost(
-        forumId: widget.forumId,
-        userId: user.uid,
-        userName: user.displayName ?? 'Rider',
-        userPhotoUrl: user.photoURL ?? '',
-        title: title,
-        body: body,
-        postType: _postType,
-        authorBike: authorBike,
-        attachment: _attachment,
-        imageUrls: imageUrls,
-      );
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _submitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
-      );
-      return;
-    }
-    if (!mounted) return;
-    ref.read(forumPostsNotifierProvider(widget.forumId).notifier).addPost(
-          ForumPostEntity(
-            id: postId,
-            forumId: widget.forumId,
-            userId: user.uid,
-            userName: user.displayName ?? 'Rider',
-            userPhotoUrl: user.photoURL ?? '',
-            title: title,
-            body: body,
-            createdAt: DateTime.now(),
-            postType: _postType,
-            authorBike: authorBike,
-            attachment: _attachment,
-            imageUrls: imageUrls,
-          ),
-        );
-    Navigator.pop(context, true);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bike = ref.watch(activeBikeProvider);
-    return Padding(
-      padding: EdgeInsets.only(
-        left: AppDimensions.paddingMd,
-        right: AppDimensions.paddingMd,
-        top: AppDimensions.paddingMd,
-        bottom:
-            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              context.l10n.newPost,
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: context.palette.textPrimary),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              context.l10n.forumPostTypeLabel,
-              style:
-                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
-            ),
-            const SizedBox(height: 6),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                for (final type in [
-                  ForumPostType.general,
-                  ForumPostType.troubleshoot,
-                  ForumPostType.diyGuide,
-                  ForumPostType.gearReview,
-                ])
-                  ChoiceChip(
-                    key: Key('post_type_${type.name}'),
-                    avatar: Icon(forumPostTypeIcon(type), size: 16),
-                    label: Text(forumPostTypeLabel(context.l10n, type)),
-                    selected: _postType == type,
-                    onSelected: (_) => setState(() => _postType = type),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _titleController,
-              style: TextStyle(color: context.palette.textPrimary),
-              onChanged: (_) {
-                if (_titleError) setState(() => _titleError = false);
-              },
-              decoration: InputDecoration(
-                hintText: context.l10n.title,
-                errorText: _titleError ? context.l10n.titleRequired : null,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _bodyController,
-              style: TextStyle(color: context.palette.textPrimary),
-              maxLines: 4,
-              onChanged: (_) {
-                if (_bodyError) setState(() => _bodyError = false);
-              },
-              decoration: InputDecoration(
-                hintText: context.l10n.whatsGoing,
-                errorText:
-                    _bodyError ? context.l10n.saySomethingBeforePosting : null,
-              ),
-            ),
-            if (_attachment != null) ...[
-              const SizedBox(height: 12),
-              ForumAttachmentCard(
-                attachment: _attachment!,
-                viewerIsAuthor: true,
-                authorName: '',
-                onRemove: () => setState(() => _attachment = null),
-              ),
-            ],
-            const SizedBox(height: 12),
-            if (_photoPaths.isNotEmpty) ...[
-              ForumPickedPhotos(
-                paths: _photoPaths,
-                onRemove: (i) => setState(() => _photoPaths.removeAt(i)),
-              ),
-              const SizedBox(height: 8),
-            ],
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton.icon(
-                key: const Key('post_add_photo'),
-                onPressed:
-                    _submitting || _photoPaths.length >= kForumPostMaxImages
-                        ? null
-                        : _pickPhoto,
-                icon: const Icon(Icons.add_photo_alternate_outlined),
-                label: Text(context.l10n
-                    .forumAddPhotos(_photoPaths.length, kForumPostMaxImages)),
-              ),
-            ),
-            const SizedBox(height: 4),
-            if (bike != null)
-              SwitchListTile(
-                key: const Key('post_attach_bike'),
-                contentPadding: EdgeInsets.zero,
-                value: _attachBike,
-                onChanged: (v) => setState(() => _attachBike = v),
-                title: Text(context.l10n.forumAttachMyBike,
-                    style: TextStyle(
-                        fontSize: 14, color: context.palette.textPrimary)),
-                subtitle: Text(authorBikeLabel(bike),
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
-              )
-            else
-              Text(
-                context.l10n.forumNoBikeToAttach,
-                style: TextStyle(
-                    fontSize: 12, color: context.palette.textTertiary),
-              ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: context.palette.primary),
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                          color: Colors.white, strokeWidth: 2.5))
-                  : Text(context.l10n.post,
-                      style: const TextStyle(color: Colors.white)),
-            ),
-          ],
-        ),
       ),
     );
   }

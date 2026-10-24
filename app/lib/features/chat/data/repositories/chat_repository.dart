@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/entities/chat_entity.dart';
 import '../models/chat_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Messages per page in a chat room (live window and each "load older").
 const int kChatMessagesPageSize = 50;
@@ -84,9 +85,11 @@ class ChatRepository {
   /// the same moment each created their own room. Chats now live at
   /// [dmId] and are created inside a transaction, so concurrent opens
   /// converge on one document.
-  Future<String> getOrCreateChat(String currentUserId, String otherUserId) async {
+  Future<String> getOrCreateChat(
+      String currentUserId, String otherUserId) async {
     if (currentUserId == otherUserId) {
-      throw ArgumentError.value(otherUserId, 'otherUserId', 'cannot chat with yourself');
+      throw ArgumentError.value(
+          otherUserId, 'otherUserId', 'cannot chat with yourself');
     }
     final id = dmId(currentUserId, otherUserId);
     final ref = _firestore.collection('chats').doc(id);
@@ -113,7 +116,8 @@ class ChatRepository {
     return id;
   }
 
-  Future<String?> _findLegacyChat(String currentUserId, String otherUserId) async {
+  Future<String?> _findLegacyChat(
+      String currentUserId, String otherUserId) async {
     final snap = await _firestore
         .collection('chats')
         .where('participants', arrayContains: currentUserId)
@@ -133,13 +137,10 @@ class ChatRepository {
     required String text,
   }) async {
     final batch = _firestore.batch();
-    
-    final messageRef = _firestore
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .doc();
-        
+
+    final messageRef =
+        _firestore.collection('chats').doc(chatId).collection('messages').doc();
+
     final chatRef = _firestore.collection('chats').doc(chatId);
 
     batch.set(messageRef, {
@@ -158,7 +159,7 @@ class ChatRepository {
       'updatedAt': FieldValue.serverTimestamp(),
     });
 
-    await batch.commit();
+    await ackOrQueued(batch.commit());
   }
 
   // markMessagesAsRead was removed (issues §90.A12c): it wrote one update

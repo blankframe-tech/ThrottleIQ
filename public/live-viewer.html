@@ -345,6 +345,26 @@
       color: #718096;
     }
 
+    .idle input {
+      width: 100%;
+      max-width: 280px;
+      padding: 12px;
+      margin: 14px 0 10px;
+      font-size: 16px;
+      border: 2px solid #cbd5e0;
+      border-radius: 8px;
+    }
+
+    #lastSeenLink:not(.hidden) {
+      display: block;
+      text-decoration: none;
+    }
+
+    .idle .form-error {
+      color: #e53e3e;
+      margin-bottom: 10px;
+    }
+
     .hidden {
       display: none;
     }
@@ -376,7 +396,18 @@
         <div class="idle-icon">🅿️</div>
         <h2 id="idleTitle">Not riding right now</h2>
         <p id="idleSubtitle">This link stays live — it'll update by itself the moment they set off.</p>
+        <a id="lastSeenLink" class="button button-primary hidden" target="_blank" rel="noopener">📍 Open last location in Maps</a>
       </div>
+
+      <!-- /r/{username} opens only with the rider's link password. -->
+      <form id="passwordForm" class="idle hidden">
+        <div class="idle-icon">🔒</div>
+        <h2>This link is password protected</h2>
+        <p>Enter the password the rider set for this link.</p>
+        <input id="passwordInput" type="password" autocomplete="current-password" required>
+        <p id="passwordError" class="form-error hidden">Wrong password, or the rider hasn't turned this link on.</p>
+        <button class="button button-primary" type="submit">Show location</button>
+      </form>
 
       <div id="viewer" class="hidden">
         <div id="statusBanner" class="status-banner"></div>
@@ -609,6 +640,31 @@
         return;
       }
 
+      document.getElementById('loading').classList.add('hidden');
+      const form = document.getElementById('passwordForm');
+      form.classList.remove('hidden');
+      form.onsubmit = async (event) => {
+        event.preventDefault();
+        const key = await linkKey(uid, document.getElementById('passwordInput').value);
+        const first = await db.collection('handleLinks').doc(key).get().catch(() => null);
+        if (!first || !first.exists) {
+          document.getElementById('passwordError').classList.remove('hidden');
+          return;
+        }
+        form.classList.add('hidden');
+        watchHandleLink(key);
+      };
+    }
+
+    /// Must match PublicLiveLinkSetting.linkKey in the app: the doc id is the
+    /// password capability, so the password itself never leaves this page.
+    async function linkKey(uid, password) {
+      const bytes = new TextEncoder().encode(`throttleiq-r:${uid}:${password}`);
+      const hash = await crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(hash), (b) => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function watchHandleLink(key) {
       // Watch the pointer rather than reading it once: someone who opens the
       // link a minute early should see it come alive on its own, and someone
       // watching to the end should see it settle back to "not riding" without
@@ -616,15 +672,20 @@
       let detachSession = null;
       let watchedToken = null;
 
-      db.collection('livePointers').doc(uid).onSnapshot(
+      db.collection('handleLinks').doc(key).onSnapshot(
         (doc) => {
           const pointer = doc.exists ? doc.data() : null;
           const token = pointer && pointer.active === true ? pointer.token : null;
 
+          if (!pointer) {
+            if (detachSession) { detachSession(); detachSession = null; }
+            showError('The rider turned this link off or changed its password.');
+            return;
+          }
           if (!token) {
             if (detachSession) { detachSession(); detachSession = null; }
             watchedToken = null;
-            showIdle();
+            showIdle(pointer);
             return;
           }
           if (token === watchedToken) return; // Already streaming this ride.
@@ -1064,11 +1125,29 @@
     /// Hides the stats/map rather than leaving the last known position on
     /// screen, and clears the map so a later ride doesn't inherit the
     /// previous one's trail.
-    function showIdle() {
+    /// [pointer], when it carries one, adds where the rider's phone was last
+    /// seen: the end of the last ride.
+    function showIdle(pointer) {
       document.getElementById('loading').classList.add('hidden');
       document.getElementById('error').classList.add('hidden');
       document.getElementById('viewer').classList.add('hidden');
       document.getElementById('idle').classList.remove('hidden');
+      const link = document.getElementById('lastSeenLink');
+      const seen = pointer && typeof pointer.lastLat === 'number' &&
+        typeof pointer.lastLng === 'number' && pointer.lastSeenAt && pointer.lastSeenAt.toDate;
+      link.classList.toggle('hidden', !seen);
+      if (!seen) {
+        document.getElementById('idleTitle').textContent = 'Not riding right now';
+        document.getElementById('idleSubtitle').textContent =
+          "This link stays live — it'll update by itself the moment they set off.";
+      } else {
+        const at = pointer.lastSeenAt.toDate();
+        document.getElementById('idleTitle').textContent =
+          `Last seen ${at.toLocaleString()}`;
+        document.getElementById('idleSubtitle').textContent =
+          `At ${pointer.lastLat.toFixed(5)}, ${pointer.lastLng.toFixed(5)}, when their last ride ended. This updates by itself when they ride again.`;
+        link.href = `https://www.google.com/maps/search/?api=1&query=${pointer.lastLat},${pointer.lastLng}`;
+      }
       if (trail) trail.setLatLngs([]);
       renderInstallCta('viewer');
     }

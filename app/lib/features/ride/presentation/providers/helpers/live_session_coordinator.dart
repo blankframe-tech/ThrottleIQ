@@ -66,13 +66,12 @@ bool shouldWriteLiveSession(LiveSessionEntity? last, LiveSessionEntity next) {
 class LiveSessionCoordinator {
   LiveSessionCoordinator({
     FirebaseFirestore? firestore,
-    Future<bool> Function()? publicLinkEnabled,
+    Future<String?> Function()? publicLinkKey,
     RealtimeServices? realtime,
     @visibleForTesting
     Timer Function(Duration, void Function(Timer))? periodicTimerFactory,
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _publicLinkEnabled =
-            publicLinkEnabled ?? PublicLiveLinkSetting.isEnabled,
+        _publicLinkKey = publicLinkKey ?? PublicLiveLinkSetting.currentKey,
         _realtime = realtime,
         _periodicTimer = periodicTimerFactory ?? Timer.periodic;
 
@@ -85,10 +84,14 @@ class LiveSessionCoordinator {
   int _ticks = 0;
   LiveSessionEntity? _lastWritten;
 
-  /// Whether the rider opted in to the permanent `/r/{username}` link
-  /// (Settings → "Public link (/r/@handle)", issues §90.D7). Read per share,
-  /// so a change in Settings applies to the next share without a restart.
-  final Future<bool> Function() _publicLinkEnabled;
+  /// The rider's password link key (Settings → "Password link (/r/@handle)",
+  /// issues §90.D7), null when off. Read per share, so a change in Settings
+  /// applies to the next ride without a restart.
+  final Future<String?> Function() _publicLinkKey;
+
+  /// The link key this share published to, so stop/teardown touch that doc
+  /// even if the password changed meanwhile.
+  String? _linkKey;
   String? _currentLiveSessionToken;
   Timer? _liveSessionTimer;
   bool _liveShareEnabled = false;
@@ -96,6 +99,9 @@ class LiveSessionCoordinator {
   static const Duration _liveSessionUpdateInterval = Duration(seconds: 10);
 
   bool get isLiveShareEnabled => _liveShareEnabled;
+
+  /// Whether the password link is on, so every ride should share to it.
+  Future<bool> publicLinkOn() async => await _publicLinkKey() != null;
   String? get currentLiveSessionToken => _currentLiveSessionToken;
 
   /// The live RTDB relay, for tests and diagnostics. Null when not sharing
@@ -121,6 +127,7 @@ class LiveSessionCoordinator {
     _liveSessionTimer = null;
     _currentLiveSessionToken = null;
     _liveShareEnabled = false;
+    _linkKey = null;
   }
 
   /// Create a cryptographically secure live share session token.
@@ -273,29 +280,26 @@ class LiveSessionCoordinator {
     }
   }
 
-  /// Publishes `livePointers/{uid}` — the `/r/{username}` permanent link —
-  /// ONLY when the rider has turned on the public link setting. The pointer
-  /// is `get: if true` in firestore.rules, so anyone who knows the rider's
-  /// @handle can follow them unauthenticated; that used to happen silently on
-  /// every opt-in share, while the app only ever showed the private
-  /// `/live/{token}` link (issues §90.D7). Default OFF.
+  /// Points the `/r/{username}` password link (`handleLinks/{key}`) at this
+  /// share, ONLY when the rider has set a link password. The old pointer was
+  /// keyed by uid and `get: if true`, so anyone who knew the @handle could
+  /// follow the rider (issues §90.D7). Merge keeps the last known location
+  /// from the previous ride until this one has a newer one.
   Future<void> _maybePublishLivePointer(String uid, String token) async {
-    if (!await _publicLinkEnabled()) return;
+    final key = await _publicLinkKey();
+    if (key == null) return;
     // Sharing may have been stopped while the setting was being read.
     if (!_liveShareEnabled || _currentLiveSessionToken != token) return;
-    await _publishLivePointer(uid, token);
-  }
-
-  /// Publishes/refreshes `livePointers/{uid}` for permanent link indirection.
-  Future<void> _publishLivePointer(String uid, String token) {
-    return _bestEffortWrite(
+    _linkKey = key;
+    await _bestEffortWrite(
       'live pointer publish',
-      () => _firestore.collection('livePointers').doc(uid).set({
+      () =>
+          _firestore.collection(PublicLiveLinkSetting.collection).doc(key).set({
         'uid': uid,
         'token': token,
         'active': true,
         'updatedAt': FieldValue.serverTimestamp(),
-      }),
+      }, SetOptions(merge: true)),
     );
   }
 
@@ -322,7 +326,8 @@ class LiveSessionCoordinator {
   /// "Stop sharing now": revokes the live link mid-ride — §78.7.
   ///
   /// Deletes `liveSessions/{token}` outright (the rider asked for it gone,
-  /// not just hidden) and clears the `/r/{username}` pointer. Recording
+  /// not just hidden) and clears the `/r/{username}` pointer, last known
+  /// location included. Recording
   /// carries on; the rider can share again, which mints a fresh token, so
   /// the revoked link stays dead.
   ///
@@ -337,6 +342,8 @@ class LiveSessionCoordinator {
   Future<void> stopSharingNow({required String? uid}) async {
     _stopRelay();
     final token = _currentLiveSessionToken;
+    final key = _linkKey;
+    _linkKey = null;
     _currentLiveSessionToken = null;
     _liveShareEnabled = false;
     _liveSessionTimer?.cancel();
@@ -344,13 +351,20 @@ class LiveSessionCoordinator {
 
     await Future.wait([
       if (token != null) _revokeSession(token),
-      if (uid != null)
+      // `update`, not `set`: if Settings already deleted the link, this
+      // must not bring the doc back.
+      if (uid != null && key != null)
         _bestEffortWrite(
           'live pointer clear',
-          () => _firestore.collection('livePointers').doc(uid).set({
-            'uid': uid,
+          () => _firestore
+              .collection(PublicLiveLinkSetting.collection)
+              .doc(key)
+              .update({
             'token': null,
             'active': false,
+            'lastLat': FieldValue.delete(),
+            'lastLng': FieldValue.delete(),
+            'lastSeenAt': FieldValue.delete(),
             'updatedAt': FieldValue.serverTimestamp(),
           }),
         ),
@@ -381,7 +395,8 @@ class LiveSessionCoordinator {
     }
   }
 
-  /// Ends the live session and clears the permanent pointer durably via [OutboxService].
+  /// Ends the live session and parks the password link on the ride's last
+  /// position ([lastLat]/[lastLng]) durably via [OutboxService].
   ///
   /// Only awaits the local, near-instant durable enqueue (`attemptNow:
   /// false`) — never the Firestore round-trip. This used to await
@@ -396,19 +411,29 @@ class LiveSessionCoordinator {
   Future<void> tearDownLiveShare({
     required String? uid,
     required OutboxService outbox,
+    double? lastLat,
+    double? lastLng,
   }) async {
     _stopRelay();
     final token = _currentLiveSessionToken;
+    final shareKey = _linkKey;
+    _linkKey = null;
     _currentLiveSessionToken = null;
     _liveShareEnabled = false;
     _liveSessionTimer?.cancel();
     _liveSessionTimer = null;
 
     if (uid == null) return;
+    // A ride not shared in this process (restored after a kill) still parks
+    // the link the earlier process pointed at it.
+    final key = shareKey ?? await _publicLinkKey();
 
     await outbox.enqueueLiveSessionTeardown(
       uid: uid,
       token: token,
+      linkKey: key,
+      lastLat: lastLat,
+      lastLng: lastLng,
       attemptNow: false,
     );
   }

@@ -185,9 +185,6 @@
     border-color: rgba(34, 197, 94, 0.45);
     background: linear-gradient(180deg, rgba(34, 197, 94, 0.04) 0%, var(--surf) 100%);
   }
-  .card-experimental {
-    border-color: rgba(250, 77, 86, 0.35);
-  }
 
   .card-header {
     display: flex;
@@ -204,8 +201,6 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
   }
-  .badge-rec { background: rgba(34, 197, 94, 0.15); color: #4ADE80; border: 1px solid rgba(34, 197, 94, 0.3); }
-  .badge-exp { background: var(--danger-bg); color: #FF7B82; border: 1px solid rgba(250, 77, 86, 0.3); }
   .badge-soon { background: rgba(59, 130, 246, 0.15); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.3); }
 
   .card-title {
@@ -222,26 +217,6 @@
   }
 
   /* Warning Box */
-  .warning-box {
-    background: var(--danger-bg);
-    border: 1px solid rgba(250, 77, 86, 0.3);
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 18px;
-    font-size: 13px;
-    line-height: 1.45;
-    color: #FFA4A8;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-  }
-  .warning-box svg {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    color: var(--danger);
-    margin-top: 1px;
-  }
 
   /* Notice Box (Yellow) */
   .notice-box {
@@ -386,42 +361,12 @@
   <!-- ANDROID SECTION -->
   <div id="section-android" class="view-section active">
 
-    <!-- Option 1: Direct APK Download -->
-    <div class="card card-experimental">
-      <div class="card-header">
-        <div>
-          <div class="card-title">Option 1: Download APK (Direct)</div>
-          <div class="mono" style="font-size:12px; color:var(--text-mut);">BUILD: LATEST GITHUB RELEASE TAG</div>
-        </div>
-        <span class="badge badge-exp">Experimental</span>
-      </div>
-      <div class="card-desc">
-        Install the signed release APK directly onto your Android device from our official GitHub repository.
-      </div>
-      
-      <div class="warning-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4m0 4h.01"/></svg>
-        <div>
-          <strong>Important Note:</strong> Once downloaded, direct APKs will <strong>not auto-update</strong> and may break things soon as experimental features evolve. Recommended for testing.
-        </div>
-      </div>
-
-      <a id="btn-apk" href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest/download/app-release.apk" class="btn btn-primary">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
-        Download Latest APK (Beta)
-      </a>
-      <div class="sublink">
-        <a href="https://github.com/blankframe-tech/ThrottleIQ/releases/latest" target="_blank" rel="noopener">View release notes on GitHub →</a>
-      </div>
-    </div>
-
-    <!-- Option 2: Google Play Store (14-day Closed Beta) -->
+    <!-- Google Play Store (closed test track; the only Android install) -->
     <div class="card card-recommended">
       <div class="card-header">
         <div>
-          <div class="card-title">Option 2: Google Play Store</div>
+          <div class="card-title">Google Play Store</div>
         </div>
-        <span class="badge badge-rec">Recommended</span>
       </div>
 
       <div id="play-invite-container">

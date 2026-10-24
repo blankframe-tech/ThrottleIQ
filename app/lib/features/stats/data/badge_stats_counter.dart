@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/utils/badges.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 // Client-maintained badge ownership counters in `stats/badges`.
 //
@@ -177,6 +178,8 @@ class BadgeStatsCounter {
   /// Call only for a badge with no earnedBadges doc yet.
   Future<void> recordEarnedBadge(String uid, String badgeId) async {
     try {
+      // Not ackOrQueued: a refusal after a timeout would skip the fallback
+      // below and lose the earnedBadges doc. Background sync, so waiting is fine.
       await commit(BadgeStatsBatches.badgeCount(uid, badgeId, isNew: true));
     } on FirebaseException catch (e) {
       if (e.code != 'permission-denied') rethrow;
@@ -200,7 +203,12 @@ class BadgeStatsCounter {
     var allCounted = true;
     for (final id in badgesNeedingCount(held)) {
       try {
-        await commit(BadgeStatsBatches.badgeCount(uid, id, isNew: false));
+        // Unacked: not known to be counted, and the next badge would wait
+        // just as long, so stop and let a later start finish.
+        if (!await ackOrQueued(
+            commit(BadgeStatsBatches.badgeCount(uid, id, isNew: false)))) {
+          return false;
+        }
       } catch (e) {
         allCounted = false;
         debugPrint('[badgeStats] counting $id failed: $e');

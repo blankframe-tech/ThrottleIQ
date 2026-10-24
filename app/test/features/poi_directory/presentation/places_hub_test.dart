@@ -240,22 +240,16 @@ void main() {
           reason: 'the chip is not a sheet refinement');
     });
 
-    test('the batch is fetched for the selected radius and the radar reads it',
-        () async {
+    test('the batch is fetched for the selected radius', () async {
       final c = container();
       await c.read(nearbyPlacesProvider(placesDefaultRadiusKm).future);
       await c.read(currentPositionProvider.future);
       expect(
           c.read(placesBatchProvider).valueOrNull, hasLength(_places.length));
-      final radar = c.read(highwayRadarProvider);
-      expect(radar.cameras.length, 2);
-      expect(radar.police.length, 1);
 
       await c.read(placesQueryProvider.notifier).setRadius(5);
       await c.read(nearbyPlacesProvider(5).future);
       expect(fetchedRadii, containsAll([25.0, 5.0]));
-      expect(c.read(highwayRadarProvider).total, 2,
-          reason: 'the 8 km camera drops out');
     });
   });
 
@@ -324,33 +318,6 @@ void main() {
       expect(find.text('Saved'), findsOneWidget);
     });
 
-    testWidgets('Highway Radar banner summarises cameras and checkposts',
-        (tester) async {
-      final c = await pumpHub(tester);
-      expect(
-          find.textContaining(
-              'Highway Radar: 2 speed cameras · 1 police checkpost'),
-          findsOneWidget);
-
-      await tester.tap(find.byTooltip('Dismiss radar'));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('Highway Radar'), findsNothing);
-      expect(c.read(radarDismissedProvider), isTrue);
-    });
-
-    testWidgets(
-        'tapping the radar switches to the map and highlights the points',
-        (tester) async {
-      final c = await pumpHub(tester);
-      await tester.tap(find.textContaining('Highway Radar:'));
-      await tester.pumpAndSettle();
-      expect(c.read(radarHighlightProvider), isTrue);
-      expect(c.read(placesViewModeProvider), PlacesViewMode.map);
-      expect(find.byType(PlacesMapView), findsOneWidget);
-      expect(find.byKey(const ValueKey('radar-marker-cam1')), findsOneWidget);
-      expect(find.byKey(const ValueKey('radar-marker-cop')), findsOneWidget);
-    });
-
     testWidgets('a category chip filters the list', (tester) async {
       await pumpHub(tester);
       await tester.tap(find.byKey(const ValueKey('places-chip-garage')));
@@ -399,7 +366,7 @@ void main() {
       await pumpHub(tester, mode: PlacesViewMode.map);
       expect(find.byType(PlacesMapView), findsOneWidget);
       expect(find.byType(PageView), findsOneWidget);
-      // Radar points stay off the map until highlighted.
+      // Cameras and checkposts get no warning pins (removed 2026-10-25).
       expect(find.byKey(const ValueKey('radar-marker-cam1')), findsNothing);
       expect(find.byTooltip('Centre on me'), findsOneWidget);
     });

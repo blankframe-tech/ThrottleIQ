@@ -11,6 +11,7 @@ import '../../data/bike_archive_service.dart';
 import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
+import '../../../forums/presentation/screens/new_forum_post_screen.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
 import '../../../maintenance/presentation/widgets/forecast_text.dart'
@@ -288,7 +289,11 @@ class BikeDetailScreen extends ConsumerWidget {
       final forum = await ForumRepository()
           .getOrCreateForum(brand: bike.brand, model: bike.model);
       if (!context.mounted) return;
-      context.push('/forums/${forum.id}${compose ? '?compose=1' : ''}');
+      if (compose) {
+        openNewForumPost(context, group: forum.id);
+      } else {
+        context.push('/forums/${forum.id}');
+      }
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

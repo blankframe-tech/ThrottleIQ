@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../models/report_model.dart';
+import 'package:throttleiq/core/cloud/write_ack.dart';
 
 class ReportRepository {
   static ReportRepository _instance = ReportRepository._internal();
@@ -54,13 +55,16 @@ class ReportRepository {
 
     final data = report.toFirestore();
     try {
-      await _firestore.collection('reports').add(data);
+      // shortcut: a refusal that arrives after the timeout is lost (the
+      // report stays unfiled); fine while the snapshot rules are deployed.
+      await ackOrQueued(_firestore.collection('reports').add(data));
     } on FirebaseException catch (e) {
       // Rules deployed before 2026-10-21 refuse the `snapshot` key, and the
       // message may have changed since it was read: file it without the copy.
       if (e.code != 'permission-denied' || snapshot == null) rethrow;
       reportNonFatal(e, StackTrace.current, reason: 'report snapshot refused');
-      await _firestore.collection('reports').add(data..remove('snapshot'));
+      await ackOrQueued(
+          _firestore.collection('reports').add(data..remove('snapshot')));
     }
   }
 }

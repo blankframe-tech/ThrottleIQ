@@ -24,10 +24,11 @@ void main() {
   late _FakeFirestore firestore;
   late List<void Function(Timer)> periodicCallbacks;
 
-  LiveSessionCoordinator coordinator({RealtimeServices? services}) =>
+  LiveSessionCoordinator coordinator(
+          {RealtimeServices? services, String? linkKey}) =>
       LiveSessionCoordinator(
         firestore: firestore,
-        publicLinkEnabled: () async => false,
+        publicLinkKey: () async => linkKey,
         realtime: services ?? realtime,
         periodicTimerFactory: (_, cb) {
           periodicCallbacks.add(cb);
@@ -220,6 +221,28 @@ void main() {
     }
     expect(services.transportNow(), RealtimeTransport.fallback);
     expect(ticks, 6);
+  });
+
+  group('password link (/r/@handle, §90.D7)', () {
+    test('off: a share never touches handleLinks', () async {
+      final c = coordinator();
+      await share(c);
+      await c.stopSharingNow(uid: 'alice');
+      expect(firestore.ops.where((op) => op.contains('handleLinks')), isEmpty);
+      expect(await c.publicLinkOn(), isFalse);
+    });
+
+    test('on: a share points handleLinks/{key} at it; stop clears that doc',
+        () async {
+      final c = coordinator(linkKey: 'K');
+      expect(await c.publicLinkOn(), isTrue);
+      await share(c);
+      expect(firestore.ops, contains('set handleLinks/K'));
+      expect(firestore.ops.where((op) => op.contains('livePointers')), isEmpty,
+          reason: 'the old uid-keyed pointer is no longer written');
+      await c.stopSharingNow(uid: 'alice');
+      expect(firestore.ops, contains('update handleLinks/K'));
+    });
   });
 }
 

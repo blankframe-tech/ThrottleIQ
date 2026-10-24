@@ -1217,6 +1217,46 @@ test('a rider can delete their own livePointers/{uid} document', async () => {
   await assertSucceeds(deleteDoc(doc(db, 'livePointers', ALICE)));
 });
 
+// §90.D7: the uid-keyed pointer is no longer public; the password link is.
+test('a stranger cannot read livePointers/{uid}', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await setDoc(doc(admin.firestore(), 'livePointers', ALICE), {
+      uid: ALICE, token: 'tok-1', active: true,
+    });
+  });
+  const anon = testEnv.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(anon, 'livePointers', ALICE)));
+  await assertSucceeds(getDoc(doc(dbFor(ALICE), 'livePointers', ALICE)));
+});
+
+const LINK_KEY = 'a'.repeat(64);
+
+test('anyone holding the key can get a handleLinks doc, nobody can list', async () => {
+  await testEnv.withSecurityRulesDisabled(async (admin) => {
+    await setDoc(doc(admin.firestore(), 'handleLinks', LINK_KEY), {
+      uid: ALICE, token: 'tok-1', active: true,
+    });
+  });
+  const anon = testEnv.unauthenticatedContext().firestore();
+  await assertSucceeds(getDoc(doc(anon, 'handleLinks', LINK_KEY)));
+  await assertFails(getDocs(collection(anon, 'handleLinks')));
+});
+
+test('a rider can create, update and delete only their own handleLinks doc', async () => {
+  const alice = dbFor(ALICE);
+  const ref = doc(alice, 'handleLinks', LINK_KEY);
+  await assertFails(setDoc(doc(alice, 'handleLinks', 'not-a-hash'), { uid: ALICE }));
+  await assertFails(setDoc(ref, { uid: MALLORY, token: 't', active: true }));
+  await assertFails(setDoc(ref, { uid: ALICE, password: 'x' }));
+  await assertSucceeds(setDoc(ref, { uid: ALICE, token: 't', active: true }));
+  await assertSucceeds(updateDoc(ref, { active: false, lastLat: 23.7, lastLng: 90.4 }));
+
+  const mallory = doc(dbFor(MALLORY), 'handleLinks', LINK_KEY);
+  await assertFails(setDoc(mallory, { uid: MALLORY, token: 'evil', active: true }));
+  await assertFails(deleteDoc(mallory));
+  await assertSucceeds(deleteDoc(ref));
+});
+
 // §78.14: new chats live at the deterministic DM id `<uidA>_<uidB>` (sorted),
 // created in a transaction by ChatRepository.getOrCreateChat. The
 // `chat-alice-mallory` docs seeded below stand in for legacy random-id chats,

@@ -89,14 +89,15 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
 
   Future<void> _retry() async {
     setState(() => _busy = true);
+    // Read before the await: retryDead revives the row, the list reloads
+    // without it and this card unmounts, so the result must not need it.
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
     final outbox = ref.read(outboxServiceProvider);
     final delivered = await outbox.retryDead(widget.entry.id);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(delivered
-          ? context.l10n.synced
-          : context.l10n.couldntSyncYetWell),
+    if (mounted) setState(() => _busy = false);
+    messenger.showSnackBar(SnackBar(
+      content: Text(delivered ? l10n.synced : l10n.couldntSyncYetWell),
     ));
   }
 
@@ -116,7 +117,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, true),
-            child: Text(dialogContext.l10n.discard, style: TextStyle(color: dialogContext.palette.danger)),
+            child: Text(dialogContext.l10n.discard,
+                style: TextStyle(color: dialogContext.palette.danger)),
           ),
         ],
       ),
@@ -145,7 +147,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
         children: [
           Row(
             children: [
-              Icon(Icons.sync_problem, color: context.palette.warning, size: 22),
+              Icon(Icons.sync_problem,
+                  color: context.palette.warning, size: 22),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(syncIssueLabel(entry.kind, context.l10n),
@@ -164,7 +167,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
             Text(entry.lastError!,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textSecondary)),
           ],
           const SizedBox(height: 8),
           Row(
@@ -172,7 +176,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
             children: [
               TextButton(
                 onPressed: _busy ? null : _discard,
-                child: Text(context.l10n.discard, style: TextStyle(color: context.palette.danger)),
+                child: Text(context.l10n.discard,
+                    style: TextStyle(color: context.palette.danger)),
               ),
               const SizedBox(width: 8),
               TextButton(
@@ -183,7 +188,8 @@ class _SyncIssueCardState extends ConsumerState<_SyncIssueCard> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : Text(context.l10n.retry, style: TextStyle(color: context.palette.primary)),
+                    : Text(context.l10n.retry,
+                        style: TextStyle(color: context.palette.primary)),
               ),
             ],
           ),

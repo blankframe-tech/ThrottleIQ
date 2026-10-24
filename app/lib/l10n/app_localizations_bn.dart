@@ -2371,11 +2371,27 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get publicLiveLinkTitle => 'পাবলিক লিংক (/r/@handle)';
+  String get publicLiveLinkTitle => 'পাসওয়ার্ড লিংক (/r/@handle)';
 
   @override
   String get publicLiveLinkDesc =>
-      'লাইভ রাইড শেয়ার করার সময় আপনার @ইউজারনেম জানা যে কেউ /r/@username লিংকে রাইডটি দেখতে পারবে — অ্যাপ বা সাইন-ইন লাগবে না। শুরুতে বন্ধ থাকে। আপনার ব্যক্তিগত লাইভ লিংক দুই ক্ষেত্রেই কাজ করবে।';
+      'প্রতিটি রাইড /r/@username লিংকে শেয়ার হবে, আর শেষ রাইড যেখানে থেমেছে সেই জায়গাটা থেকে যাবে (ফোন পড়ে গেলে কাজে লাগে)। শুধু আপনার পাসওয়ার্ড জানা মানুষই এটা খুলতে পারবে। শুরুতে বন্ধ থাকে। রাইডের সময় শেয়ার বাটন আগের মতোই শুধু ওই রাইডের লিংক দেয়।';
+
+  @override
+  String get publicLiveLinkPasswordTitle => 'লিংকের পাসওয়ার্ড';
+
+  @override
+  String get publicLiveLinkPasswordBody =>
+      'আপনার লিংক খুলতে এই পাসওয়ার্ড দিতে হবে। কমপক্ষে 8 অক্ষর দিন, আর শুধু বিশ্বস্ত মানুষদের জানান। নতুন পাসওয়ার্ড দিলে পুরনোটা আর কাজ করবে না।';
+
+  @override
+  String get publicLiveLinkPasswordTooShort => 'কমপক্ষে 8 অক্ষর দিন।';
+
+  @override
+  String get publicLiveLinkChangePassword => 'পাসওয়ার্ড বদলান';
+
+  @override
+  String get publicLiveLinkSave => 'সেভ করুন';
 
   @override
   String get audienceAnyFollower => 'আপনার যেকোনো ফলোয়ার';
@@ -2966,39 +2982,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get placeSaveFailed => 'সংরক্ষিত জায়গা আপডেট করা যায়নি';
 
   @override
-  String get radarTitle => 'হাইওয়ে রাডার';
-
-  @override
-  String radarCameras(int count) {
-    return '$countটি স্পিড ক্যামেরা';
-  }
-
-  @override
-  String radarPolice(int count) {
-    return '$countটি পুলিশ চেকপোস্ট';
-  }
-
-  @override
   String radarWithin(String km) {
     return '$km কিমির মধ্যে';
   }
-
-  @override
-  String radarNearest(String distance) {
-    return 'সবচেয়ে কাছেরটি $distance দূরে';
-  }
-
-  @override
-  String get radarShowOnMap => 'ম্যাপে দেখুন';
-
-  @override
-  String get radarHideOnMap => 'ম্যাপ থেকে লুকান';
-
-  @override
-  String get radarDismiss => 'রাডার বন্ধ করুন';
-
-  @override
-  String get radarListTitle => 'আপনার কাছের সতর্কতার জায়গা';
 
   @override
   String get placesScanOsmTitle => 'এখানে এখনো কিছু ম্যাপ করা নেই';
@@ -5628,9 +5614,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get startDiscussion => 'আলোচনা শুরু করুন';
 
   @override
-  String get startDiscussionPickForum => 'এটি কোথায় পোস্ট করবেন?';
-
-  @override
   String get createRiderClub => 'ক্লাব তৈরি করুন';
 
   @override
@@ -5797,9 +5780,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get shareToForum => 'ফোরামে শেয়ার করুন';
-
-  @override
-  String get shareToForumPick => 'কোন ফোরামে শেয়ার করবেন?';
 
   @override
   String rideAttachmentTitle(String date) {
@@ -6791,4 +6771,45 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get placeReportExpired => 'মেয়াদ শেষ';
+
+  @override
+  String get placesCacheTitle => 'অফলাইন জায়গা';
+
+  @override
+  String get placesCacheSubtitle =>
+      'আপনার রাইড থেকে এই ফোনে রাখা পাম্প, গ্যারেজ ও অন্যান্য জায়গা, যাতে ডেটা ছাড়াই দেখা যায়।';
+
+  @override
+  String get placesCacheClear => 'মুছুন';
+
+  @override
+  String get placesCacheCleared => 'রাখা জায়গাগুলো মুছে ফেলা হয়েছে';
+
+  @override
+  String get placesCacheClearFailed => 'রাখা জায়গাগুলো মোছা যায়নি';
+
+  @override
+  String get forumShare => 'শেয়ার';
+
+  @override
+  String get forumShareToGroupsTitle => 'গ্রুপে শেয়ার করুন';
+
+  @override
+  String forumShareAllRidersNote(int max) {
+    return 'প্রতিটি পোস্ট অল রাইডার্সে দেখা যায়। চাইলে সর্বোচ্চ $maxটি গ্রুপও বেছে নিতে পারেন।';
+  }
+
+  @override
+  String get allRidersGroup => 'অল রাইডার্স';
+
+  @override
+  String get allRidersGroupSubtitle => 'সব গ্রুপের সব পোস্ট';
+
+  @override
+  String get forumShareYourGroups => 'আপনার গ্রুপ';
+
+  @override
+  String forumShareCount(int count, int max) {
+    return '$maxটির মধ্যে $countটি গ্রুপ';
+  }
 }

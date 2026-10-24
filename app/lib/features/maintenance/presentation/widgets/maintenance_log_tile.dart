@@ -9,7 +9,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/bike_image_resolver.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../forums/domain/entities/forum_post_entity.dart';
-import '../../../forums/presentation/widgets/forum_picker_sheet.dart';
+import '../../../forums/presentation/screens/new_forum_post_screen.dart';
 import '../../domain/entities/service_visit.dart';
 import '../maintenance_l10n.dart';
 import '../providers/maintenance_provider.dart';
@@ -120,9 +120,8 @@ class VisitTile extends ConsumerWidget {
                 size: 18, color: context.palette.textTertiary),
             onSelected: (choice) async {
               if (choice == 'share') {
-                await showForumPickerSheet(
+                openNewForumPost(
                   context,
-                  title: l10n.shareToForumPick,
                   attachment: ForumAttachment(
                     kind: ForumAttachmentKind.maintenance,
                     refId: v.id,

@@ -36,6 +36,7 @@ import '../../features/social/presentation/screens/group_ride_map_screen.dart';
 import '../../features/forums/domain/entities/forum_post_entity.dart';
 import '../../features/forums/presentation/screens/create_forum_screen.dart';
 import '../../features/forums/presentation/screens/forum_thread_screen.dart';
+import '../../features/forums/presentation/screens/new_forum_post_screen.dart';
 import '../../features/forums/presentation/screens/forum_post_detail_screen.dart';
 import '../../features/poi_directory/presentation/screens/places_list_screen.dart';
 import '../../features/routes/presentation/screens/routes_list_screen.dart';
@@ -187,16 +188,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
           path: '/forums/create',
           builder: (_, __) => const CreateForumScreen()),
+      // Same ordering hazard: '/forums/new' must precede '/forums/:forumId'.
+      // `?group=` starts that forum ticked in the share step; `extra` may
+      // carry the ForumAttachment to share.
       GoRoute(
-        path: '/forums/:forumId',
-        // `?compose=1` opens the new-post sheet on arrival ("Ask owners",
-        // "Share to forum"); `extra` may carry the ForumAttachment to share.
-        builder: (_, state) => ForumThreadScreen(
-          forumId: state.pathParameters['forumId']!,
-          compose: state.uri.queryParameters['compose'] == '1',
+        path: '/forums/new',
+        builder: (_, state) => NewForumPostScreen(
+          initialGroup: state.uri.queryParameters['group'],
           attachment: state.extra is ForumAttachment
               ? state.extra as ForumAttachment
               : null,
+        ),
+      ),
+      GoRoute(
+        path: '/forums/:forumId',
+        builder: (_, state) => ForumThreadScreen(
+          forumId: state.pathParameters['forumId']!,
         ),
         routes: [
           GoRoute(

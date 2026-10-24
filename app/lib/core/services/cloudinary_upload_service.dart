@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Uploads images to Cloudinary via an unsigned upload preset.
 ///
@@ -138,9 +139,10 @@ class CloudinaryUploadService {
         'secureUrl': url,
         'createdAt': FieldValue.serverTimestamp(),
       });
-    } catch (_) {
+    } catch (e, st) {
       // Best-effort by design. The folder-prefix fallback in the sweep covers
       // an asset whose ledger row never landed.
+      reportSilently(e, st, where: 'cloudinary.ledgerWrite');
     }
   }
 }
