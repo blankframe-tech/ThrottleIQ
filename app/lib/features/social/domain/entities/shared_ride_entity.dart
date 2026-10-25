@@ -106,7 +106,8 @@ class SharedRideEntity extends Equatable {
     final accel = rapidAccelCount;
     final jerk = highJerkCount;
     if (brakes == null || accel == null || jerk == null) return null;
-    return computeRidingScore(hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
+    return computeRidingScore(
+        hardBrakes: brakes, rapidAccel: accel, highJerk: jerk);
   }
 
   const SharedRideEntity({
@@ -160,6 +161,18 @@ class SharedRideEntity extends Equatable {
       );
 
   int get netScore => upvotes - downvotes;
+
+  /// This ride after the signed-in rider taps [value] (1 up / -1 down): the
+  /// same arrow again clears the vote, mirroring RideShareRepository.vote's
+  /// toggle, and the tallies move with it. Used for optimistic updates.
+  SharedRideEntity withVote(int value) {
+    final next = myVote == value ? null : value;
+    return copyWith(
+      myVote: next,
+      upvotes: upvotes - (myVote == 1 ? 1 : 0) + (next == 1 ? 1 : 0),
+      downvotes: downvotes - (myVote == -1 ? 1 : 0) + (next == -1 ? 1 : 0),
+    );
+  }
 
   /// Sentinel so [copyWith] can distinguish "leave myVote alone" from
   /// "set myVote to null" (clearing a vote) — a plain `int? myVote` param

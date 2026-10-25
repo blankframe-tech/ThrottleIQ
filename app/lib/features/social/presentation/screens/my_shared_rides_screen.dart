@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../../../core/utils/formatters/speed_formatter.dart';
-import '../../../../shared/widgets/editorial.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../providers/ride_feed_provider.dart';
+import '../widgets/shared_ride_list_card.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
-
-const _audienceLabels = {
-  'public': 'Public',
-  'followers': 'Followers',
-  'mutual': 'Mutual',
-};
 
 /// The signed-in rider's own shared rides — reached from the garage header's
 /// user menu (`garage_screen.dart`'s `_UserMenuButton`), mirroring
@@ -23,7 +15,8 @@ const _audienceLabels = {
 class MySharedRidesScreen extends ConsumerWidget {
   const MySharedRidesScreen({super.key});
 
-  Future<void> _delete(BuildContext context, WidgetRef ref, String rideId) async {
+  Future<void> _delete(
+      BuildContext context, WidgetRef ref, String rideId) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -31,10 +24,13 @@ class MySharedRidesScreen extends ConsumerWidget {
         title: Text(ctx.l10n.deleteSharedRide),
         content: Text(ctx.l10n.thisRemovesItFrom),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: Text(ctx.l10n.cancelAction)),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(ctx.l10n.cancelAction)),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(ctx.l10n.delete, style: TextStyle(color: ctx.palette.danger)),
+            child: Text(ctx.l10n.delete,
+                style: TextStyle(color: ctx.palette.danger)),
           ),
         ],
       ),
@@ -52,7 +48,8 @@ class MySharedRidesScreen extends ConsumerWidget {
       backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(context.l10n.mySharedRides)),
       body: ridesAsync.when(
-        loading: () => Center(child: CircularProgressIndicator(color: context.palette.primary)),
+        loading: () => Center(
+            child: CircularProgressIndicator(color: context.palette.primary)),
         error: (e, _) => ErrorView(
           error: e,
           onRetry: () => ref.invalidate(myRidesProvider),
@@ -65,10 +62,13 @@ class MySharedRidesScreen extends ConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.ios_share, size: 64, color: context.palette.textTertiary),
+                    Icon(Icons.ios_share,
+                        size: 64, color: context.palette.textTertiary),
                     const SizedBox(height: 16),
                     Text(context.l10n.haventSharedAnyRides,
-                        style: TextStyle(color: context.palette.textSecondary, fontSize: 16)),
+                        style: TextStyle(
+                            color: context.palette.textSecondary,
+                            fontSize: 16)),
                   ],
                 ),
               ),
@@ -83,51 +83,9 @@ class MySharedRidesScreen extends ConsumerWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (_, i) {
                 final ride = rides[i];
-                return EditorialCard(
-                  onTap: () => context.push('/rides/shared/${ride.id}', extra: ride),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(ride.bikeName, style: display(context, 16, letterSpacing: 0)),
-                          ),
-                          EditorialPill(
-                            _audienceLabels[ride.audience] ?? ride.audience,
-                            tone: PillTone.neutral,
-                            filled: false,
-                          ),
-                          IconButton(
-                            tooltip: context.l10n.delete,
-                            icon: Icon(Icons.delete_outline,
-                                color: context.palette.textTertiary, size: 18),
-                            onPressed: () => _delete(context, ref, ride.id),
-                          ),
-                        ],
-                      ),
-                      Text(
-                        '${_formatDate(ride.rideDate)} · ${ride.distanceKm.toStringAsFixed(1)} km · '
-                        '${SpeedFormatter.durationFromSeconds(ride.durationSeconds)}',
-                        style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(Icons.mode_comment_outlined,
-                              size: 14, color: context.palette.textTertiary),
-                          const SizedBox(width: 4),
-                          Text('${ride.comments}',
-                              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
-                          const SizedBox(width: 12),
-                          Icon(Icons.arrow_upward, size: 14, color: context.palette.textTertiary),
-                          const SizedBox(width: 4),
-                          Text('${ride.netScore}',
-                              style: TextStyle(fontSize: 12, color: context.palette.textTertiary)),
-                        ],
-                      ),
-                    ],
-                  ),
+                return SharedRideListCard(
+                  ride: ride,
+                  onDelete: () => _delete(context, ref, ride.id),
                 );
               },
             ),
@@ -135,11 +93,5 @@ class MySharedRidesScreen extends ConsumerWidget {
         },
       ),
     );
-  }
-
-  String _formatDate(DateTime dt) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
   }
 }
