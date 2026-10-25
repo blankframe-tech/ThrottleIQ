@@ -10,8 +10,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -47,13 +47,14 @@ void main() {
       expect(focusNode.hasFocus, isFalse);
     });
 
-    testWidgets('keeps focus when tapping inside the focused text field', (tester) async {
+    testWidgets('keeps focus when tapping inside the focused text field',
+        (tester) async {
       final focusNode = FocusNode();
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -83,14 +84,15 @@ void main() {
       expect(focusNode.hasFocus, isTrue);
     });
 
-    testWidgets('shifts focus when tapping from one text field to another', (tester) async {
+    testWidgets('shifts focus when tapping from one text field to another',
+        (tester) async {
       final focusNode1 = FocusNode();
       final focusNode2 = FocusNode();
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -126,14 +128,16 @@ void main() {
       expect(focusNode2.hasFocus, isTrue);
     });
 
-    testWidgets('dismisses keyboard and executes button callback when button is tapped', (tester) async {
+    testWidgets(
+        'dismisses keyboard and executes button callback when button is tapped',
+        (tester) async {
       final focusNode = FocusNode();
       bool buttonPressed = false;
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -170,13 +174,14 @@ void main() {
       expect(focusNode.hasFocus, isFalse);
     });
 
-    testWidgets('dismisses keyboard when scrolling/dragging list view', (tester) async {
+    testWidgets('dismisses keyboard when scrolling/dragging list view',
+        (tester) async {
       final focusNode = FocusNode();
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -203,7 +208,8 @@ void main() {
       expect(focusNode.hasFocus, isTrue);
 
       // Scroll the list
-      await tester.drag(find.byKey(const ValueKey('item_5')), const Offset(0, -100));
+      await tester.drag(
+          find.byKey(const ValueKey('item_5')), const Offset(0, -100));
       await tester.pump();
       expect(focusNode.hasFocus, isFalse);
     });
@@ -213,8 +219,8 @@ void main() {
 
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -261,11 +267,12 @@ void main() {
       expect(dialogFocusNode.hasFocus, isFalse);
     });
 
-    testWidgets('safely does nothing when no focus node is active', (tester) async {
+    testWidgets('safely does nothing when no focus node is active',
+        (tester) async {
       await tester.pumpWidget(
         MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           builder: (context, child) => KeyboardDismissWrapper(
             child: child ?? const SizedBox.shrink(),
           ),
@@ -280,7 +287,9 @@ void main() {
       await tester.pump();
     });
 
-    testWidgets('lets an Autocomplete option be selected (options sit outside the field)', (tester) async {
+    testWidgets(
+        'lets an Autocomplete option be selected (options sit outside the field)',
+        (tester) async {
       final controller = TextEditingController();
       final focusNode = FocusNode();
 
@@ -309,7 +318,8 @@ void main() {
 
       // A real finger lifts frames after touching down; tester.tap() would
       // send both in one frame and miss the options closing in between.
-      final gesture = await tester.startGesture(tester.getCenter(find.text('Honda')));
+      final gesture =
+          await tester.startGesture(tester.getCenter(find.text('Honda')));
       await tester.pump();
       await gesture.up();
       await tester.pumpAndSettle();
