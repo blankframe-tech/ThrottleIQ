@@ -400,7 +400,14 @@ service cloud.firestore {
         incomingStats.totalRides is int &&
         incomingStats.totalRides >= oldRides && incomingStats.totalRides <= 100000 &&
         incomingStats.badgeIds is list && incomingStats.badgeIds.size() <= 200 &&
-        incomingStats.badgeIds.hasAll(oldBadges);
+        incomingStats.badgeIds.hasAll(oldBadges) &&
+        // Shown on the profile (2026-10-25); absent on older writers.
+        (!('longestRideKm' in incomingStats) ||
+          (incomingStats.longestRideKm is number &&
+           incomingStats.longestRideKm >= 0 && incomingStats.longestRideKm <= 5000)) &&
+        (!('longestDayStreak' in incomingStats) ||
+          (incomingStats.longestDayStreak is int &&
+           incomingStats.longestDayStreak >= 0 && incomingStats.longestDayStreak <= 36500));
     }
 
     // Whether `handle` is claimed by `uid` in usernames/{handle}, evaluated
@@ -447,7 +454,10 @@ service cloud.firestore {
         (keeps(before, after, 'displayName') || optionalNameValid(after.get('displayName', null))) &&
         (keeps(before, after, 'nickname') || optionalNameValid(after.get('nickname', null))) &&
         (keeps(before, after, 'visibility') ||
-          after.get('visibility', null) in ['public', 'mutual', 'private']);
+          after.get('visibility', null) in ['public', 'mutual', 'private']) &&
+        // Rides pinned to the profile: kMaxPinnedRides (profile_rides.dart).
+        (keeps(before, after, 'pinnedRideIds') ||
+          (after.pinnedRideIds is list && after.pinnedRideIds.size() <= 5));
     }
 
     // Whether the requester may moderate (delete other people's content in)

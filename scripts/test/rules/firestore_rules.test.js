@@ -1673,6 +1673,40 @@ test('public stats cannot go backwards or drop an already-earned badge', async (
   );
 });
 
+// 2026-10-25: the profile shows longest ride and best streak, and up to 5
+// pinned rides (kMaxPinnedRides in profile_rides.dart).
+test('public stats accept a plausible longest ride and streak, not absurd ones', async () => {
+  const db = dbFor(ALICE);
+  const stats = (extra) => ({
+    publicStats: { totalDistanceKm: 120, totalRides: 3, badgeIds: [], ...extra },
+  });
+  await assertSucceeds(
+    setDoc(doc(db, 'users', ALICE), stats({ longestRideKm: 64.5, longestDayStreak: 4 }), { merge: true })
+  );
+  await assertFails(
+    setDoc(doc(db, 'users', ALICE), stats({ longestRideKm: 99999 }), { merge: true })
+  );
+  await assertFails(
+    setDoc(doc(db, 'users', ALICE), stats({ longestDayStreak: 'forever' }), { merge: true })
+  );
+});
+
+test('a rider can pin up to 5 rides to their own profile, not 6, and not on someone else\'s', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(db, 'users', ALICE), { pinnedRideIds: ['r1', 'r2', 'r3', 'r4', 'r5'] }, { merge: true })
+  );
+  await assertFails(
+    setDoc(doc(db, 'users', ALICE), { pinnedRideIds: ['r1', 'r2', 'r3', 'r4', 'r5', 'r6'] }, { merge: true })
+  );
+  await assertFails(
+    setDoc(doc(db, 'users', ALICE), { pinnedRideIds: 'r1' }, { merge: true })
+  );
+  await assertFails(
+    setDoc(doc(dbFor(MALLORY), 'users', ALICE), { pinnedRideIds: ['r1'] }, { merge: true })
+  );
+});
+
 // docs/Issues.md §62.5: reports used to validate only reporterId, so a client
 // could fabricate a report already marked 'actioned' against anyone.
 test('a fabricated pre-actioned report is denied', async () => {
