@@ -10,12 +10,23 @@ import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
+import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../social/presentation/providers/follow_providers.dart';
+import '../../../social/presentation/providers/ride_feed_provider.dart';
 import '../../../social/presentation/widgets/follow_button.dart';
+import '../../../social/domain/entities/shared_ride_entity.dart';
+import '../../../social/domain/profile_rides.dart';
+import '../../../social/presentation/widgets/shared_ride_feed_card.dart';
+import '../../../stats/domain/ride_sort.dart';
+import '../../../stats/presentation/screens/all_rides_screen.dart';
+import '../../../stats/presentation/widgets/badge_grid.dart';
+import '../../../../core/utils/badges.dart';
+import '../../../../core/utils/error_reporter.dart';
+import '../../../../shared/widgets/editorial.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
@@ -321,6 +332,38 @@ class _ProfileBody extends ConsumerWidget {
               ),
             ],
           ),
+          // Published since 2026-10-25; 0 until the rider's next ride syncs.
+          if (profile.longestRideKm > 0 || profile.longestDayStreak > 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _StatCard(
+                    value:
+                        SpeedFormatter.distanceKm(profile.longestRideKm * 1000),
+                    label: context.l10n.longestRideStat,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _StatCard(
+                      value: '${profile.longestDayStreak}',
+                      label: context.l10n.dayStreakStat),
+                ),
+              ],
+            ),
+          ],
+          if (earnedBadgeFamiliesFromIds(profile.badgeIds) case final families
+              when families.isNotEmpty) ...[
+            const SizedBox(height: 24),
+            Text(context.l10n.badges,
+                style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: context.palette.textPrimary)),
+            const SizedBox(height: 12),
+            BadgeGrid(families: families, readOnly: true),
+          ],
           // The garage. Hidden outright — no placeholder, nothing to probe —
           // when this viewer isn't allowed to see it. The same decision is
           // re-made server-side in firestore.rules; this is the cosmetic half.
@@ -332,6 +375,10 @@ class _ProfileBody extends ConsumerWidget {
           )) ...[
             const SizedBox(height: 24),
             _GarageSection(profile: profile, isMe: isMe),
+          ],
+          if (ref.watch(appModulesProvider).social) ...[
+            const SizedBox(height: 24),
+            _SharedRidesSection(profile: profile, isMe: isMe),
           ],
         ],
       ),
@@ -439,6 +486,142 @@ class _GarageSection extends ConsumerWidget {
                 ),
               ),
             ),
+      ],
+    );
+  }
+}
+
+/// The rider's shared rides this viewer may see (see
+/// [riderSharedRidesProvider]), drawn as feed cards: pinned rides first in pin
+/// order, then the rest under the Stats tab's sort chips. On your own profile
+/// each card's menu pins or unpins it (up to [kMaxPinnedRides]).
+class _SharedRidesSection extends ConsumerStatefulWidget {
+  final UserProfileEntity profile;
+  final bool isMe;
+  const _SharedRidesSection({required this.profile, required this.isMe});
+
+  @override
+  ConsumerState<_SharedRidesSection> createState() =>
+      _SharedRidesSectionState();
+}
+
+class _SharedRidesSectionState extends ConsumerState<_SharedRidesSection> {
+  RideSort _sort = RideSort.recent;
+
+  /// Optimistic vote/comment updates over the loaded rides, by id.
+  final _patched = <String, SharedRideEntity>{};
+
+  SharedRideEntity _current(SharedRideEntity ride) => _patched[ride.id] ?? ride;
+
+  Future<void> _vote(SharedRideEntity ride, int value) async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    final before = _current(ride);
+    setState(() => _patched[ride.id] = before.withVote(value));
+    try {
+      await ref.read(rideShareRepositoryProvider).vote(ride.id, uid, value);
+    } catch (e, st) {
+      reportSilently(e, st, where: 'profile.vote');
+      if (mounted) setState(() => _patched[ride.id] = before);
+    }
+  }
+
+  void _commentAdded(SharedRideEntity ride) {
+    final current = _current(ride);
+    setState(() =>
+        _patched[ride.id] = current.copyWith(comments: current.comments + 1));
+  }
+
+  Future<void> _togglePin(String rideId) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final l10n = context.l10n;
+    final next = togglePinnedRide(widget.profile.pinnedRideIds, rideId);
+    if (next == null) {
+      messenger.showSnackBar(
+          SnackBar(content: Text(l10n.pinLimitReached(kMaxPinnedRides))));
+      return;
+    }
+    try {
+      await ref
+          .read(profileRepositoryProvider)
+          .setPinnedRides(widget.profile.uid, next);
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(
+          content: Text(l10n.couldntUpdatePins(mapFirestoreError(e, l10n)))));
+    }
+  }
+
+  Widget _card(SharedRideEntity ride, {bool pinned = false}) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: SharedRideFeedCard(
+          key: ValueKey(ride.id),
+          ride: ride,
+          pinned: pinned,
+          onVote: (value) => _vote(ride, value),
+          onCommentAdded: () => _commentAdded(ride),
+          onTogglePin: widget.isMe ? () => _togglePin(ride.id) : null,
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    final uid = widget.profile.uid;
+    final pinIds = widget.profile.pinnedRideIds;
+    final ridesAsync = ref.watch(riderSharedRidesProvider(uid));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(context.l10n.sharedRidesHeading,
+            style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary)),
+        const SizedBox(height: 12),
+        ridesAsync.when(
+          loading: () => Center(
+              child: CircularProgressIndicator(color: context.palette.primary)),
+          error: (e, _) => ErrorView(
+            error: e,
+            onRetry: () => ref.invalidate(riderSharedRidesProvider(uid)),
+          ),
+          data: (rides) {
+            final byId = {for (final r in rides) r.id: r};
+            // A pin older than the loaded page is fetched on its own; one the
+            // viewer may not see (or a deleted share) fails and is skipped.
+            final pinned = [
+              for (final id in pinIds)
+                if ((byId[id] ?? ref.watch(sharedRideProvider(id)).valueOrNull)
+                    case final ride? when ride.userId == uid)
+                  _current(ride),
+            ];
+            final rest = sortSharedRides([
+              for (final r in rides)
+                if (!pinIds.contains(r.id)) _current(r),
+            ], _sort);
+            if (pinned.isEmpty && rest.isEmpty) {
+              return Text(context.l10n.noSharedRidesYet,
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textTertiary));
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (pinned.isNotEmpty) ...[
+                  EditorialLabel(context.l10n.pinnedRidesHeading),
+                  const SizedBox(height: 8),
+                  for (final ride in pinned) _card(ride, pinned: true),
+                ],
+                if (rest.length > 1) ...[
+                  RideSortChips(
+                      sort: _sort,
+                      onChanged: (sort) => setState(() => _sort = sort)),
+                  const SizedBox(height: 12),
+                ],
+                for (final ride in rest) _card(ride),
+              ],
+            );
+          },
+        ),
       ],
     );
   }
