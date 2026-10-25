@@ -7618,3 +7618,18 @@ Functions are still undeployed; these were found by reading the code and are cov
 - **Chat moderation could destroy the evidence it meant to keep.** `onMessageCreate` overwrote the message text before writing the report holding the original. A failed report write (or a retry, which no longer sees toxic text) lost the text. *Fix:* the report is written first and the message hidden after.
 - *Tests:* `test/emulator/account-deletion.test.js` has a re-run test that starts from a half-anonymised chat: one message done, one not, participants still holding the uid, profile gone, claim still present. Both runs must end in the same correct state. `report-retention.test.js` covers paging past 400 docs and the deadline. `track-retention.test.js` covers the deadline.
 - *Verified, no change needed:* `anonymizeChat` is idempotent. The rider's messages are blanked first, and `participants` (how a re-run finds the chat) changes last, in a transaction with the `lastMessage` and legacy name/photo cleanup. The chat id is kept, and a chat with nobody left is recursively deleted.
+
+## 114. Brand/model suggestions couldn't be scrolled or tapped — FIXED (2026-10-25)
+
+In onboarding's first-bike step (and on Add/Edit Bike), the Brand and Model suggestion
+list (`BrandModelAutocompleteField`, a thin wrapper on Flutter's `Autocomplete`) showed up
+but couldn't be scrolled, and tapping an option did nothing, so riders had to type.
+*Cause:* the app-wide `KeyboardDismissWrapper` drops focus on any pointer-down outside the
+focused field's bounds. The suggestion list sits in the overlay, outside the field, and
+`RawAutocomplete` hides it as soon as the field loses focus, so the list was gone before the
+tap or drag finished. *Fix:* the wrapper hit-tests the touch and leaves focus alone when it
+lands in a `TextFieldTapRegion` (Autocomplete options, selection handles)
+(`app/lib/shared/widgets/keyboard_dismiss_wrapper.dart`). Any other outside tap still closes
+the keyboard. *Test:* `app/test/shared/widgets/keyboard_dismiss_wrapper_test.dart` picks an
+option with the finger going down and up in separate frames. It fails without the fix.
+`tester.tap()` sends both in one frame and so missed the bug. Not checked on a device yet.

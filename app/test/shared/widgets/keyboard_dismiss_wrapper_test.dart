@@ -279,5 +279,41 @@ void main() {
       await tester.tap(find.text('Hello'));
       await tester.pump();
     });
+
+    testWidgets('lets an Autocomplete option be selected (options sit outside the field)', (tester) async {
+      final controller = TextEditingController();
+      final focusNode = FocusNode();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          builder: (context, child) => KeyboardDismissWrapper(
+            child: child ?? const SizedBox.shrink(),
+          ),
+          home: Scaffold(
+            body: Autocomplete<String>(
+              textEditingController: controller,
+              focusNode: focusNode,
+              optionsBuilder: (_) => const ['Yamaha', 'Honda', 'Bajaj'],
+              fieldViewBuilder: (context, c, f, _) =>
+                  TextField(controller: c, focusNode: f),
+            ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(TextField));
+      await tester.pumpAndSettle();
+      expect(find.text('Honda'), findsOneWidget);
+
+      // A real finger lifts frames after touching down; tester.tap() would
+      // send both in one frame and miss the options closing in between.
+      final gesture = await tester.startGesture(tester.getCenter(find.text('Honda')));
+      await tester.pump();
+      await gesture.up();
+      await tester.pumpAndSettle();
+      expect(controller.text, 'Honda');
+    });
   });
 }
