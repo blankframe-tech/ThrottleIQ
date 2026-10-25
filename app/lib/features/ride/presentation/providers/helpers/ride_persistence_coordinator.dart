@@ -189,7 +189,8 @@ class RidePersistenceCoordinator {
         rides: rideRows.map(RideModel.fromMap).toList(),
         bikes: bikeRows.map(BikeModel.fromMap).toList(),
       );
-      final earnedIds = computeBadges(stats)
+      final badgeStats = BadgeStats.from(stats);
+      final earnedIds = computeBadgesFrom(badgeStats)
           .where((b) => b.earned)
           .map((b) => b.def.id)
           .toList();
@@ -198,6 +199,8 @@ class RidePersistenceCoordinator {
         totalDistanceKm: stats.totalDistanceKm,
         totalRides: stats.totalRides,
         badgeIds: earnedIds,
+        longestRideKm: badgeStats.longestRideKm,
+        longestDayStreak: badgeStats.longestDayStreak,
       );
     } catch (e, st) {
       reportSilently(e, st, where: 'ride.updatePublicStats');

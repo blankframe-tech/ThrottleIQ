@@ -255,16 +255,28 @@ class ProfileRepository {
     required double totalDistanceKm,
     required int totalRides,
     required List<String> badgeIds,
+    required double longestRideKm,
+    required int longestDayStreak,
   }) async {
     await _users.doc(uid).set({
       'publicStats': {
         'totalDistanceKm': totalDistanceKm,
         'totalRides': totalRides,
         'badgeIds': badgeIds,
+        'longestRideKm': longestRideKm,
+        'longestDayStreak': longestDayStreak,
       },
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
+
+  /// Replaces the rider's pinned shared rides (at most `kMaxPinnedRides`,
+  /// also enforced by firestore.rules).
+  Future<void> setPinnedRides(String uid, List<String> rideIds) =>
+      ackOrQueued(_users.doc(uid).set({
+        'pinnedRideIds': rideIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)));
 
   /// Sets who can view this rider's profile doc (and hence [publicStats]):
   /// 'public' (default — any signed-in rider), 'mutual' (only riders who

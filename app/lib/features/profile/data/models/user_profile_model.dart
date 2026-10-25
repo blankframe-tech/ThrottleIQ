@@ -38,6 +38,16 @@ class UserProfileModel {
               ?.whereType<String>()
               .toList() ??
           const [],
+      longestRideKm: ((data['publicStats'] as Map?)?['longestRideKm'] as num?)
+              ?.toDouble() ??
+          0,
+      longestDayStreak:
+          ((data['publicStats'] as Map?)?['longestDayStreak'] as num?)
+                  ?.toInt() ??
+              0,
+      pinnedRideIds:
+          (data['pinnedRideIds'] as List?)?.whereType<String>().toList() ??
+              const [],
       createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
       updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
     );

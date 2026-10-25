@@ -63,6 +63,17 @@ class UserProfileEntity extends Equatable {
   final int totalRides;
   final List<String> badgeIds;
 
+  /// Longest single ride (km) and longest run of consecutive riding days,
+  /// published with the stats above. 0 until the rider's first ride after
+  /// these shipped (2026-10-25).
+  final double longestRideKm;
+  final int longestDayStreak;
+
+  /// Shared-ride ids the rider pinned to the top of their profile, in pin
+  /// order, at most `kMaxPinnedRides`. Ids can go stale (a deleted share);
+  /// the profile skips what it can't load.
+  final List<String> pinnedRideIds;
+
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -82,6 +93,9 @@ class UserProfileEntity extends Equatable {
     this.totalDistanceKm = 0,
     this.totalRides = 0,
     this.badgeIds = const [],
+    this.longestRideKm = 0,
+    this.longestDayStreak = 0,
+    this.pinnedRideIds = const [],
     this.createdAt,
     this.updatedAt,
   });
@@ -89,7 +103,9 @@ class UserProfileEntity extends Equatable {
   /// The best human label for this rider: nickname → displayName → @username
   /// → "Rider".
   String get bestName {
-    if (nickname != null && nickname!.trim().isNotEmpty) return nickname!.trim();
+    if (nickname != null && nickname!.trim().isNotEmpty) {
+      return nickname!.trim();
+    }
     if (displayName.trim().isNotEmpty) return displayName.trim();
     if (username != null && username!.isNotEmpty) return '@$username';
     return 'Rider';
@@ -116,6 +132,9 @@ class UserProfileEntity extends Equatable {
     double? totalDistanceKm,
     int? totalRides,
     List<String>? badgeIds,
+    double? longestRideKm,
+    int? longestDayStreak,
+    List<String>? pinnedRideIds,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -135,6 +154,9 @@ class UserProfileEntity extends Equatable {
       totalDistanceKm: totalDistanceKm ?? this.totalDistanceKm,
       totalRides: totalRides ?? this.totalRides,
       badgeIds: badgeIds ?? this.badgeIds,
+      longestRideKm: longestRideKm ?? this.longestRideKm,
+      longestDayStreak: longestDayStreak ?? this.longestDayStreak,
+      pinnedRideIds: pinnedRideIds ?? this.pinnedRideIds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -157,6 +179,9 @@ class UserProfileEntity extends Equatable {
         totalDistanceKm,
         totalRides,
         badgeIds,
+        longestRideKm,
+        longestDayStreak,
+        pinnedRideIds,
         createdAt,
         updatedAt,
       ];
