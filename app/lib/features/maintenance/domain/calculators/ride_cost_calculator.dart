@@ -37,7 +37,15 @@ class RideCostBreakdown {
   /// Most expensive first; only items that had usable cost data.
   final List<RideCostLine> lines;
 
-  const RideCostBreakdown({required this.distanceKm, required this.lines});
+  /// How this ride's fuel compares with the bike's usual riding (see
+  /// `ride_fuel.dart`); 1.0 when it was costed flat.
+  final double fuelFactor;
+
+  const RideCostBreakdown({
+    required this.distanceKm,
+    required this.lines,
+    this.fuelFactor = 1.0,
+  });
 
   bool get isEmpty => lines.isEmpty;
   double get total => lines.fold(0.0, (s, l) => s + l.cost);
@@ -51,6 +59,9 @@ class RideCostBreakdown {
 ///   per-service price is the mean of the rider's logged costs for that item
 ///   (actual history wins), falling back to the check's typical cost.
 /// ride cost          = distance × Σ cost/km, per line.
+///
+/// [compute]'s `fuelFactor` scales the fuel line for how the ride was ridden
+/// (jam vs steady cruise) — see `ride_fuel.dart`.
 ///
 /// Only enabled checks count ("things I maintain"); the `fuel` check is
 /// priced from [BikeRunningCostEntity] instead of its interval, since a
@@ -93,15 +104,17 @@ class RideCostCalculator {
     required List<MaintenanceConfigEntity> configs,
     required List<MaintenanceEntity> logs,
     BikeRunningCostEntity? runningCost,
+    double fuelFactor = 1.0,
   }) {
     final distance = distanceKm.isFinite && distanceKm > 0 ? distanceKm : 0.0;
     final lines = <RideCostLine>[];
 
-    final fuel = fuelCostPerKm(
+    final flatFuel = fuelCostPerKm(
       pricePerLitre: runningCost?.fuelPricePerLitre,
       kmPerLitre: runningCost?.kmPerLitre,
     );
-    if (fuel != null) {
+    if (flatFuel != null) {
+      final fuel = flatFuel * fuelFactor;
       lines.add(RideCostLine(
         serviceType: ServiceType.fuel,
         costPerKm: fuel,
@@ -131,6 +144,10 @@ class RideCostCalculator {
     }
 
     lines.sort((a, b) => b.costPerKm.compareTo(a.costPerKm));
-    return RideCostBreakdown(distanceKm: distance, lines: lines);
+    return RideCostBreakdown(
+      distanceKm: distance,
+      lines: lines,
+      fuelFactor: flatFuel != null ? fuelFactor : 1.0,
+    );
   }
 }
