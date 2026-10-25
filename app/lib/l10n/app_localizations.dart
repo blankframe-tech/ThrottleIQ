@@ -2102,6 +2102,60 @@ abstract class AppLocalizations {
   /// **'You haven\'t shared any rides yet'**
   String get haventSharedAnyRides;
 
+  /// Shared-ride card menu on your own profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin to profile'**
+  String get pinToProfile;
+
+  /// Shared-ride card menu on your own profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin from profile'**
+  String get unpinFromProfile;
+
+  /// Heading over the rides a rider pinned to the top of their profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get pinnedRidesHeading;
+
+  /// Profile stat label under a distance, lowercase like 'rides logged'.
+  ///
+  /// In en, this message translates to:
+  /// **'longest ride'**
+  String get longestRideStat;
+
+  /// Profile stat label under the rider's longest run of consecutive riding days.
+  ///
+  /// In en, this message translates to:
+  /// **'day streak'**
+  String get dayStreakStat;
+
+  /// Snackbar when pinning a sixth ride to the profile.
+  ///
+  /// In en, this message translates to:
+  /// **'You can pin up to {count} rides'**
+  String pinLimitReached(int count);
+
+  /// Snackbar when saving profile pins fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t update pins: {error}'**
+  String couldntUpdatePins(String error);
+
+  /// Heading of the shared-rides list on a rider's profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Shared rides'**
+  String get sharedRidesHeading;
+
+  /// Empty state of the shared-rides list on a rider's profile.
+  ///
+  /// In en, this message translates to:
+  /// **'No shared rides yet'**
+  String get noSharedRidesYet;
+
   /// Text in notifications_screen.
   ///
   /// In en, this message translates to:

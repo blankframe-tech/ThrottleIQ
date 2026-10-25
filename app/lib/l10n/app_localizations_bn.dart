@@ -1117,6 +1117,37 @@ class AppLocalizationsBn extends AppLocalizations {
   String get haventSharedAnyRides => 'আপনি এখনো কোনো রাইড শেয়ার করেননি';
 
   @override
+  String get pinToProfile => 'প্রোফাইলে পিন করুন';
+
+  @override
+  String get unpinFromProfile => 'প্রোফাইল থেকে আনপিন করুন';
+
+  @override
+  String get pinnedRidesHeading => 'পিন করা';
+
+  @override
+  String get longestRideStat => 'দীর্ঘতম রাইড';
+
+  @override
+  String get dayStreakStat => 'টানা দিনের রেকর্ড';
+
+  @override
+  String pinLimitReached(int count) {
+    return 'সর্বোচ্চ $countটি রাইড পিন করা যায়';
+  }
+
+  @override
+  String couldntUpdatePins(String error) {
+    return 'পিন আপডেট করা যায়নি: $error';
+  }
+
+  @override
+  String get sharedRidesHeading => 'শেয়ার করা রাইড';
+
+  @override
+  String get noSharedRidesYet => 'এখনো কোনো শেয়ার করা রাইড নেই';
+
+  @override
   String get notifications => 'নোটিফিকেশন';
 
   @override

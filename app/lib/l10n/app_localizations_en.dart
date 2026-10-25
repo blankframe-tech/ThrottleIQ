@@ -1116,6 +1116,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get haventSharedAnyRides => 'You haven\'t shared any rides yet';
 
   @override
+  String get pinToProfile => 'Pin to profile';
+
+  @override
+  String get unpinFromProfile => 'Unpin from profile';
+
+  @override
+  String get pinnedRidesHeading => 'Pinned';
+
+  @override
+  String get longestRideStat => 'longest ride';
+
+  @override
+  String get dayStreakStat => 'day streak';
+
+  @override
+  String pinLimitReached(int count) {
+    return 'You can pin up to $count rides';
+  }
+
+  @override
+  String couldntUpdatePins(String error) {
+    return 'Couldn\'t update pins: $error';
+  }
+
+  @override
+  String get sharedRidesHeading => 'Shared rides';
+
+  @override
+  String get noSharedRidesYet => 'No shared rides yet';
+
+  @override
   String get notifications => 'Notifications';
 
   @override

@@ -1773,3 +1773,13 @@ publicLiveLinkChangePassword
 publicLiveLinkSave
 # batch: dynamic ride fuel (2026-10-25)
 rideCostFuelAdjusted
+# batch: profile shared rides (2026-10-25)
+sharedRidesHeading
+noSharedRidesYet
+pinToProfile
+unpinFromProfile
+pinnedRidesHeading
+longestRideStat
+dayStreakStat
+pinLimitReached
+couldntUpdatePins

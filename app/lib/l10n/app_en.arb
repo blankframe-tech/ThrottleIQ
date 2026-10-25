@@ -1470,6 +1470,52 @@
   "@haventSharedAnyRides": {
     "description": "Text in my_shared_rides_screen."
   },
+  "pinToProfile": "Pin to profile",
+  "@pinToProfile": {
+    "description": "Shared-ride card menu on your own profile."
+  },
+  "unpinFromProfile": "Unpin from profile",
+  "@unpinFromProfile": {
+    "description": "Shared-ride card menu on your own profile."
+  },
+  "pinnedRidesHeading": "Pinned",
+  "@pinnedRidesHeading": {
+    "description": "Heading over the rides a rider pinned to the top of their profile."
+  },
+  "longestRideStat": "longest ride",
+  "@longestRideStat": {
+    "description": "Profile stat label under a distance, lowercase like 'rides logged'."
+  },
+  "dayStreakStat": "day streak",
+  "@dayStreakStat": {
+    "description": "Profile stat label under the rider's longest run of consecutive riding days."
+  },
+  "pinLimitReached": "You can pin up to {count} rides",
+  "@pinLimitReached": {
+    "description": "Snackbar when pinning a sixth ride to the profile.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "couldntUpdatePins": "Couldn't update pins: {error}",
+  "@couldntUpdatePins": {
+    "description": "Snackbar when saving profile pins fails.",
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "sharedRidesHeading": "Shared rides",
+  "@sharedRidesHeading": {
+    "description": "Heading of the shared-rides list on a rider's profile."
+  },
+  "noSharedRidesYet": "No shared rides yet",
+  "@noSharedRidesYet": {
+    "description": "Empty state of the shared-rides list on a rider's profile."
+  },
   "notifications": "Notifications",
   "@notifications": {
     "description": "Text in notifications_screen."
