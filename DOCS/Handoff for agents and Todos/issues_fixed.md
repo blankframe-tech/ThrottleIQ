@@ -7633,3 +7633,12 @@ lands in a `TextFieldTapRegion` (Autocomplete options, selection handles)
 the keyboard. *Test:* `app/test/shared/widgets/keyboard_dismiss_wrapper_test.dart` picks an
 option with the finger going down and up in separate frames. It fails without the fix.
 `tester.tap()` sends both in one frame and so missed the bug. Not checked on a device yet.
+
+## 113. Google sign-in fails on Play Store installs (2026-10-25) — FIXED 2026-10-25
+
+Reported by the owner on a Play install (alpha track, build 30, `1.0.0-beta.4.8.0`). Sideloaded and `flutter run` builds are not affected.
+
+- **Cause:** Play App Signing re-signs the app with Google's key, and that key's fingerprint is not registered on the Firebase Android app (`1:603325098273:android:94694220f44cbf63fcf660`), so Google rejects the sign-in. Firebase has only the upload key (`8542b8ad…`), the debug key (`db4c8876…`) and an unidentified `901e472b…`.
+- **Play signing key** (read from build 30's Play-generated universal APK with `apksigner verify --max-sdk-version 36 --print-certs`; JDK 21 can't parse the PQC v3.2 signer): SHA-1 `6016d8cbc69b07e8dc3c03397763ae0c6defbf07`, SHA-256 `cf1e8bab278265ccdd230303ae612ba95190a6d04ca85c19b8585e459060543d`.
+- **Fixed (console only, no rebuild):** both hashes registered with `firebase apps:android:sha:create <appId> <hash> --project throttleiqfb`; Firebase created the matching Android OAuth client. The local `app/android/app/google-services.json` (gitignored) got the refreshed `com.bft.throttleiq` block. Not yet re-tested on the Play install.
+- **Rule:** if the Play signing key ever changes (key upgrade), register its fingerprint again. Find it in Play Console → App integrity → App signing.
