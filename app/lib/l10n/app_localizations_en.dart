@@ -4597,6 +4597,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String rideCostFuelAdjusted(String change) {
+    return 'Fuel $change vs your usual riding (this ride\'s traffic & speed)';
+  }
+
+  @override
   String get partOrderButton => 'Order';
 
   @override

@@ -4592,6 +4592,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String rideCostFuelAdjusted(String change) {
+    return 'জ্বালানি সাধারণ রাইডের চেয়ে $change (এই রাইডের ট্রাফিক ও গতি)';
+  }
+
+  @override
   String get partOrderButton => 'অর্ডার';
 
   @override

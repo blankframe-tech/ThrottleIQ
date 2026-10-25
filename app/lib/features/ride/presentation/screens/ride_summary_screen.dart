@@ -478,8 +478,14 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
 
                 // ── Ride cost ────────────────────────────────────────────
                 // Distance × the ride's bike's running cost per km (fuel +
-                // each tracked check with cost data) — see RideCostCard.
-                RideCostCard(bikeId: ride.bikeId, distanceKm: ride.distanceKm),
+                // each tracked check with cost data), fuel scaled for this
+                // ride's jam time and speed — see RideCostCard.
+                RideCostCard(
+                  bikeId: ride.bikeId,
+                  distanceKm: ride.distanceKm,
+                  movingSeconds: ride.movingSeconds,
+                  durationSeconds: ride.durationSeconds,
+                ),
                 const SizedBox(height: 16),
 
                 // ── Map ──────────────────────────────────────────────────

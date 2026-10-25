@@ -44,25 +44,31 @@ void main() {
     test('combines fuel settings, typical costs and logged costs', () async {
       final c = ProviderContainer();
       addTearDown(c.dispose);
-      const key = (bikeId: 'b1', distanceKm: 10.0);
+      const key = (
+        bikeId: 'b1',
+        distanceKm: 10.0,
+        movingSeconds: null,
+        durationSeconds: null,
+      );
       // Keep the family alive while its sources load.
       final sub = c.listen(rideCostProvider(key), (_, __) {});
       addTearDown(sub.close);
 
-      await c.read(bikeRunningCostProvider('b1').notifier)
+      await c
+          .read(bikeRunningCostProvider('b1').notifier)
           .save(fuelPricePerLitre: 130, kmPerLitre: 40); // 3.25/km
 
       final configs = await c.read(maintenanceConfigProvider('b1').future);
-      final chain = configs.firstWhere((x) => x.serviceType == ServiceType.chain);
-      await c.read(maintenanceConfigProvider('b1').notifier)
-          .updateSingleConfig(
-              chain.copyWith(intervalKm: 600, typicalCost: 300)); // 300/600 = .5
+      final chain =
+          configs.firstWhere((x) => x.serviceType == ServiceType.chain);
+      await c.read(maintenanceConfigProvider('b1').notifier).updateSingleConfig(
+          chain.copyWith(intervalKm: 600, typicalCost: 300)); // 300/600 = .5
 
       // Oil has a typical cost but a logged actual cost wins.
       final oil =
           configs.firstWhere((x) => x.serviceType == ServiceType.oilChange);
-      await c.read(maintenanceConfigProvider('b1').notifier)
-          .updateSingleConfig(oil.copyWith(intervalKm: 1500, typicalCost: 9999));
+      await c.read(maintenanceConfigProvider('b1').notifier).updateSingleConfig(
+          oil.copyWith(intervalKm: 1500, typicalCost: 9999));
       await c.read(maintenanceProvider('b1').notifier).addLog(
             bikeId: 'b1',
             serviceType: ServiceType.oilChange,
@@ -82,6 +88,21 @@ void main() {
       expect(byType[ServiceType.oilChange]!.cost, closeTo(10, 1e-9));
       expect(byType[ServiceType.chain]!.cost, closeTo(5, 1e-9));
       expect(b.total, closeTo(47.5, 1e-9));
+
+      // A ride's timing with no riding history to compare against: fuel
+      // stays flat rather than guessing.
+      const ride = (
+        bikeId: 'b1',
+        distanceKm: 10.0,
+        movingSeconds: 1200,
+        durationSeconds: 2400,
+      );
+      final rideSub = c.listen(rideCostProvider(ride), (_, __) {});
+      addTearDown(rideSub.close);
+      await c.read(bikeUsageProvider('b1').future);
+      final r = c.read(rideCostProvider(ride))!;
+      expect(r.fuelFactor, 1.0);
+      expect(r.total, closeTo(47.5, 1e-9));
 
       // Persisted: a fresh container reads the same fuel settings back.
       final c2 = ProviderContainer();

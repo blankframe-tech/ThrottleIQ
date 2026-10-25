@@ -8094,6 +8094,12 @@ abstract class AppLocalizations {
   /// **'Estimate · {distance} km at ৳{perKm}/km'**
   String rideCostEstimateNote(String distance, String perKm);
 
+  /// Maintenance settings / running cost (ride cost) feature. Under a ride's cost: how much more or less fuel this ride burned than the bike's average km/L, from its stopped time and speed. change is like +18% or −12%.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel {change} vs your usual riding (this ride\'s traffic & speed)'**
+  String rideCostFuelAdjusted(String change);
+
   /// Maintenance part ordering (demo, cash on delivery).
   ///
   /// In en, this message translates to:

@@ -1771,3 +1771,5 @@ publicLiveLinkPasswordBody
 publicLiveLinkPasswordTooShort
 publicLiveLinkChangePassword
 publicLiveLinkSave
+# batch: dynamic ride fuel (2026-10-25)
+rideCostFuelAdjusted

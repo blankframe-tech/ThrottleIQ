@@ -1332,6 +1332,7 @@
   "rideCostHint": "এই রাইডে কত খরচ হলো দেখতে জ্বালানির দাম, মাইলেজ ও সার্ভিস খরচ যোগ করুন।",
   "rideCostSetUp": "সেট করুন",
   "rideCostEstimateNote": "অনুমান · {distance} কিমি, ৳{perKm}/কিমি",
+  "rideCostFuelAdjusted": "জ্বালানি সাধারণ রাইডের চেয়ে {change} (এই রাইডের ট্রাফিক ও গতি)",
   "partOrderButton": "অর্ডার",
   "partOrderTitle": "{part} অর্ডার করুন",
   "partOrderTestingNotice": "এই ফিচারটি পরীক্ষা করা হচ্ছে। কোনো আসল অর্ডার হবে না এবং কোনো টাকা কাটা হবে না।",

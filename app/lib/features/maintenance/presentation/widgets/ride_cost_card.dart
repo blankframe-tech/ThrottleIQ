@@ -9,7 +9,8 @@ import 'maintenance_format.dart';
 import 'running_costs_sheet.dart';
 
 /// "What did this ride cost?" — distance × the bike's running cost per km,
-/// broken down by fuel and each tracked check that has cost data.
+/// broken down by fuel and each tracked check that has cost data. Given the
+/// ride's timing, fuel reflects its jam time and speed (`ride_fuel.dart`).
 ///
 /// Renders nothing while its sources load or for a zero-distance ride; with
 /// no cost data at all it shows a one-line hint that opens the running-cost
@@ -17,18 +18,26 @@ import 'running_costs_sheet.dart';
 class RideCostCard extends ConsumerWidget {
   final String bikeId;
   final double distanceKm;
+  final int? movingSeconds;
+  final int? durationSeconds;
 
   const RideCostCard({
     super.key,
     required this.bikeId,
     required this.distanceKm,
+    this.movingSeconds,
+    this.durationSeconds,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (bikeId.isEmpty || !(distanceKm > 0)) return const SizedBox.shrink();
-    final breakdown =
-        ref.watch(rideCostProvider((bikeId: bikeId, distanceKm: distanceKm)));
+    final breakdown = ref.watch(rideCostProvider((
+      bikeId: bikeId,
+      distanceKm: distanceKm,
+      movingSeconds: movingSeconds,
+      durationSeconds: durationSeconds,
+    )));
     if (breakdown == null) return const SizedBox.shrink();
     final l10n = context.l10n;
 
@@ -55,6 +64,7 @@ class RideCostCard extends ConsumerWidget {
       );
     }
 
+    final fuelChange = ((breakdown.fuelFactor - 1) * 100).round();
     return EditorialCard(
       radius: context.shape.radiusLg,
       padding: const EdgeInsets.all(14),
@@ -67,8 +77,7 @@ class RideCostCard extends ConsumerWidget {
             children: [
               Expanded(child: EditorialLabel(l10n.rideCostTitle)),
               Text('৳${formatTaka(breakdown.total)}',
-                  key: const Key('rideCostTotal'),
-                  style: display(context, 22)),
+                  key: const Key('rideCostTotal'), style: display(context, 22)),
             ],
           ),
           const SizedBox(height: 2),
@@ -77,6 +86,14 @@ class RideCostCard extends ConsumerWidget {
                 formatTakaRate(breakdown.costPerKm)),
             style: TextStyle(fontSize: 11, color: context.palette.textTertiary),
           ),
+          if (fuelChange.abs() >= 3)
+            Text(
+              l10n.rideCostFuelAdjusted(
+                  '${fuelChange > 0 ? '+' : '−'}${fuelChange.abs()}%'),
+              key: const Key('rideCostFuelAdjusted'),
+              style:
+                  TextStyle(fontSize: 11, color: context.palette.textTertiary),
+            ),
           const SizedBox(height: 10),
           for (final line in breakdown.lines)
             Padding(

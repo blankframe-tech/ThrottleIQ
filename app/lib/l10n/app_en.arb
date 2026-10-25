@@ -6371,6 +6371,15 @@
       }
     }
   },
+  "rideCostFuelAdjusted": "Fuel {change} vs your usual riding (this ride's traffic & speed)",
+  "@rideCostFuelAdjusted": {
+    "description": "Maintenance settings / running cost (ride cost) feature. Under a ride's cost: how much more or less fuel this ride burned than the bike's average km/L, from its stopped time and speed. change is like +18% or \u221212%.",
+    "placeholders": {
+      "change": {
+        "type": "String"
+      }
+    }
+  },
   "partOrderButton": "Order",
   "@partOrderButton": {
     "description": "Maintenance part ordering (demo, cash on delivery)."

@@ -53,9 +53,30 @@ void main() {
     expect(find.text('৳12'), findsOneWidget);
   });
 
+  testWidgets('notes when this ride\'s fuel differs from usual',
+      (tester) async {
+    const fuel = RideCostLine(
+        serviceType: ServiceType.fuel,
+        costPerKm: 3,
+        cost: 60,
+        source: CostSource.fuel);
+    await tester.pumpWidget(_harness(const RideCostBreakdown(
+        distanceKm: 20, lines: [fuel], fuelFactor: 1.18)));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Fuel +18% vs your usual'), findsOneWidget);
+
+    // Fresh scope: a reused one keeps the first override's breakdown.
+    await tester.pumpWidget(const SizedBox());
+
+    await tester.pumpWidget(_harness(const RideCostBreakdown(
+        distanceKm: 20, lines: [fuel], fuelFactor: 1.01)));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('rideCostFuelAdjusted')), findsNothing);
+  });
+
   testWidgets('no cost data → setup hint', (tester) async {
-    await tester.pumpWidget(_harness(
-        const RideCostBreakdown(distanceKm: 20, lines: [])));
+    await tester.pumpWidget(
+        _harness(const RideCostBreakdown(distanceKm: 20, lines: [])));
     await tester.pumpAndSettle();
     expect(find.text('Set up'), findsOneWidget);
     expect(find.text('RIDE COST'), findsNothing);
