@@ -20,7 +20,12 @@ import 'badge_detail_sheet.dart';
 class BadgeGrid extends StatelessWidget {
   final List<BadgeFamilyProgress> families;
 
-  const BadgeGrid({super.key, required this.families});
+  /// Tiles don't open the ladder: for another rider's badges, where only
+  /// earned state is known (see `earnedBadgeFamiliesFromIds`), the ladder's
+  /// "you: N km" progress would be wrong.
+  final bool readOnly;
+
+  const BadgeGrid({super.key, required this.families, this.readOnly = false});
 
   @override
   Widget build(BuildContext context) {
@@ -33,10 +38,12 @@ class BadgeGrid extends StatelessWidget {
             progress: family,
             // A one-rung family ("First ride") has no ladder worth a sheet
             // of its own; go straight to the badge.
-            onTap: () => family.badges.length == 1
-                ? showBadgeDetailSheet(context,
-                    progress: family, badge: family.badges.single)
-                : showBadgeLadderSheet(context, family),
+            onTap: readOnly
+                ? null
+                : () => family.badges.length == 1
+                    ? showBadgeDetailSheet(context,
+                        progress: family, badge: family.badges.single)
+                    : showBadgeLadderSheet(context, family),
           ),
       ],
     );
@@ -63,7 +70,7 @@ Future<void> showBadgeLadderSheet(
 
 class _BadgeFamilyTile extends StatelessWidget {
   final BadgeFamilyProgress progress;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _BadgeFamilyTile({required this.progress, required this.onTap});
 
@@ -75,7 +82,7 @@ class _BadgeFamilyTile extends StatelessWidget {
     final tier = progress.highestTier;
 
     return Semantics(
-      button: true,
+      button: onTap != null,
       label: context.l10n.badgeFamilyEarned(
           progress.family.localizedName(context.l10n),
           progress.earnedCount,

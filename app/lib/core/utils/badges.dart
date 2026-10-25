@@ -622,6 +622,27 @@ List<BadgeFamilyProgress> computeBadgeProgressFrom(BadgeStats stats) => [
         ),
     ];
 
+/// The families another rider has earned at least one badge in, from the
+/// earned badge ids on their public profile (`publicStats.badgeIds`). Only
+/// earned state is known — [BadgeFamilyProgress.value] is 0 — so show these
+/// with `BadgeGrid(readOnly: true)`. Unknown ids (a retired badge) are
+/// ignored. Pure.
+List<BadgeFamilyProgress> earnedBadgeFamiliesFromIds(Iterable<String> ids) {
+  final earned = ids.toSet();
+  return [
+    for (final family in badgeFamilies)
+      if (family.tiers.any((t) => earned.contains(t.id)))
+        BadgeFamilyProgress(
+          family: family,
+          value: 0,
+          badges: [
+            for (final spec in family.tiers)
+              EarnedBadge(BadgeDef(family, spec), earned.contains(spec.id)),
+          ],
+        ),
+  ];
+}
+
 /// Trims the pointless `.0` off whole numbers so thresholds read as
 /// "5,000 km" rather than "5000.0 km", while 2.5 h keeps its half.
 ///

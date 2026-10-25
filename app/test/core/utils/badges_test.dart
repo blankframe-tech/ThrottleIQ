@@ -456,4 +456,19 @@ void main() {
       expect(formatBadgeValue(1.4), '1.4');
     });
   });
+
+  group('earnedBadgeFamiliesFromIds', () {
+    test('keeps only families with an earned id, marking exactly those', () {
+      final family = badgeFamilies.first;
+      final firstId = family.tiers.first.id;
+      final result = earnedBadgeFamiliesFromIds([firstId, 'retired_badge']);
+      expect(result.map((f) => f.family.id), [family.id]);
+      expect(result.single.earnedCount, 1);
+      expect(result.single.badges.first.earned, isTrue);
+    });
+
+    test('no ids, no families', () {
+      expect(earnedBadgeFamiliesFromIds(const []), isEmpty);
+    });
+  });
 }
