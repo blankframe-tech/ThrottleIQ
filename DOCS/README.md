@@ -75,6 +75,7 @@ Update these in the same session as the change they describe.
 | [`guides/SETUP.md`](For%20Devs%20and%20Contributors/guides/SETUP.md) | Local setup: Firebase, Cloudinary, signing, build commands. |
 | [`guides/account_deletion_runbook.md`](For%20Devs%20and%20Contributors/guides/account_deletion_runbook.md) | How to delete a rider's account and data by hand. |
 | [`guides/app_check.md`](For%20Devs%20and%20Contributors/guides/app_check.md) | App Check setup and enforcement runbook. |
+| [`guides/ThrottleIQ_Maya_Ride_Integration_Guide.pdf`](For%20Devs%20and%20Contributors/guides/ThrottleIQ_Maya_Ride_Integration_Guide.pdf) | For Maya Ride (2026-10-25): integrating the `mayabi/` kit, hosted API vs self-hosting, Blaze cost estimate, permission to reuse this branch. |
 | [`load_test/`](For%20Devs%20and%20Contributors/load_test) | Spark-quota load test (2026-10-15) and the quota outage rehearsal (2026-10-21). |
 
 Package READMEs live next to the code: `app/README.md`, `functions/README.md`,
