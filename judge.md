@@ -182,3 +182,11 @@ An outside plan proposed selling oil and accessories on Suggest.Bike and driving
 - **Dropped, blocked on decisions that are not ThrottleIQ's:** SSO/linked accounts with Suggest.Bike (Suggest.Bike is a static site with no accounts or backend), discount links (no shop exists, nothing to discount), "tap to order Motul 10W-40" (would be a brand-sponsored nudge inside a rider app; and `OrderPartSheet` is a labelled DEMO that sends nothing).
 - **If the owner decides to sell (see Suggest.Bike `judge.md`, same date):** the smallest real path is to point `OrderPartSheet` for oil at a Suggest.Bike page with the bike's oil grade (Suggest.Bike now publishes `engineOil` per bike where an owner's manual states it), not to build SSO. Map ThrottleIQ's free-text brand/model to Suggest.Bike ids first.
 Score unchanged at 40%.
+
+## Update (2026-10-27, agent round): review-round steps 2 and 4 checked, already done
+
+Both agent steps from the 2026-10-19 "Next steps" were already on `main`; no code changed this round.
+- **Step 2 (Google data revert):** `scripts/oneoff/revert_google_places.js` (2026-10-21 update above) deletes the 717 `system:gmaps-seed-dhaka` docs and, with `--from=<export>`, clears the Google-filled fields on the 80; dry run unless `--apply --backup=<file>`. `import_google_places.js` writes `verified: false` since `29b5bb5b`. Re-ran the revert and import unit tests: 12/12. **Not run against production**, not even the dry run: the owner decides (step 1).
+- **Step 4 (§104.1):** fixed 2026-10-22 (`42aaefbf`, `issues_fixed.md` §104.1): `RidePlacesCache` reads each geohash cell once (again after 3 days), later refreshes pull only `updatedAt > lastPull`; 8 tests in `ride_places_cache_test.dart`. Not in a release yet. Still open there: `scripts/loadtest/quota_sim.js` models the old 25 km query.
+- **Gate:** `check.sh --force` passed on `8a7e8359`. Nothing deployed.
+Score unchanged at 40%.
