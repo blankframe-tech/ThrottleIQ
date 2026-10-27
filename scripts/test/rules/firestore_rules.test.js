@@ -331,6 +331,14 @@ test('a stranger cannot delete someone else\'s reply to drive the count down', a
 // isAdmin() must not blow up on a token with no email claims — §24.11
 // ---------------------------------------------------------------------------
 
+/** ForumRepository.deletePost: the post and its postCount drop in one batch. */
+function deletePost(db) {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, 'forums', FORUM_ID, 'posts', POST_ID));
+  batch.update(doc(db, 'forums', FORUM_ID), { postCount: increment(-1), lastPostId: POST_ID });
+  return batch.commit();
+}
+
 test('a forum creator can moderate even with no email_verified claim', async () => {
   // isAdmin() used to read request.auth.token.email_verified directly. On a
   // token without that claim (anonymous/phone sign-in, and every test token
@@ -346,12 +354,12 @@ test('a forum creator can moderate even with no email_verified claim', async () 
 
   const db = dbFor(MALLORY);
   // ALICE's post, deleted by the forum's creator.
-  await assertSucceeds(deleteDoc(doc(db, 'forums', FORUM_ID, 'posts', POST_ID)));
+  await assertSucceeds(deletePost(db));
 });
 
 test('a non-moderator still cannot delete someone else\'s post', async () => {
   const db = dbFor(MALLORY);
-  await assertFails(deleteDoc(doc(db, 'forums', FORUM_ID, 'posts', POST_ID)));
+  await assertFails(deletePost(db));
 });
 
 // docs/Issues.md §47: a QA sweep reported "permission-denied" when a
@@ -364,7 +372,7 @@ test('a non-moderator still cannot delete someone else\'s post', async () => {
 // could have caused the reported failure with no local test ever catching it.
 test('a rider can delete their own post', async () => {
   const db = dbFor(ALICE);
-  await assertSucceeds(deleteDoc(doc(db, 'forums', FORUM_ID, 'posts', POST_ID)));
+  await assertSucceeds(deletePost(db));
 });
 
 // ---------------------------------------------------------------------------
@@ -1542,7 +1550,6 @@ function sharedRideData(overrides = {}) {
     createdAt: new Date(),
     audience: 'public',
     allowedUserIds: [],
-    likes: 0,
     comments: 0,
     upvotes: 0,
     downvotes: 0,
