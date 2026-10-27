@@ -402,6 +402,109 @@ test('empty credentials (an unset secret) skip the sweep without throwing', asyn
   assert.equal(await exists(`users/${UID}`), false);
 });
 
+// Critique 2026-10-27 #16: the rider's identity in other riders' space. Each
+// test seeds its own data and runs the erasure twice: a retry must not fail
+// or apply anything twice.
+async function seedAndEraseTwice(docs, check) {
+  await clearEmulators();
+  const batch = db.batch();
+  for (const [path, data] of Object.entries(docs)) batch.set(db.doc(path), data);
+  await batch.commit();
+  for (let run = 0; run < 2; run++) {
+    const result = await deleteUserData(db, UID, { rtdb: null });
+    assert.deepEqual(result.failedSteps, [], `run ${run}`);
+    await check();
+  }
+}
+
+test('notifications the rider sent into other inboxes are deleted', async () => {
+  await seedAndEraseTwice({
+    [`users/${OTHER}/notifications/follow_${UID}`]: { type: 'follow', fromUid: UID, fromName: 'Gone', fromPhotoUrl: 'x' },
+    [`users/${OTHER}/notifications/inv1`]: { type: 'groupRideInvite', fromUid: UID, fromName: 'Gone', groupRideId: 'r1' },
+    [`users/${OTHER}/notifications/follow_third`]: { type: 'follow', fromUid: 'third', fromName: 'Third' },
+  }, async () => {
+    assert.equal(await exists(`users/${OTHER}/notifications/follow_${UID}`), false);
+    assert.equal(await exists(`users/${OTHER}/notifications/inv1`), false);
+    assert.equal(await exists(`users/${OTHER}/notifications/follow_third`), true);
+  });
+});
+
+test("voice notes lose the rider's name, photo and clip, also on rides they left", async () => {
+  const note = (senderId, senderName) => ({
+    senderId, senderName, senderPhotoUrl: 'x', audioUrl: `https://res.cloudinary.com/vjvcigkt/video/upload/voiceNotes/${senderId}/v`, durationMs: 1000,
+  });
+  await seedAndEraseTwice({
+    'groupRides/left': { creatorId: OTHER, memberIds: [OTHER], invitedIds: [], status: 'active' },
+    'groupRides/left/voiceNotes/v1': note(UID, 'Gone'),
+    'groupRides/left/voiceNotes/v2': note(OTHER, 'Other'),
+  }, async () => {
+    assert.deepEqual((await db.doc('groupRides/left/voiceNotes/v1').get()).data(), {
+      senderId: DELETED_PARTICIPANT, senderName: DELETED_RIDER, senderPhotoUrl: '', audioUrl: '', durationMs: 1000,
+    });
+    assert.deepEqual((await db.doc('groupRides/left/voiceNotes/v2').get()).data(), note(OTHER, 'Other'));
+  });
+});
+
+test("the rider's votes are deleted and the tallies drop to match", async () => {
+  await seedAndEraseTwice({
+    'rides/othersRide': { userId: OTHER, upvotes: 2, downvotes: 0 },
+    [`rides/othersRide/votes/${UID}`]: { value: 1 },
+    [`rides/othersRide/votes/${OTHER}`]: { value: 1 },
+    'forums/f1/posts/p2': { userId: OTHER, upvotes: 0, downvotes: 1 },
+    [`forums/f1/posts/p2/votes/${UID}`]: { value: -1 },
+    // A vote left under a ride that has since been deleted.
+    [`rides/gone/votes/${UID}`]: { value: 1 },
+  }, async () => {
+    assert.equal(await exists(`rides/othersRide/votes/${UID}`), false);
+    assert.equal(await exists(`rides/othersRide/votes/${OTHER}`), true);
+    assert.equal(await exists(`forums/f1/posts/p2/votes/${UID}`), false);
+    assert.equal(await exists(`rides/gone/votes/${UID}`), false);
+    assert.equal(await exists('rides/gone'), false, 'deleted parent not recreated');
+    const ride = (await db.doc('rides/othersRide').get()).data();
+    assert.deepEqual([ride.upvotes, ride.downvotes], [1, 0]);
+    const post = (await db.doc('forums/f1/posts/p2').get()).data();
+    assert.deepEqual([post.upvotes, post.downvotes], [0, 0]);
+  });
+});
+
+test("the rider's place reviews are kept, detached, under an id without the uid", async () => {
+  await seedAndEraseTwice({
+    'places/pl1': { name: 'Pump', ratingSum: 9, ratingCount: 2 },
+    [`reviews/${UID}_pl1`]: { placeId: 'pl1', userId: UID, stars: 4, text: 'good', flagged: false },
+    [`reviews/${OTHER}_pl1`]: { placeId: 'pl1', userId: OTHER, stars: 5, text: 'great', flagged: false },
+  }, async () => {
+    assert.equal(await exists(`reviews/${UID}_pl1`), false);
+    assert.equal(await exists(`reviews/${OTHER}_pl1`), true);
+    const reviews = (await db.collection('reviews').where('placeId', '==', 'pl1').get()).docs;
+    assert.equal(reviews.length, 2, 'moved once, not copied on the retry');
+    const moved = reviews.find((d) => d.id !== `${OTHER}_pl1`);
+    assert.ok(!moved.id.includes(UID));
+    assert.deepEqual(moved.data(), { placeId: 'pl1', userId: '', stars: 4, text: 'good', flagged: false });
+    const place = (await db.doc('places/pl1').get()).data();
+    assert.deepEqual([place.ratingSum, place.ratingCount], [9, 2], 'rating aggregate still matches the reviews');
+  });
+});
+
+test("a group ride the rider created loses their roster row and creator name", async () => {
+  await seedAndEraseTwice({
+    'groupRides/mine': {
+      creatorId: UID, creatorName: 'Gone', memberIds: [UID, OTHER], invitedIds: [], status: 'active',
+      members: [{ userId: UID, userName: 'Gone' }, { userId: OTHER, userName: 'Other' }],
+    },
+    [`groupRides/mine/members/${UID}`]: { userId: UID, userName: 'Gone', userPhotoUrl: 'x' },
+    [`groupRides/mine/members/${OTHER}`]: { userId: OTHER, userName: 'Other' },
+    [`groupRides/mine/memberLocations/${UID}`]: { lat: 1, lng: 1 },
+  }, async () => {
+    const ride = (await db.doc('groupRides/mine').get()).data();
+    assert.equal(ride.creatorName, DELETED_RIDER);
+    assert.equal(ride.status, 'completed');
+    assert.deepEqual(ride.members, [{ userId: OTHER, userName: 'Other' }]);
+    assert.equal(await exists(`groupRides/mine/members/${UID}`), false);
+    assert.equal(await exists(`groupRides/mine/memberLocations/${UID}`), false);
+    assert.equal(await exists(`groupRides/mine/members/${OTHER}`), true);
+  });
+});
+
 test.after(async () => {
   await rtdb.app.delete();
 });

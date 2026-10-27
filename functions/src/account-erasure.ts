@@ -1,4 +1,4 @@
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 import { getDatabase, type Database } from "firebase-admin/database";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "node:crypto";
@@ -205,20 +205,8 @@ export async function deleteUserData(
   // deleted: deleting a ride other people are part of is a product decision.
   for (const [rideId, data] of rides) {
     const rideRef = db.collection("groupRides").doc(rideId);
-    if (data.creatorId === uid) {
-      await step(`groupRides/${rideId} (creator)`, async () => {
-        if (data.status !== "completed") {
-          // Same fields as the client's _endedFields().
-          await rideRef.update({
-            status: "completed",
-            endedAt: FieldValue.serverTimestamp(),
-          });
-        }
-        await rideRef.collection("memberLocations").doc(uid).delete();
-      });
-      continue;
-    }
-    await step(`groupRides/${rideId}`, () =>
+    const creator = data.creatorId === uid;
+    await step(creator ? `groupRides/${rideId} (creator)` : `groupRides/${rideId}`, () =>
       db.runTransaction(async (txn) => {
         const snap = await txn.get(rideRef);
         if (!snap.exists) return;
@@ -226,8 +214,20 @@ export async function deleteUserData(
         // carries an inline `members` array with the rider's name and photo.
         const legacy = snap.get("members");
         txn.update(rideRef, {
-          memberIds: FieldValue.arrayRemove(uid),
-          invitedIds: FieldValue.arrayRemove(uid),
+          ...(creator
+            ? {
+                // The ride stays (and keeps creatorId, how a retry finds
+                // it); the creator's byline goes.
+                creatorName: DELETED_RIDER,
+                // Same fields as the client's _endedFields().
+                ...(snap.get("status") !== "completed"
+                  ? { status: "completed", endedAt: FieldValue.serverTimestamp() }
+                  : {}),
+              }
+            : {
+                memberIds: FieldValue.arrayRemove(uid),
+                invitedIds: FieldValue.arrayRemove(uid),
+              }),
           ...(Array.isArray(legacy)
             ? {
                 members: legacy.filter(
@@ -303,6 +303,38 @@ export async function deleteUserData(
     });
   }
 
+  // Notifications the rider sent into other riders' inboxes (follow, ride
+  // invite, joined...): each carries fromName/fromPhotoUrl. Needs the
+  // `notifications.fromUid` COLLECTION_GROUP index (see INDEXES below).
+  await step("delete sent notifications", async () => {
+    const snap = await db.collectionGroup("notifications").where("fromUid", "==", uid).get();
+    for (let i = 0; i < snap.docs.length; i += ANONYMIZE_BATCH) {
+      const batch = db.batch();
+      for (const doc of snap.docs.slice(i, i + ANONYMIZE_BATCH)) batch.delete(doc.ref);
+      await batch.commit();
+    }
+  });
+
+  // Votes on shared rides and forum posts live at `.../votes/{uid}` and hold
+  // only `{value}`, so no query can filter them by voter.
+  // shortcut: scans every vote doc in the project, page by page; add a `uid`
+  // field to vote writes (+ rules, + backfill) once that scan gets costly.
+  // Each vote is removed in a transaction that takes its +1 back off the
+  // parent's upvotes/downvotes, so the counters keep matching the vote docs.
+  await step("delete votes", async () => {
+    let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+    for (;;) {
+      let page = db.collectionGroup("votes").orderBy(FieldPath.documentId()).limit(500);
+      if (last) page = page.startAfter(last);
+      const snap = await page.get();
+      if (snap.empty) break;
+      last = snap.docs[snap.docs.length - 1];
+      for (const doc of snap.docs) {
+        if (doc.id === uid) await removeVote(db, doc.ref);
+      }
+    }
+  });
+
   // Chats (owner decision 2026-10-21): the other rider keeps the
   // conversation; the deleted rider's side is anonymised. One step per chat,
   // so one failure doesn't strand the rest.
@@ -315,16 +347,17 @@ export async function deleteUserData(
   // tombstone rather than an empty string so a rendered post reads "Deleted
   // rider" instead of an empty byline.
   //
-  // INDEXES (issues §101.S2): the three `collectionGroup` queries below need a
+  // INDEXES (issues §101.S2): the `collectionGroup` queries below need a
   // COLLECTION_GROUP-scope single-field index on `userId` for `posts`,
-  // `replies` and `comments`. Firestore does NOT maintain single-field
+  // `replies` and `comments`, on `senderId` for `voiceNotes` (and the one
+  // above on `fromUid` for `notifications`). Firestore does NOT maintain single-field
   // indexes at collection-group scope by default (only at collection scope),
   // so without them each query fails with FAILED_PRECONDITION. Those three
   // entries belong in firestore.indexes.json `fieldOverrides`, each also
   // restating the default COLLECTION-scope ASC/DESC/CONTAINS indexes (an
   // override replaces the defaults for that field), and only take effect once
-  // deployed with `firebase deploy --only firestore:indexes`. Until then this
-  // step fails, and the failure is recorded in the accountDeletions marker's
+  // deployed with `firebase deploy --only firestore:indexes`. Until then each
+  // such step fails, and the failure is recorded in the accountDeletions marker's
   // `failedSteps` ("anonymize forum posts" etc.), not just logged. The
   // Firestore emulator does not enforce indexes, so tests cannot catch this.
   const anonymizeQueries: Array<
@@ -346,9 +379,12 @@ export async function deleteUserData(
       { userId: "", userName: DELETED_RIDER, userPhotoUrl: "" },
     ],
     [
-      "place reviews",
-      db.collection("reviews").where("userId", "==", uid),
-      { userId: "" },
+      // Group-ride voice clips. The audio URL names the rider's uid
+      // (voiceNotes/{uid}/...) and the file goes in the Cloudinary sweep, so
+      // it is blanked like a chat message's text.
+      "voice notes",
+      db.collectionGroup("voiceNotes").where("senderId", "==", uid),
+      { senderId: DELETED_PARTICIPANT, senderName: DELETED_RIDER, senderPhotoUrl: "", audioUrl: "" },
     ],
     [
       "places contributed",
@@ -374,6 +410,21 @@ export async function deleteUserData(
       }
     });
   }
+
+  // Place reviews are kept, detached from the rider (privacy.html §9), but
+  // their id `{uid}_{placeId}` names the rider, so each moves to an auto id.
+  // Moving rather than deleting leaves the place's ratingSum/ratingCount true.
+  await step("anonymize place reviews", async () => {
+    const snap = await db.collection("reviews").where("userId", "==", uid).get();
+    for (const doc of snap.docs) {
+      await db.runTransaction(async (txn) => {
+        const cur = await txn.get(doc.ref);
+        if (!cur.exists) return;
+        txn.set(db.collection("reviews").doc(), { ...cur.data(), userId: "" });
+        txn.delete(doc.ref);
+      });
+    }
+  });
 
   // Reports about the rider (owner decision 2026-10-21). A pending one is
   // kept whole, uid and evidence copy (`snapshot`, chat-moderation's
@@ -498,6 +549,30 @@ async function rtdbRemove(
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+/**
+ * Deletes one vote doc and takes its +1 back off the parent ride/post's
+ * tally. A retry finds the vote gone and does nothing; a parent deleted since
+ * is not recreated.
+ */
+async function removeVote(
+  db: FirebaseFirestore.Firestore,
+  voteRef: FirebaseFirestore.DocumentReference
+): Promise<void> {
+  const parentRef = voteRef.parent.parent;
+  if (!parentRef) return;
+  await db.runTransaction(async (txn) => {
+    const [vote, parent] = await txn.getAll(voteRef, parentRef);
+    if (!vote.exists) return;
+    txn.delete(voteRef);
+    const value = vote.get("value");
+    if (parent.exists && (value === 1 || value === -1)) {
+      txn.update(parentRef, {
+        [value === 1 ? "upvotes" : "downvotes"]: FieldValue.increment(-1),
+      });
+    }
+  });
 }
 
 /** forum_follows ids are `{uid}_{forumId}`; the doc also carries forumId. */
