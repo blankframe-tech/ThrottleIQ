@@ -39,7 +39,7 @@ let testEnv;
 
 test.before(async () => {
   testEnv = await initializeTestEnvironment({
-    projectId: 'throttleiq-rules-test-pitwall',
+    projectId: 'demo-throttleiq-rules-pitwall',
     firestore: { rules: RULES }, // host: FIRESTORE_EMULATOR_HOST (emulators:exec)
   });
 });

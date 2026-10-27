@@ -13,7 +13,7 @@ const assert = require('node:assert/strict');
 const admin = require('firebase-admin');
 const { backfill } = require('../../oneoff/backfill_users_visibility.js');
 
-const app = admin.initializeApp({ projectId: 'throttleiq-backfill-test' }, 'backfill-test');
+const app = admin.initializeApp({ projectId: 'demo-throttleiq-backfill' }, 'backfill-test');
 const db = admin.firestore(app);
 
 test.before(async () => {

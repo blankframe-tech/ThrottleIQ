@@ -119,6 +119,15 @@ Do these in order.
    Deploying it also starts GPS retention; until then, do both by hand
    (`DOCS/General/Files for Stores/moderation_policy.md` §5).
 
+9. **Rules from 2026-10-27 (follow graph, places, reviews, legacy blocks).**
+   Not live: production still has the 2026-10-22 rules. No client change is
+   needed (every build since August already writes the shapes these accept),
+   so deploy them with, or right after, step 3's migration:
+   `firebase deploy --only firestore:rules --project throttleiqfb`.
+   Proven in the emulator only (`scripts/test/rules/access_matrix_rules.test.js`).
+   After it, check one rider profile's follower count and one place add with a
+   photo on a real build.
+
 ### App Check enforcement
 
 Decision 2026-10-21: enforce App Check on Cloud Firestore only. The runbook,

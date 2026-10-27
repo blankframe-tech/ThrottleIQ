@@ -41,7 +41,7 @@ let testEnv;
 
 test.before(async () => {
   testEnv = await initializeTestEnvironment({
-    projectId: 'throttleiq-rules-test-crash-events',
+    projectId: 'demo-throttleiq-rules-crash-events',
     firestore: { rules: RULES }, // host: FIRESTORE_EMULATOR_HOST (emulators:exec)
   });
 });

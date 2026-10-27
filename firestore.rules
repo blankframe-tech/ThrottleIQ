@@ -78,7 +78,10 @@ service cloud.firestore {
         !('visibility' in profile) || profile.visibility == 'public' ||
         (profile.visibility == 'mutual' &&
           exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + uid)) &&
-          exists(/databases/$(database)/documents/follows/$(uid + '_' + request.auth.uid))));
+          exists(/databases/$(database)/documents/follows/$(uid + '_' + request.auth.uid)) &&
+          // A block made before the block handler dropped edges (§90.A11)
+          // can leave both edges in place; the block still wins.
+          !exists(/databases/$(database)/documents/users/$(uid)/blocks/$(request.auth.uid))));
     }
 
     // Whether the requester may read uid's bikes subcollection. Mirrors
@@ -107,7 +110,8 @@ service cloud.firestore {
         (profileVisibleTo(uid, profile) && (
           (tier != 'followers' && tier != 'private') ||
           (tier == 'followers' &&
-            exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + uid))))));
+            exists(/databases/$(database)/documents/follows/$(request.auth.uid + '_' + uid)) &&
+            !exists(/databases/$(database)/documents/users/$(uid)/blocks/$(request.auth.uid))))));
     }
 
     // The single global admin. Mirrors kAdminEmail in the app's
@@ -300,6 +304,20 @@ service cloud.firestore {
         (urls.size() < 2 || forumImageUrlValid(urls[1], uid)) &&
         (urls.size() < 3 || forumImageUrlValid(urls[2], uid)) &&
         (urls.size() < 4 || forumImageUrlValid(urls[3], uid));
+    }
+
+    // A place's photos: none (OSM imports, a failed upload, null from an old
+    // build), or the one photo the rider uploaded to their own places/ folder.
+    function placePhotosValid(urls, uid) {
+      return urls == null || (urls is list && (urls.size() == 0 ||
+        (urls.size() == 1 && urls[0] is string && urls[0].size() <= 1000 &&
+         urls[0].matches('^https://res\\.cloudinary\\.com/vjvcigkt/image/upload/(.*/)?places/' + uid + '/.+'))));
+    }
+
+    // Like optionalString, but null is allowed too (PlaceModel writes
+    // address/phone/hours as null when unknown).
+    function optionalText(d, key, maxLen) {
+      return d.get(key, null) == null || (d[key] is string && d[key].size() <= maxLen);
     }
 
     function forumAttachmentValid(a) {
@@ -1404,7 +1422,27 @@ service cloud.firestore {
       // must be server time: a backdated value would hide the place from every
       // `updatedAt > lastPull` pull. Optional, because builds before the cache
       // don't write it.
+      //
+      // 2026-10-27 (emulator round): only PlaceModel.toFirestore's keys (the
+      // same set in every version), so a rider can't add `googlePlaceId`
+      // (revert_google_places.js reads it as "enriched by the gmaps import"),
+      // a Google rating of their own (the app shows any googleRating > 0 as
+      // Google's), or photos on another host (fetched by every viewer's
+      // device: the §33.4 beacon). The photo is the rider's own upload
+      // (PlaceRepository.uploadPlacePhoto, one per place); text is capped.
       allow create: if request.auth != null &&
+        request.resource.data.keys().hasOnly(['name', 'category', 'latitude',
+          'longitude', 'geohash', 'address', 'phone', 'hours', 'photoUrls',
+          'verified', 'createdBy', 'createdAt', 'ratingSum', 'ratingCount',
+          'googleRating', 'googleRatingCount', 'osmId', 'tags', 'expiresAt',
+          'updatedAt']) &&
+        request.resource.data.get('googleRating', 0) == 0 &&
+        request.resource.data.get('googleRatingCount', 0) == 0 &&
+        placePhotosValid(request.resource.data.get('photoUrls', []), request.auth.uid) &&
+        request.resource.data.name is string && request.resource.data.name.size() <= 200 &&
+        optionalText(request.resource.data, 'address', 1000) &&
+        optionalText(request.resource.data, 'phone', 100) &&
+        optionalText(request.resource.data, 'hours', 1000) &&
         (!('updatedAt' in request.resource.data) ||
           request.resource.data.updatedAt == request.time) &&
         request.resource.data.createdBy == request.auth.uid &&
@@ -1491,7 +1529,15 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.flagged == false &&
         request.resource.data.stars >= 1 &&
-        request.resource.data.stars <= 5;
+        request.resource.data.stars <= 5 &&
+        // 2026-10-27: ReviewModel.toFirestore's keys only, whole stars (the
+        // rating bump adds them to ratingSum), capped text, and no images
+        // (the app has no review photos, so any URL would be a beacon).
+        request.resource.data.keys().hasOnly(['placeId', 'userId', 'stars',
+          'text', 'imageUrls', 'createdAt', 'flagged']) &&
+        request.resource.data.stars is int &&
+        optionalText(request.resource.data, 'text', 5000) &&
+        request.resource.data.get('imageUrls', []) in [null, []];
 
       // updateReview() / deleteReview() / flagReview() exist on
       // ReviewRepository but — like updatePlace() above — aren't called
@@ -1628,8 +1674,24 @@ service cloud.firestore {
     // work. Counts are derived via count() aggregation — no counter to spoof.
     // B3 (critique 2026-10-14): a block in either direction refuses the edge,
     // so a blocked rider can't re-follow back into the followers tier.
+    //
+    // 2026-10-27 (emulator round): reads used to be any signed-in rider, so
+    // one unfiltered list pulled the whole graph, including who a 'private'
+    // or 'mutual' rider follows and is followed by. Now an edge is readable
+    // by either end, or by anyone allowed to see one end's profile. A list
+    // must pin `followerUid ==` or `followeeUid ==` (every FollowRepository
+    // query does) so that profile can be fetched; an unpinned list is denied.
     match /follows/{edgeId} {
-      allow read: if request.auth != null;
+      // isFollowing and blockUser get edges that may be missing; like chats,
+      // only your own (else "denied" vs "empty" says whether two others follow).
+      allow read: if request.auth != null && (
+        (resource == null && request.auth.uid in edgeId.split('_')) ||
+        request.auth.uid == resource.data.followerUid ||
+        request.auth.uid == resource.data.followeeUid ||
+        profileVisibleTo(resource.data.followeeUid,
+          get(/databases/$(database)/documents/users/$(resource.data.followeeUid)).data) ||
+        profileVisibleTo(resource.data.followerUid,
+          get(/databases/$(database)/documents/users/$(resource.data.followerUid)).data));
       allow create: if request.auth != null &&
         request.resource.data.followerUid == request.auth.uid &&
         edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid) &&

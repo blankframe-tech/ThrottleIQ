@@ -54,7 +54,7 @@ let testEnv;
 
 test.before(async () => {
   testEnv = await initializeTestEnvironment({
-    projectId: 'throttleiq-rules-test-report-snapshot',
+    projectId: 'demo-throttleiq-rules-report-snapshot',
     firestore: { rules: RULES, host, port: Number(port) },
   });
 });

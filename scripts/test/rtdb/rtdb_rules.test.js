@@ -42,7 +42,7 @@ let testEnv;
 
 test.before(async () => {
   testEnv = await initializeTestEnvironment({
-    projectId: 'throttleiq-rtdb-rules-test',
+    projectId: 'demo-throttleiq-rtdb-rules',
     database: { rules: RULES, host: '127.0.0.1', port: 9000 },
   });
 });
