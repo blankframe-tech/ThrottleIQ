@@ -88,52 +88,20 @@ class RouteRepository {
   }
 
   /// Gets public routes (for discovery).
-  Future<List<RouteEntity>> getPublicRoutes({
-    int limit = 20,
-    DocumentSnapshot? startAfter,
-  }) async {
-    Query query = _firestore
+  Future<List<RouteEntity>> getPublicRoutes({int limit = 20}) async {
+    final querySnapshot = await _firestore
         .collectionGroup('routes')
         .where('isPublic', isEqualTo: true)
         .orderBy('timesRidden', descending: true)
-        .limit(limit + 1);
-
-    if (startAfter != null) {
-      query = query.startAfterDocument(startAfter);
-    }
-
-    final querySnapshot = await query.get();
+        .limit(limit)
+        .get();
     return querySnapshot.docs
-        .map((doc) =>
-            RouteModel.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)
-                .toEntity())
+        .map((doc) => RouteModel.fromFirestore(doc.data(), doc.id).toEntity())
         .toList();
   }
 
-  /// Shares a route with specific users.
-  Future<void> shareRoute({
-    required String userId,
-    required String routeId,
-    required List<String> userIds,
-  }) async {
-    await _firestore
-        .collection('users')
-        .doc(userId)
-        .collection('routes')
-        .doc(routeId)
-        .update({
-      'sharedWithUserIds': FieldValue.arrayUnion(userIds),
-    });
-  }
-
-  /// Makes a route public.
-  Future<void> makePublic(String userId, String routeId) async {
-    await setPublic(userId, routeId, true);
-  }
-
   /// Flips a route between public (discoverable by every rider) and private
-  /// (owner-only). [makePublic] is the one-way shorthand kept for callers that
-  /// only ever publish.
+  /// (owner-only).
   ///
   /// Going public permanently clips the stored polyline (the issues log
   /// §24.3) — strips ~200m off each end, same as

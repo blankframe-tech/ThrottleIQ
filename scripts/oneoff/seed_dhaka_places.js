@@ -145,7 +145,7 @@ const CATEGORIES = Object.keys(CATEGORY_DISPLAY_NAME);
 // A line-for-line port of GeohashUtil.encode
 // (app/lib/core/utils/geohash_util.dart), at the precision-9 default
 // GeohashUtils.encode applies — the two must agree exactly or seeded places
-// fall outside the prefix ranges getPlacesByGeohash queries, and a rider's map
+// fall outside the prefix ranges getNearbyPlaces queries, and a rider's map
 // viewport silently misses them.
 //
 // Ported rather than pulled from npm on purpose: a third-party geohash package

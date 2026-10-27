@@ -104,64 +104,6 @@ class PlaceRepository {
     return PlaceModel.fromFirestore(doc).toEntity();
   }
 
-  /// Get places by category
-  Future<List<PlaceEntity>> getPlacesByCategory(PlaceCategory category) async {
-    final querySnapshot = await _firestore
-        .collection(_collection)
-        .where('category', isEqualTo: category.name)
-        .get();
-    return querySnapshot.docs
-        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
-        .toList();
-  }
-
-  /// Get places by geohash prefix (for map viewport query)
-  Future<List<PlaceEntity>> getPlacesByGeohash(String geohashPrefix) async {
-    final querySnapshot = await _firestore
-        .collection(_collection)
-        .where('geohash', isGreaterThanOrEqualTo: geohashPrefix)
-        .where('geohash', isLessThan: '$geohashPrefix~')
-        .get();
-    return querySnapshot.docs
-        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
-        .toList();
-  }
-
-  /// Get places by multiple geohash prefixes (for complex viewport)
-  Future<List<PlaceEntity>> getPlacesByGeohashes(
-    List<String> geohashPrefixes,
-  ) async {
-    final places = <PlaceEntity>[];
-    for (final prefix in geohashPrefixes) {
-      final result = await getPlacesByGeohash(prefix);
-      places.addAll(result);
-    }
-    // Remove duplicates
-    final seen = <String>{};
-    return places.where((p) => seen.add(p.id)).toList();
-  }
-
-  /// Get all places (with optional category filter)
-  Future<List<PlaceEntity>> getAllPlaces({
-    PlaceCategory? category,
-    bool? verified,
-  }) async {
-    Query<Map<String, dynamic>> query = _firestore.collection(_collection);
-
-    if (category != null) {
-      query = query.where('category', isEqualTo: category.name);
-    }
-
-    if (verified != null) {
-      query = query.where('verified', isEqualTo: verified);
-    }
-
-    final querySnapshot = await query.get();
-    return querySnapshot.docs
-        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
-        .toList();
-  }
-
   /// Delete a place
   Future<void> deletePlace(String placeId) async {
     await _firestore.collection(_collection).doc(placeId).delete();
@@ -305,26 +247,6 @@ class PlaceRepository {
     }
     withDistance.sort((a, b) => a.$2.compareTo(b.$2));
     return [for (final (place, _) in withDistance) place];
-  }
-
-  /// Search places by name (prefix match).
-  ///
-  /// issues §33.12: the upper bound used to be `query + 'z'`, which
-  /// only brackets every continuation of [query] when every possible next
-  /// character sorts below U+007A — true for plain ASCII, false for this
-  /// app's Bengali place names (U+0980–U+09FF), which sort above `'z'` and so
-  /// fell outside the range entirely. `''` is the standard Firestore
-  /// prefix-query sentinel: a private-use codepoint higher than any realistic
-  /// character in a place name, in any script.
-  Future<List<PlaceEntity>> searchPlacesByName(String query) async {
-    final querySnapshot = await _firestore
-        .collection(_collection)
-        .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThan: '$query')
-        .get();
-    return querySnapshot.docs
-        .map((doc) => PlaceModel.fromFirestore(doc).toEntity())
-        .toList();
   }
 
   /// Stream a single place's data (real-time) — mirrors

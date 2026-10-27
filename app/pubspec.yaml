@@ -11,7 +11,6 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  cupertino_icons: ^1.0.8
 
   # State Management
   flutter_riverpod: ^2.5.1
@@ -141,7 +140,6 @@ dependencies:
   # ^0.19.0 when localization was added. Only one call site (DateFormat in
   # user_profile_screen.dart), so the major-version move was low risk.
   intl: ^0.20.2
-  collection: ^1.18.0
   equatable: ^2.0.5
   permission_handler: ^11.3.1
   # Renders the SafeQR medical-info card as an on-device QR code — pure client-

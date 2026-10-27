@@ -10,6 +10,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_permissions.dart';
@@ -88,7 +89,12 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
             error: e,
             onRetry: () => ref.invalidate(forumPostsProvider(forumId))),
         data: (_) {
-          final posts = ref.watch(forumPostsNotifierProvider(forumId));
+          final blocked =
+              ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+          final posts = ref
+              .watch(forumPostsNotifierProvider(forumId))
+              .where((p) => !blocked.contains(p.userId))
+              .toList();
           if (posts.isEmpty) {
             return Center(
               child: Padding(

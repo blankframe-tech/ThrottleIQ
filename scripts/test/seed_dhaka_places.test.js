@@ -41,7 +41,7 @@ test('geohashEncode matches the app\'s Dart implementation', () => {
   //
   // This has to agree exactly. A seeded place whose geohash disagrees with what
   // the client would compute falls outside the prefix range
-  // getPlacesByGeohash queries, so it exists in Firestore and is invisible on
+  // getNearbyPlaces queries, so it exists in Firestore and is invisible on
   // the map — the worst kind of wrong, because nothing errors.
   const cases = [
     [23.757764886304216, 90.44676798461435, 'wh0r4hvr4'],

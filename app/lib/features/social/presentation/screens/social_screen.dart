@@ -82,8 +82,15 @@ final _forumSearchProvider = FutureProvider.autoDispose
 ///
 /// One unreadable profile (private / mutual-only visibility) is dropped
 /// rather than failing the whole list.
+///
+/// Kept alive for [kSuggestionsTtl] like [suggestedProfilesProvider]: plain
+/// autoDispose under the `TabBarView` re-read every profile on each visit.
 final _followingProfilesProvider =
     FutureProvider.autoDispose<List<UserProfileEntity>>((ref) async {
+  final link = ref.keepAlive();
+  final ttl = Timer(kSuggestionsTtl, link.close);
+  ref.onDispose(ttl.cancel);
+
   final ids = await ref.watch(followingUidsProvider.future);
   if (ids.isEmpty) return const [];
   final repo = ref.watch(profileRepositoryProvider);

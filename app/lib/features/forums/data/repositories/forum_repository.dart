@@ -730,9 +730,22 @@ class ForumRepository {
       List<ForumPostEntity> posts) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null || posts.isEmpty) return posts;
+    return hydrateWith(posts, (p) => getMyPostVote(p.forumId, p.id, uid));
+  }
 
-    final votes = await Future.wait(
-        posts.map((p) => getMyPostVote(p.forumId, p.id, uid)));
+  /// Puts [getVote]'s answer on each post, skipping posts whose tallies are
+  /// both 0: [votePost] bumps a tally in the same transaction that writes the
+  /// vote doc, so such a post has no vote from anyone. Mirrors
+  /// RideShareRepository.hydrateWith (issues §104.3).
+  @visibleForTesting
+  static Future<List<ForumPostEntity>> hydrateWith(
+    List<ForumPostEntity> posts,
+    Future<int?> Function(ForumPostEntity post) getVote,
+  ) async {
+    final votes = await Future.wait(posts.map((p) =>
+        p.upvotes == 0 && p.downvotes == 0
+            ? Future<int?>.value()
+            : getVote(p)));
     return [
       for (var i = 0; i < posts.length; i++)
         posts[i].copyWith(myVote: votes[i]),
