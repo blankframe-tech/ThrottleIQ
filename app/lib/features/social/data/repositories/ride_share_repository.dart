@@ -74,8 +74,9 @@ class RideShareRepository {
     // track — that must NOT block sharing (this was the "share throws an
     // error" bug). Instead we share with NO route line at all, which is the
     // privacy-safe outcome anyway: the ride still posts, the feed card just
-    // shows stats without a map trace.
-    final clippedPolyline = PrivacyZoneClipper.clipPolyline(
+    // shows stats without a map trace. Then thinned to <= 1,000 points so a
+    // long ride can't approach the 1 MiB doc limit or bloat every feed read.
+    final clippedPolyline = PrivacyZoneClipper.clipForSharing(
       polyline,
       seed: await _privacySalt.forUid(userId),
     );

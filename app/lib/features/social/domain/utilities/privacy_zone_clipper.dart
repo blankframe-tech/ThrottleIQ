@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/geo_math.dart';
+import '../../../../core/utils/polyline_simplify.dart';
 
 /// Hides the start and end of a shared ride so the polyline doesn't lead
 /// back to the rider's front door.
@@ -92,4 +93,11 @@ class PrivacyZoneClipper {
 
     return polyline.sublist(i, j + 1);
   }
+
+  /// The polyline as written to a shared ride or public route: clipped
+  /// FIRST, then simplified to at most [kSharedPolylineMaxPoints]. The
+  /// simplifier only drops points, so nothing clipped can come back; the
+  /// clip also needs the raw endpoints, which simplifying first would move.
+  static List<LatLng> clipForSharing(List<LatLng> polyline, {int seed = 0}) =>
+      simplifyPolyline(clipPolyline(polyline, seed: seed));
 }
