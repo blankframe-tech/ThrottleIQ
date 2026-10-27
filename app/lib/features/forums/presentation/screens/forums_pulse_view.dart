@@ -12,6 +12,7 @@ import '../../../../shared/widgets/app_card.dart';
 import '../widgets/forum_post_images.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_pulse.dart';
 import '../providers/forum_bookmarks_provider.dart';
@@ -69,11 +70,14 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
                   label: Text(pulseFilterLabel(context.l10n, f)),
                   selected: _filter == f,
                   onSelected: (_) => setState(() => _filter = f),
-                  selectedColor: context.palette.primary.withValues(alpha: 0.18),
+                  selectedColor:
+                      context.palette.primary.withValues(alpha: 0.18),
                   labelStyle: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: _filter == f ? context.palette.primary : context.palette.textSecondary,
+                    color: _filter == f
+                        ? context.palette.primary
+                        : context.palette.textSecondary,
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -85,8 +89,9 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
           child: _filter == PulseFilter.saved
               ? const _SavedList()
               : firstAsync.when(
-                  loading: () =>
-                      Center(child: CircularProgressIndicator(color: context.palette.primary)),
+                  loading: () => Center(
+                      child: CircularProgressIndicator(
+                          color: context.palette.primary)),
                   error: (e, _) => ErrorView(
                     error: e,
                     onRetry: () => ref.invalidate(pulseSourcesProvider),
@@ -99,7 +104,12 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
   }
 
   Widget _buildFeed(PulseFirstPage first) {
-    final all = ref.watch(pulseFeedNotifierProvider);
+    final blocked =
+        ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+    final all = ref
+        .watch(pulseFeedNotifierProvider)
+        .where((p) => !blocked.contains(p.userId))
+        .toList();
     final notifier = ref.read(pulseFeedNotifierProvider.notifier);
 
     Future<void> refresh() async {
@@ -110,7 +120,8 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
     if (first.sources.forumIds.isEmpty) {
       return _PulseEmpty(onExploreHubs: widget.onExploreHubs);
     }
-    final posts = filterPulsePosts(all, _filter, garageForumIds: first.sources.garageForumIds);
+    final posts = filterPulsePosts(all, _filter,
+        garageForumIds: first.sources.garageForumIds);
     final showMore = notifier.hasMore && _filter != PulseFilter.mostVoted;
 
     return RefreshIndicator(
@@ -121,10 +132,13 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
               padding: const EdgeInsets.all(AppDimensions.paddingLg),
               children: [
                 const SizedBox(height: 48),
-                Icon(Icons.filter_alt_off_outlined, size: 48, color: context.palette.textTertiary),
+                Icon(Icons.filter_alt_off_outlined,
+                    size: 48, color: context.palette.textTertiary),
                 const SizedBox(height: 12),
                 Text(
-                  all.isEmpty ? context.l10n.pulseNoPostsYet : context.l10n.pulseNoMatches,
+                  all.isEmpty
+                      ? context.l10n.pulseNoPostsYet
+                      : context.l10n.pulseNoMatches,
                   textAlign: TextAlign.center,
                   style: TextStyle(color: context.palette.textSecondary),
                 ),
@@ -141,7 +155,8 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
                     child: notifier.isLoadingMore
                         ? Padding(
                             padding: const EdgeInsets.all(8),
-                            child: CircularProgressIndicator(color: context.palette.primary),
+                            child: CircularProgressIndicator(
+                                color: context.palette.primary),
                           )
                         : OutlinedButton(
                             onPressed: () async {
@@ -150,7 +165,9 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
                               } catch (e) {
                                 if (!mounted) return;
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(mapFirestoreError(e, context.l10n))),
+                                  SnackBar(
+                                      content: Text(
+                                          mapFirestoreError(e, context.l10n))),
                                 );
                               }
                             },
@@ -187,13 +204,16 @@ class _PulseEmpty extends StatelessWidget {
               context.l10n.pulseEmptyTitle,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: context.palette.textPrimary),
             ),
             const SizedBox(height: 6),
             Text(
               context.l10n.pulseEmptyBody,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+              style:
+                  TextStyle(fontSize: 13, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
@@ -222,7 +242,8 @@ class _SavedList extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.bookmark_border, size: 48, color: context.palette.textTertiary),
+              Icon(Icons.bookmark_border,
+                  size: 48, color: context.palette.textTertiary),
               const SizedBox(height: 12),
               Text(
                 context.l10n.pulseNoSaved,
@@ -235,8 +256,8 @@ class _SavedList extends ConsumerWidget {
       );
     }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(
-          AppDimensions.paddingMd, 4, AppDimensions.paddingMd, AppDimensions.paddingLg),
+      padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
+          AppDimensions.paddingMd, AppDimensions.paddingLg),
       itemCount: saved.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (_, i) {
@@ -245,7 +266,8 @@ class _SavedList extends ConsumerWidget {
           onTap: () => context.push('/forums/${b.forumId}/post/${b.postId}'),
           child: Row(
             children: [
-              Icon(forumPostTypeIcon(b.postType), color: context.palette.primary),
+              Icon(forumPostTypeIcon(b.postType),
+                  color: context.palette.primary),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -260,14 +282,17 @@ class _SavedList extends ConsumerWidget {
                             color: context.palette.textPrimary)),
                     if (b.forumName.isNotEmpty)
                       Text(b.forumName,
-                          style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: context.palette.textSecondary)),
                   ],
                 ),
               ),
               IconButton(
                 tooltip: context.l10n.unsavePost,
                 icon: Icon(Icons.bookmark, color: context.palette.primary),
-                onPressed: () => ref.read(forumBookmarksProvider.notifier).removeKey(b.key),
+                onPressed: () =>
+                    ref.read(forumBookmarksProvider.notifier).removeKey(b.key),
               ),
             ],
           ),
@@ -282,7 +307,8 @@ class _SavedList extends ConsumerWidget {
 class PulsePostCard extends ConsumerWidget {
   final ForumPostEntity post;
   final String originName;
-  const PulsePostCard({super.key, required this.post, required this.originName});
+  const PulsePostCard(
+      {super.key, required this.post, required this.originName});
 
   Future<void> _vote(BuildContext context, WidgetRef ref, int value) async {
     try {
@@ -297,8 +323,8 @@ class PulsePostCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final saved = ref.watch(forumBookmarksProvider
-        .select((list) => list.any((b) => b.forumId == post.forumId && b.postId == post.id)));
+    final saved = ref.watch(forumBookmarksProvider.select((list) =>
+        list.any((b) => b.forumId == post.forumId && b.postId == post.id)));
 
     return AppCard(
       key: Key('pulse_post_${post.id}'),
@@ -314,10 +340,12 @@ class PulsePostCard extends ConsumerWidget {
                     behavior: HitTestBehavior.opaque,
                     onTap: () => context.push('/forums/${post.forumId}'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
                         color: context.palette.surfaceVariant,
-                        borderRadius: BorderRadius.circular(context.shape.radiusSm),
+                        borderRadius:
+                            BorderRadius.circular(context.shape.radiusSm),
                       ),
                       child: Text(
                         originName,
@@ -335,7 +363,8 @@ class PulsePostCard extends ConsumerWidget {
               ForumPostTypeTag(post: post),
               const Spacer(),
               Text(post.createdAt.timeAgo,
-                  style: TextStyle(fontSize: 11, color: context.palette.textTertiary)),
+                  style: TextStyle(
+                      fontSize: 11, color: context.palette.textTertiary)),
             ],
           ),
           const SizedBox(height: 8),
@@ -344,14 +373,17 @@ class PulsePostCard extends ConsumerWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-                fontSize: 15, fontWeight: FontWeight.w700, color: context.palette.textPrimary),
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: context.palette.textPrimary),
           ),
           const SizedBox(height: 4),
           Text(
             post.body,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           if (post.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 8),
@@ -374,7 +406,8 @@ class PulsePostCard extends ConsumerWidget {
                     post.attachment!.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                    style: TextStyle(
+                        fontSize: 12, color: context.palette.textTertiary),
                   ),
                 ),
               ],
@@ -383,7 +416,8 @@ class PulsePostCard extends ConsumerWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              UserAvatar(photoUrl: post.userPhotoUrl, name: post.userName, radius: 11),
+              UserAvatar(
+                  photoUrl: post.userPhotoUrl, name: post.userName, radius: 11),
               const SizedBox(width: 6),
               Flexible(
                 child: Column(
@@ -392,8 +426,10 @@ class PulsePostCard extends ConsumerWidget {
                     Text(post.userName,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontSize: 12, color: context.palette.textPrimary)),
-                    if (post.authorBike != null) AuthorBikeBadge(bike: post.authorBike!),
+                        style: TextStyle(
+                            fontSize: 12, color: context.palette.textPrimary)),
+                    if (post.authorBike != null)
+                      AuthorBikeBadge(bike: post.authorBike!),
                   ],
                 ),
               ),
@@ -426,12 +462,15 @@ class PulsePostCard extends ConsumerWidget {
                         : context.palette.textSecondary),
               ),
               const SizedBox(width: 4),
-              Icon(Icons.chat_bubble_outline, size: 15, color: context.palette.textSecondary),
+              Icon(Icons.chat_bubble_outline,
+                  size: 15, color: context.palette.textSecondary),
               const SizedBox(width: 3),
               Text('${post.replyCount}',
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary)),
               IconButton(
-                tooltip: saved ? context.l10n.unsavePost : context.l10n.savePost,
+                tooltip:
+                    saved ? context.l10n.unsavePost : context.l10n.savePost,
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                 onPressed: () => ref
@@ -439,7 +478,9 @@ class PulsePostCard extends ConsumerWidget {
                     .toggle(post, forumName: originName),
                 icon: Icon(saved ? Icons.bookmark : Icons.bookmark_border,
                     size: 19,
-                    color: saved ? context.palette.primary : context.palette.textSecondary),
+                    color: saved
+                        ? context.palette.primary
+                        : context.palette.textSecondary),
               ),
             ],
           ),

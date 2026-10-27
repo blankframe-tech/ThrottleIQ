@@ -4,63 +4,8 @@ import 'package:throttleiq/features/poi_directory/data/models/place_model.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
 
 void main() {
-  final testPlace = PlaceEntity(
-    id: 'place1',
-    name: 'Test Fuel Station',
-    category: PlaceCategory.fuel,
-    latitude: 23.8103,
-    longitude: 90.4125,
-    geohash: 'twyv',
-    address: 'Test Address',
-    phone: '+880123456789',
-    hours: '24/7',
-    photoUrls: const [],
-    verified: false,
-    createdBy: 'user1',
-    createdAt: DateTime.now(),
-    ratingSum: 0,
-    ratingCount: 0,
-  );
-
-  group('PlaceRepository', () {
-    test('addPlace should add a new place to Firestore', () async {
-      // This test demonstrates the expected behavior
-      // In practice, you would use Firebase test environment
-      expect(testPlace.name, equals('Test Fuel Station'));
-      expect(testPlace.category, equals(PlaceCategory.fuel));
-    });
-
-    test('getPlace should return a place by ID', () async {
-      // Mock implementation
-      expect(testPlace.id, equals('place1'));
-    });
-
-    test('getPlacesByCategory should return places by category', () async {
-      final places = [testPlace];
-      expect(places, isNotEmpty);
-      expect(places.first.category, equals(PlaceCategory.fuel));
-    });
-
-    test('getNearbyPlaces should return places within radius', () async {
-      final nearbyPlaces = [testPlace];
-      expect(nearbyPlaces, isNotEmpty);
-    });
-
-    test('searchPlacesByName should find places by name', () async {
-      final results = [testPlace];
-      expect(results.first.name, contains('Fuel Station'));
-    });
-  });
-
-  group('Distance Calculation', () {
-    test('calculate distance between two coordinates', () {
-      // Dhaka to Chittagong (approximately 261 km)
-      // These are public methods, so we verify the math works
-      expect(testPlace.latitude, isA<double>());
-      expect(testPlace.longitude, isA<double>());
-    });
-  });
-
+  // PlaceEntity / PlaceModel only; PlaceRepository's queries are covered by
+  // repositories/place_nearby_query_test.dart.
   group('Place Rating Aggregation', () {
     test('average rating calculation', () {
       final placeWithRatings = PlaceEntity(

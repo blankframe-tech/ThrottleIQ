@@ -96,8 +96,8 @@ echo "==> [1/4] Committing release changes..."
 cd "${REPO_ROOT}"
 # Never auto-stage new files (issues §101.S9): a stray secret dropped in the
 # tree (.env.production, a .p12, a service-account key) would otherwise be
-# committed and pushed. Only tracked files (e.g. the pubspec version bump) are
-# staged; anything untracked must be committed or ignored by hand first.
+# committed and pushed. Anything untracked must be committed or ignored by
+# hand first.
 UNTRACKED_FILES="$(git ls-files --others --exclude-standard)"
 if [ -n "${UNTRACKED_FILES}" ]; then
   echo "❌ Untracked files in the working tree — refusing to auto-commit them:"
@@ -105,10 +105,19 @@ if [ -n "${UNTRACKED_FILES}" ]; then
   echo "Commit them yourself, add them to .gitignore, or remove them, then re-run."
   exit 1
 fi
-if [ -n "$(git status --porcelain)" ]; then
-  echo "Found uncommitted changes to tracked files. Staging and committing..."
-  git add -u
-  git commit -m "chore(release): bump version to ${PUBSPEC_VERSION} and update deployment artifacts"
+# Only the version bump is committed here: any other dirty tracked file is
+# unfinished work that must not ship under a "chore(release)" commit.
+OTHER_DIRTY="$(git diff --name-only HEAD -- . ':(exclude)app/pubspec.yaml')"
+if [ -n "${OTHER_DIRTY}" ]; then
+  echo "❌ Tracked files other than app/pubspec.yaml have uncommitted changes:"
+  echo "${OTHER_DIRTY}" | sed 's/^/    /'
+  echo "Commit or stash them yourself, then re-run."
+  exit 1
+fi
+if ! git diff --quiet HEAD -- app/pubspec.yaml; then
+  echo "Committing the app/pubspec.yaml version bump..."
+  git add app/pubspec.yaml
+  git commit -m "chore(release): bump version to ${PUBSPEC_VERSION}"
 else
   echo "Working tree is clean."
 fi
@@ -199,7 +208,9 @@ EOF
   fi
 
   # Create tag and release via gh CLI
+  # --target: without it gh tags the default branch's head, not this commit.
   gh release create "${RELEASE_TAG}" \
+    --target "$(git rev-parse HEAD)" \
     --title "ThrottleIQ — ${RELEASE_TAG} (v${PUBSPEC_VERSION})" \
     --notes "${RELEASE_NOTES}"
 

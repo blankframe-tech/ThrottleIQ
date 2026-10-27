@@ -373,6 +373,11 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
   }
 
   Widget _buildComments() {
+    final blocked =
+        ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+    final comments = (_comments ?? const <RideCommentEntity>[])
+        .where((c) => !blocked.contains(c.userId))
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -385,7 +390,7 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
                 child:
                     CircularProgressIndicator(color: context.palette.primary)),
           )
-        else if ((_comments ?? const []).isEmpty)
+        else if (comments.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(context.l10n.noCommentsYet,
@@ -393,7 +398,7 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
                     fontSize: 13, color: context.palette.textSecondary)),
           )
         else
-          ..._comments!.map((c) => Padding(
+          ...comments.map((c) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: RichText(
                   text: TextSpan(

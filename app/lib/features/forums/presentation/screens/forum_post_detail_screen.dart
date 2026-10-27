@@ -10,6 +10,7 @@ import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/entities/forum_reply_entity.dart';
@@ -208,8 +209,11 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
   Widget _buildBody(ForumPostEntity post) {
     final uid = ref.watch(currentUserProvider)?.uid;
     final isAuthorOfTroubleshoot = canMarkSolution(post, uid);
+    final blocked =
+        ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+    final replies = _replies.where((r) => !blocked.contains(r.userId)).toList();
     final ordered =
-        orderRepliesWithSolutionFirst(_replies, post.solutionReplyId);
+        orderRepliesWithSolutionFirst(replies, post.solutionReplyId);
 
     return Column(
       children: [
@@ -251,14 +255,14 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
               Container(height: 1, color: context.palette.border),
               const SizedBox(height: 16),
               Text(
-                '${_replies.length} ${_replies.length == 1 ? 'reply' : 'replies'}',
+                '${replies.length} ${replies.length == 1 ? 'reply' : 'replies'}',
                 style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: context.palette.textPrimary),
               ),
               const SizedBox(height: 12),
-              if (_replies.isEmpty)
+              if (replies.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(context.l10n.noRepliesYetBe,

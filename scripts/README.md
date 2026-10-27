@@ -99,7 +99,7 @@ account that gcloud uses on this Mac can't read Cloud Monitoring.
 
 ```bash
 gcloud auth login blankframe.technologies@gmail.com   # the owner; opens a browser
-# Put the default back, or scripts/publish_release.sh uses the wrong account:
+# Put the default account back afterwards:
 gcloud config set account id-throttleiq-play-publisher@throttle-iq-gcc1.iam.gserviceaccount.com
 OWNER=blankframe.technologies@gmail.com
 ```
@@ -584,7 +584,7 @@ from duplicating a seeded place: both sides key off `osmId`.
   (`app/lib/core/utils/geohash_util.dart`) at the precision-9 default
   `GeohashUtils.encode` applies, rather than an npm geohash package. The two have
   to agree exactly: a seeded place whose geohash disagrees with what the client
-  computes falls outside the prefix range `getPlacesByGeohash` queries, so it
+  computes falls outside the prefix range `getNearbyPlaces` queries, so it
   exists in Firestore and is invisible on the map, with nothing erroring. The
   port was checked against the Dart implementation over 4,004 points — 2,000
   random inside the Dhaka box, 2,000 random worldwide, plus the origin, both

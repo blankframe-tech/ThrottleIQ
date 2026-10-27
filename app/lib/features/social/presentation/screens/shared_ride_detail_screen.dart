@@ -16,6 +16,7 @@ import '../../../../shared/widgets/riding_score_badge.dart';
 import '../../../../shared/widgets/user_avatar.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../moderation/presentation/widgets/report_bottom_sheet.dart';
+import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../data/repositories/route_repository.dart';
 import '../../domain/entities/ride_comment_entity.dart';
@@ -978,7 +979,7 @@ class _SharedRideDetailScreenState
           Icon(Icons.chat_bubble_outline,
               size: 20, color: context.palette.textSecondary),
           const SizedBox(width: 8),
-          Text(context.l10n.commentsCount(_comments?.length ?? 0),
+          Text(context.l10n.commentsCount(_visibleComments.length),
               style: TextStyle(
                   color: context.palette.textSecondary, fontSize: 14)),
         ],
@@ -986,7 +987,17 @@ class _SharedRideDetailScreenState
     );
   }
 
+  /// Loaded comments minus riders this user blocked. Call only from build.
+  List<RideCommentEntity> get _visibleComments {
+    final blocked =
+        ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+    return (_comments ?? const <RideCommentEntity>[])
+        .where((c) => !blocked.contains(c.userId))
+        .toList();
+  }
+
   Widget _buildCommentsSection() {
+    final comments = _visibleComments;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -997,7 +1008,7 @@ class _SharedRideDetailScreenState
               child: Padding(
                   padding: EdgeInsets.all(16),
                   child: CircularProgressIndicator()))
-        else if (_comments == null || _comments!.isEmpty)
+        else if (comments.isEmpty)
           Center(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1010,11 +1021,11 @@ class _SharedRideDetailScreenState
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemCount: _comments!.length,
+            itemCount: comments.length,
             separatorBuilder: (_, __) =>
                 Divider(color: context.palette.border, height: 16),
             itemBuilder: (context, index) {
-              final comment = _comments![index];
+              final comment = comments[index];
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
