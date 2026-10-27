@@ -86,8 +86,34 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
     return newBaseline + bike.totalDistanceKm;
   }
 
-  Future<void> updateBike(BikeEntity bike) async {
-    await _dao.update(BikeModel.toMap(bike));
+  /// Saves the Edit Bike form. Writes only the columns the form edits: the
+  /// [bike] it holds was loaded when the screen opened, and writing it whole
+  /// undid km, ride counts and the active flag changed meanwhile, e.g. by
+  /// auto-tracking credit (critique oct27 #7). [odometerReadingKm] is the
+  /// dashboard reading the rider typed (null = untouched, baseline kept),
+  /// turned into a baseline against the bike's tracked km as stored now.
+  Future<void> updateBike(BikeEntity bike,
+      {double? odometerReadingKm, bool clearOdometer = false}) async {
+    final row = await _dao.getById(bike.id);
+    if (row == null) return;
+    final trackedKm = BikeModel.fromMap(row).totalDistanceKm;
+    await _dao.update({
+      'id': bike.id,
+      'brand': bike.brand,
+      'model': bike.model,
+      'year': bike.year,
+      'cc': bike.cc,
+      'image_path': bike.imagePath,
+      'color_value': bike.colorValue,
+      'is_ebike': bike.isEbike ? 1 : 0,
+      if (clearOdometer)
+        'odometer_km': null
+      else if (odometerReadingKm != null)
+        'odometer_km':
+            (odometerReadingKm - trackedKm).clamp(0.0, double.infinity),
+      // The touch trigger stamps updated_at for last-writer-wins (C4).
+      'synced': 0,
+    });
     ref.invalidateSelf();
   }
 

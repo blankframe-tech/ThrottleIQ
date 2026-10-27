@@ -120,6 +120,24 @@ void main() {
     manager.dispose();
   });
 
+  test('syncOnResume runs a pass, then is throttled (critique oct27 #6)',
+      () async {
+    final connectivity = _OfflineConnectivity();
+    final manager = SyncManager(
+      outbox: OutboxService(currentUid: () => 'rider-1'),
+      connectivity: connectivity,
+      auth: _FakeAuth(),
+    );
+    addTearDown(manager.dispose);
+
+    await manager.syncOnResume();
+    expect(connectivity.checks, 1);
+
+    // A second resume inside the 30 s window doesn't start another pass.
+    await manager.syncOnResume();
+    expect(connectivity.checks, 1);
+  });
+
   /// §104: Firestore over its daily quota pauses sync before the outbox is
   /// touched, so a day-long outage costs queued entries no retries.
   group('quota pause', () {

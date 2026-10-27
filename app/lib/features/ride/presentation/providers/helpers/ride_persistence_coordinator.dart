@@ -15,6 +15,7 @@ import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/data/models/bike_model.dart';
 import 'package:throttleiq/features/profile/data/repositories/profile_repository.dart';
 import 'package:throttleiq/features/ride/data/models/ride_model.dart';
+import 'package:throttleiq/features/ride/domain/calculators/event_detector.dart';
 import 'package:throttleiq/features/ride/domain/calculators/segment_speed_aggregator.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
@@ -43,6 +44,7 @@ class RidePersistenceCoordinator {
   static const String _prefsRideId = RidePrefsKeys.activeRideId;
   static const String _prefsStartTime = 'ride_start_time';
   static const String _prefsElapsedS = RidePrefsKeys.elapsedSeconds;
+  static const String _prefsEventCounts = 'ride_event_counts';
 
   static const int _bufferFlushSize = 5;
   static const Duration _bufferFlushInterval = Duration(seconds: 3);
@@ -105,10 +107,13 @@ class RidePersistenceCoordinator {
     await prefs.setString(_prefsRideId, ride.id);
     await prefs.setString(_prefsStartTime, ride.startTime.toIso8601String());
     await prefs.setInt(_prefsElapsedS, 0);
+    await prefs.remove(_prefsEventCounts);
   }
 
-  /// Snapshots the ride clock, throttled to 10s unless [force] is true.
-  Future<void> persistElapsed(Duration elapsed, {bool force = false}) async {
+  /// Snapshots the ride clock and [detector]'s event counts, throttled to
+  /// 10s unless [force] is true.
+  Future<void> persistElapsed(Duration elapsed,
+      {required EventDetector detector, bool force = false}) async {
     final now = DateTime.now();
     if (!force &&
         _lastElapsedPersist != null &&
@@ -118,6 +123,30 @@ class RidePersistenceCoordinator {
     _lastElapsedPersist = now;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_prefsElapsedS, elapsed.inSeconds);
+    await prefs.setStringList(_prefsEventCounts, [
+      for (final c in [
+        detector.hardBrakeCount,
+        detector.rapidAccelCount,
+        detector.highJerkCount,
+        detector.overspeedCount,
+      ])
+        '$c',
+    ]);
+  }
+
+  /// Seeds [detector] with the counts [persistElapsed] saved before the OS
+  /// killed the app, so a restored ride keeps its earlier hard brakes etc.
+  /// (critique oct27 #12). Leaves it untouched when nothing valid was saved.
+  Future<void> restoreEventCounts(EventDetector detector) async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_prefsEventCounts)?.map(int.tryParse);
+    if (saved == null || saved.length != 4 || saved.contains(null)) return;
+    final c = saved.cast<int>().toList();
+    detector
+      ..hardBrakeCount = c[0]
+      ..rapidAccelCount = c[1]
+      ..highJerkCount = c[2]
+      ..overspeedCount = c[3];
   }
 
   /// Clears active ride markers from SharedPreferences.
@@ -126,6 +155,7 @@ class RidePersistenceCoordinator {
     await prefs.remove(_prefsRideId);
     await prefs.remove(_prefsStartTime);
     await prefs.remove(_prefsElapsedS);
+    await prefs.remove(_prefsEventCounts);
   }
 
   /// Retrieves saved active ride ID if any.

@@ -638,6 +638,14 @@ class SyncManager {
   /// Manual sync trigger
   Future<void> sync() => _performSync();
 
+  /// Sync on return to the foreground (critique oct27 #6), at most once per
+  /// [connectivityThrottle] so switching apps doesn't spend reads each time.
+  Future<void> syncOnResume() async {
+    final delay = connectivitySyncDelay(
+        lastSyncStartedAt: _lastSyncStartedAt, now: DateTime.now());
+    if (delay == Duration.zero) await _performSync();
+  }
+
   /// Uploads the GPS trail of every ride whose metadata is synced but whose
   /// trail isn't, marking each one `track_synced` only once its upload
   /// returns. A failure is logged and left at 0 for the next cycle rather

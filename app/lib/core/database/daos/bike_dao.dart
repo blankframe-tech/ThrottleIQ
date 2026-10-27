@@ -326,7 +326,7 @@ class BikeDao {
     );
   }
 
-  Future<void> updateImagePath(String id, String imagePath) async {
+  Future<void> updateImagePath(String id, String? imagePath) async {
     final db = await DatabaseHelper.instance.database;
     await db.update(
       'bikes',

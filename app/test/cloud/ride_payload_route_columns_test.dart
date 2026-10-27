@@ -6,6 +6,19 @@ import 'package:throttleiq/core/cloud/cloud_repository.dart';
 /// schema doesn't have is an insert that throws and silently drops the ride —
 /// the hazard `track_synced` and `archived` each needed a bespoke guard for.
 void main() {
+  group('isFinishedRideDoc (critique oct27 #4)', () {
+    test('completed and crash rides are downloaded', () {
+      expect(CloudRepository.isFinishedRideDoc({'status': 'completed'}), true);
+      expect(CloudRepository.isFinishedRideDoc({'status': 'crash'}), true);
+    });
+
+    test('a stale active or status-less doc is skipped', () {
+      expect(CloudRepository.isFinishedRideDoc({'status': 'active'}), false);
+      expect(CloudRepository.isFinishedRideDoc({'status': 'paused'}), false);
+      expect(CloudRepository.isFinishedRideDoc({}), false);
+    });
+  });
+
   group('ridePayload', () {
     test('an ordinary ride looks exactly as it did before v17', () {
       final payload = CloudRepository.ridePayload({

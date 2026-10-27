@@ -152,20 +152,21 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     setState(() => _imagePath = cropped);
   }
 
-
   Future<void> _connectEbike() async {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.palette.surface,
-        title: Text('Connecting to E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+        title: Text('Connecting to E-Bike',
+            style: TextStyle(color: context.palette.textPrimary)),
         content: Row(
           children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 16),
             Expanded(
-              child: Text('Scanning for bluetooth signal...', style: TextStyle(color: context.palette.textSecondary)),
+              child: Text('Scanning for bluetooth signal...',
+                  style: TextStyle(color: context.palette.textSecondary)),
             ),
           ],
         ),
@@ -174,20 +175,22 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
     Navigator.of(context).pop();
-    
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: context.palette.surface,
-        title: Text('Connected!', style: TextStyle(color: context.palette.textPrimary)),
+        title: Text('Connected!',
+            style: TextStyle(color: context.palette.textPrimary)),
         content: Text(
-            'Battery: 85%\nLocation: Shared\nStatus: Online',
-            style: TextStyle(color: context.palette.textSecondary),
+          'Battery: 85%\nLocation: Shared\nStatus: Online',
+          style: TextStyle(color: context.palette.textSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Done', style: TextStyle(color: context.palette.primary)),
+            child:
+                Text('Done', style: TextStyle(color: context.palette.primary)),
           ),
         ],
       ),
@@ -232,9 +235,6 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       final text = _odometerCtrl.text.trim();
       final enteredOdo = parseLocalizedNumber(text);
       final unchanged = text == _odoPrefill?.trim();
-      final newBaseline = unchanged || enteredOdo == null
-          ? existing.odometerKm
-          : (enteredOdo - existing.totalDistanceKm).clamp(0.0, double.infinity);
       await ref.read(garageProvider.notifier).updateBike(
             existing.copyWith(
               brand: _brandCtrl.text.trim(),
@@ -242,12 +242,14 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               year: parseLocalizedInt(_yearCtrl.text),
               cc: parseLocalizedInt(_ccCtrl.text),
               imagePath: savedImagePath,
-              odometerKm: newBaseline,
-              clearOdometer: text.isEmpty,
               colorValue: _colorValue,
-        isEbike: _isEbike,
+              isEbike: _isEbike,
               clearColor: _colorValue == null,
             ),
+            // The notifier turns the reading into a baseline against the
+            // bike's tracked km as stored at save time (critique oct27 #7).
+            odometerReadingKm: unchanged ? null : enteredOdo,
+            clearOdometer: text.isEmpty,
           );
       if (mounted) context.pop();
     } else {
@@ -260,9 +262,11 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
             imagePath: savedImagePath,
             odometerKm: enteredOdo,
             colorValue: _colorValue,
-        isEbike: _isEbike,
+            isEbike: _isEbike,
           );
-      if (newBikeId != null) AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
+      if (newBikeId != null) {
+        AnalyticsService.instance.log(AnalyticsEvent.bikeAdded);
+      }
       if (mounted) {
         // Back to the garage with an offer, rather than straight into the
         // maintenance setup (which then redirected a second time on save —
@@ -342,7 +346,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.add_a_photo_outlined,
-                                  color: context.palette.textSecondary, size: 28),
+                                  color: context.palette.textSecondary,
+                                  size: 28),
                               const SizedBox(height: 6),
                               Text(context.l10n.addPhoto,
                                   style: TextStyle(
@@ -403,7 +408,9 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return null;
                         final y = parseLocalizedInt(v);
-                        if (y == null || y < 1900 || y > DateTime.now().year + 1) {
+                        if (y == null ||
+                            y < 1900 ||
+                            y > DateTime.now().year + 1) {
                           return context.l10n.invalidNumber;
                         }
                         return null;
@@ -437,7 +444,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                     const TextInputType.numberWithOptions(decimal: true),
                 style: TextStyle(color: context.palette.textPrimary),
                 decoration: InputDecoration(
-                    labelText: context.l10n.odometerReadingKm, hintText: '12000'),
+                    labelText: context.l10n.odometerReadingKm,
+                    hintText: '12000'),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return null;
                   final o = parseLocalizedNumber(v, min: 0, max: 2000000);
@@ -456,7 +464,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
               const SizedBox(height: 12),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text('This is an E-Bike', style: TextStyle(color: context.palette.textPrimary)),
+                title: Text('This is an E-Bike',
+                    style: TextStyle(color: context.palette.textPrimary)),
                 value: _isEbike,
                 onChanged: (val) {
                   setState(() => _isEbike = val);
@@ -481,8 +490,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                 ),
               const SizedBox(height: 20),
               Text(context.l10n.bikeColor,
-                  style:
-                      TextStyle(fontSize: 13, color: context.palette.textSecondary)),
+                  style: TextStyle(
+                      fontSize: 13, color: context.palette.textSecondary)),
               const SizedBox(height: 8),
               _ColorSwatchPicker(
                 selected: _colorValue,
@@ -497,7 +506,9 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
                         width: 20,
                         child: CircularProgressIndicator(
                             strokeWidth: 2, color: Colors.white))
-                    : Text(isEdit ? context.l10n.saveChanges : context.l10n.addBike),
+                    : Text(isEdit
+                        ? context.l10n.saveChanges
+                        : context.l10n.addBike),
               ),
             ],
           ),
@@ -565,7 +576,8 @@ class _SwatchTile extends StatelessWidget {
             color: color,
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected ? context.palette.textPrimary : Colors.transparent,
+              color:
+                  isSelected ? context.palette.textPrimary : Colors.transparent,
               width: 2.5,
             ),
           ),
@@ -602,12 +614,14 @@ class _AutoTile extends StatelessWidget {
             color: context.palette.surface,
             shape: BoxShape.circle,
             border: Border.all(
-              color: isSelected ? context.palette.textPrimary : context.palette.border,
+              color: isSelected
+                  ? context.palette.textPrimary
+                  : context.palette.border,
               width: isSelected ? 2.5 : 1,
             ),
           ),
-          child:
-              Icon(Icons.auto_awesome, size: 16, color: context.palette.textSecondary),
+          child: Icon(Icons.auto_awesome,
+              size: 16, color: context.palette.textSecondary),
         ),
       ),
     );

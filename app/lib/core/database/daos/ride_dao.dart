@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
+import '../../constants/ride_prefs_keys.dart';
 import '../../constants/sensor_constants.dart';
 import '../database_helper.dart';
 
@@ -367,15 +369,22 @@ class RideDao {
   }
 
   /// Every ride of [userId]'s, finished or still recording, as a time window
-  /// — what an auto-detection must not overlap (§90.C3). A ride with no
-  /// `end_time` yet (being recorded right now) is open-ended.
+  /// — what an auto-detection must not overlap (§90.C3). Only the ride being
+  /// recorded right now (the recovery marker `RidePrefsKeys.activeRideId`)
+  /// is open-ended: a stale row with no `end_time` (an orphaned `active`
+  /// ride, e.g. pulled back from the cloud) would otherwise swallow every
+  /// later detection forever (critique oct27 #4).
   Future<List<({String id, DateTime start, DateTime? end})>> rideWindows(
       String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    // The background isolate's cached copy can miss the recorder's write.
+    await prefs.reload();
+    final activeId = prefs.getString(RidePrefsKeys.activeRideId);
     final db = await DatabaseHelper.instance.database;
     final rows = await db.query('rides',
         columns: ['id', 'start_time', 'end_time'],
-        where: 'user_id = ?',
-        whereArgs: [userId]);
+        where: 'user_id = ? AND (end_time IS NOT NULL OR id = ?)',
+        whereArgs: [userId, activeId ?? '']);
     final out = <({String id, DateTime start, DateTime? end})>[];
     for (final r in rows) {
       final start = DateTime.tryParse(r['start_time'] as String? ?? '');

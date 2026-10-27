@@ -19,6 +19,7 @@ class _FakeGarage extends GarageNotifier {
   final List<BikeEntity> bikes;
   final Completer<void>? gate;
   final updated = <BikeEntity>[];
+  final readings = <double?>[];
   int added = 0;
 
   @override
@@ -28,7 +29,11 @@ class _FakeGarage extends GarageNotifier {
   }
 
   @override
-  Future<void> updateBike(BikeEntity bike) async => updated.add(bike);
+  Future<void> updateBike(BikeEntity bike,
+      {double? odometerReadingKm, bool clearOdometer = false}) async {
+    updated.add(bike);
+    readings.add(odometerReadingKm);
+  }
 
   @override
   Future<String?> addBike({
@@ -103,7 +108,9 @@ Future<void> _tapSave(WidgetTester tester) async {
 }
 
 void main() {
-  testWidgets('edit shows baseline + tracked km and saves back a baseline',
+  // The reading → baseline conversion itself happens in
+  // GarageNotifier.updateBike; see garage_update_bike_test.dart.
+  testWidgets('edit shows baseline + tracked km and saves back the reading',
       (tester) async {
     final fake = await _pump(tester);
     expect(tester.widget<TextFormField>(_odoField).controller!.text, '1500');
@@ -112,14 +119,15 @@ void main() {
     await _tapSave(tester);
 
     expect(fake.updated, hasLength(1));
-    expect(fake.updated.single.odometerKm, 1100);
+    expect(fake.readings.single, 1600);
     expect(fake.added, 0);
   });
 
-  testWidgets('untouched odometer keeps the stored baseline', (tester) async {
+  testWidgets('untouched odometer is not written', (tester) async {
     final fake = await _pump(tester);
     await _tapSave(tester);
-    expect(fake.updated.single.odometerKm, 1000);
+    expect(fake.updated, hasLength(1));
+    expect(fake.readings.single, isNull);
   });
 
   testWidgets('rejects a reading below the tracked km and junk numbers',
@@ -135,7 +143,11 @@ void main() {
 
   testWidgets('cc above 3000 is rejected', (tester) async {
     final fake = await _pump(tester);
-    await tester.enterText(find.byType(TextFormField).at(find.byType(TextFormField).evaluate().length - 2), '5000');
+    await tester.enterText(
+        find
+            .byType(TextFormField)
+            .at(find.byType(TextFormField).evaluate().length - 2),
+        '5000');
     await _tapSave(tester);
     expect(find.text('Invalid number'), findsWidgets);
     expect(fake.updated, isEmpty);
