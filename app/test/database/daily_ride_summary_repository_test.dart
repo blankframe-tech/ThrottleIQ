@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 import 'package:throttleiq/features/ride/data/repositories/daily_ride_summary_repository.dart';
@@ -11,6 +12,7 @@ void main() {
   const userId = 'u1';
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     databaseFactory = databaseFactoryFfi;
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
     await db.execute('PRAGMA foreign_keys = ON');
@@ -24,7 +26,8 @@ void main() {
     await db.close();
   });
 
-  Future<void> seedRide(String id, DateTime start, {int durationS = 600, double distanceM = 3000}) async {
+  Future<void> seedRide(String id, DateTime start,
+      {int durationS = 600, double distanceM = 3000}) async {
     await db.insert('rides', {
       'id': id,
       'user_id': userId,
@@ -41,7 +44,9 @@ void main() {
     });
   }
 
-  Future<void> seedDetection(String id, DateTime start, {
+  Future<void> seedDetection(
+    String id,
+    DateTime start, {
     String status = 'pending',
     int points = 5,
     double startLat = 23.0,
@@ -98,11 +103,15 @@ void main() {
       expect(summary.detectedRideCount, 1);
     });
 
-    test('includes summarized detections but ignores reconciled or discarded', () async {
+    test('includes summarized detections but ignores reconciled or discarded',
+        () async {
       final day = DateTime(2026, 1, 1);
-      await seedDetection('d1', DateTime(2026, 1, 1, 8, 0), status: 'summarized');
-      await seedDetection('d2', DateTime(2026, 1, 1, 12, 0), status: 'reconciled');
-      await seedDetection('d3', DateTime(2026, 1, 1, 16, 0), status: 'discarded');
+      await seedDetection('d1', DateTime(2026, 1, 1, 8, 0),
+          status: 'summarized');
+      await seedDetection('d2', DateTime(2026, 1, 1, 12, 0),
+          status: 'reconciled');
+      await seedDetection('d3', DateTime(2026, 1, 1, 16, 0),
+          status: 'discarded');
 
       final summary = await repository.summaryFor(userId, day);
       expect(summary.detectedSegmentCount, 1);
@@ -111,10 +120,13 @@ void main() {
 
     test('ignores detections with purged fixes', () async {
       final day = DateTime(2026, 1, 1);
-      await seedDetection('d1', DateTime(2026, 1, 1, 8, 0), status: 'summarized');
+      await seedDetection('d1', DateTime(2026, 1, 1, 8, 0),
+          status: 'summarized');
       // Purge fixes for d1 manually
-      await db.update('auto_detections', {'fixes_purged': 1}, where: 'id = ?', whereArgs: ['d1']);
-      await db.delete('auto_fixes', where: 'detection_id = ?', whereArgs: ['d1']);
+      await db.update('auto_detections', {'fixes_purged': 1},
+          where: 'id = ?', whereArgs: ['d1']);
+      await db
+          .delete('auto_fixes', where: 'detection_id = ?', whereArgs: ['d1']);
 
       final summary = await repository.summaryFor(userId, day);
       expect(summary.isEmpty, isTrue);

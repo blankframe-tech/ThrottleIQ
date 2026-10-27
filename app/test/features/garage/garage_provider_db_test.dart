@@ -83,4 +83,50 @@ void main() {
     expect(await n.syncOdometer(bikeId: 'old', newOdometerKm: 7000), 7000);
     expect(await n.syncOdometer(bikeId: 'nope', newOdometerKm: 1), isNull);
   });
+
+  group('updateBike writes only the edited columns (critique oct27 #7)', () {
+    Future<Map<String, Object?>> row() async =>
+        (await db.query('bikes', where: 'id = ?', whereArgs: ['old'])).single;
+
+    test('km credited after the screen loaded survive a save', () async {
+      final c = container();
+      final loaded = (await c.read(garageProvider.future)).single;
+      // Auto-tracking credits 12 km and a ride lands while Edit Bike is open.
+      await db.rawUpdate('''UPDATE bikes SET odometer_km = odometer_km + 12,
+          total_distance_m = total_distance_m + 3000, ride_count = 4,
+          last_ride_at = '2026-10-27T08:00:00.000Z', synced = 1''');
+
+      await c
+          .read(garageProvider.notifier)
+          .updateBike(loaded.copyWith(brand: 'TVS', model: 'Apache'));
+
+      final r = await row();
+      expect(r['brand'], 'TVS');
+      expect(r['model'], 'Apache');
+      expect(r['odometer_km'], 112.0);
+      expect(r['total_distance_m'], 5003000.0);
+      expect(r['ride_count'], 4);
+      expect(r['last_ride_at'], '2026-10-27T08:00:00.000Z');
+      expect(r['is_active'], 1);
+      expect(r['synced'], 0);
+    });
+
+    test('a typed reading becomes a baseline against the km stored now',
+        () async {
+      final c = container();
+      final loaded = (await c.read(garageProvider.future)).single;
+      await db.rawUpdate(
+          'UPDATE bikes SET total_distance_m = total_distance_m + 3000');
+
+      final n = c.read(garageProvider.notifier);
+      await n.updateBike(loaded, odometerReadingKm: 6000);
+      expect((await row())['odometer_km'], closeTo(997, 1e-9));
+
+      // Below the tracked km: floored at 0. Cleared: null.
+      await n.updateBike(loaded, odometerReadingKm: 10);
+      expect((await row())['odometer_km'], 0.0);
+      await n.updateBike(loaded, clearOdometer: true);
+      expect((await row())['odometer_km'], isNull);
+    });
+  });
 }

@@ -620,7 +620,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
         state == AppLifecycleState.hidden) {
       unawaited(_persistenceCoordinator.flushPointBuffer());
       unawaited(_persistenceCoordinator.persistElapsed(this.state.elapsed,
-          force: true));
+          detector: _detector, force: true));
     }
     if (state == AppLifecycleState.resumed && _serviceLost) {
       unawaited(_rehost());
@@ -1075,7 +1075,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           // A once-a-second tick is not the thing that resolved an error.
           keepError: true,
         );
-        unawaited(_persistenceCoordinator.persistElapsed(state.elapsed));
+        unawaited(_persistenceCoordinator.persistElapsed(state.elapsed,
+            detector: _detector));
         // Beats go on after the service is lost: the plugin may restart it,
         // and the restarted handler must see the UI is still recording.
         if (_inService || _serviceLost) AutoTrackingService.sendUiBeat();
@@ -1178,7 +1179,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           status: state.status,
         ));
       }
-      await _persistenceCoordinator.persistElapsed(state.elapsed, force: true);
+      await _persistenceCoordinator.persistElapsed(state.elapsed,
+          detector: _detector, force: true);
     } finally {
       _latch.exit();
       if (mounted) {
@@ -1382,6 +1384,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _latch.exit();
       if (mounted) state = const RideRecordingState();
     }
+    // Back the ride up now: MIUI may freeze the app before the 5-minute
+    // timer fires (critique oct27 #6). `_isSyncing` drops a duplicate pass.
+    unawaited(_ref.read(syncManagerProvider).sync());
     return ride.id;
   }
 
@@ -1491,6 +1496,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     _sensorCoordinator.reset();
     _detector.reset();
+    // The counts from before the kill; a reset alone scored only the part
+    // ridden after the restore (critique oct27 #12).
+    await _persistenceCoordinator.restoreEventCounts(_detector);
     _detector.overspeedThreshold = _ref.read(overspeedLimitProvider) / 3.6;
     // The pre-restore peaks lived only in memory; the restored ride's lean
     // and g figures cover what is ridden after the resume.
@@ -1534,7 +1542,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     );
 
     WidgetsBinding.instance.addObserver(this);
-    await _persistenceCoordinator.persistElapsed(state.elapsed, force: true);
+    await _persistenceCoordinator.persistElapsed(state.elapsed,
+        detector: _detector, force: true);
     await _tearDownLiveShare();
   }
 

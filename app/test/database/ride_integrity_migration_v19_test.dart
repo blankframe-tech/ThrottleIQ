@@ -2,7 +2,9 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:throttleiq/core/constants/ride_prefs_keys.dart';
 import 'package:throttleiq/core/database/daos/auto_detection_dao.dart';
 import 'package:throttleiq/core/database/daos/ride_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
@@ -30,16 +32,17 @@ void main() {
           .map((r) => r['name'] as String)
           .toSet();
 
-  Future<Set<String>> tables() async => (await db
-          .rawQuery("SELECT name FROM sqlite_master WHERE type='table'"))
-      .map((r) => r['name'] as String)
-      .toSet();
+  Future<Set<String>> tables() async =>
+      (await db.rawQuery("SELECT name FROM sqlite_master WHERE type='table'"))
+          .map((r) => r['name'] as String)
+          .toSet();
 
   test('schemaVersion is 19 or later', () {
     expect(DatabaseHelper.schemaVersion, greaterThanOrEqualTo(19));
   });
 
-  test('v18 → v19 adds segment_start (default 0) and deleted_rides, keeps '
+  test(
+      'v18 → v19 adds segment_start (default 0) and deleted_rides, keeps '
       'existing points', () async {
     await db.execute('''
       CREATE TABLE rides (id TEXT PRIMARY KEY, user_id TEXT NOT NULL,
@@ -101,7 +104,7 @@ void main() {
     });
 
     Future<void> insertRide(String id, String start, String? end,
-        {String user = 'u1'}) =>
+            {String user = 'u1'}) =>
         db.insert('rides', {
           'id': id,
           'user_id': user,
@@ -151,10 +154,15 @@ void main() {
       expect(await dao.deletedIds(), {'r2'});
     });
 
-    test('rideWindows returns every ride of the rider, open-ended if active',
+    test(
+        'rideWindows returns the rider\'s finished rides plus the one being '
+        'recorded, open-ended; an orphaned unfinished row is ignored',
         () async {
+      SharedPreferences.setMockInitialValues(
+          {RidePrefsKeys.activeRideId: 'live'});
       await insertRide('done', '2026-10-06T08:00:00Z', '2026-10-06T08:30:00Z');
       await insertRide('live', '2026-10-06T09:00:00.000', null);
+      await insertRide('orphan', '2026-10-01T09:00:00.000', null);
       await insertRide('other', '2026-10-06T08:00:00Z', null, user: 'u2');
 
       final windows = await RideDao().rideWindows('u1');
@@ -204,8 +212,7 @@ void main() {
 
       await dao.closeRecordingDetection('dead');
       final statuses = {
-        for (final r in await db.query('auto_detections'))
-          r['id']: r['status'],
+        for (final r in await db.query('auto_detections')) r['id']: r['status'],
       };
       expect(statuses, {
         'live': AutoDetectionStatus.recording,

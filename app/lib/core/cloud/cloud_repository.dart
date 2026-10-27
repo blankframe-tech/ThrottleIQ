@@ -66,13 +66,13 @@ class CloudRepository {
     final rides = await userDoc
         .collection('rides')
         .where('bike_id', isEqualTo: bikeId)
-        .get();
+        .get(_serverOnly);
 
     // Children before parents, and the bike last: if a later chunk fails,
     // the retry re-queries by bike_id and still finds the rides it missed.
     final refs = <DocumentReference>[];
     for (final ride in rides.docs) {
-      final track = await ride.reference.collection('track').get();
+      final track = await ride.reference.collection('track').get(_serverOnly);
       refs.addAll(track.docs.map((d) => d.reference));
     }
     refs.addAll(rides.docs.map((d) => d.reference));
@@ -81,6 +81,13 @@ class CloudRepository {
     refs.add(userDoc.collection('bikes').doc(bikeId));
     await _deleteInChunks(refs);
   }
+
+  /// The child listings of a remote delete. A plain `.get()` on a "connected
+  /// but no internet" phone silently answers from the offline cache, so only
+  /// the cached children were deleted and the tombstone was still marked
+  /// synced. Server-only throws offline instead, and the caller keeps the
+  /// tombstone for the next cycle (critique oct27 #5).
+  static const _serverOnly = GetOptions(source: Source.server);
 
   /// Firestore caps a batch at 500 writes; 400 leaves headroom.
   static const deleteChunkSize = 400;
@@ -194,6 +201,14 @@ class CloudRepository {
           Map<String, dynamic> remote, Map<String, Object?> local) =>
       local['synced'] == 1 &&
       LastWriterWins.remoteIsNewer(remote, Map<String, dynamic>.from(local));
+
+  /// Whether a downloaded ride doc is a finished ride (RideDao's
+  /// `completed`/`crash`). The stale `active` rows already in Firestore (see
+  /// SyncManager) would otherwise come back as open-ended rides
+  /// (critique oct27 #4).
+  @visibleForTesting
+  static bool isFinishedRideDoc(Map<String, dynamic> doc) =>
+      const {'completed', 'crash'}.contains(doc['status']);
 
   /// A ride document as a local row: only the columns this build has,
   /// marked synced, times as UTC. A document from a pre-v28 build has
@@ -358,7 +373,9 @@ class CloudRepository {
       if (imagePath != null &&
           imagePath.isNotEmpty &&
           !BikeImageResolver.isRemoteUrl(imagePath)) {
-        final resolved = BikeImageResolver.resolvePathSync(imagePath);
+        // Async: also looks in the documents dir even before main.dart has
+        // cached it, so a moved-but-present photo is never cleared below.
+        final resolved = await BikeImageResolver.resolvePath(imagePath);
         if (resolved != null && File(resolved).existsSync()) {
           try {
             final cloudUrl = await _cloudinaryUploadService.upload(
@@ -376,6 +393,9 @@ class CloudRepository {
         } else {
           // File does not exist locally, avoid pushing dead local path to Firestore.
           bike['image_path'] = null;
+          // And forget it locally, or getBikesWithLocalImages picks the bike
+          // up again and re-uploads it every cycle (critique oct27 #15).
+          await _bikeDao.updateImagePath(bike['id'] as String, null);
         }
       }
       bikesToUpload.add(bike);
@@ -779,7 +799,8 @@ class CloudRepository {
     DateTime? firstFailed;
     for (final doc in snap.docs) {
       final mine = local[doc.id];
-      if (deletedIds.contains(doc.id) ||
+      if (!isFinishedRideDoc(doc.data()) ||
+          deletedIds.contains(doc.id) ||
           (mine != null && !downloadReplacesLocal(doc.data(), mine))) {
         continue;
       }
@@ -842,7 +863,7 @@ class CloudRepository {
   Future<void> deleteRideRemote(String uid, String rideId) async {
     final rideRef =
         _firestore.collection('users').doc(uid).collection('rides').doc(rideId);
-    final track = await rideRef.collection('track').get();
+    final track = await rideRef.collection('track').get(_serverOnly);
     await _deleteInChunks([
       ...track.docs.map((d) => d.reference),
       rideRef,

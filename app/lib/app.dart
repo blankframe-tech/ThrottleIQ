@@ -141,6 +141,9 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
   void didChangeAppLifecycleState(AppLifecycleState appState) {
     if (appState != AppLifecycleState.resumed) return;
     unawaited(_reconcileDetectedRides());
+    // A ride saved just before MIUI froze the app must not wait for the
+    // 5-minute timer, which may never fire (critique oct27 #6).
+    unawaited(ref.read(syncManagerProvider).syncOnResume());
     // Calendar-driven items (brake fluid age, tax token) fall due without a
     // ride, so the check runs on every return to the app too.
     MaintenanceAlerts.instance.scheduleEvaluate();

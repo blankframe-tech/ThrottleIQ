@@ -2,7 +2,9 @@
 library;
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:throttleiq/core/constants/ride_prefs_keys.dart';
 import 'package:throttleiq/core/database/daos/auto_detection_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
 import 'package:throttleiq/features/maintenance/data/repositories/maintenance_forecast_repository.dart';
@@ -18,6 +20,7 @@ void main() {
   final t0 = DateTime(2026, 10, 5, 8);
 
   setUp(() async {
+    SharedPreferences.setMockInitialValues({});
     databaseFactory = databaseFactoryFfi;
     db = await databaseFactory.openDatabase(inMemoryDatabasePath);
     await db.execute('PRAGMA foreign_keys = ON');
@@ -93,6 +96,38 @@ void main() {
     final km = await DetectedOdometerCredit()
         .creditDetection(userId: 'u1', detectionId: 'd2');
     expect(km, 0);
+    expect(await odometer('b1'), 1000);
+  });
+
+  Future<void> insertUnfinishedRide(String id) => db.insert('rides', {
+        'id': id,
+        'user_id': 'u1',
+        'bike_id': 'b1',
+        'start_time': t0.subtract(const Duration(days: 3)).toIso8601String(),
+        'status': 'active',
+        'created_at': t0.toIso8601String(),
+      });
+
+  test(
+      'an orphaned active ride (no end_time) does not block a detection '
+      '(critique oct27 #4)', () async {
+    await seedTrip('d4');
+    await insertUnfinishedRide('stale');
+    final km = await DetectedOdometerCredit()
+        .creditDetection(userId: 'u1', detectionId: 'd4');
+    expect(km, closeTo(2.95, 0.15));
+    expect(await odometer('b1'), closeTo(1000 + km, 1e-6));
+  });
+
+  test('the ride being recorded right now still blocks it', () async {
+    SharedPreferences.setMockInitialValues(
+        {RidePrefsKeys.activeRideId: 'live'});
+    await seedTrip('d5');
+    await insertUnfinishedRide('live');
+    expect(
+        await DetectedOdometerCredit()
+            .creditDetection(userId: 'u1', detectionId: 'd5'),
+        0);
     expect(await odometer('b1'), 1000);
   });
 
