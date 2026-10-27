@@ -346,11 +346,10 @@ class RideShareRepository {
   ///
   /// A ride with no votes at all is skipped ([hydrateWith], issues §104.3).
   /// Reducing it below one-read-per-voted-ride needs a
-  /// `collectionGroup('votes')` query, which in turn needs a `uid` field on
-  /// each vote document (the uid is currently only the document id, which a
-  /// collection-group query can't filter on), a collection-group read rule,
-  /// and a backfill of existing vote docs. Left for a pass that can run and
-  /// verify that migration.
+  /// `collectionGroup('votes')` query on the vote docs' `uid` field, which
+  /// build-29 votes lack until scripts/oneoff/backfill_vote_uid.js runs and
+  /// `config/app.minBuild` moves past it, plus a collection-group read rule.
+  /// Left for a later pass.
   Future<List<SharedRideEntity>> _hydrate(
       List<SharedRideEntity> entities) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
@@ -420,7 +419,7 @@ class RideShareRepository {
         return;
       }
 
-      transaction.set(voteRef, {'value': value});
+      transaction.set(voteRef, {'value': value, 'uid': uid});
       if (previous == null) {
         transaction.update(docRef, {
           value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),

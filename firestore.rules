@@ -351,6 +351,15 @@ service cloud.firestore {
           get(parentPath).data.get('downvotes', 0), getAfter(parentPath).data.get('downvotes', 0));
     }
 
+    // A vote doc is `{value: 1 | -1, uid}`; `uid` (the voter, == the doc id)
+    // lets account erasure find a rider's votes with a collection-group query.
+    // shortcut: `uid` is optional because build 29 writes `{value}` only; make it required once config/app.minBuild passes the release that writes it.
+    function voteDocValid(data, voterUid) {
+      return data.keys().hasOnly(['value', 'uid']) &&
+        (data.value == 1 || data.value == -1) &&
+        data.get('uid', voterUid) == voterUid;
+    }
+
     // `field` on the parent moves by `delta` in this commit and `marker`
     // names `childId` (lastReplyId / lastPostId / lastCommentId), so the
     // parent's own rule has tied that move to this very child.
@@ -1162,7 +1171,7 @@ service cloud.firestore {
       // issues §101.S3: create/update also require that the voter can see
       // the ride (a stranger could otherwise plant vote docs on a
       // followers/mutual share) and that the doc is exactly
-      // RideShareRepository.vote's `{value}`.
+      // RideShareRepository.vote's `{value, uid}` (voteDocValid).
       //
       // Critique 2026-10-27: every vote write, delete included, needs the
       // ride's tallies to move with it in the same transaction (#1, which
@@ -1172,8 +1181,7 @@ service cloud.firestore {
         allow create, update: if request.auth != null && request.auth.uid == userId &&
           rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
           !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/rides/$(rideId)).data.userId)/blocks/$(request.auth.uid)) &&
-          request.resource.data.keys().hasOnly(['value']) &&
-          (request.resource.data.value == 1 || request.resource.data.value == -1) &&
+          voteDocValid(request.resource.data, userId) &&
           voteTallied(/databases/$(database)/documents/rides/$(rideId),
             /databases/$(database)/documents/rides/$(rideId)/votes/$(userId));
         allow delete: if request.auth != null && request.auth.uid == userId &&
@@ -1459,16 +1467,15 @@ service cloud.firestore {
            counterMovedFor(/databases/$(database)/documents/forums/$(forumId),
              'postCount', -1, 'lastPostId', postId));
 
-        // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
+        // One vote doc per user: { value: 1 | -1, uid }. No rideVisibleTo-style
         // gate needed — forum posts have no audience tiers, they're readable
         // by any authed rider same as the post itself.
-        // §101.S3: exactly ForumRepository.votePost's `{value}`, nothing else.
+        // §101.S3: exactly ForumRepository.votePost's `{value, uid}`, nothing else.
         // #1: tallied in the same transaction, like ride votes.
         match /votes/{userId} {
           allow read: if request.auth != null;
           allow create, update: if request.auth != null && request.auth.uid == userId &&
-            request.resource.data.keys().hasOnly(['value']) &&
-            (request.resource.data.value == 1 || request.resource.data.value == -1) &&
+            voteDocValid(request.resource.data, userId) &&
             exists(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId)) &&
             voteTallied(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
               /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(userId));

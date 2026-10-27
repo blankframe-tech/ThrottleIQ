@@ -448,8 +448,9 @@ test("voice notes lose the rider's name, photo and clip, also on rides they left
 test("the rider's votes are deleted and the tallies drop to match", async () => {
   await seedAndEraseTwice({
     'rides/othersRide': { userId: OTHER, upvotes: 2, downvotes: 0 },
-    [`rides/othersRide/votes/${UID}`]: { value: 1 },
-    [`rides/othersRide/votes/${OTHER}`]: { value: 1 },
+    // Current app writes `{value, uid}`; build 29 wrote `{value}` only (p2).
+    [`rides/othersRide/votes/${UID}`]: { value: 1, uid: UID },
+    [`rides/othersRide/votes/${OTHER}`]: { value: 1, uid: OTHER },
     'forums/f1/posts/p2': { userId: OTHER, upvotes: 0, downvotes: 1 },
     [`forums/f1/posts/p2/votes/${UID}`]: { value: -1 },
     // A vote left under a ride that has since been deleted.
