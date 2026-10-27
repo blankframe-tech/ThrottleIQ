@@ -7,10 +7,20 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Release and deploy
 
-- [ ] **Deploy (#30, #31):** rules, indexes and Hosting went out 2026-10-22. Left: Cloud Functions
-      once on Blaze (deletion, retention, chat moderation), and the rules again for the places
-      `updatedAt` check added after that deploy (issues §104.1; safe to deploy any time).
+- [ ] **Deploy (#30, #31):** rules, indexes and Hosting last went out 2026-10-27 (critique fixes
+      included). Left: Cloud Functions once on Blaze (deletion, retention, chat moderation).
+- [ ] **Vote `uid`, before the next release (new 2026-10-28, `SECURITY.md` step 11):** otherwise
+      the new build's votes are denied. From the repo root
+      `firebase deploy --only firestore:rules,firestore:indexes --project throttleiqfb` (answer no
+      to deleting indexes), wait for the `votes.uid` override to show Enabled, then from `scripts/`
+      run `node oneoff/backfill_vote_uid.js --service-account=../secret/throttleiqfb-firebase-adminsdk-fbsvc-033db7e607.json`
+      (dry run), then the same with `--yes-i-really-mean-it` (type `BACKFILL VOTES`).
+- [ ] **After the next release is the minimum build (#56, new 2026-10-28, issues §115):** raise
+      `config/app.minBuild`, ask an agent for the §115 cleanup (vote `uid` required, polyline cap
+      of 1,000 points, drop the legacy comment-delete clause, remove the vote scan), deploy the
+      rules, and run the vote backfill once more.
 - [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
+      Since 2026-10-28 it also carries the 2026-10-27 critique fixes (`issues_fixed.md` §115).
       Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
       (`For Devs and Contributors/guides/app_check.md`). Since 2026-10-22 it also carries the §104 read
       savings, the 8 s screen-write timeout, hour-rounded crash timestamps and the legacy-likes removal.
@@ -47,10 +57,12 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Accounts and security
 
-- [ ] **SECURITY step 3 (#2), urgent:** rules and indexes are live since 2026-10-22, so run the
-      email migration now (dry run, then `--yes-i-really-mean-it`), then fix `privacy.html` §5
-      and deploy Hosting. Also run `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in
-      `isAdmin()` can be removed (issues §110.4).
+- [ ] **Admin claim (#2):** the email migration and privacy §5 are done (2026-10-27). Left: run
+      `scripts/oneoff/set_admin_claim.js` once, so the Gmail fallback in `isAdmin()` can be
+      removed (issues §110.4).
+- [ ] **Unused key (new 2026-10-28, optional):** `secret/throttle-iq-gcc1-b9771877b5d4.json` is a
+      key for another Google Cloud project (`throttle-iq-gcc1`) that no ThrottleIQ script uses.
+      Delete it in that project's console if nothing else needs it.
 - [ ] **Secrets (#9):** rotate the Apify token, move keys out of the Drive-synced repo, restrict the
       Firebase API keys.
 - [ ] **CodeQL (#49, new 2026-10-22):** the push of `a0bf4f4f` bypassed the main ruleset while CodeQL
@@ -58,13 +70,21 @@ number. Done items are deleted, not ticked; git history keeps them._
 - [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are
       locked). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
       the deletion sweep's ownership check skips every asset.
+- [ ] **Security scans (#55, new 2026-10-28):** `security.yml` (gitleaks + osv-scanner) and
+      `.gitleaks.toml` are written but uncommitted; tell an agent to commit and push them.
 - [ ] **CI (#16):** GitHub CI runs and passes, but `main` has no required checks. Make `flutter`,
-      `rules` and `functions` required; approve or close the Dependabot PRs.
+      `rules`, `functions`, `secrets` and `dependencies` required; turn on Secret scanning and Push
+      protection (Settings › Code security); approve or close the Dependabot PRs.
 - [ ] **Deletion requests by hand within 30 days**, with
       `For Devs and Contributors/guides/account_deletion_runbook.md`, until the deletion function
       runs on Blaze.
 
 ## Needs a phone, a bike or a person
+
+- [ ] **Critique fixes on a phone (new 2026-10-28):** vote and un-vote a ride, comment, follow a
+      forum (it always failed before), reply to a post, share a ride with a photo, make a route
+      public. Then boot a simulator and run
+      `cd app && flutter drive --driver=test_driver/integration_test.dart --target=integration_test/e2e_test.dart`.
 
 - [ ] **Real-phone test (#5).** Nothing on `main` since the last release has run on hardware. The
       checklist is the "Device checks" follow-up at the top of `issues_open.md` and the HANDOFF's
@@ -82,6 +102,10 @@ number. Done items are deleted, not ticked; git history keeps them._
       booklets and 2-3 mechanics (issues §95.2-§95.4).
 
 ## Decisions
+
+- [ ] **Unused code on `main` (#57, new 2026-10-28, critique #19):** park the Realtime Database code
+      (`core/realtime/`, typing channel, viewer RTDB path, `firebase_database`) and
+      `features/indriyo` on a branch (about 2,100 lines), or keep them. Ties to #3 (Blaze).
 
 - [ ] **Google Maps data in production (#1):** take it down or keep it. Decision card:
       `DOCS/agent_rooms/drafts/decision_card_scraped_places.md` (2026-10-22).

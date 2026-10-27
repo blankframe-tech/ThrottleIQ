@@ -49,7 +49,7 @@ Everything after `5a935e93` (the 4.7.1 bump):
 - Quota outage mode (§104.6), the `dispose()` fix (`4b914c10`, §106), and the dark-mode map filter (`fb3b9297`).
 - Feature tour v5: real-screen captures with pinned callouts, one accent colour, steps grouped by tab (`ea939409`, `features.md`).
 
-- Critique 2026-10-27 fixes (`DOCS/critic oct27.md`, `issues_fixed.md` §115): counter, forum, block and shared-ride rules; sync after a ride ends and on resume; Edit Bike no longer undoes km; restored rides keep event counts; blocked riders hidden in comments and forums; forum follow fixed. Leftovers: `issues_open.md` §115.
+- Critique 2026-10-27 fixes (`DOCS/critic oct27.md`, `issues_fixed.md` §115): counter, forum, block and shared-ride rules; sync after a ride ends and on resume; Edit Bike no longer undoes km; restored rides keep event counts; blocked riders hidden in comments and forums; forum follow fixed. Follow-ups 2026-10-28: shared and public route lines capped at 1,000 points, vote docs carry `uid`, `syncOdometer` fixed, `fake_cloud_firestore` tests. Owner steps: `needs_attention.md` (vote `uid` deploy and backfill before the release; cleanup after it becomes minBuild; phone checks; critique #19). Leftovers: `issues_open.md` §115.
 
 Shipping these is owner item 26.
 
@@ -57,7 +57,7 @@ Shipping these is owner item 26.
 
 | Part | State |
 |---|---|
-| Firestore rules and indexes | Deployed 2026-10-27 from `5bbb53f1` (includes §104.1 places `updatedAt` and the 2026-10-27 follow-graph/places/reviews/legacy-blocks rules). **Email migration ran 2026-10-27:** 53/53 profile emails moved to `private/account`, 8 verified got an `emailLookup`, re-run reports 0 (owner item 2 done). The critique-fix rules and indexes (`7822003a`, `c3f9072c`) were deployed the same day (`SECURITY.md` step 10). |
+| Firestore rules and indexes | Deployed 2026-10-27 from `5bbb53f1` (includes §104.1 places `updatedAt` and the 2026-10-27 follow-graph/places/reviews/legacy-blocks rules). **Email migration ran 2026-10-27:** 53/53 profile emails moved to `private/account`, 8 verified got an `emailLookup`, re-run reports 0 (owner item 2 done). The critique-fix rules and indexes (`7822003a`, `c3f9072c`) were deployed the same day (`SECURITY.md` step 10). **Not deployed:** the vote `uid` rules and `votes.uid` index (`7a3b2add`, 2026-10-28); they and the vote backfill must go out before the next release (`SECURITY.md` step 11, `needs_attention.md`). |
 | Hosting | Deployed 2026-10-27 (`privacy.html` §5: email no longer visible to riders, effective date 27 Oct; earlier §1/§8/§9 and `community.html`). |
 | Cloud Functions | Never deployed: the project is on Spark (owner item 3). So `onUserAccountDeleted`, `purgeOldGpsTracks`, the report-snapshot purge and chat moderation don't run. Account deletion is manual: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`. |
 | Quota alert | Live since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, policy `alertPolicies/13055223357814148266`). Production used 3-14% of daily reads in the week before. |
@@ -187,6 +187,9 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 ### 2026-10-28
 
 - **Opened to outside contributors (on `main`):** LICENSE → TSAL v1.1 with §1A (fork/modify only to send a PR), new `CLA.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `.github/ISSUE_TEMPLATE/` (bug, feature, translation; security → private advisory), PR template, `.github/workflows/cla.yml` (CLA Assistant Lite, pinned SHA). README Contributing/License updated; it used to say branch from `experimental`, which is 87 commits behind `main`. On GitHub: label `translation`, branch `cla-signatures`, starter issues #20–#24 (#25 closed, already fixed by `c4243606`). Discussions on and topics set (via blankframe-tech, same day). Owner: lawyer review, outreach (owner items 53–54).
+- **Security scanning in CI (uncommitted):** new `.github/workflows/security.yml` (push, PR, weekly Monday 03:00 UTC): `secrets` runs gitleaks (`.gitleaks.toml` = default rules + the four Firebase client API keys, exact match only), `dependencies` runs osv-scanner on `app/pubspec.lock` and `functions/package-lock.json`. Neither has run yet (local download blocked); `npm audit` on functions: 0. First CI run may go red on an existing pub advisory. Owner: make both jobs required + turn on GitHub secret scanning (owner item 16).
+- **Critic oct27 #1–3 verified fixed** (`7822003a`): rules suite 387/387 locally. `.agents/rules/qa-gate.md` rule 4 now requires deny (attacker) tests with every `firestore.rules` change. Enabling secret scanning via `gh api` returned 404 (no admin on this token), so it stays with the owner.
+- **Left for the owner (nothing agent-only remains):** owner items #55 (OK to commit and push the security scans), #56 (release, then raise `minBuild`; unblocks the §115 cleanup: comment-delete clause, polyline cap, vote `uid`), #57 (park the RTDB code and indriyo off `main`?), plus #16 (required checks, secret scanning; needs the admin account), #17 (App Check) and #3 (Blaze).
 
 ### 2026-10-25
 

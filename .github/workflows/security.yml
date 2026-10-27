@@ -1,0 +1,43 @@
+# Secret and dependency scanning. Separate from ci.yml so it can also run
+# weekly: new advisories land in the OSV database without any code change.
+name: security
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  secrets:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      # gitleaks-action lists a PR's commits through the API.
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      # Push/PR: scans the new commits. Schedule/manual: the whole history.
+      - uses: gitleaks/gitleaks-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # PR comments need write access; the job summary is enough.
+          GITLEAKS_ENABLE_COMMENTS: false
+
+  dependencies:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      # Known vulnerabilities in the app's and the functions' locked deps.
+      - uses: google/osv-scanner-action/osv-scanner-action@v2.7.0
+        with:
+          scan-args: |-
+            -L=app/pubspec.lock
+            -L=functions/package-lock.json

@@ -1,0 +1,15 @@
+# gitleaks config for .github/workflows/security.yml: the default rules,
+# minus the Firebase client API keys. Those ship inside every app build and web
+# page by design (access is guarded by the rules and App Check, not the key).
+# Allow-list exact keys only, so any other Google key still fails the scan.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Firebase client API keys (public by design)"
+regexes = [
+  '''AIzaSyAP16m8JzeIisHX1Wb0ImLGAu7AAHM4b-I''', # web (public/live-viewer.html)
+  '''AIzaSyDqefnntNovy6QFcc0N6KJeIJ6wym4J1dU''', # android (firebase_options.dart)
+  '''AIzaSyDRjGyrJ0RPuQYLegbCZ4_wkpsHB_pfQVA''', # ios (firebase_options.dart, GoogleService-Info.plist)
+  '''AIzaSyD4K_qNqZ4X8yL8F_8C_9D_0E_1F_2G_3H''', # old fake placeholder, still in history
+]

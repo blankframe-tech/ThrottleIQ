@@ -26,6 +26,11 @@ These rules apply to every coding task in this project without exception.
    DAO, or service must have at least a happy-path test and one edge-case test.
    Use the `throttleiq-qa` skill for exact patterns.
 
+   **`firestore.rules` changes ship with deny tests** in `scripts/test/rules/`,
+   written as the attacker: extra keys, someone else's doc, a bare delete or
+   create that skips its counter, a blocked rider. Every recent rules hole
+   (critic oct27 #1–3) was a path only the happy test covered.
+
 5. **Never mock DAOs in database tests.** Use real in-memory SQLite via
    `sqflite_common_ffi` — see `app/test/database/bike_dao_delete_test.dart`.
    Mocks cannot catch the deadlock class of bug documented in issues_fixed.md §7.
