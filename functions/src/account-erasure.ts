@@ -315,13 +315,21 @@ export async function deleteUserData(
     }
   });
 
-  // Votes on shared rides and forum posts live at `.../votes/{uid}` and hold
-  // only `{value}`, so no query can filter them by voter.
-  // shortcut: scans every vote doc in the project, page by page; add a `uid`
-  // field to vote writes (+ rules, + backfill) once that scan gets costly.
-  // Each vote is removed in a transaction that takes its +1 back off the
-  // parent's upvotes/downvotes, so the counters keep matching the vote docs.
+  // Votes on shared rides and forum posts live at `.../votes/{uid}` as
+  // `{value, uid}` (needs the `votes.uid` COLLECTION_GROUP index). Each vote
+  // is removed in a transaction that takes its +1 back off the parent's
+  // upvotes/downvotes, so the counters keep matching the vote docs.
   await step("delete votes", async () => {
+    const snap = await db.collectionGroup("votes").where("uid", "==", uid).get();
+    for (const doc of snap.docs) await removeVote(db, doc.ref);
+  });
+
+  // Build-29 clients still write `{value}` only, and Firestore can't query a
+  // missing field, so those votes are only found by doc id in a full scan.
+  // shortcut: reads every vote doc in the project; delete this step once
+  // config/app.minBuild passes the release that writes `uid` and
+  // scripts/oneoff/backfill_vote_uid.js has run.
+  await step("delete legacy votes", async () => {
     let last: FirebaseFirestore.QueryDocumentSnapshot | undefined;
     for (;;) {
       let page = db.collectionGroup("votes").orderBy(FieldPath.documentId()).limit(500);

@@ -785,7 +785,7 @@ class ForumRepository {
         return;
       }
 
-      transaction.set(voteRef, {'value': value});
+      transaction.set(voteRef, {'value': value, 'uid': uid});
       if (previous == null) {
         transaction.update(postRef, {
           value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
