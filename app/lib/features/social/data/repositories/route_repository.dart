@@ -13,10 +13,14 @@ class RouteRepository {
 
   factory RouteRepository() => _instance;
 
-  RouteRepository._internal();
+  RouteRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
+  @visibleForTesting
+  RouteRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
+  late final PrivacyZoneSalt _privacySalt =
+      PrivacyZoneSalt(firestore: _firestore);
 
   /// Saves a new route from a completed ride.
   ///
