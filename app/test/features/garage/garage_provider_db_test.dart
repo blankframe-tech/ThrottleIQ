@@ -84,6 +84,25 @@ void main() {
     expect(await n.syncOdometer(bikeId: 'nope', newOdometerKm: 1), isNull);
   });
 
+  test('syncOdometer measures against km credited after the sheet opened',
+      () async {
+    final c = container();
+    await c.read(garageProvider.future);
+    // Auto-tracking credits 3 km while the sync sheet is open.
+    await db.rawUpdate(
+        'UPDATE bikes SET total_distance_m = total_distance_m + 3000');
+
+    final shown = await c
+        .read(garageProvider.notifier)
+        .syncOdometer(bikeId: 'old', newOdometerKm: 7000);
+
+    final r = (await db.query('bikes')).single;
+    expect(r['total_distance_m'], 5003000.0);
+    // Baseline + the 5003 tracked km reads exactly what the rider typed.
+    expect(r['odometer_km'], closeTo(1997, 1e-9));
+    expect(shown, closeTo(7000, 1e-9));
+  });
+
   group('updateBike writes only the edited columns (critique oct27 #7)', () {
     Future<Map<String, Object?>> row() async =>
         (await db.query('bikes', where: 'id = ?', whereArgs: ['old'])).single;
