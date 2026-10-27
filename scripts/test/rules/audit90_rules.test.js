@@ -218,11 +218,19 @@ test('D1: the ride owner can delete anyone\'s comment, then the ride (deleteShar
   await assertSucceeds(deleteDoc(rideRef));
 });
 
+// Critique 2026-10-27 #1: the delete carries the ride's `comments` -1 for
+// that comment in the same commit, so it can't be looped against addComment.
 test('D1: a comment author can delete their own comment, not someone else\'s', async () => {
   await seedComments();
   const db = dbFor(BOB);
-  await assertSucceeds(deleteDoc(doc(db, 'rides', 'r-public', 'comments', 'c-bob')));
-  await assertFails(deleteDoc(doc(db, 'rides', 'r-public', 'comments', 'c-mallory')));
+  const deleteWithTally = (id) => {
+    const b = writeBatch(db);
+    b.delete(doc(db, 'rides', 'r-public', 'comments', id));
+    b.update(doc(db, 'rides', 'r-public'), { comments: increment(-1), lastCommentId: id });
+    return b.commit();
+  };
+  await assertSucceeds(deleteWithTally('c-bob'));
+  await assertFails(deleteWithTally('c-mallory'));
 });
 
 // ---------------------------------------------------------------------------

@@ -339,6 +339,50 @@ service cloud.firestore {
         (downvotesAfter - downvotesBefore) == (after == -1 ? 1 : 0) - (before == -1 ? 1 : 0);
     }
 
+    // Critique 2026-10-27 #1: the counter rules only bound the PARENT write,
+    // so a child written or deleted alone (vote, reply, post, follow) let a
+    // loop of "create + bump, bare delete" pump a tally. The child's own rule
+    // now needs the matching parent change in the same commit. A parent that
+    // is gone after the commit has no tally left to drift.
+    function voteTallied(parentPath, votePath) {
+      return !existsAfter(parentPath) ||
+        voteBumpValid(votePath,
+          get(parentPath).data.get('upvotes', 0), getAfter(parentPath).data.get('upvotes', 0),
+          get(parentPath).data.get('downvotes', 0), getAfter(parentPath).data.get('downvotes', 0));
+    }
+
+    // `field` on the parent moves by `delta` in this commit and `marker`
+    // names `childId` (lastReplyId / lastPostId / lastCommentId), so the
+    // parent's own rule has tied that move to this very child.
+    function counterMovedFor(parentPath, field, delta, marker, childId) {
+      return getAfter(parentPath).data.get(marker, '') == childId &&
+        getAfter(parentPath).data.get(field, 0) == get(parentPath).data.get(field, 0) + delta;
+    }
+
+    // Shared-ride photos (RideShareRepository, at most kMaxRidePhotos = 3),
+    // each on an allow-listed host (critique 2026-10-27 #8).
+    function ridePhotosValid(urls) {
+      return urls == null || (urls is list && urls.size() <= 3 &&
+        (urls.size() < 1 || photoUrlAllowed(urls[0])) &&
+        (urls.size() < 2 || photoUrlAllowed(urls[1])) &&
+        (urls.size() < 3 || photoUrlAllowed(urls[2])));
+    }
+
+    // The fields of a shared ride every feed viewer's device fetches or
+    // renders: unchanged (a legacy share keeps its old values through an
+    // unrelated edit), or allow-listed and capped. The composer caps the
+    // caption at 280; the polyline is the clipped raw track, bounded only by
+    // the 1 MiB document limit, so it is type-checked here, not capped.
+    function sharedRideFieldsValid(before, after) {
+      return (keeps(before, after, 'photoUrls') || ridePhotosValid(after.get('photoUrls', null))) &&
+        (keeps(before, after, 'photoUrl') || photoUrlAllowed(after.get('photoUrl', null))) &&
+        (keeps(before, after, 'userPhotoUrl') || photoUrlAllowed(after.get('userPhotoUrl', null))) &&
+        (keeps(before, after, 'mapSnapshotUrl') || photoUrlAllowed(after.get('mapSnapshotUrl', null))) &&
+        (keeps(before, after, 'userName') || optionalNameValid(after.get('userName', null))) &&
+        (keeps(before, after, 'caption') || optionalText(after, 'caption', 2000)) &&
+        after.get('polyline', []) is list;
+    }
+
     // The riding-score event counts (optional — null/absent on a ride shared
     // before score-sharing existed, which the client treats as "no badge"
     // rather than a fabricated perfect score). Where present each must be a
@@ -471,6 +515,14 @@ service cloud.firestore {
         (keeps(before, after, 'photoUrl') || photoUrlAllowed(after.get('photoUrl', null))) &&
         (keeps(before, after, 'displayName') || optionalNameValid(after.get('displayName', null))) &&
         (keeps(before, after, 'nickname') || optionalNameValid(after.get('nickname', null))) &&
+        // Critique 2026-10-27 #9: the shown `username` must be the claimed
+        // handle (usernameLower, bound to usernames/{handle} above) in some
+        // letter case. The bio fields cap at 160; builds up to 32 had no cap
+        // on the Edit Profile one, hence the slack.
+        (keeps(before, after, 'username') ||
+          (after.get('username', null) is string &&
+           after.username.lower() == after.get('usernameLower', ''))) &&
+        (keeps(before, after, 'bio') || optionalText(after, 'bio', 2000)) &&
         (keeps(before, after, 'visibility') ||
           after.get('visibility', null) in ['public', 'mutual', 'private']) &&
         // Rides pinned to the profile: kMaxPinnedRides (profile_rides.dart).
@@ -891,10 +943,10 @@ service cloud.firestore {
     // project's billing plan, issues §24). Scoping to `create` only,
     // with the shape the client actually writes, closes that off; no
     // `allow update`/`allow delete` is granted at all.
-    // The document id IS the rideId (see CrashCoordinator). That makes the
-    // write idempotent — the crash sequence can be retried, or driven twice,
-    // without creating a second alert and a second function invocation for the
-    // same ride, which `.add()` did (issues §83.19).
+    // The document id is derived from the rideId (see CrashCoordinator and
+    // #18 below). That makes the write idempotent — a retried write lands on
+    // the same doc instead of creating a second alert and a second function
+    // invocation, which `.add()` did (issues §83.19).
     //
     // It does NOT stop deliberate abuse, and shouldn't be read as doing so: a
     // client is free to invent an id and send `rideId` to match it. Rules
@@ -919,10 +971,20 @@ service cloud.firestore {
     // so a string there would land verbatim in an emergency contact's
     // message. Null coordinates MUST keep passing: a crash before the first
     // fix still has to alert.
+    //
+    // Critique 2026-10-27 #18: with the id equal to the rideId, a second
+    // crash on the same ride was an update and silently denied. The id is now
+    // `{rideId}_{epochMs}` (one per crash sequence; the SDK's own retries
+    // reuse it); the bare rideId stays valid for builds before that change.
     match /crashNotifications/{documentId} {
       allow create: if request.auth != null &&
         request.auth.uid == request.resource.data.uid &&
-        request.resource.data.get('rideId', '') == documentId &&
+        request.resource.data.get('rideId', '') is string &&
+        request.resource.data.get('rideId', '') != '' &&
+        (documentId == request.resource.data.rideId ||
+         (documentId.size() > request.resource.data.rideId.size() + 1 &&
+          documentId[0:request.resource.data.rideId.size() + 1] == request.resource.data.rideId + '_' &&
+          documentId[request.resource.data.rideId.size() + 1:documentId.size()].matches('[0-9]{1,16}'))) &&
         request.resource.data.get('status', '') == 'pending' &&
         request.resource.data.keys().hasOnly([
           'uid', 'rideId', 'timestamp', 'lastLat', 'lastLng', 'status'
@@ -993,7 +1055,16 @@ service cloud.firestore {
         request.resource.data.get('comments', 0) == 0 &&
         request.resource.data.get('upvotes', 0) == 0 &&
         request.resource.data.get('downvotes', 0) == 0 &&
-        rideStatsPlausible(request.resource.data);
+        rideStatsPlausible(request.resource.data) &&
+        // Critique 2026-10-27 #8: RideShareModel.toFirestore's keys only.
+        request.resource.data.keys().hasOnly(['id', 'userId', 'userName',
+          'userPhotoUrl', 'bikeId', 'bikeName', 'bikeType', 'rideDate',
+          'distanceKm', 'durationSeconds', 'maxSpeedKmh', 'polyline',
+          'mapSnapshotUrl', 'comments', 'createdAt', 'audience',
+          'allowedUserIds', 'routeId', 'photoUrls', 'photoUrl', 'caption',
+          'upvotes', 'downvotes', 'hardBrakeCount', 'rapidAccelCount',
+          'highJerkCount']) &&
+        sharedRideFieldsValid({}, request.resource.data);
       // Owner can update/delete the ride freely, but may not reassign
       // authorship (userId is immutable on this branch), and — same fix as
       // create, issues §62.1 — may not use this branch to touch the
@@ -1013,7 +1084,15 @@ service cloud.firestore {
         request.resource.data.get('comments', 0) == resource.data.get('comments', 0) &&
         request.resource.data.get('upvotes', 0) == resource.data.get('upvotes', 0) &&
         request.resource.data.get('downvotes', 0) == resource.data.get('downvotes', 0) &&
-        rideStatsPlausible(request.resource.data);
+        rideStatsPlausible(request.resource.data) &&
+        // #8: only the share's own fields change; legacy extras may stay.
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['id',
+          'userName', 'userPhotoUrl', 'bikeId', 'bikeName', 'bikeType',
+          'rideDate', 'distanceKm', 'durationSeconds', 'maxSpeedKmh',
+          'polyline', 'mapSnapshotUrl', 'createdAt', 'audience',
+          'allowedUserIds', 'routeId', 'photoUrls', 'photoUrl', 'caption',
+          'hardBrakeCount', 'rapidAccelCount', 'highJerkCount']) &&
+        sharedRideFieldsValid(resource.data, request.resource.data);
       // Any authenticated user who can see the ride may bump the engagement
       // counters, but cannot touch any other field or set an arbitrary value.
       // Two disjoint shapes (three until 2026-09-21 — `likes` was the third;
@@ -1039,6 +1118,14 @@ service cloud.firestore {
           newDocBy(
             /databases/$(database)/documents/rides/$(rideId)/comments/$(request.resource.data.lastCommentId),
             request.auth.uid)) ||
+         // -1 only while the comment it names is deleted in the same commit
+         // (#1); who may delete it is the comment's own delete rule.
+         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'lastCommentId']) &&
+          request.resource.data.comments == resource.data.comments - 1 &&
+          request.resource.data.get('lastCommentId', '') is string &&
+          request.resource.data.get('lastCommentId', '') != '' &&
+          docRemoved(
+            /databases/$(database)/documents/rides/$(rideId)/comments/$(request.resource.data.lastCommentId))) ||
          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['upvotes', 'downvotes']) &&
           voteBumpValid(
             /databases/$(database)/documents/rides/$(rideId)/votes/$(request.auth.uid),
@@ -1075,16 +1162,23 @@ service cloud.firestore {
       // issues §101.S3: create/update also require that the voter can see
       // the ride (a stranger could otherwise plant vote docs on a
       // followers/mutual share) and that the doc is exactly
-      // RideShareRepository.vote's `{value}`. Delete stays owner-only with
-      // no visibility check, so a rider can still clear their vote after
-      // the author narrows the audience.
+      // RideShareRepository.vote's `{value}`.
+      //
+      // Critique 2026-10-27: every vote write, delete included, needs the
+      // ride's tallies to move with it in the same transaction (#1, which
+      // vote() already does), and a rider the owner blocked can't vote (#3).
       match /votes/{userId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow create, update: if request.auth != null && request.auth.uid == userId &&
           rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
+          !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/rides/$(rideId)).data.userId)/blocks/$(request.auth.uid)) &&
           request.resource.data.keys().hasOnly(['value']) &&
-          (request.resource.data.value == 1 || request.resource.data.value == -1);
-        allow delete: if request.auth != null && request.auth.uid == userId;
+          (request.resource.data.value == 1 || request.resource.data.value == -1) &&
+          voteTallied(/databases/$(database)/documents/rides/$(rideId),
+            /databases/$(database)/documents/rides/$(rideId)/votes/$(userId));
+        allow delete: if request.auth != null && request.auth.uid == userId &&
+          voteTallied(/databases/$(database)/documents/rides/$(rideId),
+            /databases/$(database)/documents/rides/$(rideId)/votes/$(userId));
       }
       // §90.D1: comments used to be create + read only, so the first comment
       // on a share made it undeletable (deleteSharedRide removes comments
@@ -1097,12 +1191,18 @@ service cloud.firestore {
       // characters of text, a capped name and an allow-listed photo
       // (§90.D10), and a server timestamp.
       // delete: the comment's author, or the ride's owner.
+      //
+      // Critique 2026-10-27: a rider the owner blocked can't comment (#3), and
+      // a delete needs the ride's `comments` -1 for this comment in the same
+      // commit, or the ride gone after it (#1; deleteSharedRide removes the
+      // ride first, then its comments).
       match /comments/{commentId} {
         allow read: if rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data);
         allow create: if request.auth != null &&
           request.resource.data.userId == request.auth.uid &&
           exists(/databases/$(database)/documents/rides/$(rideId)) &&
           rideVisibleTo(get(/databases/$(database)/documents/rides/$(rideId)).data) &&
+          !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/rides/$(rideId)).data.userId)/blocks/$(request.auth.uid)) &&
           request.resource.data.keys().hasOnly([
             'id', 'rideId', 'userId', 'userName', 'userPhotoUrl', 'text',
             'createdAt', 'updatedAt'
@@ -1116,7 +1216,15 @@ service cloud.firestore {
           request.resource.data.get('updatedAt', null) == null &&
           request.resource.data.createdAt == request.time;
         allow delete: if request.auth != null &&
-          (resource.data.userId == request.auth.uid ||
+          (!existsAfter(/databases/$(database)/documents/rides/$(rideId)) ||
+           ((resource.data.userId == request.auth.uid ||
+             get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid) &&
+            counterMovedFor(/databases/$(database)/documents/rides/$(rideId),
+              'comments', -1, 'lastCommentId', commentId)) ||
+           // shortcut: builds up to 32 delete the comments one by one BEFORE
+           // the ride, so the owner keeps a bare delete (and with it a
+           // self-bump loop on their own ride). Drop this line once
+           // config/app.minBuild passes the build that deletes the ride first.
            get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid);
       }
     }
@@ -1171,11 +1279,26 @@ service cloud.firestore {
       // so "omit both fields" has to stay legal or that flow breaks; what's
       // now closed is a client setting them to anything OTHER than its own
       // uid / a single-element list of its own uid.
+      //
+      // Critique 2026-10-27 #2: that still let a rider stamp THEMSELVES on a
+      // bike/topic forum they opened first, and become its moderator. Now
+      // createdBy/maintainerIds exist only on a rider-made forum (a `c-` id,
+      // type 'custom', createCustomForum), and every other forum carries
+      // neither (getOrCreateForum / getOrCreateGeneralForum). Keys are the
+      // union of those three writers.
       allow create: if request.auth != null &&
         request.resource.data.followerCount == 0 &&
         request.resource.data.postCount == 0 &&
-        (!('createdBy' in request.resource.data) || request.resource.data.createdBy == request.auth.uid) &&
-        (!('maintainerIds' in request.resource.data) || request.resource.data.maintainerIds == [request.auth.uid]);
+        request.resource.data.keys().hasOnly(['type', 'brand', 'model', 'topic',
+          'displayName', 'description', 'createdBy', 'maintainerIds',
+          'followerCount', 'postCount', 'createdAt']) &&
+        ((forumId.matches('c-.+') &&
+          request.resource.data.type == 'custom' &&
+          request.resource.data.createdBy == request.auth.uid &&
+          request.resource.data.maintainerIds == [request.auth.uid]) ||
+         (request.resource.data.type in ['brand', 'bikeModel', 'general'] &&
+          !('createdBy' in request.resource.data) &&
+          !('maintainerIds' in request.resource.data)));
       // §90.D11: both counters are now bound to the doc they count, the same
       // existsAfter idiom as the comment/reply/vote counters (§24.7). Before,
       // the comment here claimed the forum_follows rule gated followerCount,
@@ -1263,7 +1386,10 @@ service cloud.firestore {
           request.resource.data.title.size() <= 300 &&
           request.resource.data.body is string &&
           request.resource.data.body.size() <= 20000 &&
-          request.resource.data.createdAt == request.time;
+          request.resource.data.createdAt == request.time &&
+          // #1: createPost's batch bumps postCount for this post.
+          counterMovedFor(/databases/$(database)/documents/forums/$(forumId),
+            'postCount', 1, 'lastPostId', postId);
         // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
         // the reply doc named by `lastReplyId` being created in the same
         // transaction (issues §24.7 — addReply() was made
@@ -1324,19 +1450,31 @@ service cloud.firestore {
         // a parent delete — they're left orphaned on purpose for beta (a
         // Cloud Function should reap them); orphans are unreadable in
         // practice since every read path starts from the parent post.
+        //
+        // #1: and deletePost's batch drops postCount for this post (or the
+        // forum is gone), so a bare delete can't follow a bumped create.
         allow delete: if request.auth != null &&
-          (resource.data.userId == request.auth.uid || canModerateForum(forumId));
+          (resource.data.userId == request.auth.uid || canModerateForum(forumId)) &&
+          (!existsAfter(/databases/$(database)/documents/forums/$(forumId)) ||
+           counterMovedFor(/databases/$(database)/documents/forums/$(forumId),
+             'postCount', -1, 'lastPostId', postId));
 
         // One vote doc per user: { value: 1 | -1 }. No rideVisibleTo-style
         // gate needed — forum posts have no audience tiers, they're readable
         // by any authed rider same as the post itself.
         // §101.S3: exactly ForumRepository.votePost's `{value}`, nothing else.
+        // #1: tallied in the same transaction, like ride votes.
         match /votes/{userId} {
           allow read: if request.auth != null;
           allow create, update: if request.auth != null && request.auth.uid == userId &&
             request.resource.data.keys().hasOnly(['value']) &&
-            (request.resource.data.value == 1 || request.resource.data.value == -1);
-          allow delete: if request.auth != null && request.auth.uid == userId;
+            (request.resource.data.value == 1 || request.resource.data.value == -1) &&
+            exists(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId)) &&
+            voteTallied(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(userId));
+          allow delete: if request.auth != null && request.auth.uid == userId &&
+            voteTallied(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
+              /databases/$(database)/documents/forums/$(forumId)/posts/$(postId)/votes/$(userId));
         }
 
         match /replies/{replyId} {
@@ -1353,10 +1491,18 @@ service cloud.firestore {
             request.resource.data.body is string &&
             request.resource.data.body.size() > 0 &&
             request.resource.data.body.size() <= 20000 &&
-            request.resource.data.createdAt == request.time;
-          // Same ownership-or-moderator shape as the post delete above.
+            request.resource.data.createdAt == request.time &&
+            // #1: addReply's transaction bumps replyCount for this reply.
+            counterMovedFor(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
+              'replyCount', 1, 'lastReplyId', replyId);
+          // Same ownership-or-moderator shape as the post delete above, and
+          // #1: deleteReply's batch drops replyCount for this reply (or the
+          // post is gone).
           allow delete: if request.auth != null &&
-            (resource.data.userId == request.auth.uid || canModerateForum(forumId));
+            (resource.data.userId == request.auth.uid || canModerateForum(forumId)) &&
+            (!existsAfter(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId)) ||
+             counterMovedFor(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
+               'replyCount', -1, 'lastReplyId', replyId));
         }
       }
     }
@@ -1372,11 +1518,24 @@ service cloud.firestore {
       // data the app never intends to expose about other users (mirrors the
       // rides/{rideId}/likes ownership check, not the open-read rules above
       // that only apply where content is meant to be publicly readable).
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // A missing doc reads only for its own rider: followForum /
+      // unfollowForum / isFollowing get() it before it exists, and that read
+      // used to error on `resource.data` and deny (found 2026-10-27).
+      allow read: if request.auth != null && (
+        (resource == null && followId.split('_')[0] == request.auth.uid) ||
+        resource.data.userId == request.auth.uid);
+      // #1 (critique 2026-10-27): followForum / unfollowForum move the
+      // forum's followerCount in the same transaction; a bare follow or
+      // unfollow is refused, so the pair can't be looped to pump the count.
       allow create: if request.auth != null &&
         request.resource.data.userId == request.auth.uid &&
-        followId == (request.auth.uid + '_' + request.resource.data.forumId);
-      allow delete: if request.auth != null && resource.data.userId == request.auth.uid;
+        followId == (request.auth.uid + '_' + request.resource.data.forumId) &&
+        getAfter(/databases/$(database)/documents/forums/$(request.resource.data.forumId)).data.get('followerCount', 0) ==
+          get(/databases/$(database)/documents/forums/$(request.resource.data.forumId)).data.get('followerCount', 0) + 1;
+      allow delete: if request.auth != null && resource.data.userId == request.auth.uid &&
+        (!existsAfter(/databases/$(database)/documents/forums/$(resource.data.forumId)) ||
+         getAfter(/databases/$(database)/documents/forums/$(resource.data.forumId)).data.get('followerCount', 0) ==
+           get(/databases/$(database)/documents/forums/$(resource.data.forumId)).data.get('followerCount', 0) - 1);
     }
 
     // Places directory (Phase 4 — nearby garages/fuel pumps/parts shops).

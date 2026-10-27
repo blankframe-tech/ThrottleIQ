@@ -21,6 +21,7 @@ const {
 
 const {
   doc, setDoc, updateDoc, serverTimestamp, collectionGroup, getDocs, query, where,
+  writeBatch, increment,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -74,6 +75,15 @@ function dbFor(uid) {
 }
 
 /** Exactly the fields newForumPostFields() writes. */
+/** ForumRepository.createPost: the post and its postCount bump in one batch. */
+function createPost(postId, data) {
+  const db = dbFor(ALICE);
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'forums', FORUM_ID, 'posts', postId), data);
+  batch.update(doc(db, 'forums', FORUM_ID), { postCount: increment(1), lastPostId: postId });
+  return batch.commit();
+}
+
 function newPost(uid, extra = {}) {
   return {
     forumId: FORUM_ID,
@@ -98,7 +108,7 @@ function newPost(uid, extra = {}) {
 
 test('a typed post with a bike byline and a ride card can be created', async () => {
   await assertSucceeds(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p1'), newPost(ALICE, {
+    createPost('p1', newPost(ALICE, {
       authorBike: 'Yamaha MT-15 (2023) · 12,400 km',
       attachment: { kind: 'ride', refId: 'ride-9', title: 'Ride on 3 Oct', subtitle: '42 km · 1h' },
     }))
@@ -109,43 +119,43 @@ test('a pre-redesign post (no new fields) can still be created', async () => {
   const legacy = newPost(ALICE);
   delete legacy.postType;
   delete legacy.isSolved;
-  await assertSucceeds(setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p2'), legacy));
+  await assertSucceeds(createPost('p2', legacy));
 });
 
 test('a post cannot be created already solved', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p3'), newPost(ALICE, { isSolved: true }))
+    createPost('p3', newPost(ALICE, { isSolved: true }))
   );
 });
 
 test('a post cannot be created with an accepted solution', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p4'),
+    createPost('p4',
       newPost(ALICE, { solutionReplyId: REPLY_ID }))
   );
 });
 
 test('an unknown post type is refused', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p5'), newPost(ALICE, { postType: 'spam' }))
+    createPost('p5', newPost(ALICE, { postType: 'spam' }))
   );
 });
 
 test('an oversized bike byline is refused', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p6'),
+    createPost('p6',
       newPost(ALICE, { authorBike: 'x'.repeat(81) }))
   );
 });
 
 test('a malformed attachment is refused', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p7'), newPost(ALICE, {
+    createPost('p7', newPost(ALICE, {
       attachment: { kind: 'ride', refId: 'r', title: 't', subtitle: 's', url: 'https://evil' },
     }))
   );
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'p8'), newPost(ALICE, {
+    createPost('p8', newPost(ALICE, {
       attachment: { kind: 'video', refId: 'r', title: 't', subtitle: 's' },
     }))
   );
@@ -156,34 +166,34 @@ const PHOTO = (uid, n = 1) =>
 
 test('a post with up to four own-folder photos can be created', async () => {
   await assertSucceeds(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph1'),
+    createPost('ph1',
       newPost(ALICE, { imageUrls: [PHOTO(ALICE)] }))
   );
   await assertSucceeds(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph2'),
+    createPost('ph2',
       newPost(ALICE, { imageUrls: [1, 2, 3, 4].map((n) => PHOTO(ALICE, n)) }))
   );
 });
 
 test('post photos must be own-folder Cloudinary uploads, at most four', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph3'),
+    createPost('ph3',
       newPost(ALICE, { imageUrls: [1, 2, 3, 4, 5].map((n) => PHOTO(ALICE, n)) }))
   );
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph4'),
+    createPost('ph4',
       newPost(ALICE, { imageUrls: ['https://evil.example.com/x.jpg'] }))
   );
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph5'),
+    createPost('ph5',
       newPost(ALICE, { imageUrls: [PHOTO(MALLORY)] }))
   );
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph6'),
+    createPost('ph6',
       newPost(ALICE, { imageUrls: [PHOTO(ALICE), 'https://evil.example.com/x.jpg'] }))
   );
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'ph7'),
+    createPost('ph7',
       newPost(ALICE, { imageUrls: 'not-a-list' }))
   );
 });
@@ -259,28 +269,28 @@ test('the solution update cannot smuggle other fields', async () => {
 
 test('a post can be shared to up to four more groups', async () => {
   await assertSucceeds(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g1'),
+    createPost('g1',
       newPost(ALICE, { alsoIn: ['a', 'b', 'c', 'd'] }))
   );
 });
 
 test('five more groups is one too many', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g2'),
+    createPost('g2',
       newPost(ALICE, { alsoIn: ['a', 'b', 'c', 'd', 'e'] }))
   );
 });
 
 test('alsoIn cannot name the home forum', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g3'),
+    createPost('g3',
       newPost(ALICE, { alsoIn: [FORUM_ID] }))
   );
 });
 
 test('alsoIn must be a list', async () => {
   await assertFails(
-    setDoc(doc(dbFor(ALICE), 'forums', FORUM_ID, 'posts', 'g4'),
+    createPost('g4',
       newPost(ALICE, { alsoIn: 'a' }))
   );
 });

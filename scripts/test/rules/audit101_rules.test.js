@@ -285,24 +285,36 @@ test('S3 votes: extra keys on a ride vote are denied', async () => {
   );
 });
 
-test('S3 votes: a rider can delete their vote even after losing visibility', async () => {
+// Critique 2026-10-27 #1 replaces "a rider can delete their vote even after
+// losing visibility": a vote delete now needs the tally drop in the same
+// commit, and the tally update needs visibility, so the app's toggle-off
+// (which always sends both) never had that path anyway.
+test('S3 votes: a bare vote delete is denied, even after losing visibility', async () => {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), 'rides', 'r-followers', 'votes', MALLORY), { value: 1 });
   });
-  await assertSucceeds(deleteDoc(doc(dbFor(MALLORY), 'rides', 'r-followers', 'votes', MALLORY)));
+  await assertFails(deleteDoc(doc(dbFor(MALLORY), 'rides', 'r-followers', 'votes', MALLORY)));
 });
 
 test('S3 votes: forum post votes accept exactly {value}', async () => {
   const db = dbFor(BOB);
-  const voteRef = doc(db, 'forums', 'f1', 'posts', 'p1', 'votes', BOB);
-  await assertFails(setDoc(voteRef, { value: 1, junk: 'x' }));
-  await assertFails(setDoc(voteRef, { value: 2 }));
-  await assertSucceeds(setDoc(voteRef, { value: -1 }));
+  const postRef = doc(db, 'forums', 'f1', 'posts', 'p1');
+  const voteRef = doc(postRef, 'votes', BOB);
+  // ForumRepository.votePost: the vote and its tally move in one transaction.
+  const vote = (data, tally) => runTransaction(db, async (tx) => {
+    await tx.get(voteRef);
+    if (data === null) tx.delete(voteRef); else tx.set(voteRef, data);
+    tx.update(postRef, tally);
+  });
+  await assertFails(vote({ value: 1, junk: 'x' }, { upvotes: increment(1) }));
+  await assertFails(vote({ value: 2 }, { upvotes: increment(1) }));
+  await assertSucceeds(vote({ value: -1 }, { downvotes: increment(1) }));
   // Flip (-1 -> 1) is an update of the existing doc: same allow-list.
-  await assertFails(setDoc(voteRef, { value: 1, junk: 'x' }));
-  await assertFails(setDoc(voteRef, { value: 2 }));
-  await assertSucceeds(setDoc(voteRef, { value: 1 }));
-  await assertSucceeds(deleteDoc(voteRef));
+  const flip = { upvotes: increment(1), downvotes: increment(-1) };
+  await assertFails(vote({ value: 1, junk: 'x' }, flip));
+  await assertFails(vote({ value: 2 }, flip));
+  await assertSucceeds(vote({ value: 1 }, flip));
+  await assertSucceeds(vote(null, { upvotes: increment(-1) }));
 });
 
 // ---------------------------------------------------------------------------
@@ -318,28 +330,30 @@ function post(overrides = {}) {
   };
 }
 
-test('S3 forum: a normal post succeeds, and a 300-char title / 20000-char body is the cap', async () => {
+/** ForumRepository.createPost: the post and its postCount bump in one batch. */
+function createPost(postId, data) {
   const db = dbFor(BOB);
-  await assertSucceeds(setDoc(doc(db, 'forums', 'f1', 'posts', 'a'), post()));
-  await assertSucceeds(
-    setDoc(doc(db, 'forums', 'f1', 'posts', 'b'), post({ title: 't'.repeat(300), body: 'b'.repeat(20000) }))
-  );
+  const batch = writeBatch(db);
+  batch.set(doc(db, 'forums', 'f1', 'posts', postId), data);
+  batch.update(doc(db, 'forums', 'f1'), { postCount: increment(1), lastPostId: postId });
+  return batch.commit();
+}
+
+test('S3 forum: a normal post succeeds, and a 300-char title / 20000-char body is the cap', async () => {
+  await assertSucceeds(createPost('a', post()));
+  await assertSucceeds(createPost('b', post({ title: 't'.repeat(300), body: 'b'.repeat(20000) })));
 });
 
 test('S3 forum: oversize, empty or non-string title/body is denied', async () => {
-  const db = dbFor(BOB);
-  const ref = doc(db, 'forums', 'f1', 'posts', 'c');
-  await assertFails(setDoc(ref, post({ title: 't'.repeat(301) })));
-  await assertFails(setDoc(ref, post({ title: '' })));
-  await assertFails(setDoc(ref, post({ title: 42 })));
-  await assertFails(setDoc(ref, post({ body: 'b'.repeat(20001) })));
-  await assertFails(setDoc(ref, post({ body: { nested: true } })));
+  await assertFails(createPost('c', post({ title: 't'.repeat(301) })));
+  await assertFails(createPost('c', post({ title: '' })));
+  await assertFails(createPost('c', post({ title: 42 })));
+  await assertFails(createPost('c', post({ body: 'b'.repeat(20001) })));
+  await assertFails(createPost('c', post({ body: { nested: true } })));
 });
 
 test('S3 forum: a post stamped with a client clock is denied', async () => {
-  await assertFails(
-    setDoc(doc(dbFor(BOB), 'forums', 'f1', 'posts', 'd'), post({ createdAt: Timestamp.now() }))
-  );
+  await assertFails(createPost('d', post({ createdAt: Timestamp.now() })));
 });
 
 /** ForumRepository.addReply's transaction. */

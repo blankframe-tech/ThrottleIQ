@@ -29,7 +29,8 @@ class CrashCoordinator {
     _crashHandlingActive = true;
 
     await HapticService.maxVibration();
-    unawaited(NotificationService.instance.showCrashAlert(secondsRemaining: 60));
+    unawaited(
+        NotificationService.instance.showCrashAlert(secondsRemaining: 60));
 
     _crashCountdownTimer?.cancel();
     var secondsLeft = 60;
@@ -85,14 +86,15 @@ class CrashCoordinator {
   }) async {
     if (uid == null || rideId == null) return;
 
-    // Keyed by rideId rather than an auto-id, which makes this idempotent:
-    // one alert per ride, however many times the sequence is driven. With
-    // `.add()` every retry — and every notification a signed-in client cared
-    // to POST — created another document and another function invocation, with
-    // nothing in firestore.rules bounding it (issues §83.19).
+    // Keyed `{rideId}_{epochMs}` rather than an auto-id: the SDK's retries of
+    // this write land on the same doc (with `.add()` each one was another
+    // alert and function invocation, issues §83.19), while a second crash on
+    // the same ride gets its own alert instead of a denied update (critique
+    // 2026-10-27 #18). firestore.rules checks the rideId prefix.
+    final docId = '${rideId}_${DateTime.now().millisecondsSinceEpoch}';
     await _bestEffortWrite(
       'crash notification',
-      () => _firestore.collection('crashNotifications').doc(rideId).set({
+      () => _firestore.collection('crashNotifications').doc(docId).set({
         'uid': uid,
         'rideId': rideId,
         'timestamp': DateTime.now().toIso8601String(),
@@ -103,7 +105,8 @@ class CrashCoordinator {
     );
   }
 
-  Future<void> _bestEffortWrite(String label, Future<void> Function() write) async {
+  Future<void> _bestEffortWrite(
+      String label, Future<void> Function() write) async {
     try {
       await write().timeout(kOutboxAttemptTimeout);
     } on TimeoutException {

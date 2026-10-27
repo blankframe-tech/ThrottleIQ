@@ -530,12 +530,13 @@ class RideShareRepository {
     // Fire every comment delete at once rather than awaiting them one at a
     // time — a popular ride with many comments used to stall proportionally
     // to that count.
+    // Listed while the ride still exists (the read rule checks it), deleted
+    // after it: firestore.rules lets a comment go without a `comments` -1
+    // only once its ride is gone (critique 2026-10-27 #1).
     final comments = await docRef.collection('comments').get();
+    await ackOrQueued(docRef.delete());
     await ackOrQueued(Future.wait([
       for (final comment in comments.docs) comment.reference.delete(),
     ]));
-
-    // Delete the ride
-    await ackOrQueued(docRef.delete());
   }
 }

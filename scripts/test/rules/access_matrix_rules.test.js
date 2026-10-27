@@ -24,7 +24,7 @@ const {
 
 const {
   doc, collection, query, where, limit, getDoc, getDocs, setDoc, updateDoc,
-  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp,
+  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp, increment,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -399,9 +399,16 @@ test('admin: may delete any forum post; a rider only their own', async () => {
     'forums/f1/posts/p1': { userId: BOB, title: 't', body: 'b' },
     'forums/f1/posts/p2': { userId: CAROL, title: 't', body: 'b' },
   });
-  await assertFails(deleteDoc(doc(db(ALICE), 'forums/f1/posts/p1')));
-  await assertSucceeds(deleteDoc(doc(db(BOB), 'forums/f1/posts/p1')));
-  await assertSucceeds(deleteDoc(doc(db('admin-uid', { admin: true }), 'forums/f1/posts/p2')));
+  // ForumRepository.deletePost's batch (critique 2026-10-27 #1).
+  const del = (f, id) => {
+    const b = writeBatch(f);
+    b.delete(doc(f, `forums/f1/posts/${id}`));
+    b.update(doc(f, 'forums/f1'), { postCount: increment(-1), lastPostId: id });
+    return b.commit();
+  };
+  await assertFails(del(db(ALICE), 'p1'));
+  await assertSucceeds(del(db(BOB), 'p1'));
+  await assertSucceeds(del(db('admin-uid', { admin: true }), 'p2'));
 });
 
 test('admin: config and stats are not client-writable, even for the admin', async () => {
