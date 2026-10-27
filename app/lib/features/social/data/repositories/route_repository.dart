@@ -166,7 +166,8 @@ class RouteRepository {
     final rawPolyline = data == null
         ? const <LatLng>[]
         : RouteModel.fromFirestore(data, routeId).polyline;
-    final clipped = PrivacyZoneClipper.clipPolyline(
+    // Clipped, then thinned to the same 1,000-point cap as a shared ride.
+    final clipped = PrivacyZoneClipper.clipForSharing(
       rawPolyline,
       seed: await _privacySalt.forUid(userId),
     );
