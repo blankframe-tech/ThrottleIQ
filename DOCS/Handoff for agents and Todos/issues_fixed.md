@@ -11,6 +11,10 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 116. Windows clones lose a file, so PRs delete it — FIXED (2026-10-28, uncommitted)
+
+PR #26 (outside contributor, Windows) deleted `DOCS/General/CRASH TESTING/...minutes:seconds after the crash.jpeg`: Windows can't check out a `:` filename, so git sees it as deleted. Renamed to `minutes-seconds` (only bad path in the repo, nothing linked it). `scripts/check.sh` now has `guard: Windows-safe paths`, which fails on `<>:"|?*\`, trailing dot/space and reserved names (`CON`, `NUL`, …) in tracked files, so CI blocks a repeat. PR #26 still needs the deletion dropped (rebase), the BOM on `PRD.md` line 1 removed, and open item 3's first sentence cut before merge.
+
 ## 115. Critique of 2026-10-27 — FIXED (2026-10-27)
 
 Write-up: `DOCS/critic oct27.md`. Four lanes merged into `main` (`c3f9072c`, `5cb5879a`, `00e63e5a`, `7822003a`). Leftovers are in `issues_open.md` §115.

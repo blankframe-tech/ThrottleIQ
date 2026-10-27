@@ -107,6 +107,11 @@ guard_entitlements() {
   ! grep -nE '<key>(com\.apple\.developer\.(associated-domains|icloud[^<]*|applesignin|usernotifications[^<]*)|aps-environment)</key>' \
     app/ios/*/*.entitlements; }
 
+# Windows can't check out these names, so contributors there see the file as
+# deleted and commit the deletion (PR #26).
+guard_windows_paths() {
+  ! git ls-files | grep -E '[<>:"|?*\\]|[. ]$|[. ]/|(^|/)(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(\.|/|$)'; }
+
 analyze() { (cd app && flutter analyze); }
 tests() { (cd app && flutter test --reporter=failures-only); }
 
@@ -126,6 +131,7 @@ step "l10n generate" l10n
 step "format (changed files)" format_changed
 step "guard: raw as double" guard_as_double
 step "guard: paid-only entitlements" guard_entitlements
+step "guard: Windows-safe paths" guard_windows_paths
 step "flutter analyze" analyze
 step "flutter test" tests
 if [ "$CI" = false ]; then
