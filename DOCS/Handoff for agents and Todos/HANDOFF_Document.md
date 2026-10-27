@@ -49,14 +49,16 @@ Everything after `5a935e93` (the 4.7.1 bump):
 - Quota outage mode (§104.6), the `dispose()` fix (`4b914c10`, §106), and the dark-mode map filter (`fb3b9297`).
 - Feature tour v5: real-screen captures with pinned callouts, one accent colour, steps grouped by tab (`ea939409`, `features.md`).
 
+- Critique 2026-10-27 fixes (`DOCS/critic oct27.md`, `issues_fixed.md` §115): counter, forum, block and shared-ride rules; sync after a ride ends and on resume; Edit Bike no longer undoes km; restored rides keep event counts; blocked riders hidden in comments and forums; forum follow fixed. Leftovers: `issues_open.md` §115.
+
 Shipping these is owner item 26.
 
 ### Production backend
 
 | Part | State |
 |---|---|
-| Firestore rules and indexes | Deployed 2026-10-22 from `23139b60` (report-snapshot rules included). Since then `main` adds one rule: the places `updatedAt` must be server time (§104.1); redeploy rules with the next deploy. **The email migration (`SECURITY.md` step 3, second half) has not run:** until it does, old public profiles still carry emails. Owner item 2. |
-| Hosting | Deployed 2026-10-22 (`privacy.html` §1/§8/§9, `community.html`). `privacy.html` §5 still says other riders can read your email; change it and redeploy Hosting right after the email migration (`SECURITY.md` step 3). |
+| Firestore rules and indexes | Deployed 2026-10-27 from `5bbb53f1` (includes §104.1 places `updatedAt` and the 2026-10-27 follow-graph/places/reviews/legacy-blocks rules). **Email migration ran 2026-10-27:** 53/53 profile emails moved to `private/account`, 8 verified got an `emailLookup`, re-run reports 0 (owner item 2 done). The critique-fix rules and indexes (`7822003a`, `c3f9072c`) were deployed the same day (`SECURITY.md` step 10). |
+| Hosting | Deployed 2026-10-27 (`privacy.html` §5: email no longer visible to riders, effective date 27 Oct; earlier §1/§8/§9 and `community.html`). |
 | Cloud Functions | Never deployed: the project is on Spark (owner item 3). So `onUserAccountDeleted`, `purgeOldGpsTracks`, the report-snapshot purge and chat moderation don't run. Account deletion is manual: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`. |
 | Quota alert | Live since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, policy `alertPolicies/13055223357814148266`). Production used 3-14% of daily reads in the week before. |
 | `places` collection | 1,238 docs, including 717 from a Google Maps scrape (2026-10-19). Take-down decision: owner item 1 (`scripts/oneoff/revert_google_places.js`, ready, never run). |
@@ -232,7 +234,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-10-21
 
-- **Scripts layout (`03a209b5`, committed 2026-10-22):** the one-off admin scripts are in `scripts/oneoff/`. Run them as `node oneoff/<name>.js` from `scripts/`; the `npm run` names are unchanged. `check.sh`, `deploy.sh`, `publish_release.sh`, `crash_stats.js`, `export_impact_events.js` and `ste_sentence_length.js` stay in `scripts/`.
+- **Scripts layout (`03a209b5`, committed 2026-10-22):** the one-off admin scripts are in `scripts/oneoff/`. Run them as `node oneoff/<name>.js` from `scripts/`; the `npm run` names are unchanged. `check.sh`, `deploy.sh`, `crash_stats.js`, `export_impact_events.js` and `ste_sentence_length.js` stay in `scripts/` (`publish_release.sh` was deleted 2026-10-27, critic #20).
 - **Quota outage mode (§104.6), merged 2026-10-22, not released, not on a device:**
   - When the Spark daily quota runs out, sync and the outbox pause, riders see `OverQuotaBar`, and sync resumes after the reset.
   - The owner email alert is live: re-apply steps in `scripts/README.md` "Firestore daily quota".

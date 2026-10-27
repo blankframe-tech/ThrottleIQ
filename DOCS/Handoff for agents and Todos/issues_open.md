@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§115**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§116**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -636,8 +636,8 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 - **101.A4** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card
   and the username link.
 - **101.P5** the English `displayName` fallback is stored in Firestore; no ODbL attribution on
-  the places list and detail (the map tiles carry it). **101.P6** `searchPlacesByName` is
-  case-sensitive; `getGeohashesForViewport` (`geohash_utils.dart:24`) has no callers.
+  the places list and detail (the map tiles carry it). **101.P6** (`searchPlacesByName` was
+  deleted 2026-10-27, no callers); `getGeohashesForViewport` (`geohash_utils.dart:24`) has no callers.
   **101.P7** `LocaleNotifier` has no try/catch around prefs.
 - **101.B3** CI has no release build. **101.B5** proguard keep rules are over-broad;
   `targetSdk` follows Flutter. **101.B8** CI never runs `integration_test/` and has no coverage
@@ -855,3 +855,12 @@ Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). 
 - No rate limit on password guesses (rules-only, doc id = hash). Mitigated by the 8-char minimum; a Cloud Function check would be needed for real limiting.
 - Deployed 2026-10-25: firestore.rules and hosting (live `/r/` page asks for the password). NOT deployed: functions (account-erasure deletes `handleLinks`). Like every function here, it waits on Blaze (owner item #3): deploy refuses on Spark. Use the npm `firebase-tools` (`"$(npm prefix -g)/bin/firebase"`); the standalone `/usr/local/bin/firebase` crashes in the functions predeploy (`reading 'stdin'`). Not tried end to end on a device.
 - BN strings for the new keys await native review (bn_pending_review.txt).
+
+## 115. Critique of 2026-10-27, leftovers (`DOCS/critic oct27.md`)
+Findings 1-9, 11-18 and 20 were fixed 2026-10-27 (see `issues_fixed.md` §115). Finding 10 (keys in the Drive-synced folder) was dropped by the owner: Drive is considered safe. Still open:
+- **#19** RTDB code (`core/realtime/`, typing channel, viewer RTDB path, `firebase_database`) and `features/indriyo` are still on `main`, compiled out or unused. Parking them on a branch is the owner's call.
+- **#1 shortcut:** build 29 deletes ride comments before the ride, so `firestore.rules` keeps a legacy clause letting a ride owner delete comments without the -1 (marked `shortcut:`). An owner can still pump the comment count on their own rides. Drop the clause once `config/app.minBuild` passes the release with `deleteSharedRide` ride-first.
+- **#8** shared-ride `polyline` has no size cap beyond Firestore's 1 MiB: the app sends the raw clipped track. A real cap needs the app to thin the track first.
+- **#7 sibling:** `GarageNotifier.syncOdometer` builds its value from the garage list cached when the screen loaded, so it can still undo km credited meanwhile.
+- **#16** the vote cleanup in account erasure scans every `votes` doc (marked `shortcut:`): vote docs carry no `uid` field. Fine at beta size; the real fix is a `uid` field on vote writes plus rules, app and backfill.
+- No Dart test for: the sync after `stopRide`, the server-only child listing in remote deletes, the crash-alert id, the ride-comment block filter, and `getPublicRoutes` (no Firestore fake in dev dependencies).

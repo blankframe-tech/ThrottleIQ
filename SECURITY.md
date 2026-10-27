@@ -53,8 +53,8 @@ Do these in order.
    least that build. Clients cannot write `config/*`. Every Android artifact
    carries the same number (split APKs too, see `scripts/deploy.sh`), so
    one value covers them all.
-   **Done 2026-10-19: `minBuild = 29`** (beta-v4.7.1). Step 3 is half done:
-   rules and indexes deployed 2026-10-22, the email migration not run.
+   **Done 2026-10-19: `minBuild = 29`** (beta-v4.7.1). **Step 3 done 2026-10-27:**
+   rules and indexes redeployed, migration moved 53/53 emails, Hosting with the new §5.
 3. **Rules and indexes, then the email migration in the same hour.** Until
    the migration runs, the old public profiles still hold their emails and
    the new rules only slow a scraper down (N9). Rules work on Spark:
@@ -120,13 +120,23 @@ Do these in order.
    (`DOCS/General/Files for Stores/moderation_policy.md` §5).
 
 9. **Rules from 2026-10-27 (follow graph, places, reviews, legacy blocks).**
-   Not live: production still has the 2026-10-22 rules. No client change is
+   **Deployed 2026-10-27** with step 3. No client change is
    needed (every build since August already writes the shapes these accept),
    so deploy them with, or right after, step 3's migration:
    `firebase deploy --only firestore:rules --project throttleiqfb`.
    Proven in the emulator only (`scripts/test/rules/access_matrix_rules.test.js`).
    After it, check one rider profile's follower count and one place add with a
    photo on a real build.
+
+10. **Rules and indexes from the 2026-10-27 critique fixes (`7822003a`, `c3f9072c`).**
+   **Deployed 2026-10-27.**
+   Safe before the next app release: every build-29 write path passes
+   (`scripts/test/rules/critic_oct27_rules.test.js`). Deploy:
+   `firebase deploy --only firestore:rules,firestore:indexes --project throttleiqfb`
+   (answer no to deleting indexes). Then on a real build: vote and un-vote a
+   ride, comment, follow a forum, post a reply, share a ride with a photo.
+   Later, once `config/app.minBuild` passes the release that deletes the ride
+   before its comments, drop the `shortcut:` legacy comment-delete clause.
 
 ### App Check enforcement
 

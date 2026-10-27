@@ -11,6 +11,14 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 115. Critique of 2026-10-27 — FIXED (2026-10-27)
+
+Write-up: `DOCS/critic oct27.md`. Four lanes merged into `main` (`c3f9072c`, `5cb5879a`, `00e63e5a`, `7822003a`). Leftovers are in `issues_open.md` §115.
+- **Rules (#1, #2, #3, #8, #9, #18; `7822003a`, tests `scripts/test/rules/critic_oct27_rules.test.js`):** vote, comment, reply, post and forum-follow writes and deletes must move their parent counter in the same commit; bike/topic forums can't carry `createdBy`/`maintainerIds` (only `c-` custom ones) and accept only the app's keys; a blocked rider can't vote or comment on the blocker's rides; shared rides accept only `RideShareModel` keys with allow-listed photo URLs and caps; `username` must match `usernameLower`, `bio` capped; crash alerts use `{rideId}_{epochMs}` (bare rideId still accepted for build 29). Found on the way: following a forum always failed (the read of the not-yet-existing `forum_follows` doc was denied); fixed. `deleteSharedRide` now deletes the ride first, then its comments. Edit Profile bio capped at 160.
+- **Data path (#4, #5, #6, #7, #12, #15; `00e63e5a`):** `rideWindows` treats only the active ride as open-ended and `downloadRides` skips unfinished rides; remote ride/bike deletes list children from the server only; sync after `stopRide` and on resume (`SyncManager.syncOnResume`, 30 s throttle); Edit Bike writes only the edited columns; restored rides keep their safety-event counts (`ride_event_counts` pref); a bike with a missing photo file clears its local path instead of re-uploading every cycle.
+- **App and tooling (#3 client, #11, #13, #14, #17, #20; `5cb5879a`):** blocked riders' comments, replies and posts are hidden; forum vote hydration skips 0/0 posts; the People tab's following list stays cached 10 min; Discover returns 20 routes; `deploy.sh` commits only `app/pubspec.yaml` and tags `HEAD`; dead place/route methods, a fake test, `scripts/publish_release.sh`, `collection` and `cupertino_icons` removed.
+- **Account erasure (#16; `c3f9072c`):** also deletes notifications the rider sent, votes (with counter decrement), anonymises voice notes, moves reviews to new ids, and clears `creatorName` and `members/{uid}` on rides they created. Two new collection-group index overrides (`notifications.fromUid`, `voiceNotes.senderId`). Not deployed (Spark).
+
 ## 1. API leak — GitHub secret-scanning alert (Firebase Web API key)
 
 **Status:** Resolved / false positive — recommendation given, not yet marked closed on GitHub.
