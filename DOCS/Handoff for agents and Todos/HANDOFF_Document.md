@@ -123,6 +123,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 | Map tiles | Thunderforest `atlas` in release builds; the key is in gitignored `secret/tiles.env`, which `scripts/deploy.sh` reads. Free tier: 150k tiles a month. |
 | Impact records | Cloud `impactEvents` copies outlive a local ride delete (2026-10-15 merge). |
 | `mayabi` | Never merged into `main` (2026-10-17). |
+| Outside contributions | Accepted under TSAL v1.1 §1A (fork only to open a PR) plus `CLA.md`, signed by PR comment via `.github/workflows/cla.yml`; signatures on branch `cla-signatures` (keep it unprotected). PRs go to `main` (2026-10-28). |
 
 ## Key facts
 
@@ -182,6 +183,10 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-10-28
+
+- **Opened to outside contributors (on `main`):** LICENSE → TSAL v1.1 with §1A (fork/modify only to send a PR), new `CLA.md`, `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1), `.github/ISSUE_TEMPLATE/` (bug, feature, translation; security → private advisory), PR template, `.github/workflows/cla.yml` (CLA Assistant Lite, pinned SHA). README Contributing/License updated; it used to say branch from `experimental`, which is 87 commits behind `main`. On GitHub: label `translation`, branch `cla-signatures`, starter issues #20–#24 (#25 closed, already fixed by `c4243606`). Discussions on and topics set (via blankframe-tech, same day). Owner: lawyer review, outreach (owner items 53–54).
 
 ### 2026-10-25
 

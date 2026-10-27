@@ -111,11 +111,11 @@ Everything is under [`DOCS/`](DOCS/README.md). Start with [`HANDOFF_Document.md`
 
 ## 🤝 Contributing
 
-Branch from `experimental`, keep commits focused, write tests for new logic, never commit secrets, and run `scripts/check.sh` before pushing.
+Contributions are welcome: code, tests, bug reports and Bangla translation review. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) list. You sign the [CLA](CLA.md) once, on your first pull request.
 
 ## 📄 License
 
-**ThrottleIQ Source-Available License (TSAL) v1.0** — see [LICENSE](LICENSE). You can view and audit the source, but not copy, fork or build a competing app.
+**ThrottleIQ Source-Available License (TSAL) v1.1** — see [LICENSE](LICENSE). You can view and audit the source, and fork it only to send a pull request. You can't release your fork or build a competing app.
 
 ---
 

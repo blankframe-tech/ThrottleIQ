@@ -1,0 +1,23 @@
+name: Translation fix
+description: A Bangla (or English) string is wrong, awkward or missing.
+labels: [translation]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Screen
+      placeholder: e.g. Garage → Add bike
+    validations:
+      required: true
+  - type: textarea
+    id: now
+    attributes:
+      label: Text shown now
+    validations:
+      required: true
+  - type: textarea
+    id: better
+    attributes:
+      label: Suggested text
+    validations:
+      required: true

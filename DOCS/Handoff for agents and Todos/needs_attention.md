@@ -102,6 +102,11 @@ number. Done items are deleted, not ticked; git history keeps them._
       order-parts button: keep it for a partner or remove it (new, issues §95.11), "Verified" places vs
       the SafeSpot flyer (#47), and the Maya pricing in the public repo (#48).
 
+## Outside contributors (new 2026-10-28)
+
+- [ ] **Lawyer review of LICENSE §1A and CLA.md (#53)** before announcing; also fix §9 governing law.
+- [ ] **Post the contributor outreach (#54):** `Handoffs for Non Coding Agents/marketing/contributor_outreach.DRAFT.md`.
+
 ## Settled, don't re-ask
 
 - Keystore backed up (2026-09-21). Map tiles: Thunderforest. `config/app.minBuild = 29`.
