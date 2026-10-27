@@ -27,9 +27,12 @@ class CloudRepository {
 
   factory CloudRepository() => _instance;
 
-  CloudRepository._internal();
+  CloudRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  @visibleForTesting
+  CloudRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
   late final RideDao _rideDao = RideDao();
   late final RidePointDao _pointDao = RidePointDao();
   late final BikeDao _bikeDao = BikeDao();

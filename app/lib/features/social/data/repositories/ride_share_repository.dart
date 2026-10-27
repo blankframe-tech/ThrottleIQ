@@ -18,7 +18,10 @@ import 'package:throttleiq/core/cloud/write_ack.dart';
 const int kRideCommentsPageSize = 30;
 
 class RideShareRepository {
-  static final RideShareRepository _instance = RideShareRepository._internal();
+  static RideShareRepository _instance = RideShareRepository._internal();
+
+  @visibleForTesting
+  static set instanceForTest(RideShareRepository fake) => _instance = fake;
 
   factory RideShareRepository() => _instance;
 

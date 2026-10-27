@@ -180,6 +180,8 @@ dev_dependencies:
   sqflite_common_ffi: ^2.4.0+3
   # setupFirebaseCoreMocks, for tests that build Firebase-backed notifiers.
   firebase_core_platform_interface: ^6.0.3
+  # In-memory Firestore for repository tests (deletes, queries, doc ids).
+  fake_cloud_firestore: ^3.1.0
 
 flutter_launcher_icons:
   image_path: "assets/images/app_icon.png"

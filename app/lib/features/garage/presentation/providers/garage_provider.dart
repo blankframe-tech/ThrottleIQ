@@ -72,18 +72,21 @@ class GarageNotifier extends AsyncNotifier<List<BikeEntity>> {
   /// entered reading unless it is below the GPS-tracked total, in which case
   /// the baseline is floored at 0 and the tracked total wins (§101.R7).
   /// Null when the bike isn't found.
+  ///
+  /// Reads the tracked km from the row, not the garage list cached when the
+  /// sheet opened: km credited meanwhile would otherwise be counted twice
+  /// (same class as [updateBike], critique oct27 #7).
   Future<double?> syncOdometer({
     required String bikeId,
     required double newOdometerKm,
   }) async {
-    final bikes = state.valueOrNull ?? [];
-    final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
-    if (bike == null) return null;
-    final newBaseline =
-        (newOdometerKm - bike.totalDistanceKm).clamp(0.0, double.infinity);
+    final row = await _dao.getById(bikeId);
+    if (row == null) return null;
+    final trackedKm = BikeModel.fromMap(row).totalDistanceKm;
+    final newBaseline = (newOdometerKm - trackedKm).clamp(0.0, double.infinity);
     await _dao.updateOdometer(bikeId, newBaseline);
     ref.invalidateSelf();
-    return newBaseline + bike.totalDistanceKm;
+    return newBaseline + trackedKm;
   }
 
   /// Saves the Edit Bike form. Writes only the columns the form edits: the
