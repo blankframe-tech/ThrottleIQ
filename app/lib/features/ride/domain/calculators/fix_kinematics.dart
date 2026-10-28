@@ -20,7 +20,8 @@ typedef FixKinematics = ({
 typedef PrevFix = ({double speedMs, double? acceleration, bool clamped});
 
 /// Builds a [PrevFix] from a stored point's values.
-PrevFix prevFixOf(double speedMs, {double? acceleration, bool clamped = false}) =>
+PrevFix prevFixOf(double speedMs,
+        {double? acceleration, bool clamped = false}) =>
     (speedMs: speedMs, acceleration: acceleration, clamped: clamped);
 
 /// Most distance a fix with a usable Doppler speed may add (§90.C12).
@@ -78,7 +79,27 @@ FixKinematics evaluateFix({
   // A NaN/Infinity Doppler speed is treated as "none" (derived-speed branch).
   final hasRawSpeed = rawSpeedMs.isFinite &&
       rawSpeedMs >= SensorConstants.unreliableSpeedFallbackThresholdMs &&
-          rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
+      rawSpeedMs <= SensorConstants.maxPlausibleSpeedMs;
+
+  // A derived speed the bike could not reach from the previous fix is a
+  // position jump (a stale cached fix replaced by a fresh one), not motion:
+  // 0 -> 37 m/s in 1.4 s read as a 133 km/h max (issues §118). It adds
+  // nothing and is flagged clamped, so the next fix measures from the new
+  // position and is let through: two fixes in a row that agree are motion.
+  if (!hasRawSpeed &&
+      prev != null &&
+      hasValidDeltaT &&
+      !prev.clamped &&
+      candidateDerivedSpeed >
+          prev.speedMs + SensorConstants.maxPhysicalAccelMs2 * deltaT) {
+    return (
+      speedMs: 0.0,
+      distanceDeltaM: 0.0,
+      acceleration: null,
+      jerk: null,
+      clamped: true,
+    );
+  }
 
   double speedMs;
   if (hasRawSpeed) {

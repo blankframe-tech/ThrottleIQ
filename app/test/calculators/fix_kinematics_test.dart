@@ -146,6 +146,59 @@ void main() {
       expect(k.jerk == null || k.jerk!.isFinite, isTrue);
     });
 
+    test('ride 2026-10-28: a stale-fix jump from rest is not a 133 km/h max',
+        () {
+      // Real points from the phone (ride ddca6271): two idle fixes at the same
+      // cached position, then a fresh fix 50.6 m east 1.368 s later, no
+      // Doppler speed. Recorded as 133.2 km/h before §118.
+      final jump = evaluateFix(
+        rawSpeedMs: 0,
+        prev: prevFixOf(0, acceleration: 0),
+        rawDistanceM: haversineMeters(23.7217582027768, 90.3860133160027,
+            23.7218251285193, 90.386505289184),
+        deltaTSeconds: 1.368,
+        accuracyM: 21.7,
+      );
+      expect(jump.speedMs, 0);
+      expect(jump.distanceDeltaM, 0);
+      expect(jump.clamped, isTrue);
+      expect(jump.acceleration, isNull);
+    });
+
+    test('after a rejected jump the next agreeing fix counts', () {
+      // Riding at 15 m/s with no Doppler: one fix lost, not the whole ride.
+      final first = evaluateFix(
+        rawSpeedMs: 0,
+        prev: prevFixOf(0),
+        rawDistanceM: 15,
+        deltaTSeconds: 1,
+        accuracyM: 5,
+      );
+      expect(first.speedMs, 0);
+      final second = evaluateFix(
+        rawSpeedMs: 0,
+        prev: prevFixOf(first.speedMs, clamped: first.clamped),
+        rawDistanceM: 15,
+        deltaTSeconds: 1,
+        accuracyM: 5,
+      );
+      expect(second.speedMs, closeTo(15, 1e-9));
+      expect(second.distanceDeltaM, 15);
+      expect(second.clamped, isFalse);
+    });
+
+    test('pulling away from rest at a real pace is kept', () {
+      final k = evaluateFix(
+        rawSpeedMs: 0,
+        prev: prevFixOf(0),
+        rawDistanceM: 11,
+        deltaTSeconds: 1,
+        accuracyM: 5,
+      );
+      expect(k.speedMs, closeTo(11, 1e-9));
+      expect(k.distanceDeltaM, 11);
+    });
+
     test('the derived-speed fallback is not capped by the Doppler rule', () {
       // No Doppler speed; 50 m in 5 s → 10 m/s derived.
       final k = evaluateFix(
