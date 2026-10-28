@@ -130,7 +130,7 @@ stateDiagram-v2
 | AUT-4 | The app shows one daily summary, not one ride per trip. | ✅ 📱 |
 | AUT-5 | The app merges trips with stops of 20 minutes or less. | ✅ |
 | AUT-6 | The app sends a summary notification at 21:00. | ✅ 📱 |
-| AUT-7 | The app deletes old raw fixes after summary. | 🟡 No code calls the purge yet. |
+| AUT-7 | The app deletes old raw fixes after summary. | ✅ Built in `auto_tracking_service.dart` via `DailyRideSummaryRepository.purgeOldFixesIfDue()`, 14-day window |
 
 ### 6.4 Garage and maintenance
 
@@ -307,7 +307,7 @@ These targets are **proposals**. The founder must confirm them.
 |---|---|---|
 | 1 | Choose how crash alerts reach contacts (SMS, push, or e-mail). Then build SAF-3 to SAF-5. | Founder |
 | 2 | Replace the English-only word list with real moderation (TNS-2). | Developer |
-| 3 | Call the purge from the app (AUT-7). Decide if the app must store totals before the purge. | Developer |
+| 3 | Decide if the app must store day totals before the purge, since purged detections drop out of older daily summaries. | Developer |
 | 4 | Check all 📱 items on a real device. | Founder |
 | 5 | Confirm the metric targets in §10. | Founder |
 
