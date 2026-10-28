@@ -37,12 +37,12 @@ import 'core/utils/bike_image_resolver.dart';
 Future<void> _activateAppCheck() async {
   try {
     await FirebaseAppCheck.instance.activate(
-      androidProvider: kUsesAppCheckDebugProvider
-          ? AndroidProvider.debug
-          : AndroidProvider.playIntegrity,
-      appleProvider: kUsesAppCheckDebugProvider
-          ? AppleProvider.debug
-          : AppleProvider.appAttestWithDeviceCheckFallback,
+      providerAndroid: kUsesAppCheckDebugProvider
+          ? const AndroidDebugProvider()
+          : const AndroidPlayIntegrityProvider(),
+      providerApple: kUsesAppCheckDebugProvider
+          ? const AppleDebugProvider()
+          : const AppleAppAttestWithDeviceCheckFallbackProvider(),
     );
   } catch (e) {
     debugPrint('App Check activation failed (non-fatal): $e');

@@ -19,14 +19,14 @@ dependencies:
   go_router: ^13.2.0
 
   # Firebase
-  firebase_core: ^3.1.0
-  firebase_auth: ^5.0.0
-  firebase_crashlytics: ^4.1.3
-  cloud_firestore: ^5.0.0
+  firebase_core: ^4.0.0
+  firebase_auth: ^6.0.0
+  firebase_crashlytics: ^5.0.0
+  cloud_firestore: ^6.0.0
   # Realtime Database carries only high-frequency movement (live-share 1 Hz,
   # group-ride dots, chat typing) over one WebSocket; Firestore stays the
   # source of truth. See DOCS/For Devs and Contributors/architecture/realtime-database.md.
-  firebase_database: ^11.3.10
+  firebase_database: ^12.0.0
   google_sign_in: ^6.1.0
 
   # Maps & Location
@@ -161,8 +161,8 @@ dependencies:
   # of cached_network_image, which the depend_on_referenced_packages lint
   # flags.
   flutter_cache_manager: ^3.4.2
-  firebase_app_check: ^0.3.2+10
-  firebase_analytics: ^11.6.0
+  firebase_app_check: ^0.4.0
+  firebase_analytics: ^12.0.0
   printing: ^5.15.1
   pdf: ^3.13.1
   # SHA-256 for the emailLookup doc id (ProfileRepository's emailLookupId).
@@ -179,9 +179,9 @@ dev_dependencies:
   flutter_launcher_icons: ^0.14.4
   sqflite_common_ffi: ^2.4.0+3
   # setupFirebaseCoreMocks, for tests that build Firebase-backed notifiers.
-  firebase_core_platform_interface: ^6.0.3
+  firebase_core_platform_interface: ^8.0.0
   # In-memory Firestore for repository tests (deletes, queries, doc ids).
-  fake_cloud_firestore: ^3.1.0
+  fake_cloud_firestore: ^4.4.0
 
 flutter_launcher_icons:
   image_path: "assets/images/app_icon.png"
