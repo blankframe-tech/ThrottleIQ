@@ -452,7 +452,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get safeQrLocalOnlyDisclaimer =>
-      'Saved only on this device — it is not backed up or synced.';
+      'Saved privately to your account, so it comes back after a reinstall or on a new phone. Only you can see it until someone scans the QR.';
 
   @override
   String get safeQrShareImageAction => 'Save or share QR image';

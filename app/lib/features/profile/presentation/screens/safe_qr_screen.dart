@@ -50,6 +50,23 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
     _allergiesCtrl = TextEditingController(text: saved.allergies);
     _conditionsCtrl = TextEditingController(text: saved.conditions);
     _medicationsCtrl = TextEditingController(text: saved.medications);
+    // The Firestore read can land after the screen opens; fill the fields
+    // then, unless the rider has already started typing.
+    ref.listenManual(medicalInfoProvider, (_, next) {
+      final ctrls = [
+        _bloodGroupCtrl,
+        _allergiesCtrl,
+        _conditionsCtrl,
+        _medicationsCtrl
+      ];
+      if (ctrls.any((c) => c.text.isNotEmpty)) return;
+      setState(() {
+        _bloodGroupCtrl.text = next.bloodGroup;
+        _allergiesCtrl.text = next.allergies;
+        _conditionsCtrl.text = next.conditions;
+        _medicationsCtrl.text = next.medications;
+      });
+    });
   }
 
   @override
@@ -191,7 +208,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
         children: [
           Text(
             l10n.safeQrIntro,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 20),
           Center(
@@ -244,8 +262,9 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
           const SizedBox(height: 8),
           Center(
             child: OutlinedButton.icon(
-              onPressed:
-                  hasContent && !_exporting ? () => _printSticker(payload) : null,
+              onPressed: hasContent && !_exporting
+                  ? () => _printSticker(payload)
+                  : null,
               style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
               icon: const Icon(Icons.print_outlined, size: 18),
               label: Text(l10n.safeQrPrintAction),

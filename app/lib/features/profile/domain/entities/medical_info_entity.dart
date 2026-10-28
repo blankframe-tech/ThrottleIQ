@@ -2,9 +2,8 @@ import 'package:equatable/equatable.dart';
 
 /// The rider-entered fields behind SafeQR (see `safe_qr_payload.dart`) — a
 /// first-responder card, not a medical record: short, scannable fields only,
-/// no history or documents. Device-local by design (see
-/// `medical_info_provider.dart`), so there is nothing here Firestore ever
-/// sees.
+/// no history or documents. Stored owner-only in `users/{uid}/private/medical`
+/// (see `medical_info_provider.dart`).
 class MedicalInfoEntity extends Equatable {
   final String bloodGroup;
   final String allergies;

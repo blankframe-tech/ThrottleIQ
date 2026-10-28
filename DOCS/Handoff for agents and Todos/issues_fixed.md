@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 117. SafeQR medical info was wiped by every reinstall — FIXED (2026-10-28)
+
+Reported by the owner. *Cause:* `medical_info_provider.dart` kept the card in SharedPreferences only (deliberate, to keep medical data off the server), and the manifest has `android:allowBackup="false"`, so an uninstall deleted it on both platforms. *Fix (owner chose cloud sync):* the card lives in `users/{uid}/private/medical` (already owner-only in `firestore.rules`; account erasure already deletes `users/{uid}` recursively, so no rules or functions change). A pre-sync local copy is moved up once and then removed from prefs; an existing cloud copy wins; offline with no cache shows the local copy and keeps it for the next launch. `SafeQrScreen` fills its fields when the read lands, unless the rider has started typing. The in-app disclaimer (`safeQrLocalOnlyDisclaimer`, EN + BN, BN queued in `bn_pending_review.txt`) and `public/privacy.html` (new SafeQR row, effective 28 Oct 2026) now say it is stored in the rider's account; `data_safety_review.DRAFT.md` now marks Health info as collected. *Test:* `app/test/features/profile/medical_info_provider_test.dart` (round trip, one-time copy-up, cloud wins, no uid). Not checked on a device with a real reinstall. Ships in the +33 AAB.
+
+---
+
 ## 116. Windows clones lose a file, so PRs delete it — FIXED (2026-10-28, uncommitted)
 
 PR #26 (outside contributor, Windows) deleted `DOCS/General/CRASH TESTING/...minutes:seconds after the crash.jpeg`: Windows can't check out a `:` filename, so git sees it as deleted. Renamed to `minutes-seconds` (only bad path in the repo, nothing linked it). `scripts/check.sh` now has `guard: Windows-safe paths`, which fails on `<>:"|?*\`, trailing dot/space and reserved names (`CON`, `NUL`, …) in tracked files, so CI blocks a repeat. PR #26 still needs the deletion dropped (rebase), the BOM on `PRD.md` line 1 removed, and open item 3's first sentence cut before merge.

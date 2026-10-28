@@ -451,7 +451,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get safeQrLocalOnlyDisclaimer =>
-      'শুধুমাত্র এই ডিভাইসে সংরক্ষিত — এটি ব্যাকআপ বা সিঙ্ক করা হয় না।';
+      'আপনার অ্যাকাউন্টে গোপনে সংরক্ষিত, তাই অ্যাপ আবার ইনস্টল করলে বা নতুন ফোনে এটি ফিরে আসে। QR স্ক্যান না করা পর্যন্ত শুধু আপনি এটি দেখতে পান।';
 
   @override
   String get safeQrShareImageAction => 'QR ছবি সংরক্ষণ বা শেয়ার করুন';

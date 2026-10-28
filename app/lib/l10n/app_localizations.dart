@@ -890,10 +890,10 @@ abstract class AppLocalizations {
   /// **'SafeQR info saved.'**
   String get safeQrSavedMessage;
 
-  /// Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced.
+  /// Note that SafeQR medical info is stored owner-only in the rider's account and restored after a reinstall.
   ///
   /// In en, this message translates to:
-  /// **'Saved only on this device — it is not backed up or synced.'**
+  /// **'Saved privately to your account, so it comes back after a reinstall or on a new phone. Only you can see it until someone scans the QR.'**
   String get safeQrLocalOnlyDisclaimer;
 
   /// Button that exports the SafeQR card as a PNG through the system share sheet (which also offers Save to Photos/Files), e.g. to set as a lock-screen wallpaper or print as a helmet sticker.

@@ -1783,3 +1783,4 @@ longestRideStat
 dayStreakStat
 pinLimitReached
 couldntUpdatePins
+safeQrLocalOnlyDisclaimer

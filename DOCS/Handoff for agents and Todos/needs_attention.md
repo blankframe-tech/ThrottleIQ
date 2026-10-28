@@ -46,6 +46,9 @@ number. Done items are deleted, not ticked; git history keeps them._
       `data_safety_and_permissions.md` ("Crash detection records") first: Health info, User IDs.
       Draft answers for review (2026-10-22): `throttleiq_data_safety.DRAFT.csv` and
       `data_safety_review.DRAFT.md` in the same folder (23 answers change, 7 calls for you).
+- [ ] **SafeQR now syncs medical info (new 2026-10-28, issues §117):** tick Health info in the Data
+      Safety form (collected, optional, not shared, App functionality) and deploy hosting so the
+      updated `public/privacy.html` goes live. It ships in +33.
 - [ ] **privacy.html is behind the app (#46, new 2026-10-22):** bike photos are uploaded, and the
       camera permission, Nominatim lookups and group-ride positions aren't disclosed; the app has no
       link to the policy (`data_safety_review.DRAFT.md`).

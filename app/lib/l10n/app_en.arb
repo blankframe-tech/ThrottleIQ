@@ -581,9 +581,9 @@
   "@safeQrSavedMessage": {
     "description": "Snackbar shown after saving SafeQR medical info."
   },
-  "safeQrLocalOnlyDisclaimer": "Saved only on this device \u2014 it is not backed up or synced.",
+  "safeQrLocalOnlyDisclaimer": "Saved privately to your account, so it comes back after a reinstall or on a new phone. Only you can see it until someone scans the QR.",
   "@safeQrLocalOnlyDisclaimer": {
-    "description": "Disclaimer clarifying that SafeQR medical info is device-local, not cloud-synced."
+    "description": "Note that SafeQR medical info is stored owner-only in the rider's account and restored after a reinstall."
   },
   "safeQrShareImageAction": "Save or share QR image",
   "@safeQrShareImageAction": {
