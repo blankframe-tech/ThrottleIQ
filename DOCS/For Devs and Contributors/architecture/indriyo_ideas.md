@@ -21,6 +21,11 @@ to find objects in a webcam frame. It draws boxes with confidence and lists what
 2. Map boxes to `IndriyoVehicleDetection`, feed `updateThreatState`.
 3. Keep simulation mode as the fallback. Add tests for the box-to-threat mapping. Run `scripts/check.sh`.
 
+**Training data (checked 2026-10-29, owner items #58 and #59)**
+- [DhakaAI](https://doi.org/10.7910/DVN/POREXF): CC0 at the source, about 3K images, 21 classes including rickshaw, CNG, human hauler. Use it to fine-tune the shipped model. Cite Shihavuddin and Rashid, 2020. Open question: whether the photos themselves were the authors' to release.
+- [RSUD20K](https://www.kaggle.com/datasets/hasibzunair/rsud20k-bangladesh-road-scene-understanding): CC BY-NC 4.0. Evaluation only, kept out of the repo; never train the shipped model on it or ship its weights unless the authors grant a commercial licence.
+- Both are shot facing forward; Indriyo faces backwards. Measure on real rear-camera footage.
+
 **Risks and open questions**
 - Licence: Ultralytics YOLO is AGPL. Prefer an Apache-licensed model for a shipped app.
 - Heat: the phone runs GPS, the stream and the detector in the sun. Drop the rate when the phone gets hot.

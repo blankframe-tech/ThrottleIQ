@@ -134,6 +134,25 @@ number. Done items are deleted, not ticked; git history keeps them._
 - [ ] **Lawyer review of LICENSE §1A and CLA.md (#53)** before announcing; also fix §9 governing law.
 - [ ] **Post the contributor outreach (#54):** `Handoffs for Non Coding Agents/marketing/contributor_outreach.DRAFT.md`.
 
+## Indriyo training data (new 2026-10-29)
+
+Licences checked by an agent; nothing downloaded or trained. Waits on #57 (park indriyo or keep it on `main`).
+
+- [ ] **DhakaAI (#58):** [Harvard Dataverse](https://doi.org/10.7910/DVN/POREXF) (CC0, the original) /
+      [Kaggle](https://www.kaggle.com/datasets/rifat963/dhakaai-dhaka-based-traffic-detection-dataset) (mirror, says GPL 2).
+      About 3K images, 21 classes including rickshaw, CNG and human hauler. Can train the shipped model.
+      **You:** confirm the photos are the authors' to give away (CC0 may cover only the labels if the
+      photos were scraped); give the agent a GPU account and token (Kaggle or Colab); test on a real
+      phone with the Indriyo camera and record rear-facing rides. **Agent alone:** download, convert,
+      map classes, fine-tune a small Apache-licensed detector (not Ultralytics, AGPL), export
+      TFLite/Core ML, wire into `IndriyoNotifier.updateThreatState`, tests, `scripts/check.sh`.
+- [ ] **RSUD20K (#59, decision):** [Kaggle](https://www.kaggle.com/datasets/hasibzunair/rsud20k-bangladesh-road-scene-understanding) /
+      [GitHub](https://github.com/hasibzunair/RSUD20K) / [paper](https://arxiv.org/abs/2401.07322).
+      20K dashcam images on Bangladesh roads, but CC BY-NC 4.0 (non-commercial). Recommended: use it
+      only to test the DhakaAI model (scratchpad only, never committed, never trained into the shipped
+      model, its weights never shipped). If Indriyo heads to sales, you email the authors for a
+      commercial licence; the agent can draft the email.
+
 ## Settled, don't re-ask
 
 - Keystore backed up (2026-09-21). Map tiles: Thunderforest. `config/app.minBuild = 29`.

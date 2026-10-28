@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§116**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§121**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -282,7 +282,11 @@ Remaining:
 - **Bangla review by a native speaker (the real gate, owner item #12,
   deferred to November).** `app/lib/l10n/bn_pending_review.txt` lists the
   machine-drafted strings by batch (1,703 non-comment lines on 2026-10-22),
-  including the strings from §78.28 and §88.4. Nothing in it has been read by
+  including the strings from §78.28 and §88.4. On 2026-10-29 a native speaker
+  (RanaKhan77, GitHub issue #23) reviewed the `pilot`, `auth` and `ride`
+  batches: 5 fixes applied to `app_bn.arb` (`directions`,
+  `thatUsernameTakenTry`, `resumeCarryDiscardIt`, `recenterRoute`, `year`)
+  and those batches were removed from the list. The rest has not been read by
   a native speaker. `arb_parity_test.dart` keeps the list from naming dead
   keys.
 - **Bangla on a device:** the 2026-09-21 UI tour walked 82 screens in Bangla
@@ -862,3 +866,6 @@ Findings 1-9, 11-18 and 20 were fixed 2026-10-27 (see `issues_fixed.md` §115). 
 - **#1 shortcut:** build 29 deletes ride comments before the ride, so `firestore.rules` keeps a legacy clause letting a ride owner delete comments without the -1 (marked `shortcut:`). An owner can still pump the comment count on their own rides. Drop the clause once `config/app.minBuild` passes the release with `deleteSharedRide` ride-first.
 - **#8** the app now thins shared-ride and public-route polylines to ≤ 1,000 points (`23d7e7cb`, `core/utils/polyline_simplify.dart`), but build 29 still sends the raw track, so the rules have no cap yet. Add `polyline.size() <= 1000` once `config/app.minBuild` passes that release. Shares already in Firestore keep their old long polylines. Making a route public now also replaces the owner's stored route trail with the thinned copy (≥ 5 m accuracy).
 - **#16** votes now carry `uid` (`7a3b2add`) and erasure finds them by query, but the full-scan "delete legacy votes" step stays (marked `shortcut:`): build 29 writes `{value}` only and overwrites a backfilled `uid` on a vote flip. Once `config/app.minBuild` passes that release: run `scripts/oneoff/backfill_vote_uid.js` again, make `uid` required in `voteDocValid`, and delete the scan step.
+
+## 120. CI is red on `main`: two `deploy.sh` staging tests fail (2026-10-29)
+`5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` was not updated. `stagingBlock()` still looks for `git add -u`, so tests 22 and 23 fail with `staging block not found`. The `rules` job has failed on every push since then (`930ccc87`, `208a426a`, `912bbc22`). It also blocks contributor PRs: #26 (docs only, fixes issue #21) failed for this reason alone and was merged with `--admin` on 2026-10-28. Fix: make `stagingBlock()` end at the `git add app/pubspec.yaml` block, and have the scratch repo use `app/pubspec.yaml`.
