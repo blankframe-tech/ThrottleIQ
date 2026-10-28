@@ -644,7 +644,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get thatUsernameTakenTry =>
-      'এই ইউজারনেমটি নেওয়া হয়ে গেছে — অন্যটি চেষ্টা করুন।';
+      'এই ইউজারনেমটি নেওয়া আছে — অন্যটা চেষ্টা করুন।';
 
   @override
   String errorWithDetail(Object e) {
@@ -703,7 +703,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get model => 'মডেল *';
 
   @override
-  String get year => 'সাল';
+  String get year => 'মডেল সাল';
 
   @override
   String get engineCc => 'ইঞ্জিন সিসি';
@@ -767,7 +767,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get distance => 'দূরত্ব';
 
   @override
-  String get directions => 'ডিরেকশনস';
+  String get directions => 'ডিরেকশন';
 
   @override
   String get backTour => 'ট্যুরে ফিরে যান';
@@ -830,7 +830,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get resumeCarryDiscardIt =>
-      'চালিয়ে যেতে আবার শুরু করুন, অথবা নতুন করে শুরু করতে এটি বাদ দিন।';
+      'চালিয়ে যেতে \"আবার শুরু\" চাপুন, নতুন করে শুরু করতে \"বাদ দিন\" চাপুন।';
 
   @override
   String get crashDetected => 'দুর্ঘটনা শনাক্ত হয়েছে';
@@ -905,7 +905,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get zoomOut => 'জুম আউট';
 
   @override
-  String get recenterRoute => 'রুট মাঝখানে আনুন';
+  String get recenterRoute => 'রুটে ফিরে যান';
 
   @override
   String get fullscreenMap => 'ফুলস্ক্রিন ম্যাপ';
