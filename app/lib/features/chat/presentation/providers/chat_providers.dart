@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/realtime/realtime_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -90,7 +91,8 @@ final chatBlockedProvider =
   if (myBlocks.contains(otherUid)) return true;
   try {
     return await ref.watch(profileRepositoryProvider).isBlockedBy(otherUid, myUid);
-  } catch (_) {
+  } catch (e, st) {
+    reportSilently(e, st, where: 'chat.isBlockedBy');
     return false;
   }
 });

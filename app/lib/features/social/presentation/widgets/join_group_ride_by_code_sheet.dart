@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -86,7 +87,10 @@ class _JoinGroupRideByCodeSheetState
               groupRideId: result.groupRideId,
               fromPhotoUrl: user.photoURL,
             );
-      } catch (_) {/* creator just won't find out until they open the ride */}
+      } catch (e, st) {
+        // Creator just won't find out until they open the ride.
+        reportSilently(e, st, where: 'social.joinByCode.notifyCreator');
+      }
       if (!mounted) return;
       Navigator.of(context).pop(result.groupRideId);
     } on GroupRideJoinException catch (e) {

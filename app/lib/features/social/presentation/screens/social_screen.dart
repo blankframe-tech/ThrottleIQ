@@ -98,6 +98,7 @@ final _followingProfilesProvider =
     try {
       return await repo.getProfile(id);
     } catch (_) {
+      // Unreadable (private) profile: drop it, keep the rest of the list.
       return null;
     }
   }));

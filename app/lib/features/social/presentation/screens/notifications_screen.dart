@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -158,7 +159,10 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
             groupRideId: groupRideId,
             fromPhotoUrl: user.photoURL,
           );
-    } catch (_) {/* creator just won't find out until they open the ride */}
+    } catch (e, st) {
+      // Creator just won't find out until they open the ride.
+      reportSilently(e, st, where: 'social.notifyGroupRideJoined');
+    }
 
     if (!mounted) return;
     context.push('/group-ride/$groupRideId');

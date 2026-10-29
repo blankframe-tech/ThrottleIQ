@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -180,7 +181,8 @@ class _PostCard extends ConsumerWidget {
       await ref
           .read(forumPostsNotifierProvider(forumId).notifier)
           .vote(postId, value);
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'forum.castVote');
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.couldntRecordVoteCheck)),

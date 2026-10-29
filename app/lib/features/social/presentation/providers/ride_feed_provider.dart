@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/repositories/ride_share_repository.dart';
@@ -263,7 +264,8 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
         if (refreshMutuals) _ref.invalidate(mutualIdsProvider);
         mutual = await _ref.read(mutualIdsProvider.future);
       }
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'social.feed.following');
       following = const <String>{};
     }
 
@@ -385,7 +387,8 @@ class RideFeedNotifier extends StateNotifier<FeedState> {
 
     try {
       await _repo.vote(rideId, uid, value);
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'social.feed.vote');
       // Revert on failure.
       state = state.copyWith(rides: [
         for (final r in state.rides)

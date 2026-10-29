@@ -711,7 +711,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       final currentZoom = _mapController.camera.zoom;
       _mapController.move(
           _mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _zoomOut() {
@@ -719,7 +719,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       final currentZoom = _mapController.camera.zoom;
       _mapController.move(
           _mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _recenterMap() {
