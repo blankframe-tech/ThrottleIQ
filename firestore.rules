@@ -1203,7 +1203,12 @@ service cloud.firestore {
           optionalNameValid(request.resource.data.get('userName', null)) &&
           photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
           request.resource.data.get('updatedAt', null) == null &&
-          request.resource.data.createdAt == request.time;
+          request.resource.data.createdAt == request.time &&
+          // Security sweep B1: the +1 for this comment in the same commit
+          // (addComment's transaction, every build since 2026-08-14), or a
+          // bare create plus a counted delete drives `comments` below zero.
+          counterMovedFor(/databases/$(database)/documents/rides/$(rideId),
+            'comments', 1, 'lastCommentId', commentId);
         allow delete: if request.auth != null &&
           (!existsAfter(/databases/$(database)/documents/rides/$(rideId)) ||
            ((resource.data.userId == request.auth.uid ||

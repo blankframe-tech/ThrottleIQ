@@ -165,6 +165,15 @@ test('F1 ride comments: addComment\'s transaction still works', async () => {
   }));
 });
 
+test('B1 ride comments: a bare comment create (no comments +1) is denied', async () => {
+  await seed({ 'rides/r1': RIDE });
+  // Bare create, then the counted delete, would drive `comments` below zero.
+  await assertFails(setDoc(doc(db(MALLORY), 'rides/r1/comments/c1'), {
+    id: 'c1', rideId: 'r1', userId: MALLORY, userName: 'M', userPhotoUrl: '',
+    text: 'spam', createdAt: serverTimestamp(), updatedAt: null,
+  }));
+});
+
 test('F1 ride comments: deleteSharedRide (list, delete the ride, then its comments) works', async () => {
   await seed({
     'rides/r1': { ...RIDE, comments: 2 },
