@@ -5004,12 +5004,6 @@ abstract class AppLocalizations {
   /// Text in place_detail_screen.
   ///
   /// In en, this message translates to:
-  /// **'★ 0 (Not on Google)'**
-  String get n0NotGoogle;
-
-  /// Text in place_detail_screen.
-  ///
-  /// In en, this message translates to:
   /// **'★ 0 (0 reviews)'**
   String get n00Reviews;
 

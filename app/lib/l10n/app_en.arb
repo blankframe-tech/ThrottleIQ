@@ -3830,10 +3830,6 @@
   "@officialPoint": {
     "description": "Text in place_detail_screen (+1 more)."
   },
-  "n0NotGoogle": "\u2605 0 (Not on Google)",
-  "@n0NotGoogle": {
-    "description": "Text in place_detail_screen."
-  },
   "n00Reviews": "\u2605 0 (0 reviews)",
   "@n00Reviews": {
     "description": "Text in place_detail_screen."
