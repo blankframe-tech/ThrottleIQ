@@ -11,7 +11,7 @@ const assert = require('node:assert/strict');
 
 const { db, rtdb, clearEmulators } = require('./setup');
 const { handleCrashNotification, runEscalationSweep } = require('../../lib/crash-core');
-const { CLAIM_LEASE_MS } = require('../../lib/crash-claim');
+const { CLAIM_LEASE_MS, ALERT_LIMIT } = require('../../lib/crash-claim');
 
 const UID = 'crashRiderUid00000000000001';
 
@@ -118,6 +118,35 @@ test('a failed escalation fails the sweep instead of reporting success', async (
     contactedAt: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
   });
   await assert.rejects(runEscalationSweep(db), /1 escalation\(s\) failed: esc-bad/);
+});
+
+// Security sweep 2026-10-30 C5: once delivery is real, each alert texts every
+// contact, so a rider (or a stolen account) could flood strangers' phones.
+const SPAMMER = 'crashRiderUid00000000000002';
+
+test('an alert reaches at most 5 contacts', async () => {
+  for (let i = 0; i < 7; i++) {
+    await db.doc(`users/${SPAMMER}/emergencyContacts/c${i}`).set({ name: `C${i}`, phone: `+88010${i}` });
+  }
+  const ref = db.doc('crashNotifications/spam-0');
+  await ref.set({ uid: SPAMMER, rideId: 'spam-0', status: 'pending' });
+  assert.equal(await handleCrashNotification(db, ref), true);
+  assert.equal((await ref.get()).get('contactsResolved'), 5);
+  const rows = await db.collection(`users/${SPAMMER}/notificationLog`).get();
+  assert.equal(rows.size, 5);
+});
+
+test('alerts past the per-rider limit are held back, not sent', async () => {
+  // spam-0 above already counted once.
+  for (let i = 1; i <= ALERT_LIMIT; i++) {
+    const ref = db.doc(`crashNotifications/spam-${i}`);
+    await ref.set({ uid: SPAMMER, rideId: `spam-${i}`, status: 'pending' });
+    await handleCrashNotification(db, ref);
+    const status = (await ref.get()).get('status');
+    assert.equal(status, i < ALERT_LIMIT ? 'mock_not_sent' : 'rate_limited', `alert ${i + 1}`);
+  }
+  const rows = await db.collection(`users/${SPAMMER}/notificationLog`).get();
+  assert.equal(rows.size, 5 * ALERT_LIMIT, 'nothing logged for the held-back alert');
 });
 
 test.after(async () => {

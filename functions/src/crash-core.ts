@@ -1,5 +1,5 @@
 import * as logger from 'firebase-functions/logger';
-import { shouldClaim, shouldClaimEscalation } from './crash-claim';
+import { admitAlert, shouldClaim, shouldClaimEscalation } from './crash-claim';
 
 /**
  * The bodies of `onCrashNotification` and `escalateCrashAlert`
@@ -19,6 +19,9 @@ import { shouldClaim, shouldClaimEscalation } from './crash-claim';
  * the Twilio/SendGrid call, never before. See issues_open.md §81.2.
  */
 const DELIVERY_IMPLEMENTED = false;
+
+/** Most emergency contacts one crash alert goes to. */
+const MAX_CONTACTS = 5;
 
 interface CrashNotification {
   uid: string;
@@ -43,7 +46,9 @@ interface CrashNotification {
     | 'acknowledged'
     /** Claimed by an escalateCrashAlert run; see escalatingAt. */
     | 'escalating'
-    | 'escalated';
+    | 'escalated'
+    /** Terminal: over the per-rider limit (admitAlert), nothing was sent. */
+    | 'rate_limited';
   /** ISO time the current `processing` claim was taken. */
   claimedAt?: string;
   /** ISO time the current `escalating` claim was taken. */
@@ -79,25 +84,42 @@ export async function handleCrashNotification(
     const snap = await txn.get(ref);
     if (!snap.exists) return null;
     const data = snap.data() as CrashNotification;
-    if (!shouldClaim(data.status, data.claimedAt, Date.now())) return null;
+    const now = Date.now();
+    if (!shouldClaim(data.status, data.claimedAt, now)) return null;
+    // Counted on the first claim only: a retaken stale claim already was.
+    // Server-only doc (no client rule matches it), erased with the profile.
+    if (data.status === 'pending') {
+      const limitRef = db.doc(`users/${data.uid}/crashAlertLimit/state`);
+      const sentAt = admitAlert((await txn.get(limitRef)).get('sentAt'), now);
+      if (!sentAt) {
+        txn.update(ref, { status: 'rate_limited', contactedAt: new Date(now).toISOString() });
+        logger.warn(`onCrashNotification: ${ref.id} held back, rider ${data.uid} is over the alert limit`);
+        return null;
+      }
+      txn.set(limitRef, { sentAt });
+    }
     txn.update(ref, {
       status: 'processing',
-      claimedAt: new Date().toISOString(),
+      claimedAt: new Date(now).toISOString(),
     });
     return data;
   });
   if (!notification) {
-    logger.info(`onCrashNotification: ${ref.id} already claimed or handled; skipping`);
+    logger.info(`onCrashNotification: ${ref.id} not claimed (handled, in flight or rate limited); skipping`);
     return false;
   }
   const { uid, rideId, lastLat, lastLng } = notification;
 
   try {
     // Fetch user's emergency contacts
+    // Capped: the app sets no limit, and each contact is one SMS or email.
+    // shortcut: the first MAX_CONTACTS by doc id, not the rider's choice;
+    // let the app mark primary contacts if riders need more than five.
     const contactsSnapshot = await db
       .collection('users')
       .doc(uid)
       .collection('emergencyContacts')
+      .limit(MAX_CONTACTS)
       .get();
 
     if (contactsSnapshot.empty) {
