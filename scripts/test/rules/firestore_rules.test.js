@@ -497,11 +497,12 @@ function notificationRef(db, ownerUid = ALICE) {
 test('a valid follow notification (no photo) is allowed', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: null,
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -510,11 +511,12 @@ test('a valid follow notification (no photo) is allowed', async () => {
 test('a valid follow notification with an allowlisted Cloudinary photo is allowed', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: 'https://res.cloudinary.com/vjvcigkt/image/upload/v1/avatars/mallory.jpg',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -529,6 +531,7 @@ test('a valid groupRideInvite notification with a groupRideId is allowed', async
       fromName: 'Mallory',
       fromPhotoUrl: '',
       groupRideId: 'ride-123',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -543,6 +546,7 @@ test('a valid groupRideJoined notification with a groupRideId is allowed', async
       fromName: 'Mallory',
       fromPhotoUrl: '',
       groupRideId: 'ride-123',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -556,6 +560,7 @@ test('a groupRideJoined notification with no groupRideId is denied', async () =>
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: '',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -568,6 +573,7 @@ test('a notification with an unknown type is denied', async () => {
       type: 'systemAlert',
       fromUid: MALLORY,
       fromName: 'Admin: verify your account',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -576,11 +582,12 @@ test('a notification with an unknown type is denied', async () => {
 test('a notification with a non-allowlisted fromPhotoUrl (the tracking-pixel vector) is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: 'https://attacker.example/pixel.png',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -594,6 +601,7 @@ test('a groupRideInvite notification with no groupRideId is denied', async () =>
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: '',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -602,11 +610,12 @@ test('a groupRideInvite notification with no groupRideId is denied', async () =>
 test('a notification spoofing fromUid as someone else is still denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: ALICE,
       fromName: 'Alice',
       fromPhotoUrl: null,
+      createdAt: serverTimestamp(),
       read: false,
     })
   );

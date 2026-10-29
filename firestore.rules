@@ -789,8 +789,19 @@ service cloud.firestore {
       // this app already carries (captions, forum posts) — not the
       // unconditional device-fetch/beacon vector this fix closes.
       match /notifications/{notificationId} {
+        // Security sweep B2: exactly NotificationRepository's keys, a server
+        // timestamp, unread, and a follow only at its one `follow_{uid}` id —
+        // else a sender could flood an inbox or pin a row on top of it.
         function notificationShapeValid(data) {
-          return data.fromUid == request.auth.uid &&
+          return data.keys().hasOnly(['type', 'fromUid', 'fromName',
+              'fromPhotoUrl', 'groupRideId', 'createdAt', 'read']) &&
+            data.createdAt == request.time &&
+            data.read == false &&
+            (data.get('type', '') != 'follow' ||
+             notificationId == 'follow_' + request.auth.uid) &&
+            (!('groupRideId' in data) ||
+             (data.groupRideId is string && data.groupRideId.size() <= 128)) &&
+            data.fromUid == request.auth.uid &&
             data.get('type', '') in
               ['follow', 'groupRideInvite', 'groupRideJoined'] &&
             data.get('fromName', '') is string &&
