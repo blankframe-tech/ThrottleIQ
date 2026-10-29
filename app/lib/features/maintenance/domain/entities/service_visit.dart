@@ -27,7 +27,8 @@ class ServiceVisit {
   /// The bill: the entered total when there is one, else the sum of item
   /// prices. Null when nothing was priced.
   double? get totalCost {
-    final total = items.map((i) => i.visitTotal).whereType<double>().firstOrNull;
+    final total =
+        items.map((i) => i.visitTotal).whereType<double>().firstOrNull;
     if (total != null) return total;
     final priced = items.map((i) => i.cost).whereType<double>();
     return priced.isEmpty ? null : priced.fold<double>(0, (a, b) => a + b);
@@ -52,7 +53,8 @@ List<ServiceVisit> groupVisits(List<MaintenanceEntity> logs) {
       ServiceVisit(
           e.key,
           List.of(e.value)
-            ..sort((a, b) => a.serviceType.index.compareTo(b.serviceType.index))),
+            ..sort(
+                (a, b) => a.serviceType.index.compareTo(b.serviceType.index))),
   ];
   visits.sort((a, b) {
     final d = b.date.compareTo(a.date);
@@ -60,6 +62,22 @@ List<ServiceVisit> groupVisits(List<MaintenanceEntity> logs) {
     return b.odometerKm.compareTo(a.odometerKm);
   });
   return visits;
+}
+
+/// True when [odometerKm] is below a log on or before [date] (other than
+/// visit [excludeVisitKey], the one being edited). Only a warning: a
+/// replaced odometer legitimately reads lower (issue #40).
+bool odometerBelowEarlierLog({
+  required double odometerKm,
+  required DateTime date,
+  required Iterable<MaintenanceEntity> logs,
+  String? excludeVisitKey,
+}) {
+  final day = DateTime(date.year, date.month, date.day);
+  return logs.any((l) =>
+      l.visitKey != excludeVisitKey &&
+      !DateTime(l.date.year, l.date.month, l.date.day).isAfter(day) &&
+      l.odometerKm > odometerKm);
 }
 
 /// Total spend across visits (each visit's bill counted once).
@@ -148,9 +166,8 @@ List<MaintenanceEntity> buildVisitLogs({
           // One item: the bill is its price, whatever was stored before.
           cost: single ? (draft.totalCost ?? item.cost) : item.cost,
           notes: clean(draft.notes),
-          customLabel: item.type == ServiceType.custom
-              ? clean(item.customLabel)
-              : null,
+          customLabel:
+              item.type == ServiceType.custom ? clean(item.customLabel) : null,
           createdAt: prior?.createdAt ?? now,
           visitId: visitId,
           checkKey: item.checkKey,

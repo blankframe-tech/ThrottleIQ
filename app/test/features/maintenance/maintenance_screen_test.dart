@@ -160,6 +160,24 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('log a visit warns, without blocking, on a low odometer (#40)',
+      (tester) async {
+    await pump(tester,
+        onboarded: true, screen: const AddMaintenanceLogScreen(bikeId: 'b1'));
+    const warning = "Lower than an earlier visit's reading. "
+        'If the odometer was replaced, you can still save.';
+    await tester.enterText(find.byKey(const Key('visitOdometer')), '20000');
+    await tester.pump();
+    expect(find.text(warning), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('visitOdometer')), '5000');
+    await tester.pump();
+    expect(find.text(warning), findsOneWidget);
+    // A warning, not a validation error: the form still validates.
+    final form = tester.state<FormState>(find.byType(Form));
+    expect(form.validate(), isTrue);
+  });
+
   testWidgets('setup screen renders the suggested schedule', (tester) async {
     await pump(tester,
         onboarded: false, screen: const MaintenanceSetupScreen(bikeId: 'b1'));

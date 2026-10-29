@@ -1667,3 +1667,5 @@ indriyoNotConnected
 indriyoInvalidUrl
 indriyoSimulationTitle
 indriyoSimulationSubtitle
+# batch: lane g bugs (2026-10-29)
+visitOdometerBelowEarlier
