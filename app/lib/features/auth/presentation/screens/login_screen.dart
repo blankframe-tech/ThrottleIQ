@@ -74,8 +74,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   hint: 'rider@example.com',
                   keyboardType: TextInputType.emailAddress,
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return context.l10n.emailRequired;
+                    }
                     if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
@@ -95,8 +96,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6)
+                    if (v == null || v.length < 6) {
                       return context.l10n.passwordTooShort;
+                    }
                     return null;
                   },
                 ),

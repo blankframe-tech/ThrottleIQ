@@ -98,8 +98,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       labelText: context.l10n.email,
                       hintText: 'rider@example.com'),
                   validator: (v) {
-                    if (v == null || v.isEmpty)
+                    if (v == null || v.isEmpty) {
                       return context.l10n.emailRequired;
+                    }
                     if (!v.contains('@')) return context.l10n.invalidEmail;
                     return null;
                   },
@@ -122,8 +123,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.length < 6)
+                    if (v == null || v.length < 6) {
                       return context.l10n.min6Characters;
+                    }
                     return null;
                   },
                 ),
@@ -135,8 +137,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   decoration:
                       InputDecoration(labelText: context.l10n.confirmPassword),
                   validator: (v) {
-                    if (v != _passCtrl.text)
+                    if (v != _passCtrl.text) {
                       return context.l10n.passwordsDoNotMatch;
+                    }
                     return null;
                   },
                 ),
