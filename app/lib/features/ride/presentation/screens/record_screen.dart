@@ -58,13 +58,27 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
         ?.split(' ')
         .first;
     _greetingPick = pickGreeting(DateTime.now());
-    // One-shot: this screen can be *built* while a ride is already running
-    // (cold start onto Record, or a restored interrupted ride), and a
-    // `ref.listen` only fires on a change, never on the current value.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _redirectIfRiding();
       unawaited(_offerOemGuide());
     });
+  }
+
+  /// Whether this screen is on screen. The tab shell keeps it alive offstage
+  /// (#61), and `TickerMode` is off there.
+  bool _visible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Each time the screen is shown, not only when built: it can appear while
+    // a ride is already running (cold start onto Record, a restored
+    // interrupted ride, or switching back to this tab), and a `ref.listen`
+    // only fires on a change, never on the current value.
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible && !_visible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+    }
+    _visible = visible;
   }
 
   /// The one-time Xiaomi/OPPO/vivo/realme battery-settings guide, offered
@@ -89,7 +103,9 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   /// reasons that have nothing to do with recording (unread count, active
   /// bike, appearance change). §83.11.
   void _redirectIfRiding() {
-    if (!mounted) return;
+    // Offstage (another tab, or a route on top): a ride started from Places
+    // or a group ride must not pull the rider away. Re-checked when shown.
+    if (!mounted || !_visible) return;
     final status = ref.read(rideRecordingProvider).status;
     if (status == RecordingStatus.active || status == RecordingStatus.paused) {
       context.go('/ride/active');
@@ -112,7 +128,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     );
 
     final activeBike = ref.watch(activeBikeProvider);
-    final rideState = ref.watch(rideRecordingProvider);
+    final rideState = ref.watch(rideRecordingProvider
+        .select((s) => (error: s.error, blockKind: s.blockKind)));
     final quote =
         resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
     final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
@@ -210,7 +227,11 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(recordingErrorText(context.l10n, rideState),
+                              Text(
+                                  // Text depends only on error + blockKind,
+                                  // which the select above already watches.
+                                  recordingErrorText(context.l10n,
+                                      ref.read(rideRecordingProvider)),
                                   style: TextStyle(
                                       color: context.palette.danger,
                                       fontSize: 13),
@@ -328,7 +349,7 @@ class _HoldToStartControl extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(rideRecordingProvider).status;
+    final status = ref.watch(rideRecordingProvider.select((s) => s.status));
 
     return HoldToStartButton(
       enabled: enabled,

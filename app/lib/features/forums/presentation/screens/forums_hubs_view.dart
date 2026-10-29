@@ -77,122 +77,130 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
         ref.invalidate(customForumsProvider);
         await refreshGarageForums(ref);
       },
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd, 4,
-            AppDimensions.paddingMd, AppDimensions.paddingLg),
-        children: [
-          _SearchShortcut(onTap: widget.onOpenSearch),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  key: const Key('hubs_start_discussion'),
-                  onPressed: () => openNewForumPost(context),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  label: Text(context.l10n.startDiscussion,
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _createClub,
-                  icon: const Icon(Icons.group_add_outlined, size: 18),
-                  label: Text(context.l10n.createRiderClub,
-                      overflow: TextOverflow.ellipsis),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          // The master group: every post from every group.
-          Card(
-            key: const Key('hubs_all_riders'),
-            margin: EdgeInsets.zero,
-            color: context.palette.surface,
-            child: ListTile(
-              leading: Icon(Icons.public, color: context.palette.primary),
-              title: Text(context.l10n.allRidersGroup,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: context.palette.textPrimary)),
-              subtitle: Text(context.l10n.allRidersGroupSubtitle,
-                  style: TextStyle(color: context.palette.textSecondary)),
-              trailing: _resolving == kAllRidersForumId
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2, color: context.palette.primary))
-                  : Icon(Icons.chevron_right,
-                      color: context.palette.textTertiary),
-              onTap: () => _resolveAndOpen(
-                kAllRidersForumId,
-                () => ForumRepository()
-                    .getOrCreateGeneralForum(topic: kAllRidersTopic),
-              ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          _SectionTitle(context.l10n.yourGarageHubs),
-          const SizedBox(height: 10),
-          const _GarageHubs(),
-          const SizedBox(height: 24),
-          _SectionTitle(context.l10n.brandPaddocks),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 104,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: kBrandPaddocks.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (_, i) {
-                final paddock = kBrandPaddocks[i];
-                return _BrandPaddockCard(
-                  paddock: paddock,
-                  forum: stats[paddock.slug],
-                  activity: paddockStats == null
-                      ? null
-                      : paddockStats[paddock.slug] ?? BrandPaddockStats.empty,
-                  resolving: _resolving == paddock.slug,
-                  onTap: () => _resolveAndOpen(
-                    paddock.slug,
-                    () => ForumRepository()
-                        .getOrCreateForum(brand: paddock.brand),
+      // Slivers so the clubs list (user data, up to a page) builds lazily.
+      child: CustomScrollView(slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(
+              AppDimensions.paddingMd, 4, AppDimensions.paddingMd, 0),
+          sliver: SliverList.list(children: [
+            _SearchShortcut(onTap: widget.onOpenSearch),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    key: const Key('hubs_start_discussion'),
+                    onPressed: () => openNewForumPost(context),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    label: Text(context.l10n.startDiscussion,
+                        overflow: TextOverflow.ellipsis),
                   ),
-                );
-              },
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _createClub,
+                    icon: const Icon(Icons.group_add_outlined, size: 18),
+                    label: Text(context.l10n.createRiderClub,
+                        overflow: TextOverflow.ellipsis),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          _SectionTitle(context.l10n.topicBoards),
-          const SizedBox(height: 10),
-          _TopicBento(
-            stats: stats,
-            resolving: _resolving,
-            onTap: (board) => _resolveAndOpen(
-              board.slug,
-              () =>
-                  ForumRepository().getOrCreateGeneralForum(topic: board.topic),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(child: _SectionTitle(context.l10n.communityClubs)),
-              TextButton.icon(
-                onPressed: _createClub,
-                icon: Icon(Icons.add, size: 18, color: context.palette.primary),
-                label: Text(context.l10n.create,
-                    style: TextStyle(color: context.palette.primary)),
+            const SizedBox(height: 16),
+            // The master group: every post from every group.
+            Card(
+              key: const Key('hubs_all_riders'),
+              margin: EdgeInsets.zero,
+              color: context.palette.surface,
+              child: ListTile(
+                leading: Icon(Icons.public, color: context.palette.primary),
+                title: Text(context.l10n.allRidersGroup,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.textPrimary)),
+                subtitle: Text(context.l10n.allRidersGroupSubtitle,
+                    style: TextStyle(color: context.palette.textSecondary)),
+                trailing: _resolving == kAllRidersForumId
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: context.palette.primary))
+                    : Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary),
+                onTap: () => _resolveAndOpen(
+                  kAllRidersForumId,
+                  () => ForumRepository()
+                      .getOrCreateGeneralForum(topic: kAllRidersTopic),
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          const _RiderClubs(),
-        ],
-      ),
+            ),
+            const SizedBox(height: 24),
+            _SectionTitle(context.l10n.yourGarageHubs),
+            const SizedBox(height: 10),
+            const _GarageHubs(),
+            const SizedBox(height: 24),
+            _SectionTitle(context.l10n.brandPaddocks),
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 104,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: kBrandPaddocks.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (_, i) {
+                  final paddock = kBrandPaddocks[i];
+                  return _BrandPaddockCard(
+                    paddock: paddock,
+                    forum: stats[paddock.slug],
+                    activity: paddockStats == null
+                        ? null
+                        : paddockStats[paddock.slug] ?? BrandPaddockStats.empty,
+                    resolving: _resolving == paddock.slug,
+                    onTap: () => _resolveAndOpen(
+                      paddock.slug,
+                      () => ForumRepository()
+                          .getOrCreateForum(brand: paddock.brand),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+            _SectionTitle(context.l10n.topicBoards),
+            const SizedBox(height: 10),
+            _TopicBento(
+              stats: stats,
+              resolving: _resolving,
+              onTap: (board) => _resolveAndOpen(
+                board.slug,
+                () => ForumRepository()
+                    .getOrCreateGeneralForum(topic: board.topic),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(child: _SectionTitle(context.l10n.communityClubs)),
+                TextButton.icon(
+                  onPressed: _createClub,
+                  icon:
+                      Icon(Icons.add, size: 18, color: context.palette.primary),
+                  label: Text(context.l10n.create,
+                      style: TextStyle(color: context.palette.primary)),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+          ]),
+        ),
+        const SliverPadding(
+          padding: EdgeInsets.fromLTRB(AppDimensions.paddingMd, 0,
+              AppDimensions.paddingMd, AppDimensions.paddingLg),
+          sliver: _RiderClubs(),
+        ),
+      ]),
     );
   }
 }
@@ -657,22 +665,30 @@ class _RiderClubs extends ConsumerWidget {
     final clubsAsync = ref.watch(customForumsProvider);
     final user = ref.watch(currentUserProvider);
     return clubsAsync.when(
-      loading: () => Center(
-          child: CircularProgressIndicator(color: context.palette.primary)),
-      error: (e, _) => ErrorView(
-          error: e, onRetry: () => ref.invalidate(customForumsProvider)),
+      loading: () => SliverToBoxAdapter(
+          child: Center(
+              child:
+                  CircularProgressIndicator(color: context.palette.primary))),
+      error: (e, _) => SliverToBoxAdapter(
+          child: ErrorView(
+              error: e, onRetry: () => ref.invalidate(customForumsProvider))),
       data: (clubs) {
         if (clubs.isEmpty) {
-          return Text(
-            context.l10n.noRiderMadeForums,
-            style:
-                TextStyle(color: context.palette.textSecondary, fontSize: 13),
+          return SliverToBoxAdapter(
+            child: Text(
+              context.l10n.noRiderMadeForums,
+              style:
+                  TextStyle(color: context.palette.textSecondary, fontSize: 13),
+            ),
           );
         }
-        return Column(
-          children: [
-            for (final club in clubs) ...[
-              AppCard(
+        return SliverList.builder(
+          itemCount: clubs.length,
+          itemBuilder: (context, i) {
+            final club = clubs[i];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: AppCard(
                 onTap: () => context.push('/forums/${club.id}'),
                 child: Row(
                   children: [
@@ -746,9 +762,8 @@ class _RiderClubs extends ConsumerWidget {
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
-            ],
-          ],
+            );
+          },
         );
       },
     );
