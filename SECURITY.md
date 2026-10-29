@@ -138,7 +138,7 @@ Do these in order.
    Later, once `config/app.minBuild` passes the release that deletes the ride
    before its comments, drop the `shortcut:` legacy comment-delete clause.
 11. **Vote `uid` (2026-10-28, `7a3b2add`). Before the next app release**, or
-   that release's votes are denied: deploy
+   that release's votes are denied: deploy (done 2026-10-29, `4a16cc37`)
    `firebase deploy --only firestore:rules,firestore:indexes --project throttleiqfb`,
    wait for the `votes.uid` override to show "Enabled", then from `scripts/`:
    `node oneoff/backfill_vote_uid.js --service-account=../secret/<throttleiqfb key>.json`
