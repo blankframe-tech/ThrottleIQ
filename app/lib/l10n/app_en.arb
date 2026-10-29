@@ -8637,6 +8637,18 @@
   "@fuelLitersLabel": {
     "description": "Fuel form: litres field label (required)."
   },
+  "unitLitre": "L",
+  "@unitLitre": {
+    "description": "Short unit for litres of fuel, after a number (12.5 L)."
+  },
+  "unitKmPerLitre": "km/L",
+  "@unitKmPerLitre": {
+    "description": "Fuel efficiency unit, kilometres per litre."
+  },
+  "unitMpg": "mpg",
+  "@unitMpg": {
+    "description": "Fuel efficiency unit, miles per US gallon."
+  },
   "fuelTotalCostLabel": "Total paid",
   "@fuelTotalCostLabel": {
     "description": "Fuel form: total amount paid field label."

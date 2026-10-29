@@ -6266,6 +6266,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get fuelLitersLabel => 'লিটার *';
 
   @override
+  String get unitLitre => 'লি.';
+
+  @override
+  String get unitKmPerLitre => 'km/L';
+
+  @override
+  String get unitMpg => 'mpg';
+
+  @override
   String get fuelTotalCostLabel => 'মোট দাম';
 
   @override

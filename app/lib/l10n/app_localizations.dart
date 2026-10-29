@@ -10782,6 +10782,24 @@ abstract class AppLocalizations {
   /// **'Litres *'**
   String get fuelLitersLabel;
 
+  /// Short unit for litres of fuel, after a number (12.5 L).
+  ///
+  /// In en, this message translates to:
+  /// **'L'**
+  String get unitLitre;
+
+  /// Fuel efficiency unit, kilometres per litre.
+  ///
+  /// In en, this message translates to:
+  /// **'km/L'**
+  String get unitKmPerLitre;
+
+  /// Fuel efficiency unit, miles per US gallon.
+  ///
+  /// In en, this message translates to:
+  /// **'mpg'**
+  String get unitMpg;
+
   /// Fuel form: total amount paid field label.
   ///
   /// In en, this message translates to:

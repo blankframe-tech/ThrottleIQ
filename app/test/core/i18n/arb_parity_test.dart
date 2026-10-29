@@ -100,6 +100,10 @@ void main() {
         // A placeholder showing the *shape* of a join code (letters+digits),
         // not natural-language content to translate.
         'joinRideCodeHint',
+        // Fuel efficiency units stay Latin, as the Bangla fuel strings
+        // already write "km/L" mid-sentence.
+        'unitKmPerLitre',
+        'unitMpg',
       };
       final bengali = RegExp(r'[ঀ-৿]');
 

@@ -6289,6 +6289,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fuelLitersLabel => 'Litres *';
 
   @override
+  String get unitLitre => 'L';
+
+  @override
+  String get unitKmPerLitre => 'km/L';
+
+  @override
+  String get unitMpg => 'mpg';
+
+  @override
   String get fuelTotalCostLabel => 'Total paid';
 
   @override

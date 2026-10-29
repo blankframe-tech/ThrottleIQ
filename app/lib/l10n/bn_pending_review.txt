@@ -1676,3 +1676,7 @@ oemGuideSettingsSubtitle
 # batch: cockpit alert flash toggle (2026-10-29)
 alertFlashSettingTitle
 alertFlashSettingSubtitle
+# batch: fuel unit labels (2026-10-29)
+unitLitre
+unitKmPerLitre
+unitMpg

@@ -192,7 +192,7 @@ class _RunningCostsSheetState extends ConsumerState<RunningCostsSheet> {
                     onChanged: (_) => setState(() => _saved = false),
                     decoration: InputDecoration(
                       labelText: l10n.maintAverageMileage,
-                      suffixText: imperial ? 'mpg' : 'km/l',
+                      suffixText: imperial ? l10n.unitMpg : l10n.unitKmPerLitre,
                       filled: true,
                       fillColor: context.palette.surfaceVariant,
                     ),

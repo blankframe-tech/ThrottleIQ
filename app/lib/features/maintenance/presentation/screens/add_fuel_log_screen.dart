@@ -310,7 +310,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
-                  labelText: l10n.fuelLitersLabel, suffixText: 'L'),
+                  labelText: l10n.fuelLitersLabel, suffixText: l10n.unitLitre),
               onChanged: (_) => setState(_recompute),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return l10n.requiredField;
