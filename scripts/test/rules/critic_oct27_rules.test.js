@@ -302,6 +302,22 @@ test('F2 forums: getOrCreateForum, getOrCreateGeneralForum and createCustomForum
   }));
 });
 
+// Security sweep B6: forum create text is capped.
+test('B6 forums: oversized forum text on create is denied', async () => {
+  const f = db(MALLORY);
+  const custom = { type: 'custom', brand: '', model: null, topic: null, displayName: 'X', description: null,
+    createdBy: MALLORY, maintainerIds: [MALLORY], followerCount: 0, postCount: 0, createdAt: serverTimestamp() };
+  await assertFails(setDoc(doc(f, 'forums/c-x1'), { ...custom, displayName: 'x'.repeat(501) }));
+  await assertFails(setDoc(doc(f, 'forums/c-x2'), { ...custom, description: 'x'.repeat(2001) }));
+  await assertFails(setDoc(doc(f, 'forums/c-x3'), { ...custom, displayName: { blob: 1 } }));
+  const bike = { type: 'bikeModel', brand: 'Yamaha', model: 'R15', displayName: 'Yamaha R15',
+    followerCount: 0, postCount: 0, createdAt: serverTimestamp() };
+  await assertFails(setDoc(doc(f, 'forums/b1'), { ...bike, brand: 'x'.repeat(201) }));
+  await assertFails(setDoc(doc(f, 'forums/b2'), { ...bike, model: 'x'.repeat(201) }));
+  await assertFails(setDoc(doc(f, 'forums/t1'), { ...bike, type: 'general', brand: '', model: null,
+    topic: 'x'.repeat(201) }));
+});
+
 test('F2 forums: a c- forum must be custom and name the caller as creator', async () => {
   const f = db(MALLORY);
   const base = { brand: '', model: null, topic: null, displayName: 'X', description: null, followerCount: 0, postCount: 0, createdAt: serverTimestamp() };

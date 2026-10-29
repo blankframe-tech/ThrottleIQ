@@ -1346,6 +1346,15 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly(['type', 'brand', 'model', 'topic',
           'displayName', 'description', 'createdBy', 'maintainerIds',
           'followerCount', 'postCount', 'createdAt']) &&
+        // Security sweep B6: every rider's forum list renders these. Brand and
+        // model come from a rider's own (uncapped) bike, and the custom name
+        // and description from an uncapped form, hence the generous caps.
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 500 &&
+        optionalText(request.resource.data, 'brand', 200) &&
+        optionalText(request.resource.data, 'model', 200) &&
+        optionalText(request.resource.data, 'topic', 200) &&
+        optionalText(request.resource.data, 'description', 2000) &&
         ((forumId.matches('c-.+') &&
           request.resource.data.type == 'custom' &&
           request.resource.data.createdBy == request.auth.uid &&
@@ -1418,7 +1427,9 @@ service cloud.firestore {
           (request.resource.data.get('alsoIn', null) == null ||
            (request.resource.data.alsoIn is list &&
             request.resource.data.alsoIn.size() <= 4 &&
-            !(forumId in request.resource.data.alsoIn))) &&
+            !(forumId in request.resource.data.alsoIn) &&
+            // B6: each entry a forum-id-shaped slug (slugify.dart).
+            request.resource.data.alsoIn.join(',').matches('^([A-Za-z0-9_-]{1,200}(,[A-Za-z0-9_-]{1,200})*)?$'))) &&
           (request.resource.data.get('imageUrls', null) == null ||
            forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
           request.resource.data.get('postType', 'general') in
