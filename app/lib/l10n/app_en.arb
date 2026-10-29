@@ -1458,6 +1458,14 @@
   "@thisRemovesItFrom": {
     "description": "Text in my_shared_rides_screen."
   },
+  "sharedRideDeleteFailed": "Couldn't delete the shared ride. Check your connection and try again.",
+  "@sharedRideDeleteFailed": {
+    "description": "SnackBar in my_shared_rides_screen when deleting a shared ride fails."
+  },
+  "sharedPostNotRemoved": "Ride deleted, but its shared post couldn't be removed. Delete it from My Shared Rides when you're online.",
+  "@sharedPostNotRemoved": {
+    "description": "SnackBar in ride_summary_screen when the ride was deleted but its shared post delete failed."
+  },
   "delete": "Delete",
   "@delete": {
     "description": "Text in forum_thread_screen (+1 more)."
@@ -1692,10 +1700,6 @@
   "duration": "Duration",
   "@duration": {
     "description": "Title in shared_ride_detail_screen."
-  },
-  "ridingPace": "Riding Pace",
-  "@ridingPace": {
-    "description": "Text in shared_ride_detail_screen."
   },
   "trackPoints": "{polylineCount} track points",
   "@trackPoints": {

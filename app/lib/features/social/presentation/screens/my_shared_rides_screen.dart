@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
-import '../../data/repositories/ride_share_repository.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../providers/ride_feed_provider.dart';
 import '../widgets/shared_ride_list_card.dart';
 import '../../../../shared/widgets/error_view.dart';
@@ -36,7 +36,15 @@ class MySharedRidesScreen extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await RideShareRepository().deleteSharedRide(rideId);
+    try {
+      await ref.read(rideShareRepositoryProvider).deleteSharedRide(rideId);
+    } catch (e, st) {
+      reportSilently(e, st, where: 'mySharedRides.delete');
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.l10n.sharedRideDeleteFailed)));
+      return;
+    }
     ref.invalidate(myRidesProvider);
   }
 

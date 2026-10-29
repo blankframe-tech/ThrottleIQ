@@ -2084,6 +2084,18 @@ abstract class AppLocalizations {
   /// **'This removes it from the feed for everyone. Your local ride history is unaffected.'**
   String get thisRemovesItFrom;
 
+  /// SnackBar in my_shared_rides_screen when deleting a shared ride fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the shared ride. Check your connection and try again.'**
+  String get sharedRideDeleteFailed;
+
+  /// SnackBar in ride_summary_screen when the ride was deleted but its shared post delete failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride deleted, but its shared post couldn\'t be removed. Delete it from My Shared Rides when you\'re online.'**
+  String get sharedPostNotRemoved;
+
   /// Text in forum_thread_screen (+1 more).
   ///
   /// In en, this message translates to:
@@ -2341,12 +2353,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Duration'**
   String get duration;
-
-  /// Text in shared_ride_detail_screen.
-  ///
-  /// In en, this message translates to:
-  /// **'Riding Pace'**
-  String get ridingPace;
 
   /// Text in shared_ride_detail_screen.
   ///

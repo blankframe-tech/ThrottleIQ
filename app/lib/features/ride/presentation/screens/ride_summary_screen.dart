@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +13,7 @@ import '../../../../core/database/daos/ride_dao.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/downsample.dart';
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/utils/formatters/speed_formatter.dart';
 import '../../../../core/utils/riding_score.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -620,12 +622,15 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           .showSnackBar(SnackBar(content: Text(l10n.couldNotDelete(e))));
       return;
     }
-    // Best effort: a ride that was never shared (or an offline device) just
-    // leaves the post to be removed from My Shared Rides later.
+    // Offline, the post delete is queued by Firestore and lands later. A
+    // real failure leaves the post up, so say so instead of failing silently.
     try {
       await RideShareRepository().deleteSharedRide(ride.id);
-    } catch (e) {
-      debugPrint('shared post delete skipped: $e');
+    } on FirebaseException catch (e, st) {
+      // A never-shared ride: the comments read rule denies a missing post.
+      if (e.code != 'permission-denied') _sharedPostNotRemoved(e, st);
+    } catch (e, st) {
+      _sharedPostNotRemoved(e, st);
     }
     ref.invalidate(rideHistoryProvider(ride.bikeId));
     ref.invalidate(riderStatsProvider);
@@ -633,6 +638,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
     ref.invalidate(myRidesProvider);
     ref.read(rideFeedNotifierProvider.notifier).refresh();
     if (mounted) _dismiss(context);
+  }
+
+  void _sharedPostNotRemoved(Object e, StackTrace st) {
+    reportSilently(e, st, where: 'rideSummary.deleteSharedPost');
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.sharedPostNotRemoved)));
   }
 
   // Reached two ways: pushed on top of a rides list (bike detail / all

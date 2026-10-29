@@ -1108,6 +1108,14 @@ class AppLocalizationsBn extends AppLocalizations {
       'এতে সবার ফিড থেকে এটি সরে যাবে। আপনার ফোনের রাইড ইতিহাস অপরিবর্তিত থাকবে।';
 
   @override
+  String get sharedRideDeleteFailed =>
+      'শেয়ার করা রাইডটি মোছা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get sharedPostNotRemoved =>
+      'রাইড মুছে ফেলা হয়েছে, কিন্তু এর শেয়ার করা পোস্টটি সরানো যায়নি। অনলাইনে থাকলে \'আমার শেয়ার করা রাইড\' থেকে মুছে ফেলুন।';
+
+  @override
   String get delete => 'মুছুন';
 
   @override
@@ -1260,9 +1268,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get duration => 'সময়কাল';
-
-  @override
-  String get ridingPace => 'রাইডিং পেস';
 
   @override
   String trackPoints(Object polylineCount) {

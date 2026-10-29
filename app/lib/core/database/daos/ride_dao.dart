@@ -323,9 +323,32 @@ class RideDao {
   /// crash ride is uploaded the moment crash detection fires — or
   /// [CloudRepository.downloadRides] pulls it straight back on the next
   /// sync. SyncManager deletes the remote copy and flips `synced` to 1.
+  ///
+  /// A `completed` ride's distance and count come off its bike in the same
+  /// transaction (§103.2): only `stopRide` credits a bike, and only after
+  /// finalizing to `completed`; discarded/recovered rides never reach it.
+  /// The rollback is keyed on the row still existing, so a repeat delete or
+  /// a tombstone replay finds nothing and subtracts nothing. Floored at zero
+  /// like [BikeDao.moveRideStats].
   Future<void> deleteWithTombstone(String id, {String? userId}) async {
     final db = await DatabaseHelper.instance.database;
     await db.transaction((txn) async {
+      final rows = await txn.query('rides',
+          columns: ['bike_id', 'distance_m'],
+          where: "id = ? AND status = 'completed'",
+          whereArgs: [id]);
+      if (rows.isNotEmpty) {
+        await txn.rawUpdate('''
+          UPDATE bikes SET
+            total_distance_m = MAX(0, total_distance_m - ?),
+            ride_count = MAX(0, ride_count - 1),
+            synced = 0
+          WHERE id = ?
+        ''', [
+          (rows.first['distance_m'] as num?)?.toDouble() ?? 0,
+          rows.first['bike_id'],
+        ]);
+      }
       await txn.delete('ride_points', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('impact_events', where: 'ride_id = ?', whereArgs: [id]);
       await txn.delete('rides', where: 'id = ?', whereArgs: [id]);

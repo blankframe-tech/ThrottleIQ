@@ -746,18 +746,7 @@ review (102.7, deferred to November 2026) is in `needs_attention.md`. Still open
 
 ## §103 Shared-ride card / owner actions follow-ups (2026-10-15)
 
-103.1 and 103.4 are done (`issues_fixed.md` §103). Still open:
-
-- **103.2 Delete ride:** the bike's odometer and stats are not rolled back when a ride is deleted
-  from history. Checked 2026-10-22: `RideDao.deleteWithTombstone` (`ride_dao.dart:324`) removes
-  the ride, its points and impact events, and writes the tombstone; nothing touches the bike.
-  Shared-post delete there is best-effort (silent offline).
-- **103.3 Detail screen:** the rider card still shows `bikeName · bikeType` ("Motorcycle"
-  fallback) at `shared_ride_detail_screen.dart:666`. Only the feed card was changed.
-- **103.5 Cockpit:** the `_GroupRideTalkPill` comment in `active_ride_screen.dart` sits above
-  `PhonePlacementSelector` (cosmetic). With a large iPhone bottom safe area, the controls (~174 px)
-  may still reach the speed panel's fixed `bottom: 160` (`active_ride_screen.dart:790`; not
-  checked on a device).
+All done; see `issues_fixed.md` §103 (103.2, 103.3, 103.5 fixed 2026-10-29).
 
 ## §104 Spark quota load test (2026-10-15, `714f8d6`; report `DOCS/Handoff for agents and Todos/load_test/load-test-2026-10-15.md`)
 

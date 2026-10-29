@@ -549,12 +549,12 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
               child: Row(
                 children: [
+                  const PhonePlacementSelector(),
+                  const SizedBox(width: 8),
                   // The way back to the group map (push-to-talk) while on a
                   // live group ride. Before this the cockpit had no link to
                   // it at all — the Social "Riding Now" card was the only
                   // door in.
-                  const PhonePlacementSelector(),
-                  const SizedBox(width: 8),
                   const _GroupRideTalkPill(),
                   const Spacer(),
                   const _RideClock(),
@@ -821,7 +821,8 @@ class _SpeedPanel extends ConsumerWidget {
             : 0.0);
 
     return Positioned(
-      bottom: 160,
+      // Above the bottom controls, which grow by the same safe-area inset.
+      bottom: 160 + MediaQuery.of(context).padding.bottom,
       left: 0,
       right: 0,
       child: Column(

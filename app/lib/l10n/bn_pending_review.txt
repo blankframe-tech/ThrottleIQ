@@ -58,7 +58,6 @@ noGpsTrackAvailable
 speedPerformanceDetails
 maxSpeed
 duration
-ridingPace
 trackPoints
 startColon
 finishColon
@@ -1667,3 +1666,7 @@ indriyoNotConnected
 indriyoInvalidUrl
 indriyoSimulationTitle
 indriyoSimulationSubtitle
+
+# batch: shared ride delete errors (2026-10-29)
+sharedRideDeleteFailed
+sharedPostNotRemoved
