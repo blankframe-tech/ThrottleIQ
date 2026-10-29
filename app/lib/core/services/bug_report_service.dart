@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -67,11 +68,13 @@ class BugReportService {
     String? uid;
     try {
       uid = FirebaseAuth.instance.currentUser?.uid;
-    } catch (_) {}
+    } catch (_) {/* Firebase not initialised (tests): report goes anonymous */}
 
+    final info = await PackageInfo.fromPlatform();
     return {
       'app': 'ThrottleIQ',
-      'version': '1.0.0',
+      'version': info.version,
+      'build': info.buildNumber,
       'platform': Platform.operatingSystem,
       'os': Platform.operatingSystemVersion,
       'timestamp': DateTime.now().toUtc().toIso8601String(),
