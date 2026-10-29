@@ -16,4 +16,3 @@ The following files are present in this directory:
 - `daily_ride_summary_provider.dart`: Riverpod provider definition.
 - `live_ride_places_provider.dart`: Riverpod provider definition.
 - `ride_recording_provider.dart`: Riverpod provider definition.
-- `ride_repository_provider.dart`: Riverpod provider definition.

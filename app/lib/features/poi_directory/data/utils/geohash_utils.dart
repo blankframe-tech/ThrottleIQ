@@ -19,36 +19,6 @@ class GeohashUtils {
     };
   }
 
-  /// Get geohash prefixes for a viewport
-  /// Returns a list of geohashes that cover the viewport
-  static List<String> getGeohashesForViewport({
-    required double minLat,
-    required double maxLat,
-    required double minLng,
-    required double maxLng,
-    int precision = 6,
-  }) {
-    final geohashes = <String>{};
-
-    // Generate geohashes for a grid of points within the viewport
-    final latStep = (maxLat - minLat) / 4;
-    final lngStep = (maxLng - minLng) / 4;
-
-    for (int i = 0; i <= 4; i++) {
-      for (int j = 0; j <= 4; j++) {
-        final lat = minLat + (i * latStep);
-        final lng = minLng + (j * lngStep);
-
-        if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-          final geohash = encode(lat, lng, precision: precision);
-          geohashes.add(geohash);
-        }
-      }
-    }
-
-    return geohashes.toList();
-  }
-
   /// Simplify geohash list by removing redundant ones
   static List<String> simplifyGeohashes(List<String> geohashes) {
     if (geohashes.isEmpty) return [];
