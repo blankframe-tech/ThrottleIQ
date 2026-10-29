@@ -8649,6 +8649,60 @@
   "@unitMpg": {
     "description": "Fuel efficiency unit, miles per US gallon."
   },
+  "widgetServiceIn": "{item} in {when}",
+  "@widgetServiceIn": {
+    "description": "Home-screen maintenance widget: the next service and how far off it is. when is a distance (240 km) or widgetDays.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetServiceOverdueBy": "{item} overdue by {when}",
+  "@widgetServiceOverdueBy": {
+    "description": "Home-screen maintenance widget: a service past its limit. when is a distance or widgetDays.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      },
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetServiceDueNow": "{item} due now",
+  "@widgetServiceDueNow": {
+    "description": "Home-screen maintenance widget: a service at its limit.",
+    "placeholders": {
+      "item": {
+        "type": "String"
+      }
+    }
+  },
+  "widgetServiceFallback": "Service",
+  "@widgetServiceFallback": {
+    "description": "Home-screen maintenance widget: name used when a check has no label."
+  },
+  "widgetDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@widgetDays": {
+    "description": "Home-screen maintenance widget: a number of days, used inside widgetServiceIn / widgetServiceOverdueBy.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "widgetNoData": "No data yet",
+  "@widgetNoData": {
+    "description": "Home-screen ride stats widget before there is anything to show."
+  },
+  "widgetNoServiceData": "No service data yet",
+  "@widgetNoServiceData": {
+    "description": "Home-screen maintenance widget before any service is tracked."
+  },
   "fuelTotalCostLabel": "Total paid",
   "@fuelTotalCostLabel": {
     "description": "Fuel form: total amount paid field label."

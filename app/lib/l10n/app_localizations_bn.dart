@@ -6275,6 +6275,41 @@ class AppLocalizationsBn extends AppLocalizations {
   String get unitMpg => 'mpg';
 
   @override
+  String widgetServiceIn(String item, String when) {
+    return '$when পরে $item';
+  }
+
+  @override
+  String widgetServiceOverdueBy(String item, String when) {
+    return '$item-এর সময় $when পেরিয়ে গেছে';
+  }
+
+  @override
+  String widgetServiceDueNow(String item) {
+    return '$item এখনই করতে হবে';
+  }
+
+  @override
+  String get widgetServiceFallback => 'সার্ভিস';
+
+  @override
+  String widgetDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count দিন',
+      one: '1 দিন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get widgetNoData => 'এখনও কোনো তথ্য নেই';
+
+  @override
+  String get widgetNoServiceData => 'এখনও সার্ভিসের তথ্য নেই';
+
+  @override
   String get fuelTotalCostLabel => 'মোট দাম';
 
   @override

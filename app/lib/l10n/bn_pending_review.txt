@@ -1680,3 +1680,11 @@ alertFlashSettingSubtitle
 unitLitre
 unitKmPerLitre
 unitMpg
+# batch: home-screen widget text (2026-10-29)
+widgetServiceIn
+widgetServiceOverdueBy
+widgetServiceDueNow
+widgetServiceFallback
+widgetDays
+widgetNoData
+widgetNoServiceData

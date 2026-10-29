@@ -10,6 +10,8 @@ import 'package:home_widget/home_widget.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../database/daos/bike_dao.dart';
+import '../i18n/l10n_lookup.dart';
+import '../../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_theme_style.dart';
 import '../theme/theme_style_provider.dart';
@@ -19,6 +21,9 @@ import '../../features/garage/domain/entities/bike_entity.dart';
 import '../../features/maintenance/data/repositories/maintenance_forecast_repository.dart';
 import '../../features/maintenance/domain/calculators/maintenance_forecast.dart';
 import '../../features/maintenance/domain/entities/maintenance_entity.dart';
+import '../../features/maintenance/presentation/maintenance_l10n.dart';
+import '../../features/maintenance/presentation/widgets/maintenance_format.dart'
+    show kMaintenanceImperialPrefKey, kmToMi;
 import '../../features/ride/data/models/ride_model.dart';
 import '../../features/ride/domain/entities/ride_entity.dart';
 
@@ -101,12 +106,10 @@ const String kWidgetKeyThemeDanger = 'ti_theme_danger';
 const String kWidgetKeyThemeIsDark = 'ti_theme_is_dark';
 
 /// Shown by both platforms before the app has ever published anything. Native
-/// code has its own copy of these as a defensive default; keeping them here
-/// means a "signed out"/"no bikes" refresh can publish them explicitly rather
-/// than leaving stale numbers from a previous account on the home screen.
+/// code has its own copy as a defensive default; a "signed out"/"no bikes"
+/// refresh publishes it (and the localized `widgetNoData` /
+/// `widgetNoServiceData`) rather than leaving a previous account's numbers.
 const String kWidgetPlaceholderValue = '—';
-const String kWidgetPlaceholderNoData = 'No data yet';
-const String kWidgetPlaceholderNoService = 'No service data yet';
 
 // ---------------------------------------------------------------------------
 // Pure formatting helpers.
@@ -117,25 +120,24 @@ const String kWidgetPlaceholderNoService = 'No service data yet';
 // ---------------------------------------------------------------------------
 
 /// A distance rendered for a home-screen widget: `'0 km'`, `'128.4 km'`,
-/// `'12,480 km'`.
+/// `'12,480 km'`, or in miles when [imperial] (the rider's km/mi choice).
 ///
 /// Widgets are glanceable, not precise instruments, so this trades decimals
-/// for width as the number grows: one decimal below 1000 km, whole kilometres
+/// for width as the number grows: one decimal below 1000, whole units
 /// with thousands separators above. Non-finite and negative inputs (a corrupt
 /// row, a bad subtraction) collapse to `'0 km'` rather than rendering `NaN`
 /// on someone's home screen.
-String formatKm(double km) {
-  if (km.isNaN || km.isInfinite) return '0 km';
-  if (km < 0.05) return '0 km';
-  if (km < 1000) return '${km.toStringAsFixed(1)} km';
-  return '${_withThousandsSeparator(km.round())} km';
+String formatKm(double km, {bool imperial = false}) {
+  final unit = imperial ? 'mi' : 'km';
+  final v = imperial ? km * kmToMi : km;
+  if (v.isNaN || v.isInfinite || v < 0.05) return '0 $unit';
+  if (v < 1000) return '${v.toStringAsFixed(1)} $unit';
+  return '${_withThousandsSeparator(v.round())} $unit';
 }
 
 /// `'0 rides'` / `'1 ride'` / `'42 rides'`. Negatives clamp to zero.
-String formatRideCount(int count) {
-  final n = count < 0 ? 0 : count;
-  return '$n ${n == 1 ? 'ride' : 'rides'}';
-}
+String formatRideCount(int count, AppLocalizations l10n) =>
+    l10n.rideCountLabel(count < 0 ? 0 : count);
 
 /// The one-line "what's next" sentence on the maintenance widget.
 ///
@@ -150,19 +152,27 @@ String formatNextServiceSummary({
   required String serviceLabel,
   required double kmUntilDue,
   required bool overdue,
+  required AppLocalizations l10n,
+  bool imperial = false,
   int? daysUntilDue,
 }) {
-  final label = serviceLabel.trim().isEmpty ? 'Service' : serviceLabel.trim();
+  final label = serviceLabel.trim().isEmpty
+      ? l10n.widgetServiceFallback
+      : serviceLabel.trim();
   if (daysUntilDue != null) {
-    final d = daysUntilDue.abs();
-    final days = '$d ${d == 1 ? 'day' : 'days'}';
-    if (overdue) return '$label overdue by $days';
-    if (daysUntilDue <= 0) return '$label due now';
-    return '$label in $days';
+    final days = l10n.widgetDays(daysUntilDue.abs());
+    if (overdue) return l10n.widgetServiceOverdueBy(label, days);
+    if (daysUntilDue <= 0) return l10n.widgetServiceDueNow(label);
+    return l10n.widgetServiceIn(label, days);
   }
-  if (overdue) return '$label overdue by ${formatKm(kmUntilDue.abs())}';
-  if (kmUntilDue.isNaN || kmUntilDue <= 0) return '$label due now';
-  return '$label in ${formatKm(kmUntilDue)}';
+  String dist(double km) => formatKm(km, imperial: imperial);
+  if (overdue) {
+    return l10n.widgetServiceOverdueBy(label, dist(kmUntilDue.abs()));
+  }
+  if (kmUntilDue.isNaN || kmUntilDue <= 0) {
+    return l10n.widgetServiceDueNow(label);
+  }
+  return l10n.widgetServiceIn(label, dist(kmUntilDue));
 }
 
 String _withThousandsSeparator(int value) {
@@ -276,16 +286,15 @@ class NextServiceDue {
 /// (issues §94.1: it used to keep its own 6-type km table and ignore the
 /// rider's intervals and enabled checks). Null when nothing is tracked or
 /// known yet.
-NextServiceDue? nextServiceDue(List<CheckForecast> forecasts) {
+NextServiceDue? nextServiceDue(
+    List<CheckForecast> forecasts, AppLocalizations l10n) {
   final f = upNext(forecasts);
   if (f == null) return null;
   final byTime =
       f.daysLeft != null && (f.kmLeft == null || f.trigger == DueTrigger.time);
   return NextServiceDue(
     serviceType: f.serviceType,
-    label: (f.customLabel != null && f.customLabel!.trim().isNotEmpty)
-        ? f.customLabel!.trim()
-        : f.serviceType.label,
+    label: forecastLabel(f, l10n),
     kmUntilDue: f.kmLeft,
     daysUntilDue: f.daysLeft,
     byTime: byTime,
@@ -498,12 +507,13 @@ class HomeWidgetService {
     required int rideCount,
   }) async {
     try {
+      final (l10n, imperial) = await _displayPrefs();
       await Future.wait([
-        _save(kWidgetKeyWeeklyKm, formatKm(weeklyKm)),
+        _save(kWidgetKeyWeeklyKm, formatKm(weeklyKm, imperial: imperial)),
         _save(kWidgetKeyWeeklyKmRaw, weeklyKm),
-        _save(kWidgetKeyTotalKm, formatKm(totalKm)),
+        _save(kWidgetKeyTotalKm, formatKm(totalKm, imperial: imperial)),
         _save(kWidgetKeyTotalKmRaw, totalKm),
-        _save(kWidgetKeyRideCount, formatRideCount(rideCount)),
+        _save(kWidgetKeyRideCount, formatRideCount(rideCount, l10n)),
         _save(kWidgetKeyRideCountRaw, rideCount),
         _save(kWidgetKeyStatsUpdatedAt, DateTime.now().toIso8601String()),
       ]);
@@ -524,10 +534,13 @@ class HomeWidgetService {
     int? daysUntilDue,
   }) async {
     try {
+      final (l10n, imperial) = await _displayPrefs();
       final summary = formatNextServiceSummary(
         serviceLabel: nextServiceLabel,
         kmUntilDue: kmUntilDue,
         overdue: overdue,
+        l10n: l10n,
+        imperial: imperial,
         daysUntilDue: daysUntilDue,
       );
       await Future.wait([
@@ -538,7 +551,8 @@ class HomeWidgetService {
                 : bikeName.trim()),
         _save(kWidgetKeyServiceLabel, nextServiceLabel),
         _save(kWidgetKeyServiceSummary, summary),
-        _save(kWidgetKeyKmUntilDue, formatKm(kmUntilDue.abs())),
+        _save(kWidgetKeyKmUntilDue,
+            formatKm(kmUntilDue.abs(), imperial: imperial)),
         _save(kWidgetKeyKmUntilDueRaw, kmUntilDue),
         _save(kWidgetKeyOverdue, overdue),
         _save(kWidgetKeyMaintenanceUpdatedAt, DateTime.now().toIso8601String()),
@@ -605,13 +619,14 @@ class HomeWidgetService {
   /// numbers don't linger on the home screen.
   Future<void> publishPlaceholders() async {
     try {
+      final (l10n, _) = await _displayPrefs();
       await Future.wait([
         _save(kWidgetKeyWeeklyKm, kWidgetPlaceholderValue),
         _save(kWidgetKeyTotalKm, kWidgetPlaceholderValue),
-        _save(kWidgetKeyRideCount, kWidgetPlaceholderNoData),
+        _save(kWidgetKeyRideCount, l10n.widgetNoData),
         _save(kWidgetKeyBikeName, kWidgetPlaceholderValue),
         _save(kWidgetKeyServiceLabel, ''),
-        _save(kWidgetKeyServiceSummary, kWidgetPlaceholderNoService),
+        _save(kWidgetKeyServiceSummary, l10n.widgetNoServiceData),
         _save(kWidgetKeyKmUntilDue, kWidgetPlaceholderValue),
         _save(kWidgetKeyOverdue, false),
         _save(kWidgetKeyMaxLeanLeft, kWidgetPlaceholderValue),
@@ -721,7 +736,8 @@ class HomeWidgetService {
   }
 
   Future<void> _publishMaintenanceFor(BikeEntity bike) async {
-    final next = nextServiceDue(await _forecasts.forecastFor(bike));
+    final (l10n, _) = await _displayPrefs();
+    final next = nextServiceDue(await _forecasts.forecastFor(bike), l10n);
     if (next == null) {
       await publishMaintenanceEmpty();
       return;
@@ -738,10 +754,11 @@ class HomeWidgetService {
   /// Maintenance widget with nothing to report yet.
   Future<void> publishMaintenanceEmpty() async {
     try {
+      final (l10n, _) = await _displayPrefs();
       await Future.wait([
         _save(kWidgetKeyBikeName, kWidgetPlaceholderValue),
         _save(kWidgetKeyServiceLabel, ''),
-        _save(kWidgetKeyServiceSummary, kWidgetPlaceholderNoService),
+        _save(kWidgetKeyServiceSummary, l10n.widgetNoServiceData),
         _save(kWidgetKeyKmUntilDue, kWidgetPlaceholderValue),
         _save(kWidgetKeyKmUntilDueRaw, 0.0),
         _save(kWidgetKeyOverdue, false),
@@ -762,6 +779,17 @@ class HomeWidgetService {
       if (b.isActive) return b;
     }
     return bikes.reduce((a, b) => b.rideCount > a.rideCount ? b : a);
+  }
+
+  /// The rider's saved language and km/mi choice (the maintenance page's,
+  /// which in-app alerts follow too). A snapshot: the widgets pick up a change
+  /// on their next refresh (app start, ride save, maintenance change).
+  Future<(AppLocalizations, bool)> _displayPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (
+      await savedL10n(),
+      prefs.getBool(kMaintenanceImperialPrefKey) ?? false,
+    );
   }
 
   Future<void> _save(String key, Object? value) async {

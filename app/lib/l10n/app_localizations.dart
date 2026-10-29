@@ -10800,6 +10800,48 @@ abstract class AppLocalizations {
   /// **'mpg'**
   String get unitMpg;
 
+  /// Home-screen maintenance widget: the next service and how far off it is. when is a distance (240 km) or widgetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} in {when}'**
+  String widgetServiceIn(String item, String when);
+
+  /// Home-screen maintenance widget: a service past its limit. when is a distance or widgetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} overdue by {when}'**
+  String widgetServiceOverdueBy(String item, String when);
+
+  /// Home-screen maintenance widget: a service at its limit.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} due now'**
+  String widgetServiceDueNow(String item);
+
+  /// Home-screen maintenance widget: name used when a check has no label.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get widgetServiceFallback;
+
+  /// Home-screen maintenance widget: a number of days, used inside widgetServiceIn / widgetServiceOverdueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String widgetDays(int count);
+
+  /// Home-screen ride stats widget before there is anything to show.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get widgetNoData;
+
+  /// Home-screen maintenance widget before any service is tracked.
+  ///
+  /// In en, this message translates to:
+  /// **'No service data yet'**
+  String get widgetNoServiceData;
+
   /// Fuel form: total amount paid field label.
   ///
   /// In en, this message translates to:
