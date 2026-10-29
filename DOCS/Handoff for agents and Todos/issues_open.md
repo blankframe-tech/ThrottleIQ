@@ -630,7 +630,6 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 - **101.S7** full CSP and SRI for `public/live-viewer.html` (Leaflet from unpkg, Firebase from
   gstatic). Checked: `firebase.json` sends only `frame-ancestors 'none'`. Needs a browser check.
 - **101.S9** `scripts/` pins `firebase-admin ^12`, `functions/` `^14`.
-- **101.S10** actions aren't SHA-pinned; CI runs twice (push and PR).
 - **101.S11** stale indexes in `firestore.indexes.json` (checked): `liveSessions (userId,
   expiresAt)` though the field is `uid`, the `crashNotifications` COLLECTION_GROUP index, and the
   legacy `rides` indexes. Remove them only together with an index deploy (§84).
@@ -649,8 +648,8 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
   deleted 2026-10-27, no callers); `getGeohashesForViewport` (`geohash_utils.dart:24`) has no callers.
   **101.P7** `LocaleNotifier` has no try/catch around prefs.
 - **101.B3** CI has no release build. **101.B5** proguard keep rules are over-broad;
-  `targetSdk` follows Flutter. **101.B8** CI never runs `integration_test/` and has no coverage
-  step.
+  `targetSdk` follows Flutter. **101.B8** CI never runs `integration_test/` (coverage
+  report added 2026-10-29, #54).
 - **101.C6** auto-tracking holds a CPU wakelock all day (`auto_tracking_service.dart:548`
   `allowWakeLock: true`). Measure the battery cost on a budget phone (§96.3).
 
@@ -844,7 +843,6 @@ Open developer items found while rewriting `HANDOFF_Document.md` that no other s
 - **110.1 Unused l10n key `n0NotGoogle`.** `app/lib/l10n/app_en.arb:3767` and `app_bn.arb:806`; nothing in `app/lib` reads it since `4535b6e8` hid the Google column on place detail. *Fix:* delete the key in both ARB files and regenerate. Harmless, but it keeps a "Not on Google" string the app no longer shows. Source: HANDOFF 2026-10-19 (places).
 - **110.2 PRD says the fix purge is never called.** `DOCS/For Devs and Contributors/architecture/PRD.md:133` (AUT-7, "No code calls the purge yet") and open item 3 (`:310`). The purge runs: `auto_tracking_service.dart:367` calls `DailyRideSummaryRepository.purgeOldFixesIfDue()` (14 days, `auto_detection_dao.dart:354`). *Fix:* mark AUT-7 built; keep open item 3 only for its second question (store day totals before the purge, since purged detections drop out of older daily summaries, `auto_tracking_plan.md:249`). Source: HANDOFF 2026-10-15 (agent round).
 - **110.4 Admin check still falls back to an email.** `firestore.rules:136-141` (`isAdmin()` accepts a verified `the.abraar.rar@gmail.com` token), plus client copies in `forum_permissions.dart:5` and `jam_label_provider.dart:14`. Nobody recorded running `scripts/oneoff/set_admin_claim.js`, so the `admin` claim may not exist. *Fix:* after the owner sets the claim and signs in again, delete the email branch from `isAdmin()` and its rules tests. Why: admin rights should not depend on one mailbox's address. Source: HANDOFF Key facts, "Admin account" (2026-08-12).
-- **110.6 `main`'s pre-push hook lacks the linked-worktree fix.** `mayabi` (`ef83fe03`) unsets git's local env vars before the gate in `.githooks/pre-push`; without it, `GIT_DIR` made Flutter report `0.0.0-unknown` and `pub get` fail in a linked worktree. `main`'s hook has no such line. Not reproduced on `main`. *Fix:* write the same few lines on `main` (the owner asked for no cherry-picks from `mayabi` without asking). Source: `mayabi` branch HANDOFF, "Pre-push in a worktree".
 
 ## 111. People tab: suggested-rider cards overflow by 1 px (2026-10-22)
 

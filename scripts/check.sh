@@ -6,7 +6,7 @@
 # Usage: scripts/check.sh [--base <rev>] [--ci] [--force]
 #   --base <rev>  diff base for "changed files" checks (default: merge-base
 #                 with origin/main). CI passes the push/PR base.
-#   --ci          CI mode: no pass stamp; rules and functions are left to
+#   --ci          CI mode: no pass stamp, test coverage; rules and functions are left to
 #                 their own CI jobs.
 #   --force       run even if this exact commit already passed.
 #   --covers <sha> exit 0 if an earlier pass covers <sha> (used by pre-push).
@@ -113,7 +113,13 @@ guard_windows_paths() {
   ! git ls-files | grep -E '[<>:"|?*\\]|[. ]$|[. ]/|(^|/)(CON|PRN|AUX|NUL|COM[0-9]|LPT[0-9])(\.|/|$)'; }
 
 analyze() { (cd app && flutter analyze); }
-tests() { (cd app && flutter test --reporter=failures-only); }
+tests() {
+  # CI also writes app/coverage/lcov.info (uploaded as an artifact) and prints
+  # the line total; local runs skip it to stay fast (#54).
+  if [ "$CI" = false ]; then (cd app && flutter test --reporter=failures-only); return; fi
+  (cd app && flutter test --reporter=failures-only --coverage) || return 1
+  awk -F: '/^LF:/{f+=$2} /^LH:/{h+=$2}
+    END{if(f) printf "coverage: %.1f%% of lines (%d/%d)\n", 100*h/f, h, f}' app/coverage/lcov.info; }
 
 rules_if_changed() {
   if [ -z "$(changed firestore.rules database.rules.json 'scripts/test/rules/*')" ]; then

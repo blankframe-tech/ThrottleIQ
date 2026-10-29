@@ -7679,3 +7679,10 @@ Reported by the owner on a Play install (alpha track, build 30, `1.0.0-beta.4.8.
 - **Play signing key** (read from build 30's Play-generated universal APK with `apksigner verify --max-sdk-version 36 --print-certs`; JDK 21 can't parse the PQC v3.2 signer): SHA-1 `6016d8cbc69b07e8dc3c03397763ae0c6defbf07`, SHA-256 `cf1e8bab278265ccdd230303ae612ba95190a6d04ca85c19b8585e459060543d`.
 - **Fixed (console only, no rebuild):** both hashes registered with `firebase apps:android:sha:create <appId> <hash> --project throttleiqfb`; Firebase created the matching Android OAuth client. The local `app/android/app/google-services.json` (gitignored) got the refreshed `com.bft.throttleiq` block. Not yet re-tested on the Play install.
 - **Rule:** if the Play signing key ever changes (key upgrade), register its fingerprint again. Find it in Play Console → App integrity → App signing.
+
+## CI and hooks: #53, #54, #55, §110.6, §101.S10 — FIXED (2026-10-29, lane F, `lane/f-ci-hooks`)
+
+- **#55 / §110.6** `.githooks/pre-push` now `cd`s to the repo root and runs `unset $(git rev-parse --local-env-vars)` before the gate, so `GIT_DIR` from a linked worktree no longer makes Flutter report `0.0.0-unknown`. Written on `main`, not cherry-picked from `mayabi`. Not yet tried with a real push from a worktree.
+- **#53 / §101.S10** every `uses:` in `.github/workflows/` is pinned to a full commit SHA with the tag in a trailing comment (same majors as before). `ci.yml` and `security.yml` run `push` only on `main`, so a PR runs once. Dependabot already covered `github-actions`.
+- **#54** `scripts/check.sh --ci` runs `flutter test --coverage` and prints the line total; `ci.yml` uploads `app/coverage/lcov.info` as the `coverage-lcov` artifact. Local runs skip coverage.
+- Guards in `scripts/test/hosting_repo_hygiene.test.js`: SHA pins, push on `main` only, and the hook's `unset` before `check.sh`.
