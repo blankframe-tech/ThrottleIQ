@@ -2,6 +2,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../utils/error_reporter.dart';
+
 const _prefsKey = 'locale';
 const _systemValue = 'system';
 const _englishValue = 'en';
@@ -45,23 +47,39 @@ enum AppLocale {
 /// Persisted language preference. Defaults to [AppLocale.system] until a saved
 /// choice loads from [SharedPreferences] — same shape as
 /// `theme_style_provider.dart`, including the `mounted` guard after the await.
+/// A failing preferences store never throws out of here (#39): a failed read
+/// keeps the default, a failed write keeps the in-memory choice.
 class LocaleNotifier extends StateNotifier<AppLocale> {
-  LocaleNotifier() : super(AppLocale.system) {
+  LocaleNotifier(
+      {Future<SharedPreferences> Function() prefs =
+          SharedPreferences.getInstance})
+      : _prefs = prefs,
+        super(AppLocale.system) {
     _loadPersisted();
   }
 
+  final Future<SharedPreferences> Function() _prefs;
+
   Future<void> _loadPersisted() async {
-    final prefs = await SharedPreferences.getInstance();
-    if (!mounted) return; // disposed while the read was in flight
-    final saved = AppLocale._fromPrefs(prefs.getString(_prefsKey));
-    if (saved != state) state = saved;
+    try {
+      final prefs = await _prefs();
+      if (!mounted) return; // disposed while the read was in flight
+      final saved = AppLocale._fromPrefs(prefs.getString(_prefsKey));
+      if (saved != state) state = saved;
+    } catch (e, st) {
+      reportSilently(e, st, where: 'locale.load');
+    }
   }
 
   Future<void> setLocale(AppLocale locale) async {
     if (locale == state) return;
     state = locale;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_prefsKey, locale._prefsValue);
+    try {
+      final prefs = await _prefs();
+      await prefs.setString(_prefsKey, locale._prefsValue);
+    } catch (e, st) {
+      reportSilently(e, st, where: 'locale.save');
+    }
   }
 }
 
@@ -79,6 +97,11 @@ final appLocaleProvider = Provider<Locale?>(
 /// from preferences for code that has neither a `ref` nor a `BuildContext` —
 /// a notification, say. See `l10n_lookup.dart`.
 Future<Locale?> readSavedLocale() async {
-  final prefs = await SharedPreferences.getInstance();
-  return AppLocale._fromPrefs(prefs.getString(_prefsKey)).toLocale;
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return AppLocale._fromPrefs(prefs.getString(_prefsKey)).toLocale;
+  } catch (e, st) {
+    reportSilently(e, st, where: 'locale.readSaved');
+    return null;
+  }
 }

@@ -129,6 +129,22 @@ void main() {
       // Pumping is where the post-await continuation runs. No throw = guarded.
       await expectLater(pumpEventQueue(), completes);
     });
+
+    test('a failing preferences store keeps the default, then the choice (#39)',
+        () async {
+      Future<SharedPreferences> broken() async =>
+          throw StateError('prefs unavailable');
+      final notifier = LocaleNotifier(prefs: broken);
+      addTearDown(notifier.dispose);
+
+      // The failed read must not escape as an unhandled async error.
+      await pumpEventQueue();
+      expect(notifier.state, AppLocale.system);
+
+      // The failed write keeps the in-memory choice and does not throw.
+      await notifier.setLocale(AppLocale.bangla);
+      expect(notifier.state, AppLocale.bangla);
+    });
   });
 
   group('AppLocale.toLocale', () {
