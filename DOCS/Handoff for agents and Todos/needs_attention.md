@@ -58,8 +58,8 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Accounts and security
 
-- [ ] **Admin claim (#2):** claim set 2026-10-29 and the Gmail fallback removed from `isAdmin()`
-      (issues §110.4). Left: sign out and back in on the admin account, then deploy the rules.
+- [x] **Admin claim (#2):** claim set, Gmail fallback removed from `isAdmin()` and rules deployed
+      2026-10-29 (`941a7e9a`, issues §110.4).
 - [ ] **Unused key (new 2026-10-28, optional):** `secret/throttle-iq-gcc1-b9771877b5d4.json` is a
       key for another Google Cloud project (`throttle-iq-gcc1`) that no ThrottleIQ script uses.
       Delete it in that project's console if nothing else needs it.
