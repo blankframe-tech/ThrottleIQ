@@ -1667,3 +1667,7 @@ indriyoNotConnected
 indriyoInvalidUrl
 indriyoSimulationTitle
 indriyoSimulationSubtitle
+# batch: not a motorcycle ride (#56, 2026-10-29)
+notAMotorcycleRideAction
+notAMotorcycleRideConfirmTitle
+notAMotorcycleRideConfirmBody

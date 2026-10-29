@@ -338,6 +338,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get bikeConfirmationUpdatedMessage => 'Ride updated.';
 
   @override
+  String get notAMotorcycleRideAction => 'Not a motorcycle ride';
+
+  @override
+  String get notAMotorcycleRideConfirmTitle => 'Not a motorcycle ride?';
+
+  @override
+  String get notAMotorcycleRideConfirmBody =>
+      'This deletes the ride and takes its distance back off the bike, so service reminders stay accurate. Its shared post, if any, is removed too. This can\'t be undone.';
+
+  @override
   String loggedToBikeLabel(String bikeName) {
     return 'Logged to $bikeName';
   }

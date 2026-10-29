@@ -7602,6 +7602,10 @@ Paths are updated to the 2026-10-22 DOCS layout (`DOCS/old/apify/`).
 - **Fix:** keep the coordinator in a nullable field created on first use, and in `dispose()` call `_liveCoordinatorOrNull?.dispose()`.
 - **Resolution:** another session applied this fix on `main` in `4b914c10`, with the unit test `ride_recording_dispose_test.dart`; E2E on `main` then passed 4/4 (`judge.md`, 2026-10-21). `feat/quota-outage` gets it when it merges. With `4b914c10` applied on top of that branch, E2E also passes 4/4 (iPhone 17 simulator, iOS 27.0, 2026-10-21).
 
+## 108. Leftovers from the retired Antigravity grill — partly resolved
+
+- **108.1 "Not a motorcycle ride" action on auto rides — FIXED (2026-10-29, GitHub #56).** The bike-confirmation card (`bike_confirmation_card.dart`, on the ride summary of an unconfirmed auto ride) has a "Not a motorcycle ride" action. After a confirm dialog, `RideAttribution.rejectAsNotMotorcycle` deletes the ride with a tombstone (`RideDao.deleteWithTombstone`, which since §103.2 takes a completed ride's distance and count off its bike once, floored at 0), removes its shared post best effort, and the summary screen closes. EN + BN strings (BN queued in `bn_pending_review.txt`). *Test:* `test/features/ride/presentation/providers/reject_not_motorcycle_test.dart` (stats reversed, tombstone written, a repeat changes nothing). Deferring the increments and the bus filter stay open in `issues_open.md` §108.1.
+
 ## 109. Leftovers from the retired 2026-10-14/15 critiques — partly resolved
 
 - **109.3 N10: GPX and JSON exports write local time with no offset — FIXED (2026-10-22).** `ride_summary_screen.dart` passed `ride.startTime.toIso8601String()` and `ride.endTime?.toIso8601String()` (local time without UTC offset or 'Z') to `ExportService`, and `ExportService.generateGPX` output `<time>$startTime</time>`. Since track points are recorded in UTC, third-party services like Strava showed rides skewed by the local timezone offset (e.g. 6 hours off for Dhaka UTC+6).

@@ -228,6 +228,26 @@ class RideAttribution {
     unawaited(_resyncSharedRideBike(ride.id, bikeId));
   }
 
+  /// "Not a motorcycle ride": a bus or car trip auto-tracking picked up.
+  /// Deletes the ride with a tombstone, so sync removes the cloud copy;
+  /// [RideDao.deleteWithTombstone] also takes its distance and count back off
+  /// the bike it was credited to, so maintenance reminders don't come due
+  /// early.
+  Future<void> rejectAsNotMotorcycle(RideEntity ride) async {
+    await RideDao().deleteWithTombstone(ride.id, userId: ride.userId);
+    // Best effort, like the summary screen's delete: most rides were never
+    // shared, and an offline device leaves the post for My Shared Rides.
+    try {
+      await RideShareRepository().deleteSharedRide(ride.id);
+    } catch (e) {
+      debugPrint('[RideAttribution] shared post delete skipped: $e');
+    }
+    _ref.invalidate(garageProvider);
+    _ref.invalidate(unconfirmedAutoRidesProvider);
+    _ref.invalidate(riderStatsProvider);
+    _ref.invalidate(rideHistoryProvider(ride.bikeId));
+  }
+
   /// If [rideId] was already posted to the social feed, patches its
   /// denormalized `bikeId`/`bikeName`/`bikeType` to match the correction —
   /// otherwise the shared card would keep showing the wrong bike forever

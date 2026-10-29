@@ -338,6 +338,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get bikeConfirmationUpdatedMessage => 'রাইড আপডেট হয়েছে।';
 
   @override
+  String get notAMotorcycleRideAction => 'এটি মোটরসাইকেল রাইড নয়';
+
+  @override
+  String get notAMotorcycleRideConfirmTitle => 'এটি মোটরসাইকেল রাইড নয়?';
+
+  @override
+  String get notAMotorcycleRideConfirmBody =>
+      'এতে রাইডটি মুছে যাবে এবং এর দূরত্ব বাইক থেকে বাদ যাবে, যাতে সার্ভিসের রিমাইন্ডার ঠিক থাকে। শেয়ার করা পোস্ট থাকলে সেটিও সরানো হবে। এটি আর ফেরানো যাবে না।';
+
+  @override
   String loggedToBikeLabel(String bikeName) {
     return '$bikeName-এ লগ করা হয়েছে';
   }

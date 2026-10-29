@@ -692,6 +692,24 @@ abstract class AppLocalizations {
   /// **'Ride updated.'**
   String get bikeConfirmationUpdatedMessage;
 
+  /// Action on the bike-confirmation card for an auto-detected ride: it was a bus or car trip, not a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a motorcycle ride'**
+  String get notAMotorcycleRideAction;
+
+  /// Title of the dialog confirming an auto-detected ride should be deleted because it was not on a motorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a motorcycle ride?'**
+  String get notAMotorcycleRideConfirmTitle;
+
+  /// Body of the not-a-motorcycle-ride confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes the ride and takes its distance back off the bike, so service reminders stay accurate. Its shared post, if any, is removed too. This can\'t be undone.'**
+  String get notAMotorcycleRideConfirmBody;
+
   /// Row on the ride summary screen (most recent ride only) showing which bike the ride was logged to, next to a Change action.
   ///
   /// In en, this message translates to:
