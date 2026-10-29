@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/cloud/firebase_providers.dart';
 import '../../../../core/constants/beta_testers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -16,8 +17,8 @@ final canLabelJamsProvider = Provider<bool>((ref) {
   return BetaTesters.canLabelJams(profile?.username);
 });
 
-final jamLabelRepositoryProvider =
-    Provider<JamLabelRepository>((ref) => JamLabelRepository());
+final jamLabelRepositoryProvider = Provider<JamLabelRepository>(
+    (ref) => JamLabelRepository(firestore: ref.watch(firestoreProvider)));
 
 /// The rider's currently open jam label, or null when they haven't said
 /// they're in a jam.

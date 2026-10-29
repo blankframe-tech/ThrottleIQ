@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/medical_info_entity.dart';
+import 'package:throttleiq/core/cloud/firebase_providers.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
 
@@ -83,5 +84,5 @@ class MedicalInfoNotifier extends StateNotifier<MedicalInfoEntity> {
 final medicalInfoProvider =
     StateNotifierProvider<MedicalInfoNotifier, MedicalInfoEntity>((ref) {
   final uid = ref.watch(currentUserProvider)?.uid;
-  return MedicalInfoNotifier(uid);
+  return MedicalInfoNotifier(uid, firestore: ref.watch(firestoreProvider));
 });

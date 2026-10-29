@@ -13,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
+import '../../../../core/cloud/firebase_providers.dart';
 import '../../../../core/cloud/outbox_service.dart';
 import '../../../../core/cloud/sync_manager.dart';
 import '../../../../core/constants/sensor_constants.dart';
@@ -261,7 +262,25 @@ final rideRecordingProvider =
 /// - [SensorFusionCoordinator]: IMU streams, axis calibration, complementary filtering
 class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     with WidgetsBindingObserver {
-  RideRecordingNotifier(this._ref) : super(const RideRecordingState()) {
+  /// Collaborators default to the real ones; tests override
+  /// [rideRecordingProvider] to inject fakes (issues §83.13).
+  RideRecordingNotifier(
+    this._ref, {
+    RideDao? rideDao,
+    RidePointDao? pointDao,
+    ImpactEventDao? impactEventDao,
+    CrashCoordinator? crashCoordinator,
+    RidePersistenceCoordinator? persistenceCoordinator,
+    SensorFusionCoordinator? sensorCoordinator,
+  })  : _rideDao = rideDao ?? RideDao(),
+        _pointDao = pointDao ?? RidePointDao(),
+        _impactEventDao = impactEventDao ?? ImpactEventDao(),
+        _crashCoordinator = crashCoordinator ??
+            CrashCoordinator(firestore: _ref.read(firestoreProvider)),
+        _persistenceCoordinator = persistenceCoordinator ??
+            RidePersistenceCoordinator(firestore: _ref.read(firestoreProvider)),
+        _sensorCoordinator = sensorCoordinator ?? SensorFusionCoordinator(),
+        super(const RideRecordingState()) {
     NotificationService.instance.onCrashDismissed = () {
       if (state.crashDetected) unawaited(dismissCrashAlert());
     };
@@ -272,9 +291,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   }
 
   final Ref _ref;
-  final _rideDao = RideDao();
-  final _pointDao = RidePointDao();
-  final _impactEventDao = ImpactEventDao();
+  final RideDao _rideDao;
+  final RidePointDao _pointDao;
+  final ImpactEventDao _impactEventDao;
 
   /// Where the phone rides this time (the ride-start chips; unknown for an
   /// auto-detected ride). Saved on the ride and on every impact.
@@ -305,11 +324,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// Created on first use. dispose() must not create it: the initialiser
   /// reads a provider, and the container is already disposing by then.
   LiveSessionCoordinator? _liveCoordinatorOrNull;
-  LiveSessionCoordinator get _liveCoordinator => _liveCoordinatorOrNull ??=
-      LiveSessionCoordinator(realtime: _ref.read(realtimeServicesProvider));
-  final _crashCoordinator = CrashCoordinator();
-  final _persistenceCoordinator = RidePersistenceCoordinator();
-  final _sensorCoordinator = SensorFusionCoordinator();
+  LiveSessionCoordinator get _liveCoordinator =>
+      _liveCoordinatorOrNull ??= LiveSessionCoordinator(
+          firestore: _ref.read(firestoreProvider),
+          realtime: _ref.read(realtimeServicesProvider));
+  final CrashCoordinator _crashCoordinator;
+  final RidePersistenceCoordinator _persistenceCoordinator;
+  final SensorFusionCoordinator _sensorCoordinator;
 
   /// GPS + IMU subscriptions (the gravity-including accelerometer, for
   /// ImpactDetector's orientation check, only while that detector is live).

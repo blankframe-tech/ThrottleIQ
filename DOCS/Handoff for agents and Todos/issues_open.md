@@ -219,6 +219,16 @@ injected Firestore, so the pattern was known, and the notifier calls the
 no-arg constructor anyway. **Same root cause as 83.28:** nothing that touches
 I/O is injectable, so nothing that touches I/O is tested.
 
+**PARTLY FIXED 2026-10-29** (see `issues_fixed.md` §83.13, GitHub #51):
+`firestoreProvider` / `firebaseAuthProvider` / `currentUidProvider` exist in
+`core/cloud/firebase_providers.dart`; the notifier's DAOs and coordinators and
+`maintenanceDaoProvider` are injectable; a ratchet test holds direct
+`.instance` uses at 33. **Still open:** the 11 `static final _instance`
+repositories (90.B4) are not providers yet, and most of the 33 remaining
+`.instance` uses are their fields or `x ?? .instance` constructor defaults;
+Geolocator, foreground service and wakelock in `RideRecordingNotifier` are
+still called directly (no small interfaces yet).
+
 ### 83.14 — 54 bare `catch (_)` blocks — PARTLY FIXED 2026-10-22
 
 54 in `app/lib` (2026-10-22, down from 65), held there by the ratchet test

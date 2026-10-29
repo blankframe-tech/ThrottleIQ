@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 83.13. Firebase singletons and ride-recorder collaborators were not injectable — PARTLY FIXED (2026-10-29)
+
+New `app/lib/core/cloud/firebase_providers.dart`: `firestoreProvider`, `firebaseAuthProvider` (moved from `auth_provider.dart`, which re-exports it) and `currentUidProvider` (rebuilds on a uid change). Converted, behaviour-neutral: `emergency_contacts_provider.dart` (3 uses), `record_screen.dart` greeting name, and the providers that build `SyncManager`, `JamLabelRepository` and `MedicalInfoNotifier` now pass the provider value. `RideRecordingNotifier` takes optional `rideDao`, `pointDao`, `impactEventDao`, `crashCoordinator`, `persistenceCoordinator`, `sensorCoordinator` (defaults unchanged; Firestore comes from `firestoreProvider`), and `maintenance_provider.dart`'s file-level DAO is now `maintenanceDaoProvider`. *Guard:* `app/test/core/cloud/firebase_providers_test.dart` fails if direct `FirebaseFirestore.instance` / `FirebaseAuth.instance` in `lib/` grows past 33 (was 38), and tests `currentUidProvider`. The rest is open in `issues_open.md` §83.13. GitHub issue #51.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.
