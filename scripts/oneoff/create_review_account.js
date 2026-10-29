@@ -49,7 +49,7 @@
  *                           untouched unless you pass this flag (or set
  *                           PLAY_REVIEW_PASSWORD) explicitly. docs/Issues.md
  *                           §62.10: this used to default to a hardcoded
- *                           'Test@123' on a permanent production account.
+ *                           '[redacted]' on a permanent production account.
  *   --display-name <name>  Default: "ThrottleIQ Reviewer"
  *   --username <handle>    Default: derived from the email's local part
  *   --dry-run              Explicit form of the default. Prints the planned
