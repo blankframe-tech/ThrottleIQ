@@ -51,6 +51,8 @@ Everything after `5a935e93` (the 4.7.1 bump):
 
 - Critique 2026-10-27 fixes (`DOCS/critic oct27.md`, `issues_fixed.md` §115): counter, forum, block and shared-ride rules; sync after a ride ends and on resume; Edit Bike no longer undoes km; restored rides keep event counts; blocked riders hidden in comments and forums; forum follow fixed. Follow-ups 2026-10-28: shared and public route lines capped at 1,000 points, vote docs carry `uid`, `syncOdometer` fixed, `fake_cloud_firestore` tests. Owner steps: `needs_attention.md` (vote `uid` deploy and backfill before the release; cleanup after it becomes minBuild; phone checks; critique #19). Leftovers: `issues_open.md` §115.
 
+- 2026-10-29 parallel lanes (A–K, see Recent sessions): ride delete rolls back bike stats, GPX import and "Export my rides", "Not a motorcycle ride", ride replay, Year in Review, tab state kept across switches, Settings OEM guide and cockpit-flash switch, forum replies queue offline, Firebase providers, bare-catch triage, first goldens and the text-scale sweep, CI pinned and once per PR. **Needs a rules deploy** for the §104.2 shared group-ride positions doc and the §104.3 own-votes query (both fall back until then; additive, build 29 safe). New plugin `file_selector`: run `pod install` before the next iOS build.
+
 Shipping these is owner item 26.
 
 ### Production backend
@@ -99,9 +101,8 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 ### Before launch (developer side)
 
 - §104.1: nearby places re-read every 5 km, now 2.4× more reads after the Google import. Fix before launch.
-- §104.2-104.4: group-ride reads grow with N², and feed vote hydration.
-- §103.2-103.5: shared-ride card and history delete follow-ups.
-- §110: leftovers from this handoff's old to-do list.
+- §104.2-104.3: built 2026-10-29, waits for the rules deploy; §104.4 needs the follower backfill (`issues_open.md` §104).
+- §110.4: admin email fallback, waits on the owner setting the `admin` claim.
 
 ## Decisions in force
 
@@ -186,6 +187,19 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-10-29
 
+- **Parallel lanes A–K, merged into `main` (each lane's details in `issues_fixed.md`, leftovers in `issues_open.md`):**
+  - A §104.2/104.3: one shared `positions/all` doc per group ride (polled, dual-written with `memberLocations`) and one collection-group query for a feed page's votes. Rules added, not deployed. §104.4 left for the backfill.
+  - B §103: ride delete takes its km and count off the bike once (`RideDao.deleteWithTombstone`); shared-post delete errors shown; rider card and pace fixes (#28 #33 #34 #60).
+  - C §83.13: `firestoreProvider` / `firebaseAuthProvider` / `currentUidProvider`, injectable recorder collaborators, ratchet on direct `.instance` (#51, partly).
+  - D §83.14/§110: bare catches triaged (baseline 31), dead code deleted, locale prefs and bug-report version fixed (#22 #29 #30 #31 #39).
+  - E §83.28: recorder flow test, macOS-only goldens, text-scale sweep with the real fonts and three overflow fixes (#49 #50; #24 #48 partly).
+  - F CI: actions pinned to SHAs, CI once per PR, coverage artifact, pre-push works in a linked worktree (#53 #54 #55).
+  - G bugs: jerk on near-identical fixes, maintenance day counts, receipt photo delete, odometer warning, dark badge contrast, forum reply offline, People-tab overflow (#57 #59 #41 #40 #42 #46 #20).
+  - H settings/UX: settings split, OEM guide brands and reopen tile, cockpit flash switch, Garage QR button (#52 #36 #37 #32 #44; #35 #43 partly).
+  - I perf: RecordScreen `select`, lazy rider-club list, `StatefulShellRoute` keeps tab state (#45 #47 #61).
+  - J: GPX import on bike detail (credits the bike), "Not a motorcycle ride", export rides from "Update required" (#58 #56 #38). New dependency `file_selector`.
+  - K: animated ride replay, shareable Year in Review (#62 #63).
+  - Not checked on a device: all of it. Owner: deploy `firestore.rules` (§104), `pod install` for `file_selector`.
 - **Indriyo training data (no code change):** licences checked for two Bangladesh traffic datasets. DhakaAI is CC0 at its source (Harvard Dataverse, doi:10.7910/DVN/POREXF; the Kaggle mirror's GPL 2 label is not the authors') and can train the shipped detector. RSUD20K is CC BY-NC 4.0, so internal evaluation only. Owner items #58 (DhakaAI: photo provenance, GPU account, device test) and #59 (RSUD20K decision); agent/owner split in `needs_attention.md`, plan in `DOCS/For Devs and Contributors/architecture/indriyo_ideas.md`.
 
 ### 2026-10-28
