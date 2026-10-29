@@ -1867,12 +1867,23 @@ service cloud.firestore {
     // anyone who knew a @handle could resolve it to the rider's uid and
     // follow them through this doc. Owner-only now; still writable so old app
     // builds don't error, but nothing public reads it.
+    // Security sweep B9 (pairs with C4): account erasure deletes the RTDB
+    // live_shares/{token} named here, so a token like '/' would wipe every
+    // rider's. A pointer's token is createLiveSessionToken's 32 alphanumerics
+    // (every build since 2026-07-12), null once cleared, or left unchanged.
+    function liveTokenValid(before, after) {
+      return keeps(before, after, 'token') || after.get('token', null) == null ||
+        (after.token is string && after.token.matches('^[A-Za-z0-9]{32}$'));
+    }
+
     match /livePointers/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid &&
-        request.resource.data.uid == uid;
+        request.resource.data.uid == uid &&
+        liveTokenValid({}, request.resource.data);
       allow update: if request.auth != null && request.auth.uid == uid &&
-        request.resource.data.uid == uid;
+        request.resource.data.uid == uid &&
+        liveTokenValid(resource.data, request.resource.data);
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -1892,12 +1903,14 @@ service cloud.firestore {
         key.matches('^[0-9a-f]{64}$') &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.keys().hasOnly(
-          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']) &&
+        liveTokenValid({}, request.resource.data);
       allow update: if request.auth != null &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.keys().hasOnly(
-          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']) &&
+        liveTokenValid(resource.data, request.resource.data);
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 

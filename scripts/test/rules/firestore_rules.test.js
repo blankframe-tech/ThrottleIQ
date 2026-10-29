@@ -1263,15 +1263,38 @@ test('a rider can create, update and delete only their own handleLinks doc', asy
   const alice = dbFor(ALICE);
   const ref = doc(alice, 'handleLinks', LINK_KEY);
   await assertFails(setDoc(doc(alice, 'handleLinks', 'not-a-hash'), { uid: ALICE }));
-  await assertFails(setDoc(ref, { uid: MALLORY, token: 't', active: true }));
+  await assertFails(setDoc(ref, { uid: MALLORY, token: 'b'.repeat(32), active: true }));
   await assertFails(setDoc(ref, { uid: ALICE, password: 'x' }));
-  await assertSucceeds(setDoc(ref, { uid: ALICE, token: 't', active: true }));
+  await assertSucceeds(setDoc(ref, { uid: ALICE, token: 'b'.repeat(32), active: true }));
   await assertSucceeds(updateDoc(ref, { active: false, lastLat: 23.7, lastLng: 90.4 }));
 
   const mallory = doc(dbFor(MALLORY), 'handleLinks', LINK_KEY);
-  await assertFails(setDoc(mallory, { uid: MALLORY, token: 'evil', active: true }));
+  await assertFails(setDoc(mallory, { uid: MALLORY, token: 'b'.repeat(32), active: true }));
   await assertFails(deleteDoc(mallory));
   await assertSucceeds(deleteDoc(ref));
+});
+
+// Security sweep B9 (pairs with C4): account erasure deletes live_shares/{token}
+// for the token on these docs, so a token of '/' would wipe every rider's.
+test('B9: a live-share pointer token must be 32 alphanumerics or null', async () => {
+  const alice = dbFor(ALICE);
+  const pointer = doc(alice, 'livePointers', ALICE);
+  const link = doc(alice, 'handleLinks', LINK_KEY);
+  const TOKEN = 'Ab3'.repeat(10) + 'xY';
+  for (const bad of ['/', '../x', 'a'.repeat(31), 'a'.repeat(33), 'a/'.repeat(16)]) {
+    await assertFails(setDoc(pointer, { uid: ALICE, token: bad, active: true }));
+    await assertFails(setDoc(link, { uid: ALICE, token: bad, active: true }));
+  }
+  // _maybePublishLivePointer, then the outbox teardown's merge.
+  await assertSucceeds(setDoc(link, { uid: ALICE, token: TOKEN, active: true, updatedAt: serverTimestamp() },
+    { merge: true }));
+  await assertFails(updateDoc(link, { token: '/' }));
+  await assertSucceeds(setDoc(link, { uid: ALICE, token: null, active: false, lastLat: 23.7, lastLng: 90.4,
+    lastSeenAt: new Date(), updatedAt: serverTimestamp() }, { merge: true }));
+  // Build 29's uid-keyed pointer: publish, then clear.
+  await assertSucceeds(setDoc(pointer, { uid: ALICE, token: TOKEN, active: true }));
+  await assertFails(updateDoc(pointer, { token: '/' }));
+  await assertSucceeds(setDoc(pointer, { uid: ALICE, token: null, active: false }));
 });
 
 // §78.14: new chats live at the deterministic DM id `<uidA>_<uidB>` (sorted),
