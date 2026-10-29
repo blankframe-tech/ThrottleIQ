@@ -6481,6 +6481,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oemGuideShowMe => 'Show me';
 
   @override
+  String get oemGuideStepSleepingApps =>
+      'In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps.';
+
+  @override
+  String get oemGuideOpenBatterySettings => 'Open battery settings';
+
+  @override
   String get yourThrottleIqSection => 'Your ThrottleIQ';
 
   @override

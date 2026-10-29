@@ -1667,3 +1667,6 @@ indriyoNotConnected
 indriyoInvalidUrl
 indriyoSimulationTitle
 indriyoSimulationSubtitle
+# batch: battery guide Tecno/Infinix/itel/Samsung (2026-10-29)
+oemGuideStepSleepingApps
+oemGuideOpenBatterySettings

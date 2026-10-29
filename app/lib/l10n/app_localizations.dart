@@ -11088,6 +11088,18 @@ abstract class AppLocalizations {
   /// **'Show me'**
   String get oemGuideShowMe;
 
+  /// OEM guide step 1 on Samsung phones, which have no autostart switch.
+  ///
+  /// In en, this message translates to:
+  /// **'In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps.'**
+  String get oemGuideStepSleepingApps;
+
+  /// Button opening Samsung's Device care battery screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open battery settings'**
+  String get oemGuideOpenBatterySettings;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:

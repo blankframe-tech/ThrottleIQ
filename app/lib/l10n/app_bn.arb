@@ -1831,6 +1831,8 @@
   "oemGuideOfferTitle": "{brand}-এ রাইড মাঝপথে কেটে যায়?",
   "oemGuideOfferBody": "ব্যাটারি বাঁচাতে {brand} ফোন রাইডের মাঝপথে ThrottleIQ বন্ধ করে দিতে পারে। তিনটি সেটিং বদলালে আর হবে না, এক মিনিট লাগে।",
   "oemGuideShowMe": "দেখান",
+  "oemGuideStepSleepingApps": "ব্যাটারি (ডিভাইস কেয়ার) → ব্যাকগ্রাউন্ড ব্যবহারের সীমা থেকে ThrottleIQ-কে স্লিপিং অ্যাপ আর ডিপ স্লিপিং অ্যাপের তালিকা থেকে সরিয়ে দিন।",
+  "oemGuideOpenBatterySettings": "ব্যাটারি সেটিংস খুলুন",
   "yourThrottleIqSection": "আপনার ThrottleIQ",
   "yourThrottleIqDescription": "শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।",
   "communityFieldLabel": "কমিউনিটি",

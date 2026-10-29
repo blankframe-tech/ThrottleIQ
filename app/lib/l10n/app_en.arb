@@ -8895,6 +8895,14 @@
   "@oemGuideShowMe": {
     "description": "Button that opens the OEM guide."
   },
+  "oemGuideStepSleepingApps": "In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps.",
+  "@oemGuideStepSleepingApps": {
+    "description": "OEM guide step 1 on Samsung phones, which have no autostart switch."
+  },
+  "oemGuideOpenBatterySettings": "Open battery settings",
+  "@oemGuideOpenBatterySettings": {
+    "description": "Button opening Samsung's Device care battery screen."
+  },
   "yourThrottleIqSection": "Your ThrottleIQ",
   "@yourThrottleIqSection": {
     "description": "Settings → Your ThrottleIQ (app modules)."

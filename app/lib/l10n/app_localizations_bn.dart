@@ -6457,6 +6457,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get oemGuideShowMe => 'দেখান';
 
   @override
+  String get oemGuideStepSleepingApps =>
+      'ব্যাটারি (ডিভাইস কেয়ার) → ব্যাকগ্রাউন্ড ব্যবহারের সীমা থেকে ThrottleIQ-কে স্লিপিং অ্যাপ আর ডিপ স্লিপিং অ্যাপের তালিকা থেকে সরিয়ে দিন।';
+
+  @override
+  String get oemGuideOpenBatterySettings => 'ব্যাটারি সেটিংস খুলুন';
+
+  @override
   String get yourThrottleIqSection => 'আপনার ThrottleIQ';
 
   @override
