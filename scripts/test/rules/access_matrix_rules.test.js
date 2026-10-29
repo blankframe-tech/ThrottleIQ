@@ -377,6 +377,42 @@ test('reviews: own id and uid only, whole stars, capped text, no extra keys or i
   await assertSucceeds(setDoc(doc(d, `reviews/${ALICE}_seed1`), review({})));
 });
 
+// ── Saved routes (security sweep B3) ────────────────────────────────────────
+
+/** RouteModel.toFirestore() as RouteRepository.saveRoute writes it. */
+function route(overrides) {
+  return { id: 'rt1', userId: ALICE, name: 'Home loop', description: null, distanceKm: 12.5,
+    polyline: [{ lat: 23.8, lng: 90.4 }], mapSnapshotUrl: null, timesRidden: 1,
+    createdAt: Timestamp.now(), isPublic: false, sharedWithUserIds: [], ...overrides };
+}
+
+test('routes: saveRoute, setPublic both ways, incrementTimesRidden and delete still work', async () => {
+  const d = db(ALICE);
+  const ref = doc(d, `users/${ALICE}/routes/rt1`);
+  await assertSucceeds(setDoc(ref, route({ name: `${'A'.repeat(100)}'s ${'B'.repeat(40)} Route` })));
+  await assertSucceeds(updateDoc(ref, { isPublic: true, polyline: [{ lat: 23.81, lng: 90.41 }] }));
+  await assertSucceeds(updateDoc(ref, { timesRidden: increment(1) }));
+  await assertSucceeds(updateDoc(ref, { isPublic: false }));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test('B3 routes: a Discover-bound route is shape-checked and timesRidden only goes +1', async () => {
+  const d = db(ALICE);
+  const at = (id) => doc(d, `users/${ALICE}/routes/${id}`);
+  await assertFails(setDoc(at('x1'), route({ extra: 'payload' })));
+  await assertFails(setDoc(at('x2'), route({ name: 'x'.repeat(301) })));
+  await assertFails(setDoc(at('x3'), route({ description: 'x'.repeat(2001) })));
+  await assertFails(setDoc(at('x4'), route({ mapSnapshotUrl: 'https://evil.example/pixel.gif' })));
+  await assertFails(setDoc(at('x5'), route({ timesRidden: 1e6 })));
+  await assertFails(setDoc(at('x6'), route({ timesRidden: '1' })));
+  await assertSucceeds(setDoc(at('ok'), route({})));
+  await assertFails(updateDoc(at('ok'), { timesRidden: increment(5) }));
+  await assertFails(updateDoc(at('ok'), { timesRidden: 999 }));
+  await assertFails(updateDoc(at('ok'), { mapSnapshotUrl: 'https://evil.example/pixel.gif' }));
+  await assertFails(updateDoc(at('ok'), { name: 'x'.repeat(301) }));
+  await assertFails(updateDoc(at('ok'), { pinned: true }));
+});
+
 // ── Admin paths ─────────────────────────────────────────────────────────────
 
 test('admin: only the claim reads and closes reports, not the owner email (§110.4)', async () => {

@@ -710,10 +710,39 @@ service cloud.firestore {
       // the collectionGroup('routes') query behind getPublicRoutes needs the
       // separate rule below, because a collection-group query is not matched
       // by a path-anchored rule.
+      // Security sweep B3: every Discover viewer renders a public route, so a
+      // write carries only RouteModel's keys, capped text and an allow-listed
+      // map snapshot, and `timesRidden` (Discover's sort key) starts at 1 and
+      // only ever goes +1 (incrementTimesRidden). The name cap is 300, not
+      // 100: "Save route" on a shared ride names it "<userName>'s <bikeName>
+      // Route", and neither the app nor the rules cap a bike name.
       match /routes/{routeId} {
+        function routeKeys() {
+          return ['id', 'userId', 'name', 'description', 'distanceKm',
+            'polyline', 'mapSnapshotUrl', 'timesRidden', 'createdAt',
+            'isPublic', 'sharedWithUserIds'];
+        }
+        function routeFieldsValid(before, after) {
+          return (keeps(before, after, 'name') ||
+              (after.name is string && after.name.size() <= 300)) &&
+            (keeps(before, after, 'description') || optionalText(after, 'description', 2000)) &&
+            (keeps(before, after, 'mapSnapshotUrl') ||
+              photoUrlAllowed(after.get('mapSnapshotUrl', null)));
+        }
         allow read: if request.auth.uid == uid ||
           (request.auth != null && resource.data.get('isPublic', false) == true);
-        allow write: if request.auth.uid == uid;
+        allow create: if request.auth.uid == uid &&
+          request.resource.data.keys().hasOnly(routeKeys()) &&
+          request.resource.data.name is string &&
+          routeFieldsValid({}, request.resource.data) &&
+          request.resource.data.timesRidden is int &&
+          request.resource.data.timesRidden == 1;
+        allow update: if request.auth.uid == uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(routeKeys()) &&
+          routeFieldsValid(resource.data, request.resource.data) &&
+          (keeps(resource.data, request.resource.data, 'timesRidden') ||
+            request.resource.data.timesRidden == resource.data.timesRidden + 1);
+        allow delete: if request.auth.uid == uid;
       }
 
       // False crash positives (for tuning/analytics)
