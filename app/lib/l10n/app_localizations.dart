@@ -4416,13 +4416,13 @@ abstract class AppLocalizations {
   /// Dialog body explaining the /r/@handle link password.
   ///
   /// In en, this message translates to:
-  /// **'Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.'**
+  /// **'Anyone opening your link must enter this. Use at least 12 characters and share it only with people you trust. A new password turns the old one off.'**
   String get publicLiveLinkPasswordBody;
 
   /// Validation error under the link password field.
   ///
   /// In en, this message translates to:
-  /// **'Use at least 8 characters.'**
+  /// **'Use at least 12 characters.'**
   String get publicLiveLinkPasswordTooShort;
 
   /// Button on the /r/@handle link setting to set a new password.

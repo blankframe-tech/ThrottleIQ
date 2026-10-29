@@ -29,7 +29,7 @@ class PublicLiveLinkSetting {
 
   /// Firestore rules can't rate-limit guesses, so length is the only defence
   /// against someone who knows the handle trying passwords.
-  static const minPasswordLength = 8;
+  static const minPasswordLength = 12;
 
   static const collection = 'handleLinks';
 

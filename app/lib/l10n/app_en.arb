@@ -3392,11 +3392,11 @@
   "@publicLiveLinkPasswordTitle": {
     "description": "Dialog title for setting the password of the /r/@handle link."
   },
-  "publicLiveLinkPasswordBody": "Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.",
+  "publicLiveLinkPasswordBody": "Anyone opening your link must enter this. Use at least 12 characters and share it only with people you trust. A new password turns the old one off.",
   "@publicLiveLinkPasswordBody": {
     "description": "Dialog body explaining the /r/@handle link password."
   },
-  "publicLiveLinkPasswordTooShort": "Use at least 8 characters.",
+  "publicLiveLinkPasswordTooShort": "Use at least 12 characters.",
   "@publicLiveLinkPasswordTooShort": {
     "description": "Validation error under the link password field."
   },
