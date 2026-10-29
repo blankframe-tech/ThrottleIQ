@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -30,22 +32,56 @@ import '../../../../core/i18n/l10n_context.dart';
 /// paperwork, and settings last. "Log a visit" stays on screen throughout.
 class MaintenanceScreen extends ConsumerStatefulWidget {
   final String? bikeId;
-  const MaintenanceScreen({super.key, this.bikeId});
+
+  /// Injected in tests to move the date past midnight.
+  final DateTime Function() clock;
+  const MaintenanceScreen({super.key, this.bikeId, this.clock = DateTime.now});
 
   @override
   ConsumerState<MaintenanceScreen> createState() => _MaintenanceScreenState();
 }
 
-class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
+class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen>
+    with WidgetsBindingObserver {
   String? _selectedBikeId;
   bool _showAllGood = false;
   bool _showUnknown = false;
   int _historyShown = 5;
+  Timer? _midnightTimer;
 
   @override
   void initState() {
     super.initState();
     _selectedBikeId = widget.bikeId;
+    WidgetsBinding.instance.addObserver(this);
+    // Providers can't be written during build; sync after the first frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncDay());
+  }
+
+  @override
+  void dispose() {
+    _midnightTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _syncDay();
+  }
+
+  /// Moves [maintenanceTodayProvider] to the clock's date and re-arms the
+  /// timer for the next midnight, so day counts refresh while the page is
+  /// open across midnight (issue #59).
+  void _syncDay() {
+    if (!mounted) return;
+    final now = widget.clock();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = ref.read(maintenanceTodayProvider.notifier);
+    if (day.state != today) day.state = today;
+    _midnightTimer?.cancel();
+    final nextMidnight = DateTime(now.year, now.month, now.day + 1);
+    _midnightTimer = Timer(nextMidnight.difference(now), _syncDay);
   }
 
   /// A notification tap (or garage link) for another bike while this page
@@ -68,6 +104,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(maintenanceTodayProvider); // rebuild day counts at midnight
     final bikes = ref.watch(garageProvider).valueOrNull ?? [];
     final activeBike = _selectedBikeId != null
         ? bikes.where((b) => b.id == _selectedBikeId).firstOrNull
@@ -267,7 +304,7 @@ class _MaintenanceScreenState extends ConsumerState<MaintenanceScreen> {
     final forecasts = ref.watch(maintenanceForecastProvider(bike.id));
     final issues =
         ref.watch(precheckIssuesProvider(bike.id)).valueOrNull ?? const [];
-    final now = DateTime.now();
+    final now = widget.clock();
 
     final attention = forecasts.where((f) => f.needsAttention).toList();
     final comingUp = forecasts
