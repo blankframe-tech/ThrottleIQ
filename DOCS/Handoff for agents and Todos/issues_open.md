@@ -561,9 +561,6 @@ part of the Bangla review in `needs_attention.md`. Still open:
     sync or a reinstall (credits are local) can push "km at add" past 500, and
     never-logged checks then flip to "unknown". Fix: store the odometer reading
     at add time.
-  - Receipt image files aren't deleted with their visit (no delete path found 2026-10-22).
-  - A page left open past midnight shows yesterday's day counts until something
-    refreshes it.
   - The home-screen widget text is English and km-only (`home_widget_service.dart`). Alerts
     follow the km/mi choice since §101.R10.
   - On a fresh install, paperwork added *before* the first sync restores still
@@ -637,9 +634,9 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 - **101.C9** outbox `next_attempt_at` is stored as local time (needs a compat read); the router
   treats auth loading/error as signed out; `bug_report_service.dart:74` hard-codes version
   `'1.0.0'` (checked); some notification channel names are English.
-- **101.R2** no warning when a log's odometer is below the previous one. **101.R3**
-  `latestLogFor` picks the highest odometer, not the latest date (needs a product rule for
-  odometer resets). **101.R5** a tiny `deltaT` inflates jerk. **101.R9** `forecast_strip`
+- **101.R3** `latestLogFor` picks the highest odometer, not the latest date (needs a product
+  rule for odometer resets). (R2 and R5 fixed 2026-10-29, `issues_fixed.md` "Lane G".)
+  **101.R9** `forecast_strip`
   diamond semantics, `_UnitSegment` visual size, the swatch Auto tile reads 'Bike color'.
   **101.R10** the recording clock isn't a `Stopwatch`.
 - **101.A4** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card

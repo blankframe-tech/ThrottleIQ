@@ -11,6 +11,15 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## Lane G: contributor-issue bugs (GitHub #57, #59, #41, #40) — FIXED (2026-10-29, branch `lane/g-bugs`)
+
+- **#57 / §101.R5 Jerk spiked on GPS fixes milliseconds apart (`448bc8e6`).** `MotionCalculator` only guarded `deltaT <= 0`. It now skips acceleration and jerk under the same 0.1 s floor `evaluateFix` uses; distance is still reported. *Test:* `app/test/calculators/motion_calculator_test.dart`.
+- **#59 / §95.12 Maintenance day counts went stale past midnight (`fdbeebdf`).** New `maintenanceTodayProvider` holds today's date; the forecast provider and `MaintenanceScreen` watch it, and the screen moves it on with a midnight timer and on app resume. Clock injectable. *Test:* `app/test/features/maintenance/maintenance_screen_test.dart`.
+- **#41 / §95.12 Deleting a visit left its receipt photo on disk (`167ed9f6`).** `MaintenanceDao.delete` and `deleteWithTombstone` delete the receipt file once no remaining log references it (a visit's items share one receipt); remote URLs and missing files are skipped. *Test:* `app/test/features/maintenance/maintenance_visits_db_test.dart` (temp dir).
+- **#40 / §101.R2 No warning for an odometer below an earlier log (`77d457e7`).** `odometerBelowEarlierLog` (`service_visit.dart`) drives non-blocking helper text under the odometer field of `AddMaintenanceLogScreen`; saving still works (odometers get replaced). New key EN + BN, BN queued in `bn_pending_review.txt`. *Test:* `service_visit_test.dart`, `maintenance_screen_test.dart`.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.
