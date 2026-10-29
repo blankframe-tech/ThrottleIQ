@@ -3849,6 +3849,42 @@ abstract class AppLocalizations {
   /// **'Ride History'**
   String get rideHistory;
 
+  /// Button next to a bike's ride history: pick a .gpx file (e.g. from another app) and save it as a ride on this bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Import GPX'**
+  String get importGpxAction;
+
+  /// Snackbar after a GPX file was saved as a ride. The distance is added to the bike's total, which drives service reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride imported: {distance}. It now counts toward this bike\'s distance.'**
+  String gpxImportedMessage(String distance);
+
+  /// Error when the picked GPX file is over the size or point limit.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too big to import (10 MB or 100,000 points at most).'**
+  String get gpxImportTooLarge;
+
+  /// Error when the picked file is empty, unreadable or not GPX.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a GPX file.'**
+  String get gpxImportNotGpx;
+
+  /// Error when a GPX file has fewer than two track points with a time (e.g. a route or waypoints only).
+  ///
+  /// In en, this message translates to:
+  /// **'This GPX file has no timed track to import.'**
+  String get gpxImportNoTrack;
+
+  /// Error when the GPX track overlaps a ride already saved (e.g. the same file imported twice).
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a ride at this time, so this one wasn\'t imported.'**
+  String get gpxImportOverlapsRide;
+
   /// Text in bike_detail_screen.
   ///
   /// In en, this message translates to:

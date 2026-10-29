@@ -2137,6 +2137,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rideHistory => 'Ride History';
 
   @override
+  String get importGpxAction => 'Import GPX';
+
+  @override
+  String gpxImportedMessage(String distance) {
+    return 'Ride imported: $distance. It now counts toward this bike\'s distance.';
+  }
+
+  @override
+  String get gpxImportTooLarge =>
+      'This file is too big to import (10 MB or 100,000 points at most).';
+
+  @override
+  String get gpxImportNotGpx => 'This isn\'t a GPX file.';
+
+  @override
+  String get gpxImportNoTrack => 'This GPX file has no timed track to import.';
+
+  @override
+  String get gpxImportOverlapsRide =>
+      'You already have a ride at this time, so this one wasn\'t imported.';
+
+  @override
   String get noRidesYetThis => 'No rides yet for this bike';
 
   @override

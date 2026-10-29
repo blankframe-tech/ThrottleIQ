@@ -1671,3 +1671,10 @@ indriyoSimulationSubtitle
 notAMotorcycleRideAction
 notAMotorcycleRideConfirmTitle
 notAMotorcycleRideConfirmBody
+# batch: GPX import (#58, 2026-10-29)
+importGpxAction
+gpxImportedMessage
+gpxImportTooLarge
+gpxImportNotGpx
+gpxImportNoTrack
+gpxImportOverlapsRide

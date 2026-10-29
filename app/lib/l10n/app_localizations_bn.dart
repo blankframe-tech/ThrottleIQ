@@ -2142,6 +2142,29 @@ class AppLocalizationsBn extends AppLocalizations {
   String get rideHistory => 'রাইডের ইতিহাস';
 
   @override
+  String get importGpxAction => 'GPX ইমপোর্ট';
+
+  @override
+  String gpxImportedMessage(String distance) {
+    return 'রাইড ইমপোর্ট হয়েছে: $distance। এটি এখন এই বাইকের মোট দূরত্বে যোগ হয়েছে।';
+  }
+
+  @override
+  String get gpxImportTooLarge =>
+      'ফাইলটি ইমপোর্ট করার জন্য অনেক বড় (সর্বোচ্চ 10 MB বা 100,000 পয়েন্ট)।';
+
+  @override
+  String get gpxImportNotGpx => 'এটি GPX ফাইল নয়।';
+
+  @override
+  String get gpxImportNoTrack =>
+      'এই GPX ফাইলে ইমপোর্ট করার মতো সময়সহ কোনো ট্র্যাক নেই।';
+
+  @override
+  String get gpxImportOverlapsRide =>
+      'এই সময়ে আপনার আরেকটি রাইড আছে, তাই এটি ইমপোর্ট করা হয়নি।';
+
+  @override
   String get noRidesYetThis => 'এই বাইকের এখনো কোনো রাইড নেই';
 
   @override
