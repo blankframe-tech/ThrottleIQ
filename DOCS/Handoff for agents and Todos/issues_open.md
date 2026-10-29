@@ -844,13 +844,6 @@ Open developer items found while rewriting `HANDOFF_Document.md` that no other s
 - **110.4 Admin check still falls back to an email.** `firestore.rules:136-141` (`isAdmin()` accepts a verified `the.abraar.rar@gmail.com` token), plus client copies in `forum_permissions.dart:5` and `jam_label_provider.dart:14`. Nobody recorded running `scripts/oneoff/set_admin_claim.js`, so the `admin` claim may not exist. *Fix:* after the owner sets the claim and signs in again, delete the email branch from `isAdmin()` and its rules tests. Why: admin rights should not depend on one mailbox's address. Source: HANDOFF Key facts, "Admin account" (2026-08-12).
 - **110.6 `main`'s pre-push hook lacks the linked-worktree fix.** `mayabi` (`ef83fe03`) unsets git's local env vars before the gate in `.githooks/pre-push`; without it, `GIT_DIR` made Flutter report `0.0.0-unknown` and `pub get` fail in a linked worktree. `main`'s hook has no such line. Not reproduced on `main`. *Fix:* write the same few lines on `main` (the owner asked for no cherry-picks from `mayabi` without asking). Source: `mayabi` branch HANDOFF, "Pre-push in a worktree".
 
-## 111. People tab: suggested-rider cards overflow by 1 px (2026-10-22)
-
-Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). On Social → People, every "Suggested for you" card overflows its fixed-height row by 1 px at the bottom: `A RenderFlex overflowed by 1.00 pixels on the bottom`, once per card. Debug builds draw the yellow-black stripe under the Follow button; release builds clip 1 px of the card instead.
-
-- **Where:** the row is a `SizedBox(height: 140)` in `app/lib/features/social/presentation/screens/social_people_tab.dart:172-173`; the card is `_SuggestedRiderCard` (same file, `:254`), whose column comes out 1 px taller than the row.
-- *Fix:* let the row size to the card (or raise the height by the 1 px, or trim one gap), then check at 1.3× text scale and in Bangla, where the name line runs taller.
-
 ## Cloud Functions audit leftovers, architect to-do #5 (2026-10-22, lane C)
 
 - **The report purge re-reads every old report on each run.** Pass 1 pages through all reports reviewed before the 90-day cutoff, including those already purged. At very high volume it could use the whole 480 s budget, and pass 2 (closed reports about deleted riders) would then never run. Already marked `shortcut:` in `report-retention.ts`. *Fix when needed:* a `purged` flag plus a composite index.
