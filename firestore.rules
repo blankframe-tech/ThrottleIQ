@@ -2005,7 +2005,10 @@ service cloud.firestore {
          request.resource.data.get('memberIds', [])
            .hasAll(resource.data.get('memberIds', [])) &&
          request.resource.data.get('memberIds', [])
-           .hasOnly(resource.data.get('memberIds', []).concat([request.auth.uid]))) ||
+           .hasOnly(resource.data.get('memberIds', []).concat([request.auth.uid])) &&
+         // Hard cap (issues §104.2): every member writes the shared
+         // positions doc, and 20 riders keep it at 0.5 writes/s.
+         request.resource.data.get('memberIds', []).size() <= 20) ||
 
         // 3. A joined rider leaving. Removes exactly themselves. The creator
         //    can't take this path — leaveGroupRide ends the ride for them
@@ -2039,6 +2042,7 @@ service cloud.firestore {
            .hasOnly(resource.data.get('memberIds', []).concat([request.auth.uid])) &&
          request.resource.data.get('memberIds', [])
            .hasAll(resource.data.get('memberIds', [])) &&
+         request.resource.data.get('memberIds', []).size() <= 20 &&
          request.resource.data.get('memberIds', []).size() <=
            resource.data.get('maxParticipants', 20)));
 

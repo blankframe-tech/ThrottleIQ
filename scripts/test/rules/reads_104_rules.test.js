@@ -155,3 +155,27 @@ test('an unfiltered or uid-filtered votes query is denied', async () => {
 test('the per-ride vote get still works (build 29 path)', async () => {
   await assertSucceeds(getDoc(doc(db(MEMBER), `rides/r1/votes/${MEMBER}`)));
 });
+
+// -- §104.2 hard cap of 20 riders (shared positions doc write rate) --------
+
+const full = (extra) => Array.from({ length: 19 }, (_, i) => `m${i}`).concat(extra);
+
+test('a 21st rider cannot join by code, even with maxParticipants raised', async () => {
+  await testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'groupRides/g2'), {
+    creatorId: CREATOR, memberIds: full([CREATOR]), status: 'active', maxParticipants: 50,
+  }));
+  await assertFails(setDoc(doc(db(STRANGER), 'groupRides/g2'),
+    { memberIds: full([CREATOR, STRANGER]) }, { merge: true }));
+});
+
+test('a 21st rider cannot accept an invite; the 20th can', async () => {
+  await testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'groupRides/g3'), {
+    creatorId: CREATOR, memberIds: full([CREATOR]), invitedIds: [INVITEE], status: 'active',
+  }));
+  await assertFails(setDoc(doc(db(INVITEE), 'groupRides/g3'),
+    { memberIds: full([CREATOR, INVITEE]), invitedIds: [] }, { merge: true }));
+  await testEnv.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), 'groupRides/g3'),
+    { memberIds: full([]).slice(1).concat([CREATOR]) }, { merge: true }));
+  await assertSucceeds(setDoc(doc(db(INVITEE), 'groupRides/g3'),
+    { memberIds: full([]).slice(1).concat([CREATOR, INVITEE]), invitedIds: [] }, { merge: true }));
+});
