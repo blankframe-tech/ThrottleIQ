@@ -286,7 +286,12 @@ Remaining:
   (RanaKhan77, GitHub issue #23) reviewed the `pilot`, `auth` and `ride`
   batches: 5 fixes applied to `app_bn.arb` (`directions`,
   `thatUsernameTakenTry`, `resumeCarryDiscardIt`, `recenterRoute`, `year`)
-  and those batches were removed from the list. The rest has not been read by
+  and those batches were removed from the list. The `ride (manual)` batch
+  followed: 4 fixes (`recordingNotificationTextUser`,
+  `recordingNotificationTextAuto`, `rideRecordingActive`,
+  `recordingPermissionDenied`), batch removed. Their suggested app-wide
+  শনাক্ত → সনাক্ত sweep was not applied: শনাক্ত is the Bangla Academy form.
+  The rest has not been read by
   a native speaker. `arb_parity_test.dart` keeps the list from naming dead
   keys.
 - **Bangla on a device:** the 2026-09-21 UI tour walked 82 screens in Bangla

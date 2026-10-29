@@ -1,11 +1,3 @@
-# batch: ride (manual)
-recordingNotificationTextUser
-recordingNotificationTextAuto
-rideRecordingActive
-rideDetected
-recordingLocationOff
-recordingPermissionDenied
-addBikeBeforeRecording
 # batch: social
 aRider
 livePositionsUnavailable
