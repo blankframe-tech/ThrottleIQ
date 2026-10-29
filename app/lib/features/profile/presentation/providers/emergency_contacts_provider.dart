@@ -3,11 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/entities/emergency_contact_entity.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
+import 'package:throttleiq/core/cloud/firebase_providers.dart';
 
 final emergencyContactsProvider =
     StreamProvider.family<List<EmergencyContactEntity>, String>(
   (ref, uid) {
-    final firestore = FirebaseFirestore.instance;
+    final firestore = ref.watch(firestoreProvider);
     return firestore
         .collection('users')
         .doc(uid)
@@ -34,18 +35,19 @@ final emergencyContactsNotifierProvider = StateNotifierProvider<
   (ref) {
     final uid = ref.watch(currentUserProvider)?.uid;
     if (uid == null) {
-      return EmergencyContactsNotifier(null);
+      return EmergencyContactsNotifier(null, ref.watch(firestoreProvider));
     }
-    return EmergencyContactsNotifier(uid);
+    return EmergencyContactsNotifier(uid, ref.watch(firestoreProvider));
   },
 );
 
 class EmergencyContactsNotifier
     extends StateNotifier<AsyncValue<List<EmergencyContactEntity>>> {
   final String? _uid;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
 
-  EmergencyContactsNotifier(this._uid) : super(const AsyncValue.loading()) {
+  EmergencyContactsNotifier(this._uid, this._firestore)
+      : super(const AsyncValue.loading()) {
     if (_uid != null) {
       _loadContacts();
     }
@@ -155,7 +157,8 @@ final myEmergencyContactsProvider =
   if (uid == null) {
     return Stream.value([]);
   }
-  return FirebaseFirestore.instance
+  return ref
+      .watch(firestoreProvider)
       .collection('users')
       .doc(uid)
       .collection('emergencyContacts')

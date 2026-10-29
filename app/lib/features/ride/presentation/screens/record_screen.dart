@@ -1,10 +1,10 @@
 import 'dart:async';
 
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/cloud/firebase_providers.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/constants/bike_colors.dart';
@@ -51,7 +51,12 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   @override
   void initState() {
     super.initState();
-    _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
+    _name = ref
+        .read(firebaseAuthProvider)
+        .currentUser
+        ?.displayName
+        ?.split(' ')
+        .first;
     _greetingPick = pickGreeting(DateTime.now());
     // One-shot: this screen can be *built* while a ride is already running
     // (cold start onto Record, or a restored interrupted ride), and a

@@ -10,9 +10,10 @@ import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
+import 'package:throttleiq/core/cloud/firebase_providers.dart';
 
-final firebaseAuthProvider =
-    Provider<FirebaseAuth>((ref) => FirebaseAuth.instance);
+export 'package:throttleiq/core/cloud/firebase_providers.dart'
+    show firebaseAuthProvider;
 
 final authStateProvider = StreamProvider<User?>((ref) {
   // userChanges() (not authStateChanges()) is required here: it also fires after

@@ -33,7 +33,10 @@ import '../widgets/maintenance_format.dart' show kMaintenanceImperialPrefKey;
 import '../../domain/entities/service_visit.dart';
 
 const _uuid = Uuid();
-final _dao = MaintenanceDao();
+
+/// Override in tests to fake the service-log table (issues §83.13).
+final maintenanceDaoProvider =
+    Provider<MaintenanceDao>((ref) => MaintenanceDao());
 
 /// After any maintenance change: the home-screen widget and notifications
 /// re-read the same engine. Fire-and-forget; both are no-op safe.
@@ -51,6 +54,8 @@ final maintenanceProvider = AsyncNotifierProvider.family<MaintenanceNotifier,
 
 class MaintenanceNotifier
     extends FamilyAsyncNotifier<List<MaintenanceEntity>, String> {
+  MaintenanceDao get _dao => ref.read(maintenanceDaoProvider);
+
   @override
   Future<List<MaintenanceEntity>> build(String bikeId) async {
     final rows = await _dao.getForBike(bikeId);

@@ -20,6 +20,7 @@ import '../../features/ride/presentation/providers/ride_recording_provider.dart'
 import '../../features/stats/presentation/providers/rider_stats_provider.dart';
 import '../database/database_helper.dart';
 import 'cloud_repository.dart';
+import 'firebase_providers.dart';
 import 'firestore_quota.dart';
 import 'maintenance_settings_sync.dart';
 import 'outbox_service.dart';
@@ -683,7 +684,8 @@ class SyncManager {
 /// Riverpod provider for SyncManager
 final syncManagerProvider = Provider<SyncManager>((ref) {
   final outbox = ref.watch(outboxServiceProvider);
-  final syncManager = SyncManager(ref: ref, outbox: outbox);
+  final syncManager = SyncManager(
+      ref: ref, outbox: outbox, auth: ref.watch(firebaseAuthProvider));
   ref.onDispose(() => syncManager.dispose());
   return syncManager;
 });
