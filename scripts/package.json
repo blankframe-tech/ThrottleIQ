@@ -38,10 +38,14 @@
     "check": "node --check oneoff/reset_beta_data.js && node --check oneoff/seed_dhaka_places.js && node --check oneoff/seed_qa_test_riders.js && node --check oneoff/cleanup_qa_test_riders.js && node --check oneoff/cleanup_qa_engagement.js && node --check oneoff/qa_seed_catalog.js && node --check oneoff/seed_ai_cameras.js && node --check oneoff/seed_police_checkposts.js && node --check oneoff/seed_police_checkposts_v2.js && node --check oneoff/seed_police_checkposts_v3.js && node --check oneoff/import_google_places.js && node --check oneoff/revert_google_places.js && node --check oneoff/migrate_emails_private.js && node --check oneoff/backfill_users_visibility.js && node --check oneoff/backfill_vote_uid.js && node --check loadtest/quota_rehearsal.js"
   },
   "dependencies": {
-    "firebase-admin": "^12.7.0"
+    "firebase-admin": "^13.10.0"
   },
   "devDependencies": {
-    "@firebase/rules-unit-testing": "^3.0.4",
-    "firebase": "^10.14.1"
+    "@firebase/rules-unit-testing": "^6.0.0",
+    "firebase": "^13.1.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.7",
+    "uuid": "^11.1.1"
   }
 }
