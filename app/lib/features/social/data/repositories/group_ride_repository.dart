@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../domain/entities/group_ride_entity.dart';
@@ -70,9 +71,12 @@ class GroupRideRepository {
 
   factory GroupRideRepository() => _instance;
 
-  GroupRideRepository._internal();
+  GroupRideRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  @visibleForTesting
+  GroupRideRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
 
   DocumentReference<Map<String, dynamic>> _rideRef(String groupRideId) =>
       _firestore.collection('groupRides').doc(groupRideId);
@@ -524,24 +528,64 @@ class GroupRideRepository {
     } catch (_) {/* already gone */}
   }
 
-  /// Updates a member's live location.
+  /// Every rider's live position in one document, keyed by uid:
+  /// `{<uid>: {lat, lng, timestamp}}` (issues §104.2). Members poll it with
+  /// one `get()` per tick instead of listening to `memberLocations`, where
+  /// every rider's write was billed to every member's listener (N² reads
+  /// per tick).
+  DocumentReference<Map<String, dynamic>> _positionsRef(String groupRideId) =>
+      _rideRef(groupRideId).collection('positions').doc('all');
+
+  /// Updates a member's live location. With [shared] it also goes into the
+  /// shared positions doc, in the same batch.
   Future<void> updateMemberLocation({
     required String groupRideId,
     required String userId,
     required double lat,
     required double lng,
+    bool shared = false,
   }) async {
-    await ackOrQueued(_firestore
-        .collection('groupRides')
-        .doc(groupRideId)
-        .collection('memberLocations')
-        .doc(userId)
-        .set({
-      'userId': userId,
+    final position = {
       'lat': lat,
       'lng': lng,
       'timestamp': FieldValue.serverTimestamp(),
-    }));
+    };
+    final legacy =
+        _rideRef(groupRideId).collection('memberLocations').doc(userId);
+    if (!shared) {
+      await ackOrQueued(legacy.set({'userId': userId, ...position}));
+      return;
+    }
+    // shortcut: build 29 maps only listen to memberLocations, so it is still
+    // written; drop it once config/app.minBuild passes this release.
+    await ackOrQueued((_firestore.batch()
+          ..set(legacy, {'userId': userId, ...position})
+          ..set(_positionsRef(groupRideId), {userId: position},
+              SetOptions(merge: true)))
+        .commit());
+  }
+
+  /// One poll of the live positions: the shared doc, plus the
+  /// `memberLocations` docs of [memberIds] missing from it (riders on builds
+  /// that only write there, or who haven't published yet). Throws
+  /// `permission-denied` while the deployed rules don't know the shared doc.
+  Future<Map<String, Map<String, dynamic>>> fetchLivePositions(
+    String groupRideId,
+    Iterable<String> memberIds,
+  ) async {
+    final snap = await _positionsRef(groupRideId).get();
+    final shared = <String, Map<String, dynamic>>{
+      for (final e in (snap.data() ?? const <String, dynamic>{}).entries)
+        if (e.value is Map) e.key: Map<String, dynamic>.from(e.value as Map),
+    };
+    final missing = memberIds.toSet().difference(shared.keys.toSet()).toList();
+    if (missing.isEmpty) return shared;
+    // whereIn takes at most 30 values; a ride holds at most 20 riders.
+    final legacy = await _rideRef(groupRideId)
+        .collection('memberLocations')
+        .where(FieldPath.documentId, whereIn: missing.take(30).toList())
+        .get();
+    return {..._locationsFrom(legacy.docs), ...shared};
   }
 
   /// Gets live member locations.
@@ -817,6 +861,7 @@ class GroupRideRepository {
     // member/invite/voice-note count.
     const subcollections = [
       'memberLocations',
+      'positions',
       'invitations',
       'members',
       'voiceNotes',

@@ -26,7 +26,7 @@ const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
 const {
   doc, collection, query, where, orderBy, limit,
   getDoc, getDocs, setDoc, onSnapshot, writeBatch, runTransaction,
-  Timestamp, serverTimestamp,
+  Timestamp, serverTimestamp, collectionGroup, documentId,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(path.join(__dirname, '..', '..', 'firestore.rules'), 'utf8');
@@ -60,10 +60,10 @@ function client(uid, c) {
     async set(ref, data, ruleGets = 0) {
       if (await guard(() => setDoc(ref, data).then(() => true))) { c.writes++; c.reads += ruleGets; }
     },
-    async batch(ops) {
+    async batch(ops, ruleGets = 0) {
       const b = writeBatch(db);
-      for (const [ref, data] of ops) b.set(ref, data);
-      if (await guard(() => b.commit().then(() => true))) c.writes += ops.length;
+      for (const [ref, data, opts] of ops) b.set(ref, data, opts ?? {});
+      if (await guard(() => b.commit().then(() => true))) { c.writes += ops.length; c.reads += ruleGets; }
     },
     async txnSet(ref, data) {
       const ok = await guard(() => runTransaction(db, async (tx) => {
@@ -120,13 +120,17 @@ async function liveShare(viewers, ticks) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Group ride map: every member writes memberLocations/{uid} every 20 s
-//    when moved >= 25 m (group_ride_broadcast_gate.dart; always true while
-//    riding above 4.5 km/h). Each write's rule does 1 get() on the ride doc.
-//    Each member's map holds listeners on the ride doc, members, the
-//    memberLocations collection and voiceNotes (group_ride_providers.dart,
-//    group_ride_map_screen.dart:148), plus the "Riding Now" query.
-async function groupRide(rideId, n, ticks) {
+// 2. Group ride map: every member publishes every tick when moved >= 25 m
+//    (group_ride_broadcast_gate.dart; always true while riding above
+//    4.5 km/h). Each member's map holds listeners on the ride doc, members
+//    and voiceNotes (group_ride_providers.dart), plus the "Riding Now" query.
+//    shared (§104.2, group_ride_map_screen.dart _tick): one batch writes
+//    memberLocations/{uid} and positions/all (1 rules get() on the ride, shared
+//    by both), then one get() of positions/all (+1 rules get()). Every member
+//    is in the doc, so the missing-member memberLocations query never runs.
+//    legacy (build 29, or rules not deployed): writes memberLocations/{uid}
+//    (1 rules get()) and listens to the whole memberLocations collection.
+async function groupRide(rideId, n, ticks, shared = true) {
   const c = counter();
   const uids = Array.from({ length: n }, (_, i) => `${rideId}-m${i}`);
   await seed(async (db) => {
@@ -146,7 +150,7 @@ async function groupRide(rideId, n, ticks) {
     const ride = doc(m.db, 'groupRides', rideId);
     m.listen(ride);
     m.listen(collection(ride, 'members'));
-    m.listen(collection(ride, 'memberLocations'));
+    if (!shared) m.listen(collection(ride, 'memberLocations'));
     m.listen(query(collection(ride, 'voiceNotes'), orderBy('createdAt', 'desc'), limit(20)));
     m.listen(query(collection(m.db, 'groupRides'),
       where('memberIds', 'array-contains', u), where('status', '==', 'active')));
@@ -155,10 +159,13 @@ async function groupRide(rideId, n, ticks) {
   await settle(800);
   const base = { ...c };
   for (let t = 0; t < ticks; t++) {
-    await Promise.all(ms.map(({ u, m }) => m.set(
-      doc(m.db, 'groupRides', rideId, 'memberLocations', u),
-      { userId: u, lat: 23.8 + Math.random() / 100, lng: 90.4, timestamp: serverTimestamp() },
-      1)));
+    const pos = () => ({ lat: 23.8 + Math.random() / 100, lng: 90.4, timestamp: serverTimestamp() });
+    const loc = (m, u) => doc(m.db, 'groupRides', rideId, 'memberLocations', u);
+    const all = (m) => doc(m.db, 'groupRides', rideId, 'positions', 'all');
+    await Promise.all(ms.map(({ u, m }) => (shared
+      ? m.batch([[loc(m, u), { userId: u, ...pos() }], [all(m), { [u]: pos() }, { merge: true }]], 1)
+      : m.set(loc(m, u), { userId: u, ...pos() }, 1))));
+    if (shared) await Promise.all(ms.map(({ m }) => m.getDoc(all(m), 1)));
     await settle(400);
   }
   ms.forEach(({ m }) => m.stop());
@@ -208,7 +215,9 @@ async function syncIdle() {
 // 5. One Social feed page (ride_feed_provider.dart:140): following + followers
 //    (for mutuals), public / shared-to-me / mine (20 each), public posts of
 //    followed authors in whereIn chunks of 30, 5 restricted posts per followed
-//    author, then one vote doc get per shown ride (_hydrate).
+//    author, then the reader's votes on the 20 shown rides in one
+//    collection-group `documentId in` query (getMyVotes, §104.3; worst case:
+//    the reader voted on all 20, so it returns 20 docs; no rules get()).
 async function feedPage(follows) {
   const c = counter();
   const me = `reader${follows}`;
@@ -248,8 +257,11 @@ async function feedPage(follows) {
       2)); // rideVisibleTo: exists(follows edge) + exists(block)
   }
   await Promise.all(pages);
-  // votes read rule: get(ride)
-  for (let i = 0; i < 20; i++) await r.getDoc(doc(r.db, 'rides', `${authors[i]}-0`, 'votes', me), 1);
+  await seed(async (db) => {
+    for (let i = 0; i < 20; i++) await setDoc(doc(db, 'rides', `${authors[i]}-0`, 'votes', me), { value: 1, uid: me });
+  });
+  await r.getDocs(query(collectionGroup(r.db, 'votes'),
+    where(documentId(), 'in', authors.slice(0, 20).map((a) => `rides/${a}-0/votes/${me}`))));
   return c;
 }
 
@@ -267,10 +279,11 @@ async function main() {
     projectId: 'throttleiq-loadtest',
     firestore: { rules: RULES, host: '127.0.0.1', port: 8080 },
   });
-  const out = { live: {}, group: {}, feed: {} };
+  const out = { live: {}, group: {}, groupLegacy: {}, feed: {} };
 
   for (const v of [0, 1, 3]) out.live[v] = await liveShare(v, 12);
   for (const n of [3, 10, 20]) out.group[n] = await groupRide(`g${n}`, n, 6);
+  for (const n of [3, 10, 20]) out.groupLegacy[n] = await groupRide(`l${n}`, n, 6, false);
 
   // 100 concurrent clients: five 20-rider group rides at once. Checks the
   // per-rider cost stays linear and no write is refused under contention.
@@ -285,6 +298,7 @@ async function main() {
   // Self-checks: the shapes the app uses must pass the rules.
   for (const k of Object.keys(out.live)) assert.equal(out.live[k].denied, 0, `live ${k} denied`);
   for (const k of Object.keys(out.group)) assert.equal(out.group[k].denied, 0, `group ${k} denied`);
+  for (const k of Object.keys(out.groupLegacy)) assert.equal(out.groupLegacy[k].denied, 0, `legacy group ${k} denied`);
   for (const k of Object.keys(out.feed)) assert.equal(out.feed[k].denied, 0, `feed ${k} denied`);
   assert.equal(out.rideSave60.writes, 1 + 8);
   assert.equal(out.syncIdle.reads, 4);

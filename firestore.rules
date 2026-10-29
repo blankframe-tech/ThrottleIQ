@@ -1246,6 +1246,16 @@ service cloud.firestore {
     // `.get('isPublic', false)` because Firestore must be able to prove the
     // query's own filter satisfies the rule, and it can only do that against
     // a direct field comparison matching the filter.
+    // issues §104.3: a rider may list their OWN vote docs (ride and forum
+    // post votes) across the collection group, so the feed fetches a page's
+    // votes with one `documentId in [full paths]` query instead of one get()
+    // per ride (each also paying the per-ride rule's get() on the ride).
+    // The doc id is the voter's uid, so this matches legacy `{value}` votes
+    // too and reveals nothing about anyone else.
+    match /{path=**}/votes/{voterId} {
+      allow list: if request.auth != null && request.auth.uid == voterId;
+    }
+
     match /{path=**}/routes/{routeId} {
       allow read: if request.auth != null && resource.data.isPublic == true;
     }
@@ -2168,6 +2178,35 @@ service cloud.firestore {
           request.auth.uid == riderUid && (
             request.auth.uid == ride().creatorId ||
             request.auth.uid in ride().get('memberIds', []));
+      }
+
+      // issues §104.2: every rider's live position in ONE doc,
+      // `positions/all` = {<uid>: {lat, lng, timestamp}}, which members poll
+      // with one get() per tick. Listening to memberLocations bills every
+      // rider's write to every member (N² reads per tick). Same readers and
+      // writers as memberLocations; a rider may change only their own key.
+      match /positions/{docId} {
+        function ride() {
+          return get(/databases/$(database)/documents/groupRides/$(groupRideId)).data;
+        }
+        function positionValid(p) {
+          return p is map && p.keys().hasOnly(['lat', 'lng', 'timestamp']) &&
+            p.lat is number && p.lat >= -90 && p.lat <= 90 &&
+            p.lng is number && p.lng >= -180 && p.lng <= 180 &&
+            p.timestamp == request.time;
+        }
+        allow get: if docId == 'all' && request.auth != null && (
+          request.auth.uid == ride().creatorId ||
+          request.auth.uid in ride().get('memberIds', []) ||
+          request.auth.uid in ride().get('invitedIds', []));
+        allow create, update: if docId == 'all' && request.auth != null && (
+            request.auth.uid == ride().creatorId ||
+            request.auth.uid in ride().get('memberIds', [])) &&
+          request.resource.data.diff(resource == null ? {} : resource.data)
+            .affectedKeys().hasOnly([request.auth.uid]) &&
+          positionValid(request.resource.data.get(request.auth.uid, null));
+        allow delete: if request.auth != null &&
+          request.auth.uid == ride().creatorId;
       }
     }
 

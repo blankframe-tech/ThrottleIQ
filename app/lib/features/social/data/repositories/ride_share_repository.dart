@@ -348,37 +348,81 @@ class RideShareRepository {
   /// [hydrateVotesFor] ONCE on the
   /// merged, de-duplicated page instead — see `RideFeedNotifier._fetchPage`.
   ///
-  /// A ride with no votes at all is skipped ([hydrateWith], issues §104.3).
-  /// Reducing it below one-read-per-voted-ride needs a
-  /// `collectionGroup('votes')` query on the vote docs' `uid` field, which
-  /// build-29 votes lack until scripts/oneoff/backfill_vote_uid.js runs and
-  /// `config/app.minBuild` moves past it, plus a collection-group read rule.
-  /// Left for a later pass.
+  /// A ride with no votes at all is skipped, and the rest are fetched with
+  /// one query ([hydrateWith], [getMyVotes], issues §104.3).
   Future<List<SharedRideEntity>> _hydrate(
       List<SharedRideEntity> entities) async {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
     if (currentUserId == null) return entities;
-    return hydrateWith(entities, (id) => getMyVote(id, currentUserId));
+    return hydrateWith(entities, (ids) => getMyVotes(ids, currentUserId));
   }
 
-  /// Puts [getVote]'s answer on each ride, without asking for rides whose
+  /// Puts [getVotes]'s answer on each ride, without asking about rides whose
   /// tallies are both 0: `vote()` bumps a tally in the same transaction that
   /// writes the vote doc, so such a ride has no vote from anyone. Most feed
-  /// rides have none, and each ask is 2 billed reads (the doc plus its rules
-  /// `get()` on the ride).
+  /// rides have none.
   @visibleForTesting
   static Future<List<SharedRideEntity>> hydrateWith(
     List<SharedRideEntity> rides,
-    Future<int?> Function(String rideId) getVote,
+    Future<Map<String, int>> Function(List<String> rideIds) getVotes,
   ) async {
-    final votes = await Future.wait(rides.map((ride) =>
-        ride.upvotes == 0 && ride.downvotes == 0
-            ? Future<int?>.value()
-            : getVote(ride.id)));
-    return [
-      for (var i = 0; i < rides.length; i++)
-        rides[i].copyWith(myVote: votes[i]),
+    final voted = [
+      for (final ride in rides)
+        if (ride.upvotes != 0 || ride.downvotes != 0) ride.id,
     ];
+    final votes = voted.isEmpty ? const <String, int>{} : await getVotes(voted);
+    return [for (final ride in rides) ride.copyWith(myVote: votes[ride.id])];
+  }
+
+  /// Set once the collection-group vote query is refused (rules not deployed
+  /// yet, or a missing index), so later pages don't pay for the refusal.
+  bool _voteQueryRefused = false;
+
+  /// [uid]'s votes on [rideIds], keyed by ride id (rides without one are
+  /// absent): [queryMyVotes], or one [getMyVote] per ride (2 reads each)
+  /// while the rules refuse that query.
+  Future<Map<String, int>> getMyVotes(List<String> rideIds, String uid) async {
+    if (!_voteQueryRefused) {
+      final votes = await queryMyVotes(_firestore, rideIds, uid);
+      if (votes != null) return votes;
+      _voteQueryRefused = true;
+    }
+    final values = await Future.wait(rideIds.map((id) => getMyVote(id, uid)));
+    return {
+      for (var i = 0; i < rideIds.length; i++)
+        if (values[i] != null) rideIds[i]: values[i]!,
+    };
+  }
+
+  /// One `collectionGroup('votes')` query on the vote docs' full paths per
+  /// 30 rides: max(1, votes found) reads each. Null when the query is
+  /// refused (rules not deployed yet, or a missing index).
+  @visibleForTesting
+  static Future<Map<String, int>?> queryMyVotes(
+    FirebaseFirestore firestore,
+    List<String> rideIds,
+    String uid,
+  ) async {
+    final votes = <String, int>{};
+    try {
+      for (var i = 0; i < rideIds.length; i += 30) {
+        final snap = await firestore
+            .collectionGroup('votes')
+            .where(FieldPath.documentId, whereIn: [
+          for (final id in rideIds.skip(i).take(30)) 'rides/$id/votes/$uid',
+        ]).get();
+        for (final doc in snap.docs) {
+          final value = doc.data()['value'];
+          if (value is int) votes[doc.reference.parent.parent!.id] = value;
+        }
+      }
+    } on FirebaseException catch (e) {
+      if (e.code == 'permission-denied' || e.code == 'failed-precondition') {
+        return null;
+      }
+      rethrow;
+    }
+    return votes;
   }
 
   /// Public entry point for the merged-page hydration described on [_hydrate].
