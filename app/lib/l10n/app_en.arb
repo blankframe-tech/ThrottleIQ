@@ -312,6 +312,14 @@
   "@shareAction": {
     "description": "Button that opens the ride-share flow from the ride summary screen."
   },
+  "rideReplayPlay": "Play ride replay",
+  "@rideReplayPlay": {
+    "description": "Tooltip on the play button that animates a finished ride on the ride summary map."
+  },
+  "rideReplayPause": "Pause ride replay",
+  "@rideReplayPause": {
+    "description": "Tooltip on the pause button of the ride replay on the ride summary map."
+  },
   "exportJsonAction": "Export JSON",
   "@exportJsonAction": {
     "description": "Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated."

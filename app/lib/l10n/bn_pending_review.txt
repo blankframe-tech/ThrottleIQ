@@ -1667,3 +1667,7 @@ indriyoNotConnected
 indriyoInvalidUrl
 indriyoSimulationTitle
 indriyoSimulationSubtitle
+
+# batch: ride replay (2026-10-29)
+rideReplayPlay
+rideReplayPause

@@ -524,6 +524,18 @@ abstract class AppLocalizations {
   /// **'Share'**
   String get shareAction;
 
+  /// Tooltip on the play button that animates a finished ride on the ride summary map.
+  ///
+  /// In en, this message translates to:
+  /// **'Play ride replay'**
+  String get rideReplayPlay;
+
+  /// Tooltip on the pause button of the ride replay on the ride summary map.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause ride replay'**
+  String get rideReplayPause;
+
   /// Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated.
   ///
   /// In en, this message translates to:

@@ -240,6 +240,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get shareAction => 'শেয়ার করুন';
 
   @override
+  String get rideReplayPlay => 'রাইড রিপ্লে চালান';
+
+  @override
+  String get rideReplayPause => 'রাইড রিপ্লে থামান';
+
+  @override
   String get exportJsonAction => 'JSON এক্সপোর্ট করুন';
 
   @override

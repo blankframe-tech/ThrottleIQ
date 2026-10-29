@@ -71,6 +71,8 @@
   "routeSectionLabel": "রুট",
   "saveAndDoneAction": "সেভ করে শেষ",
   "shareAction": "শেয়ার করুন",
+  "rideReplayPlay": "রাইড রিপ্লে চালান",
+  "rideReplayPause": "রাইড রিপ্লে থামান",
   "exportJsonAction": "JSON এক্সপোর্ট করুন",
   "exportGpxAction": "GPX এক্সপোর্ট করুন",
   "exportCsvAction": "CSV এক্সপোর্ট করুন",

@@ -7679,3 +7679,7 @@ Reported by the owner on a Play install (alpha track, build 30, `1.0.0-beta.4.8.
 - **Play signing key** (read from build 30's Play-generated universal APK with `apksigner verify --max-sdk-version 36 --print-certs`; JDK 21 can't parse the PQC v3.2 signer): SHA-1 `6016d8cbc69b07e8dc3c03397763ae0c6defbf07`, SHA-256 `cf1e8bab278265ccdd230303ae612ba95190a6d04ca85c19b8585e459060543d`.
 - **Fixed (console only, no rebuild):** both hashes registered with `firebase apps:android:sha:create <appId> <hash> --project throttleiqfb`; Firebase created the matching Android OAuth client. The local `app/android/app/google-services.json` (gitignored) got the refreshed `com.bft.throttleiq` block. Not yet re-tested on the Play install.
 - **Rule:** if the Play signing key ever changes (key upgrade), register its fingerprint again. Find it in Play Console → App integrity → App signing.
+
+## GitHub #62. Ride replay on the ride summary map — DONE (2026-10-29, lane K)
+
+Play/pause and a scrubber under the summary map (`app/lib/features/ride/presentation/widgets/ride_replay_controls.dart`) walk a marker along the ride's local track points (`RideTrackLoader`, works offline) with the speed at that point; a full replay takes ~20 s. Only the marker layer rebuilds per tick. Lean is not shown: only the ride's max lean is stored, not per point. Strings EN + BN (BN in `bn_pending_review.txt`). *Test:* `app/test/features/ride/presentation/widgets/ride_replay_controls_test.dart`. Not checked on a device.

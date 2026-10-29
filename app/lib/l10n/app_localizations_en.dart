@@ -240,6 +240,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareAction => 'Share';
 
   @override
+  String get rideReplayPlay => 'Play ride replay';
+
+  @override
+  String get rideReplayPause => 'Pause ride replay';
+
+  @override
   String get exportJsonAction => 'Export JSON';
 
   @override
