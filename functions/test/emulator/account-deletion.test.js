@@ -19,8 +19,9 @@ const { deleteUserData, DELETED_RIDER, DELETED_PARTICIPANT } = require('../../li
 
 const UID = 'deletedRiderUid000000000001';
 const OTHER = 'otherRiderUid0000000000002';
-const TOKEN = 'a'.repeat(40);
-const OTHER_TOKEN = 'b'.repeat(40);
+// Live-share tokens are 32 [A-Za-z0-9] (createLiveSessionToken).
+const TOKEN = 'a'.repeat(32);
+const OTHER_TOKEN = 'b'.repeat(32);
 const CHAT_ID = [UID, OTHER].sort().join('_');
 const EMAIL_HASH = 'c'.repeat(64);
 
@@ -391,6 +392,39 @@ test('with credentials, owned media is destroyed by a signed call; foreign rows 
   assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false, 'ledger deleted with the profile');
 });
 
+// Security sweep 2026-10-30 C1: the Cloudinary sweep is the slowest step (one
+// HTTP call per asset). A timeout in it must not leave the profile behind,
+// and the ledger must outlive it so a retry can still find the media.
+test('the profile goes before the Cloudinary sweep; the ledger after it', async () => {
+  await clearEmulators();
+  await db.doc(`users/${UID}`).set({ username: 'GoneRider' });
+  await db.doc(`users/${UID}/emergencyContacts/c1`).set({ name: 'Mum', phone: '+8801700000000' });
+  await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
+
+  const seen = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).startsWith('https://api.cloudinary.com/')) return realFetch(url, init);
+    seen.push({
+      profile: await exists(`users/${UID}`),
+      contact: await exists(`users/${UID}/emergencyContacts/c1`),
+      ledger: await exists(`users/${UID}/cloudinaryAssets/a1`),
+    });
+    return { ok: true, json: async () => ({ result: 'ok' }) };
+  };
+  try {
+    const result = await deleteUserData(db, UID, {
+      rtdb: null,
+      cloudinary: { cloud: 'demo-cloud', apiKey: 'k', apiSecret: 's' },
+    });
+    assert.deepEqual(result.failedSteps, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.deepEqual(seen, [{ profile: false, contact: false, ledger: true }]);
+  assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false);
+});
+
 test('empty credentials (an unset secret) skip the sweep without throwing', async () => {
   await clearEmulators();
   await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
@@ -508,4 +542,54 @@ test("a group ride the rider created loses their roster row and creator name", a
 
 test.after(async () => {
   await rtdb.app.delete();
+});
+
+// Security sweep 2026-10-30 C2: the shared positions doc (issues §104.2)
+// held the rider's last position after the erasure.
+test("the rider's key leaves every group ride's positions/all", async () => {
+  const pos = { lat: 23.8, lng: 90.4, timestamp: 1 };
+  await seedAndEraseTwice({
+    'groupRides/joined': { creatorId: OTHER, memberIds: [OTHER, UID], invitedIds: [], status: 'active' },
+    'groupRides/joined/positions/all': { [UID]: pos, [OTHER]: pos },
+    'groupRides/mine': { creatorId: UID, memberIds: [UID, OTHER], invitedIds: [], status: 'active' },
+    'groupRides/mine/positions/all': { [UID]: pos, [OTHER]: pos },
+    // Never published a position: no empty doc may be created for it.
+    'groupRides/quiet': { creatorId: OTHER, memberIds: [OTHER, UID], invitedIds: [], status: 'active' },
+  }, async () => {
+    for (const ride of ['joined', 'mine']) {
+      const all = (await db.doc(`groupRides/${ride}/positions/all`).get()).data();
+      assert.deepEqual(Object.keys(all), [OTHER], ride);
+    }
+    assert.equal(await exists('groupRides/quiet/positions/all'), false);
+  });
+});
+
+// Security sweep 2026-10-30 C3: a custom forum kept the rider's uid as its
+// creator and maintainer (canModerateForum reads both).
+test('forums lose the rider as creator and maintainer', async () => {
+  await seedAndEraseTwice({
+    'forums/c-mine': { type: 'custom', createdBy: UID, maintainerIds: [UID, OTHER], followerCount: 0, postCount: 0 },
+    'forums/c-theirs': { type: 'custom', createdBy: OTHER, maintainerIds: [OTHER, UID], followerCount: 0, postCount: 0 },
+  }, async () => {
+    const mine = (await db.doc('forums/c-mine').get()).data();
+    assert.equal(mine.createdBy, '');
+    assert.deepEqual(mine.maintainerIds, [OTHER]);
+    const theirs = (await db.doc('forums/c-theirs').get()).data();
+    assert.equal(theirs.createdBy, OTHER);
+    assert.deepEqual(theirs.maintainerIds, [OTHER]);
+  });
+});
+
+// Security sweep 2026-10-30 C4: the pointer docs' `token` is client-written,
+// and `live_shares/${token}` with a token of '/' named the whole channel.
+test("a malformed pointer token can't wipe other riders' live shares", async () => {
+  await clearEmulators();
+  await db.doc(`livePointers/${UID}`).set({ uid: UID, token: '/' });
+  await db.doc(`handleLinks/${'e'.repeat(64)}`).set({ uid: UID, token: `${OTHER_TOKEN}/location` });
+  await rtdb.ref(`live_shares/${OTHER_TOKEN}`).set({ uid: OTHER, location: { lat: 1, lng: 1, ts: 1, seq: 1 } });
+
+  const result = await deleteUserData(db, UID, { rtdb });
+  assert.deepEqual(result.failedSteps, []);
+  assert.notEqual(await rtdbVal(`live_shares/${OTHER_TOKEN}/location`), null);
+  assert.equal(await exists(`livePointers/${UID}`), false);
 });

@@ -593,7 +593,17 @@ service cloud.firestore {
         (!('publicStats' in request.resource.data) ||
          publicStatsValid(resource == null ? {} : resource.data, request.resource.data.publicStats)) &&
         profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
-        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
+        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data) &&
+        // Security sweep B4: only keys ProfileRepository / BadgeStatsCounter
+        // write (email/emailLower: ensureProfile deletes legacy ones). An
+        // update is judged on the keys it changes, so a legacy key on an old
+        // doc doesn't block unrelated edits.
+        (resource == null ? request.resource.data.keys().toSet()
+          : request.resource.data.diff(resource.data).affectedKeys()).hasOnly([
+          'displayName', 'photoUrl', 'nickname', 'bio', 'username',
+          'usernameLower', 'visibility', 'bikesVisibility', 'publicStats',
+          'pinnedRideIds', 'followerCount', 'followingCount', 'createdAt',
+          'updatedAt', 'badgeStatsCountedAt', 'email', 'emailLower']);
       // A profile already counted in stats/badges.totalRiders can't be
       // deleted by its owner: delete-and-recreate would count them again.
       // Account deletion removes it with the Admin SDK.
@@ -710,10 +720,39 @@ service cloud.firestore {
       // the collectionGroup('routes') query behind getPublicRoutes needs the
       // separate rule below, because a collection-group query is not matched
       // by a path-anchored rule.
+      // Security sweep B3: every Discover viewer renders a public route, so a
+      // write carries only RouteModel's keys, capped text and an allow-listed
+      // map snapshot, and `timesRidden` (Discover's sort key) starts at 1 and
+      // only ever goes +1 (incrementTimesRidden). The name cap is 300, not
+      // 100: "Save route" on a shared ride names it "<userName>'s <bikeName>
+      // Route", and neither the app nor the rules cap a bike name.
       match /routes/{routeId} {
+        function routeKeys() {
+          return ['id', 'userId', 'name', 'description', 'distanceKm',
+            'polyline', 'mapSnapshotUrl', 'timesRidden', 'createdAt',
+            'isPublic', 'sharedWithUserIds'];
+        }
+        function routeFieldsValid(before, after) {
+          return (keeps(before, after, 'name') ||
+              (after.name is string && after.name.size() <= 300)) &&
+            (keeps(before, after, 'description') || optionalText(after, 'description', 2000)) &&
+            (keeps(before, after, 'mapSnapshotUrl') ||
+              photoUrlAllowed(after.get('mapSnapshotUrl', null)));
+        }
         allow read: if request.auth.uid == uid ||
           (request.auth != null && resource.data.get('isPublic', false) == true);
-        allow write: if request.auth.uid == uid;
+        allow create: if request.auth.uid == uid &&
+          request.resource.data.keys().hasOnly(routeKeys()) &&
+          request.resource.data.name is string &&
+          routeFieldsValid({}, request.resource.data) &&
+          request.resource.data.timesRidden is int &&
+          request.resource.data.timesRidden == 1;
+        allow update: if request.auth.uid == uid &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(routeKeys()) &&
+          routeFieldsValid(resource.data, request.resource.data) &&
+          (keeps(resource.data, request.resource.data, 'timesRidden') ||
+            request.resource.data.timesRidden == resource.data.timesRidden + 1);
+        allow delete: if request.auth.uid == uid;
       }
 
       // False crash positives (for tuning/analytics)
@@ -789,8 +828,19 @@ service cloud.firestore {
       // this app already carries (captions, forum posts) — not the
       // unconditional device-fetch/beacon vector this fix closes.
       match /notifications/{notificationId} {
+        // Security sweep B2: exactly NotificationRepository's keys, a server
+        // timestamp, unread, and a follow only at its one `follow_{uid}` id —
+        // else a sender could flood an inbox or pin a row on top of it.
         function notificationShapeValid(data) {
-          return data.fromUid == request.auth.uid &&
+          return data.keys().hasOnly(['type', 'fromUid', 'fromName',
+              'fromPhotoUrl', 'groupRideId', 'createdAt', 'read']) &&
+            data.createdAt == request.time &&
+            data.read == false &&
+            (data.get('type', '') != 'follow' ||
+             notificationId == 'follow_' + request.auth.uid) &&
+            (!('groupRideId' in data) ||
+             (data.groupRideId is string && data.groupRideId.size() <= 128)) &&
+            data.fromUid == request.auth.uid &&
             data.get('type', '') in
               ['follow', 'groupRideInvite', 'groupRideJoined'] &&
             data.get('fromName', '') is string &&
@@ -1203,7 +1253,12 @@ service cloud.firestore {
           optionalNameValid(request.resource.data.get('userName', null)) &&
           photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
           request.resource.data.get('updatedAt', null) == null &&
-          request.resource.data.createdAt == request.time;
+          request.resource.data.createdAt == request.time &&
+          // Security sweep B1: the +1 for this comment in the same commit
+          // (addComment's transaction, every build since 2026-08-14), or a
+          // bare create plus a counted delete drives `comments` below zero.
+          counterMovedFor(/databases/$(database)/documents/rides/$(rideId),
+            'comments', 1, 'lastCommentId', commentId);
         allow delete: if request.auth != null &&
           (!existsAfter(/databases/$(database)/documents/rides/$(rideId)) ||
            ((resource.data.userId == request.auth.uid ||
@@ -1291,6 +1346,15 @@ service cloud.firestore {
         request.resource.data.keys().hasOnly(['type', 'brand', 'model', 'topic',
           'displayName', 'description', 'createdBy', 'maintainerIds',
           'followerCount', 'postCount', 'createdAt']) &&
+        // Security sweep B6: every rider's forum list renders these. Brand and
+        // model come from a rider's own (uncapped) bike, and the custom name
+        // and description from an uncapped form, hence the generous caps.
+        request.resource.data.displayName is string &&
+        request.resource.data.displayName.size() <= 500 &&
+        optionalText(request.resource.data, 'brand', 200) &&
+        optionalText(request.resource.data, 'model', 200) &&
+        optionalText(request.resource.data, 'topic', 200) &&
+        optionalText(request.resource.data, 'description', 2000) &&
         ((forumId.matches('c-.+') &&
           request.resource.data.type == 'custom' &&
           request.resource.data.createdBy == request.auth.uid &&
@@ -1363,7 +1427,9 @@ service cloud.firestore {
           (request.resource.data.get('alsoIn', null) == null ||
            (request.resource.data.alsoIn is list &&
             request.resource.data.alsoIn.size() <= 4 &&
-            !(forumId in request.resource.data.alsoIn))) &&
+            !(forumId in request.resource.data.alsoIn) &&
+            // B6: each entry a forum-id-shaped slug (slugify.dart).
+            request.resource.data.alsoIn.join(',').matches('^([A-Za-z0-9_-]{1,200}(,[A-Za-z0-9_-]{1,200})*)?$'))) &&
           (request.resource.data.get('imageUrls', null) == null ||
            forumImagesValid(request.resource.data.imageUrls, request.auth.uid)) &&
           request.resource.data.get('postType', 'general') in
@@ -1609,7 +1675,19 @@ service cloud.firestore {
         (!('tags' in request.resource.data) ||
           (request.resource.data.tags is list &&
            request.resource.data.tags.size() <= 12 &&
-           request.resource.data.tags.toSet().size() == request.resource.data.tags.size())) &&
+           request.resource.data.tags.toSet().size() == request.resource.data.tags.size() &&
+           // Security sweep B5: each tag a short PlaceTag-style name.
+           request.resource.data.tags.join(',').matches('^([A-Za-z0-9_]{1,40}(,[A-Za-z0-9_]{1,40})*)?$'))) &&
+        // B5: the fields every viewer's map and the ride cache parse.
+        request.resource.data.category is string &&
+        request.resource.data.category.size() <= 40 &&
+        request.resource.data.latitude is number &&
+        request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90 &&
+        request.resource.data.longitude is number &&
+        request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180 &&
+        request.resource.data.geohash is string && request.resource.data.geohash.size() <= 12 &&
+        optionalText(request.resource.data, 'osmId', 64) &&
+        request.resource.data.createdAt is timestamp &&
         (!('expiresAt' in request.resource.data) ||
           (request.resource.data.expiresAt is timestamp &&
            request.resource.data.expiresAt > request.time &&
@@ -1789,12 +1867,23 @@ service cloud.firestore {
     // anyone who knew a @handle could resolve it to the rider's uid and
     // follow them through this doc. Owner-only now; still writable so old app
     // builds don't error, but nothing public reads it.
+    // Security sweep B9 (pairs with C4): account erasure deletes the RTDB
+    // live_shares/{token} named here, so a token like '/' would wipe every
+    // rider's. A pointer's token is createLiveSessionToken's 32 alphanumerics
+    // (every build since 2026-07-12), null once cleared, or left unchanged.
+    function liveTokenValid(before, after) {
+      return keeps(before, after, 'token') || after.get('token', null) == null ||
+        (after.token is string && after.token.matches('^[A-Za-z0-9]{32}$'));
+    }
+
     match /livePointers/{uid} {
       allow get: if request.auth != null && request.auth.uid == uid;
       allow create: if request.auth != null && request.auth.uid == uid &&
-        request.resource.data.uid == uid;
+        request.resource.data.uid == uid &&
+        liveTokenValid({}, request.resource.data);
       allow update: if request.auth != null && request.auth.uid == uid &&
-        request.resource.data.uid == uid;
+        request.resource.data.uid == uid &&
+        liveTokenValid(resource.data, request.resource.data);
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -1814,12 +1903,14 @@ service cloud.firestore {
         key.matches('^[0-9a-f]{64}$') &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.keys().hasOnly(
-          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']) &&
+        liveTokenValid({}, request.resource.data);
       allow update: if request.auth != null &&
         resource.data.uid == request.auth.uid &&
         request.resource.data.uid == request.auth.uid &&
         request.resource.data.keys().hasOnly(
-          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']);
+          ['uid', 'token', 'active', 'lastLat', 'lastLng', 'lastSeenAt', 'updatedAt']) &&
+        liveTokenValid(resource.data, request.resource.data);
       allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
@@ -1851,6 +1942,8 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(resource.data.followerUid)).data));
       allow create: if request.auth != null &&
         request.resource.data.followerUid == request.auth.uid &&
+        // Security sweep B8: FollowRepository.follow's keys only.
+        request.resource.data.keys().hasOnly(['followerUid', 'followeeUid', 'createdAt']) &&
         edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid) &&
         !exists(/databases/$(database)/documents/users/$(request.resource.data.followeeUid)/blocks/$(request.auth.uid)) &&
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(request.resource.data.followeeUid));
@@ -2056,7 +2149,26 @@ service cloud.firestore {
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
           request.auth.uid in ride().get('invitedIds', []));
-        allow write: if request.auth != null && (
+        // Security sweep B7: a row is GroupRideMemberModel.toDocument's keys
+        // (unchanged since 2026-07), for this uid, with a capped name, an
+        // allow-listed avatar (every member's device shows it) and typed
+        // coordinates.
+        function rosterRowValid(before, after) {
+          return after.keys().hasOnly(['userId', 'userName', 'userPhotoUrl',
+              'joinedAt', 'status', 'currentLat', 'currentLng',
+              'lastLocationUpdate']) &&
+            after.get('userId', memberUid) == memberUid &&
+            after.get('status', 'pending') in ['joined', 'pending', 'declined'] &&
+            (keeps(before, after, 'userName') || optionalNameValid(after.get('userName', null))) &&
+            (keeps(before, after, 'userPhotoUrl') || photoUrlAllowed(after.get('userPhotoUrl', null))) &&
+            (after.get('currentLat', null) == null || after.currentLat is number) &&
+            (after.get('currentLng', null) == null || after.currentLng is number);
+        }
+        allow create, update: if rowWriter() &&
+          rosterRowValid(resource == null ? {} : resource.data, request.resource.data);
+        allow delete: if rowWriter();
+        function rowWriter() {
+          return request.auth != null && (
           request.auth.uid == writeRide().creatorId ||
           // Anyone else writes ONLY their own entry, and only while on the
           // ride or holding an open invitation. An accepting invitee is still
@@ -2077,6 +2189,7 @@ service cloud.firestore {
             // the parent, never on this subcollection's mere existence.
             (writeRide().status == 'active' &&
              !(request.auth.uid in writeRide().get('bannedIds', []))))));
+        }
       }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.

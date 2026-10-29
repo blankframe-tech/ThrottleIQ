@@ -295,6 +295,14 @@ test('alsoIn must be a list', async () => {
   );
 });
 
+// Security sweep B6: each alsoIn entry is a forum-id-shaped string.
+test('B6: alsoIn entries must be short forum ids', async () => {
+  await assertFails(createPost('g5', newPost(ALICE, { alsoIn: ['x'.repeat(201)] })));
+  await assertFails(createPost('g6', newPost(ALICE, { alsoIn: [{ blob: 'x'.repeat(5000) }] })));
+  await assertFails(createPost('g7', newPost(ALICE, { alsoIn: ['a/b'] })));
+  await assertSucceeds(createPost('g8', newPost(ALICE, { alsoIn: ['yamaha__r15', 'c-night_riders'] })));
+});
+
 test('signed-in riders can read every post across groups', async () => {
   await assertSucceeds(getDocs(collectionGroup(dbFor(ALICE), 'posts')));
   await assertSucceeds(getDocs(query(collectionGroup(dbFor(ALICE), 'posts'),

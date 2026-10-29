@@ -4075,11 +4075,11 @@ different tables.
 ### 62.10 Operational: weak/shared credentials and unencrypted keys on disk — MEDIUM
 
 **Status: FIXED (the fixable parts).** `create_review_account.js` no longer
-hardcodes `Test@123` — it generates a random 20-char password (once, for a
+hardcodes `[redacted]` — it generates a random 20-char password (once, for a
 new account) unless one is explicitly supplied, and no longer silently
 resets an existing account's password on re-run. `seed_qa_test_riders.js`
 now generates a unique random password per rider instead of one shared
-`QaSeed!2026` constant, and writes them to a local `0o600`,
+`[redacted]` constant, and writes them to a local `0o600`,
 gitignore-covered file (`scripts/qa_seed_passwords.<timestamp>.json`)
 instead of printing them to stdout/CI logs. `update_places_google_ratings.js`
 now hard-fails if `FIREBASE_PROJECT_ID` is unset, matching every sibling
@@ -4094,9 +4094,9 @@ out of scope (§62.13).
 
 Not a repo leak (all covered by `.gitignore`, confirmed untracked via
 `git ls-files`), but real operational risk: `scripts/oneoff/create_review_account.js:65-66,246-249`
-hardcodes `rider.admin@example.com` / `Test@123` for a permanent,
+hardcodes `rider.admin@example.com` / `[redacted]` for a permanent,
 never-cleaned-up Play Store review account in the **live production**
-project; `seed_qa_test_riders.js` uses one shared password (`QaSeed!2026`)
+project; `seed_qa_test_riders.js` uses one shared password (`[redacted]`)
 across up to 30 real, publicly-visible production accounts, and prints it
 to stdout/CI logs on every run; `secret/creds.txt` and
 `secrets/throttle-iq-gcc1-*.json` (a live GCP service-account key) sit

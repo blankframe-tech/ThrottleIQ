@@ -52,3 +52,24 @@ export function shouldClaimEscalation(
   if (status === "escalating") return leaseExpired(escalatingAtIso, nowMs);
   return false;
 }
+
+/**
+ * Per-rider crash-alert rate limit (security sweep 2026-10-30, C5). Once
+ * delivery is real every alert texts each emergency contact, and a client
+ * can create any number of crash notifications, so more than [ALERT_LIMIT]
+ * in [ALERT_WINDOW_MS] are held back. Kept loose: a held-back alert could be
+ * a real crash.
+ */
+export const ALERT_LIMIT = 3;
+export const ALERT_WINDOW_MS = 60 * 60 * 1000;
+
+/**
+ * `sentAtMs` (the rider's earlier send times) plus `nowMs`, minus the ones
+ * older than the window, or null when the rider is already at the limit.
+ */
+export function admitAlert(sentAtMs: unknown, nowMs: number): number[] | null {
+  const recent = (Array.isArray(sentAtMs) ? sentAtMs : []).filter(
+    (t): t is number => typeof t === "number" && nowMs - t < ALERT_WINDOW_MS
+  );
+  return recent.length >= ALERT_LIMIT ? null : [...recent, nowMs];
+}

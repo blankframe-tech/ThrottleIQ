@@ -171,7 +171,7 @@ Future<void> removeLiveShareNode(
   } on TimeoutException {
     rethrow;
   } catch (e) {
-    debugPrint('[Outbox] remove of live_shares/$token failed: $e');
+    debugPrint('[Outbox] remove of a live_shares node failed: $e');
   } finally {
     lease.release();
   }

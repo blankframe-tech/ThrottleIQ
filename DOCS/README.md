@@ -95,7 +95,7 @@ Package READMEs live next to the code: `app/README.md`, `functions/README.md`,
 
 `apify/` (scrape notes and the 2026-10-21 Facebook bike-group research),
 `background_geolocation/` (the abandoned paid-plugin experiment),
-`ui_stuff/` (old theme mockups and Calming light screenshots, used as
+`ui_stuff/` (old theme mockup PNGs and Calming light screenshots, used as
 poster sources), `website_demo/` (the September marketing-site demo; its
 claims are out of date).
 

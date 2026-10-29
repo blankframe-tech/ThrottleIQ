@@ -163,3 +163,25 @@ test('a backdated updatedAt, which would dodge the ride cache delta pull, is den
     setDoc(doc(aliceDb(), 'places', 'p13'), place({ updatedAt: inHours(-1) }))
   );
 });
+
+// Security sweep B5: each tag a short string, and the place's core fields typed.
+test('B5: oversized or map-valued tags are denied', async () => {
+  await assertFails(setDoc(doc(aliceDb(), 'places', 'b1'), place({ tags: ['x'.repeat(41)] })));
+  await assertFails(setDoc(doc(aliceDb(), 'places', 'b2'), place({ tags: [{ blob: 'x'.repeat(5000) }] })));
+});
+
+test('B5: mistyped place fields are denied', async () => {
+  for (const [id, bad] of [
+    ['c1', { category: { evil: true } }],
+    ['c2', { category: 'x'.repeat(41) }],
+    ['c3', { latitude: '23.8' }],
+    ['c4', { longitude: 500 }],
+    ['c5', { geohash: 'x'.repeat(5000) }],
+    ['c6', { osmId: { blob: 1 } }],
+    ['c7', { createdAt: 'yesterday' }],
+  ]) {
+    await assertFails(setDoc(doc(aliceDb(), 'places', id), place(bad)));
+  }
+  // An OSM import's id (overpass_service: '<type>/<id>').
+  await assertSucceeds(setDoc(doc(aliceDb(), 'places', 'osm_way_1'), place({ osmId: 'way/123456789' })));
+});

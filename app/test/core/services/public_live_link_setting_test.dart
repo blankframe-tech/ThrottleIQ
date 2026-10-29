@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/services/public_live_link_setting.dart';
@@ -24,20 +27,31 @@ void main() {
 
   test('enabling stores only the key, never the password', () async {
     SharedPreferences.setMockInitialValues({});
-    await PublicLiveLinkSetting.enable(uid: 'u1', password: 'hunter22');
+    // Exactly the 12-character minimum is accepted.
+    await PublicLiveLinkSetting.enable(uid: 'u1', password: 'hunter22hunt');
     expect(await PublicLiveLinkSetting.currentKey(),
-        PublicLiveLinkSetting.linkKey('u1', 'hunter22'));
+        PublicLiveLinkSetting.linkKey('u1', 'hunter22hunt'));
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getKeys().map(prefs.get).any((v) => '$v'.contains('hunter22')),
         isFalse);
   });
 
-  test('a password under 8 characters is refused', () async {
+  test('a password under 12 characters is refused', () async {
     SharedPreferences.setMockInitialValues({});
     await expectLater(
-        PublicLiveLinkSetting.enable(uid: 'u1', password: 'short12'),
+        PublicLiveLinkSetting.enable(uid: 'u1', password: 'eleven-char'),
         throwsArgumentError);
     expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
+  });
+
+  test('the en and bn hints state the same minimum the code enforces', () {
+    const min = '${PublicLiveLinkSetting.minPasswordLength}';
+    for (final arb in ['lib/l10n/app_en.arb', 'lib/l10n/app_bn.arb']) {
+      final strings = jsonDecode(File(arb).readAsStringSync()) as Map;
+      expect(strings['publicLiveLinkPasswordBody'], contains(min), reason: arb);
+      expect(strings['publicLiveLinkPasswordTooShort'], contains(min),
+          reason: arb);
+    }
   });
 
   test('disabling with no link set needs no Firestore write', () async {
