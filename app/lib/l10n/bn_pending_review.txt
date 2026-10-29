@@ -1670,3 +1670,14 @@ indriyoSimulationSubtitle
 # batch: shared ride delete errors (2026-10-29)
 sharedRideDeleteFailed
 sharedPostNotRemoved
+
+# batch: ride replay (2026-10-29)
+rideReplayPlay
+rideReplayPause
+
+# batch: year in review card (2026-10-29)
+yearInReviewTitle
+yearInReviewHeading
+yearInReviewLongestRide
+yearInReviewFavouriteBike
+yearInReviewShareFailed

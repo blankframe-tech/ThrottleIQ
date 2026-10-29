@@ -36,6 +36,7 @@ import '../../domain/calculators/speed_baseline.dart';
 import '../widgets/bike_confirmation_card.dart';
 import '../widgets/change_bike_control.dart';
 import '../widgets/impact_question_card.dart';
+import '../widgets/ride_replay_controls.dart';
 import '../providers/ride_recording_provider.dart';
 import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/cloud/cloud_repository.dart';
@@ -63,6 +64,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   List<double> _speedsMs = [];
   List<double?> _altitudesM = [];
   bool _polylineLoaded = false;
+  final ValueNotifier<int?> _replayIndex = ValueNotifier(null);
   ({double riderKmh, double baselineKmh})? _speedOutlier;
   RideWeather? _weather;
   bool _weatherChecked = false;
@@ -83,6 +85,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
   @override
   void dispose() {
     _mapController.dispose();
+    _replayIndex.dispose();
     super.dispose();
   }
 
@@ -494,6 +497,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 EditorialLabel(l10n.routeSectionLabel),
                 const SizedBox(height: 10),
                 _buildMap(ride, startCenter, l10n),
+                if (ride.mapSnapshotPath == null &&
+                    _polyline.length > 1 &&
+                    _speedsMs.length == _polyline.length)
+                  RideReplayControls(
+                    speedsMs: _speedsMs,
+                    position: _replayIndex,
+                  ),
                 _buildSpeedLegend(l10n),
                 _buildSpeedOutlierCard(l10n),
                 const SizedBox(height: 16),
@@ -895,6 +905,30 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                         ),
                     ],
                   ),
+                // Rebuilds only this layer per replay tick, not the screen.
+                ValueListenableBuilder<int?>(
+                  valueListenable: _replayIndex,
+                  builder: (context, i, _) => i == null || i >= _polyline.length
+                      ? const SizedBox.shrink()
+                      : MarkerLayer(
+                          markers: [
+                            Marker(
+                              key: const Key('ride_replay_marker'),
+                              point: _polyline[i],
+                              width: 20,
+                              height: 20,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: context.palette.primary,
+                                  border:
+                                      Border.all(color: Colors.white, width: 3),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ],
             ),
             if (_polyline.isNotEmpty)

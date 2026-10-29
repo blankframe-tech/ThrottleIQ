@@ -240,6 +240,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareAction => 'Share';
 
   @override
+  String get rideReplayPlay => 'Play ride replay';
+
+  @override
+  String get rideReplayPause => 'Pause ride replay';
+
+  @override
   String get exportJsonAction => 'Export JSON';
 
   @override
@@ -3563,6 +3569,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get analyticsUnknownBike => 'Unknown bike';
+
+  @override
+  String get yearInReviewTitle => 'Year in review';
+
+  @override
+  String yearInReviewHeading(String year) {
+    return 'My $year on two wheels';
+  }
+
+  @override
+  String get yearInReviewLongestRide => 'Longest ride';
+
+  @override
+  String get yearInReviewFavouriteBike => 'Favourite bike';
+
+  @override
+  String get yearInReviewShareFailed =>
+      'Couldn\'t create the image. Try again.';
 
   @override
   String get analyticsTapForDetails => 'Tap a chart for details';

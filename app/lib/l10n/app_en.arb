@@ -312,6 +312,14 @@
   "@shareAction": {
     "description": "Button that opens the ride-share flow from the ride summary screen."
   },
+  "rideReplayPlay": "Play ride replay",
+  "@rideReplayPlay": {
+    "description": "Tooltip on the play button that animates a finished ride on the ride summary map."
+  },
+  "rideReplayPause": "Pause ride replay",
+  "@rideReplayPause": {
+    "description": "Tooltip on the pause button of the ride replay on the ride summary map."
+  },
   "exportJsonAction": "Export JSON",
   "@exportJsonAction": {
     "description": "Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated."
@@ -4936,6 +4944,32 @@
   "analyticsUnknownBike": "Unknown bike",
   "@analyticsUnknownBike": {
     "description": "Label for rides whose bike no longer exists."
+  },
+  "yearInReviewTitle": "Year in review",
+  "@yearInReviewTitle": {
+    "description": "Title of the screen and Rides-tab button for the shareable year-in-review card."
+  },
+  "yearInReviewHeading": "My {year} on two wheels",
+  "@yearInReviewHeading": {
+    "description": "Heading on the shareable year-in-review card.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "yearInReviewLongestRide": "Longest ride",
+  "@yearInReviewLongestRide": {
+    "description": "Stat label on the year-in-review card."
+  },
+  "yearInReviewFavouriteBike": "Favourite bike",
+  "@yearInReviewFavouriteBike": {
+    "description": "Stat label on the year-in-review card: the bike ridden most that year."
+  },
+  "yearInReviewShareFailed": "Couldn't create the image. Try again.",
+  "@yearInReviewShareFailed": {
+    "description": "Snackbar when the year-in-review image can't be made or shared."
   },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {

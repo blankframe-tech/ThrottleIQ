@@ -7703,3 +7703,11 @@ Reported by the owner on a Play install (alpha track, build 30, `1.0.0-beta.4.8.
 - **#53 / §101.S10** every `uses:` in `.github/workflows/` is pinned to a full commit SHA with the tag in a trailing comment (same majors as before). `ci.yml` and `security.yml` run `push` only on `main`, so a PR runs once. Dependabot already covered `github-actions`.
 - **#54** `scripts/check.sh --ci` runs `flutter test --coverage` and prints the line total; `ci.yml` uploads `app/coverage/lcov.info` as the `coverage-lcov` artifact. Local runs skip coverage.
 - Guards in `scripts/test/hosting_repo_hygiene.test.js`: SHA pins, push on `main` only, and the hook's `unset` before `check.sh`.
+
+## GitHub #62. Ride replay on the ride summary map — DONE (2026-10-29, lane K)
+
+Play/pause and a scrubber under the summary map (`app/lib/features/ride/presentation/widgets/ride_replay_controls.dart`) walk a marker along the ride's local track points (`RideTrackLoader`, works offline) with the speed at that point; a full replay takes ~20 s. Only the marker layer rebuilds per tick. Lean is not shown: only the ride's max lean is stored, not per point. Strings EN + BN (BN in `bn_pending_review.txt`). *Test:* `app/test/features/ride/presentation/widgets/ride_replay_controls_test.dart`. Not checked on a device.
+
+## GitHub #63. Shareable "Year in review" card — DONE (2026-10-29, lane K)
+
+Rides tab → sparkle button next to "Journey" opens `app/lib/features/stats/presentation/screens/year_in_review_screen.dart`: pick a year (only years with rides), see a card with distance, rides, longest ride and favourite bike (most rides that year, distance breaks a tie), and share it as a PNG through the system share sheet (same `RepaintBoundary` capture as Safe QR). Stats come from local rides (`riderStatsProvider.allRides`), aggregated in `app/lib/features/stats/domain/year_in_review.dart`. Strings EN + BN (BN in `bn_pending_review.txt`). *Test:* `app/test/features/stats/year_in_review_test.dart`. Not checked on a device.

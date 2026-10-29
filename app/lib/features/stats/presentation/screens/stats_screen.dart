@@ -20,6 +20,7 @@ import '../analytics_chart_registry.dart';
 import '../widgets/analytics_chart_card.dart';
 import 'all_rides_screen.dart'; // For RideSortChips and AllRidesRow
 import 'analytics_detail_screen.dart';
+import 'year_in_review_screen.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -217,7 +218,25 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(context.l10n.journey, style: display(context, 22)),
+          Row(
+            children: [
+              Expanded(
+                child: Text(context.l10n.journey, style: display(context, 22)),
+              ),
+              IconButton(
+                key: const Key('year_in_review_button'),
+                tooltip: context.l10n.yearInReviewTitle,
+                color: context.palette.primary,
+                icon: const Icon(Icons.auto_awesome_outlined),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => const YearInReviewScreen(),
+                  ),
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 8),
           EditorialCard(
             padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),

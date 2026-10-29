@@ -524,6 +524,18 @@ abstract class AppLocalizations {
   /// **'Share'**
   String get shareAction;
 
+  /// Tooltip on the play button that animates a finished ride on the ride summary map.
+  ///
+  /// In en, this message translates to:
+  /// **'Play ride replay'**
+  String get rideReplayPlay;
+
+  /// Tooltip on the pause button of the ride replay on the ride summary map.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause ride replay'**
+  String get rideReplayPause;
+
   /// Button that exports the ride as a JSON file. JSON is a file-format name and stays untranslated.
   ///
   /// In en, this message translates to:
@@ -6341,6 +6353,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Unknown bike'**
   String get analyticsUnknownBike;
+
+  /// Title of the screen and Rides-tab button for the shareable year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Year in review'**
+  String get yearInReviewTitle;
+
+  /// Heading on the shareable year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'My {year} on two wheels'**
+  String yearInReviewHeading(String year);
+
+  /// Stat label on the year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest ride'**
+  String get yearInReviewLongestRide;
+
+  /// Stat label on the year-in-review card: the bike ridden most that year.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite bike'**
+  String get yearInReviewFavouriteBike;
+
+  /// Snackbar when the year-in-review image can't be made or shared.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the image. Try again.'**
+  String get yearInReviewShareFailed;
 
   /// Hint above the analytics charts list.
   ///

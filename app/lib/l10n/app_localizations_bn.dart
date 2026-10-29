@@ -240,6 +240,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get shareAction => 'শেয়ার করুন';
 
   @override
+  String get rideReplayPlay => 'রাইড রিপ্লে চালান';
+
+  @override
+  String get rideReplayPause => 'রাইড রিপ্লে থামান';
+
+  @override
   String get exportJsonAction => 'JSON এক্সপোর্ট করুন';
 
   @override
@@ -3561,6 +3567,24 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get analyticsUnknownBike => 'অজানা বাইক';
+
+  @override
+  String get yearInReviewTitle => 'বছরের সারসংক্ষেপ';
+
+  @override
+  String yearInReviewHeading(String year) {
+    return 'দুই চাকায় আমার $year';
+  }
+
+  @override
+  String get yearInReviewLongestRide => 'সবচেয়ে লম্বা রাইড';
+
+  @override
+  String get yearInReviewFavouriteBike => 'প্রিয় বাইক';
+
+  @override
+  String get yearInReviewShareFailed =>
+      'ছবি তৈরি করা যায়নি। আবার চেষ্টা করুন।';
 
   @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
