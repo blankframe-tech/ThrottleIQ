@@ -15,18 +15,14 @@ import '../../../../core/constants/sensor_constants.dart';
 import '../providers/emergency_contacts_provider.dart';
 import '../providers/speed_alert_provider.dart';
 import 'sync_issues_screen.dart';
+import '../widgets/settings_segmented_option.dart';
 import '../../../auth/presentation/screens/onboarding_tour_provider.dart';
 import '../../../auth/presentation/widgets/tour_floating_banner.dart';
 import '../../../../shared/widgets/bug_report_sheet.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
-import '../../../../core/utils/error_reporter.dart';
-import '../../../../core/services/crash_detection_settings.dart';
 import '../../../../core/services/public_live_link_setting.dart';
 import '../../../../core/services/app_modules.dart';
-import '../../../ride/presentation/providers/auto_tracking_provider.dart';
-import '../../../ride/presentation/providers/ride_recording_provider.dart';
-import '../../../poi_directory/presentation/providers/places_provider.dart';
 
 /// Settings & profile: account info, language, emergency contacts, sign out.
 ///
@@ -133,7 +129,7 @@ class SettingsScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.brightnessSystemLabel,
                         description: l10n.brightnessSystemDescription,
                         selected: appearance.brightnessMode ==
@@ -145,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.brightnessDarkLabel,
                         description: l10n.brightnessDarkDescription,
                         selected:
@@ -157,7 +153,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.brightnessLightLabel,
                         description: l10n.brightnessLightDescription,
                         selected: appearance.brightnessMode ==
@@ -194,7 +190,7 @@ class SettingsScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.languageSystemLabel,
                         description: l10n.languageSystemDescription,
                         selected: appLocale == AppLocale.system,
@@ -205,7 +201,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.languageEnglishLabel,
                         description: l10n.languageEnglishDescription,
                         selected: appLocale == AppLocale.english,
@@ -216,7 +212,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(width: 4),
                     Expanded(
-                      child: _SegmentedOption(
+                      child: SettingsSegmentedOption(
                         label: l10n.languageBanglaLabel,
                         description: l10n.languageBanglaDescription,
                         selected: appLocale == AppLocale.bangla,
@@ -229,10 +225,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
 
-              const SizedBox(height: 24),
-
-              // ── Your ThrottleIQ (app modules) ──────────────────────────────
-              const _AppModulesSection(),
               const SizedBox(height: 24),
 
               // ── Ride tracking ──────────────────────────────────────────────
@@ -430,10 +422,6 @@ class SettingsScreen extends ConsumerWidget {
 
               const SizedBox(height: 24),
 
-              // ── Offline places cache ───────────────────────────────────────
-              const _PlacesCacheTile(),
-              const SizedBox(height: 24),
-
               // ── Sync issues (§69.O4) ───────────────────────────────────────
               // Only shown while the outbox has given up on something, so the
               // rider isn't handed a permanent "0 issues" row to wonder about.
@@ -496,8 +484,6 @@ class SettingsScreen extends ConsumerWidget {
               const _AnalyticsToggleTile(),
               const SizedBox(height: 10),
               const _PublicLiveLinkToggleTile(),
-              const SizedBox(height: 10),
-              const _CrashResearchToggleTile(),
               const SizedBox(height: 10),
               Material(
                 color: context.palette.surface,
@@ -578,6 +564,54 @@ class SettingsScreen extends ConsumerWidget {
                                       color: context.palette.textPrimary)),
                               const SizedBox(height: 2),
                               Text(context.l10n.somethingBrokenLetTeam,
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: context.palette.textSecondary)),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right,
+                            color: context.palette.textTertiary, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+              // ── Advanced ───────────────────────────────────────────────────
+              // App parts, offline data, research and Indriyo pairing: kept off
+              // this screen so everyday settings stay short.
+              Material(
+                color: context.palette.surface,
+                borderRadius: BorderRadius.circular(12),
+                child: InkWell(
+                  key: const Key('settings_advanced'),
+                  onTap: () => context.push('/settings/advanced'),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 14),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: context.palette.border),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.tune,
+                            color: context.palette.primary, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(l10n.advancedSettingsTitle,
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: context.palette.textPrimary)),
+                              const SizedBox(height: 2),
+                              Text(l10n.advancedSettingsSubtitle,
                                   style: TextStyle(
                                       fontSize: 12,
                                       color: context.palette.textSecondary)),
@@ -918,70 +952,6 @@ class _AddContactDialogState extends ConsumerState<_AddContactDialog> {
   }
 }
 
-/// Places (fuel pumps, garages, ...) kept on the device from rides and the
-/// Places tab, with a button to drop them all.
-class _PlacesCacheTile extends ConsumerWidget {
-  const _PlacesCacheTile();
-
-  Future<void> _clear(BuildContext context, WidgetRef ref) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final cleared = context.l10n.placesCacheCleared;
-    final failed = context.l10n.placesCacheClearFailed;
-    try {
-      await ref.read(placesCacheProvider).clear();
-      ref.invalidate(nearbyPlacesProvider);
-      messenger.showSnackBar(SnackBar(content: Text(cleared)));
-    } catch (e, st) {
-      reportNonFatal(e, st, reason: 'clear places cache');
-      messenger.showSnackBar(SnackBar(content: Text(failed)));
-    }
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.palette.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.offline_pin_outlined,
-              color: context.palette.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.placesCacheTitle,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary)),
-                const SizedBox(height: 2),
-                Text(l10n.placesCacheSubtitle,
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
-              ],
-            ),
-          ),
-          TextButton(
-            key: const Key('settings_clear_places_cache'),
-            onPressed: () => _clear(context, ref),
-            child: Text(l10n.placesCacheClear),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// One tappable segment of a label-plus-description segmented control. Used
-/// by the Language control (three segments) and by Appearance's Vibe and
-/// Brightness controls (two segments each) — Color has too many options for
-/// this shape and uses [ColorModeDropdown] instead.
 class _SyncIssuesTile extends ConsumerWidget {
   const _SyncIssuesTile();
 
@@ -1034,54 +1004,6 @@ class _SyncIssuesTile extends ConsumerWidget {
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SegmentedOption extends StatelessWidget {
-  const _SegmentedOption({
-    required this.label,
-    required this.description,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final String description;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(context.shape.radiusSm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? context.palette.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(context.shape.radiusSm),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label,
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: selected
-                        ? context.palette.surface
-                        : context.palette.textPrimary)),
-            const SizedBox(height: 2),
-            Text(description,
-                style: TextStyle(
-                    fontSize: 11,
-                    color: selected
-                        ? context.palette.surface.withValues(alpha: 0.8)
-                        : context.palette.textTertiary)),
-          ],
         ),
       ),
     );
@@ -1157,217 +1079,6 @@ class _OverspeedLimitTile extends ConsumerWidget {
               },
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Settings → Your ThrottleIQ: which parts of the app the rider wants
-/// ([AppModules]). Turning a part off asks first and says what it costs —
-/// gently, since the rider is choosing a smaller app on purpose. Turning one
-/// back on needs no confirmation.
-class _AppModulesSection extends ConsumerWidget {
-  const _AppModulesSection();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    final modules = ref.watch(appModulesProvider);
-
-    Widget community(CommunityMode mode, String label, String description) =>
-        Expanded(
-          child: _SegmentedOption(
-            label: label,
-            description: description,
-            selected: modules.community == mode,
-            onTap: () =>
-                _apply(context, ref, modules.copyWith(community: mode)),
-          ),
-        );
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(l10n.yourThrottleIqSection,
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: context.palette.textPrimary)),
-        const SizedBox(height: 4),
-        Text(l10n.yourThrottleIqDescription,
-            style:
-                TextStyle(fontSize: 12, color: context.palette.textTertiary)),
-        const SizedBox(height: 12),
-        Text(l10n.communityFieldLabel,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.palette.textSecondary)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(context.shape.radiusMd),
-            border: Border.all(color: context.palette.border),
-          ),
-          child: Row(
-            children: [
-              community(CommunityMode.full, l10n.communityFullLabel,
-                  l10n.communityFullDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.forumsOnly, l10n.communityForumsLabel,
-                  l10n.communityForumsDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.off, l10n.communityOffLabel,
-                  l10n.communityOffDescription),
-            ],
-          ),
-        ),
-        const SizedBox(height: 10),
-        _ModuleSwitchTile(
-          icon: Icons.place_outlined,
-          title: l10n.placesModuleTitle,
-          subtitle: l10n.placesModuleSubtitle,
-          value: modules.places,
-          onChanged: (v) => _apply(context, ref, modules.copyWith(places: v)),
-        ),
-        const SizedBox(height: 10),
-        _ModuleSwitchTile(
-          icon: Icons.my_location,
-          title: l10n.rideTrackingModuleTitle,
-          subtitle: l10n.rideTrackingModuleSubtitle,
-          value: modules.rideTracking,
-          onChanged: (v) =>
-              _apply(context, ref, modules.copyWith(rideTracking: v)),
-        ),
-      ],
-    );
-  }
-
-  /// Confirms anything being turned off, then saves. Turning ride tracking
-  /// off also switches auto-tracking off, so nothing reads location in the
-  /// background; it is refused mid-ride rather than cutting a recording short.
-  Future<void> _apply(
-      BuildContext context, WidgetRef ref, AppModules next) async {
-    final l10n = context.l10n;
-    final current = ref.read(appModulesProvider);
-    if (next.community == current.community &&
-        next.places == current.places &&
-        next.rideTracking == current.rideTracking) {
-      return;
-    }
-
-    final stopsTracking = current.rideTracking && !next.rideTracking;
-    if (stopsTracking &&
-        ref.read(rideRecordingProvider).status != RecordingStatus.idle &&
-        ref.read(rideRecordingProvider).status != RecordingStatus.completed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.rideTrackingOffDuringRide)));
-      return;
-    }
-
-    final (String, String)? warning = stopsTracking
-        ? (l10n.rideTrackingOffWarningTitle, l10n.rideTrackingOffWarningBody)
-        : current.places && !next.places
-            ? (l10n.placesOffWarningTitle, l10n.placesOffWarningBody)
-            : current.forums && !next.forums
-                ? (l10n.communityOffWarningTitle, l10n.communityOffWarningBody)
-                : current.social && !next.social
-                    ? (
-                        l10n.communityForumsOnlyWarningTitle,
-                        l10n.communityForumsOnlyWarningBody
-                      )
-                    : null;
-    if (warning != null) {
-      final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogCtx) => AlertDialog(
-          backgroundColor: dialogCtx.palette.surface,
-          title: Text(warning.$1,
-              style: TextStyle(
-                  color: dialogCtx.palette.textPrimary,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold)),
-          content: Text(warning.$2,
-              style: TextStyle(
-                  color: dialogCtx.palette.textSecondary,
-                  fontSize: 14,
-                  height: 1.4)),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(true),
-              style: TextButton.styleFrom(
-                  foregroundColor: dialogCtx.palette.textSecondary),
-              child: Text(dialogCtx.l10n.moduleTurnOffAction),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogCtx).pop(false),
-              child: Text(dialogCtx.l10n.moduleKeepOnAction),
-            ),
-          ],
-        ),
-      );
-      if (confirmed != true || !context.mounted) return;
-    }
-
-    if (stopsTracking) {
-      await ref.read(autoTrackingEnabledProvider.notifier).disable();
-    }
-    await ref.read(appModulesProvider.notifier).set(next);
-    if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.modulesUpdatedSnack)));
-    }
-  }
-}
-
-class _ModuleSwitchTile extends StatelessWidget {
-  const _ModuleSwitchTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.palette.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.palette.border),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: context.palette.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary)),
-                const SizedBox(height: 2),
-                Text(subtitle,
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
-              ],
-            ),
-          ),
-          Switch(value: value, onChanged: onChanged),
         ],
       ),
     );
@@ -1520,74 +1231,6 @@ class _LinkPasswordDialogState extends State<_LinkPasswordDialog> {
           child: Text(context.l10n.publicLiveLinkSave),
         ),
       ],
-    );
-  }
-}
-
-/// Settings → Privacy & Safety: the opt-in for sharing answered impacts with
-/// the crash-detection research set (`crashEvents`). Off by default;
-/// persisted by [CrashResearchConsent].
-class _CrashResearchToggleTile extends ConsumerStatefulWidget {
-  const _CrashResearchToggleTile();
-
-  @override
-  ConsumerState<_CrashResearchToggleTile> createState() =>
-      _CrashResearchToggleTileState();
-}
-
-class _CrashResearchToggleTileState
-    extends ConsumerState<_CrashResearchToggleTile> {
-  bool _enabled = false;
-
-  @override
-  void initState() {
-    super.initState();
-    CrashResearchConsent.isEnabled().then((v) {
-      if (mounted) setState(() => _enabled = v);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: context.palette.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.palette.border),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.health_and_safety_outlined,
-              color: context.palette.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(context.l10n.crashResearchTitle,
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: context.palette.textPrimary)),
-                const SizedBox(height: 2),
-                Text(context.l10n.crashResearchDesc,
-                    style: TextStyle(
-                        fontSize: 12, color: context.palette.textSecondary)),
-              ],
-            ),
-          ),
-          Switch(
-            key: const Key('crash_research_switch'),
-            value: _enabled,
-            onChanged: (v) {
-              setState(() => _enabled = v);
-              unawaited(CrashResearchConsent.setEnabled(v,
-                  uid: ref.read(currentUserProvider)?.uid));
-            },
-          ),
-        ],
-      ),
     );
   }
 }

@@ -584,7 +584,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
-                  if (kIndriyoEnabled) ...[
+                  if (ref.watch(indriyoSettingsProvider).enabled) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       onPressed: () =>
@@ -605,7 +605,7 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
           ),
 
           // ── Indriyo Digital Rearview Mirror HUD ───────────────────────────
-          if (kIndriyoEnabled &&
+          if (ref.watch(indriyoSettingsProvider).enabled &&
               ref.watch(indriyoSettingsProvider).isHudVisible)
             Positioned(
               top: MediaQuery.of(context).padding.top + 54,

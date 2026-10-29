@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain HTTP only for the Indriyo camera's own Wi-Fi address (its default
+     stream URL); everything else stays HTTPS-only.
+     shortcut: a camera moved to another address needs a new entry here. -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">192.168.4.1</domain>
+    </domain-config>
+</network-security-config>

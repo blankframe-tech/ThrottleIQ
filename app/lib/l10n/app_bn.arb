@@ -1923,5 +1923,20 @@
   "allRidersGroup": "অল রাইডার্স",
   "allRidersGroupSubtitle": "সব গ্রুপের সব পোস্ট",
   "forumShareYourGroups": "আপনার গ্রুপ",
-  "forumShareCount": "{max}টির মধ্যে {count}টি গ্রুপ"
+  "forumShareCount": "{max}টির মধ্যে {count}টি গ্রুপ",
+  "advancedSettingsTitle": "অ্যাডভান্সড",
+  "advancedSettingsSubtitle": "অ্যাপের অংশ, অফলাইন ডেটা, গবেষণা ও ইন্দ্রিয় মিরর",
+  "indriyoSection": "ইন্দ্রিয় মিরর",
+  "indriyoDescription": "রাইডের সময় ব্লাইন্ড-স্পট সতর্কতাসহ পেছনের দৃশ্য দেখতে ইন্দ্রিয় রিয়ার ক্যামেরা যুক্ত করুন।",
+  "indriyoEnableTitle": "ইন্দ্রিয় ব্যবহার করুন",
+  "indriyoEnableSubtitle": "রাইড স্ক্রিনে একটি মিরর বাটন যোগ করে",
+  "indriyoPairingSteps": "1. ইন্দ্রিয় ক্যামেরা চালু করুন।\n2. ফোনের Wi-Fi সেটিংসে এর Wi-Fi-তে যুক্ত হন।\n3. \"সংযোগ পরীক্ষা করুন\" চাপুন।",
+  "indriyoStreamUrlLabel": "ক্যামেরা স্ট্রিমের ঠিকানা",
+  "indriyoTestConnection": "সংযোগ পরীক্ষা করুন",
+  "indriyoTesting": "পরীক্ষা চলছে…",
+  "indriyoConnected": "ক্যামেরা পাওয়া গেছে। ইন্দ্রিয় যুক্ত হয়েছে।",
+  "indriyoNotConnected": "ক্যামেরায় পৌঁছানো যায়নি। ক্যামেরার Wi-Fi-তে আছেন কি না এবং ঠিকানা ঠিক আছে কি না দেখুন।",
+  "indriyoInvalidUrl": "http:// বা https:// দিয়ে শুরু হওয়া একটি ঠিকানা দিন",
+  "indriyoSimulationTitle": "ডেমো মোড",
+  "indriyoSimulationSubtitle": "ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।"
 }

@@ -6791,4 +6791,55 @@ class AppLocalizationsEn extends AppLocalizations {
   String forumShareCount(int count, int max) {
     return '$count of $max groups';
   }
+
+  @override
+  String get advancedSettingsTitle => 'Advanced';
+
+  @override
+  String get advancedSettingsSubtitle =>
+      'App parts, offline data, research and the Indriyo mirror';
+
+  @override
+  String get indriyoSection => 'Indriyo mirror';
+
+  @override
+  String get indriyoDescription =>
+      'Pair the Indriyo rear camera to see a rear-view mirror with blind-spot alerts while you ride.';
+
+  @override
+  String get indriyoEnableTitle => 'Use Indriyo';
+
+  @override
+  String get indriyoEnableSubtitle => 'Adds a mirror button to the ride screen';
+
+  @override
+  String get indriyoPairingSteps =>
+      '1. Turn the Indriyo camera on.\n2. Join its Wi-Fi in your phone\'s Wi-Fi settings.\n3. Tap Test connection.';
+
+  @override
+  String get indriyoStreamUrlLabel => 'Camera stream address';
+
+  @override
+  String get indriyoTestConnection => 'Test connection';
+
+  @override
+  String get indriyoTesting => 'Testing…';
+
+  @override
+  String get indriyoConnected => 'Camera found. Indriyo is paired.';
+
+  @override
+  String get indriyoNotConnected =>
+      'Couldn\'t reach the camera. Check that you\'re on its Wi-Fi and the address is right.';
+
+  @override
+  String get indriyoInvalidUrl =>
+      'Enter an address that starts with http:// or https://';
+
+  @override
+  String get indriyoSimulationTitle => 'Demo mode';
+
+  @override
+  String get indriyoSimulationSubtitle =>
+      'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.';
 }

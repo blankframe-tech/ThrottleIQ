@@ -1,33 +1,37 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/indriyo_models.dart';
 
-/// Off unless built with `--dart-define=INDRIYO=true`: riders without the
-/// mirror hardware never see the HUD, whose default simulation draws fake
-/// collision alerts.
-const bool kIndriyoEnabled = bool.fromEnvironment('INDRIYO');
+const String kIndriyoDefaultStreamUrl = 'http://192.168.4.1:81/stream';
 
+/// Settings → Advanced → Indriyo. Off by default, so riders without the
+/// mirror hardware never see the HUD; the demo simulation (fake collision
+/// alerts) is a separate opt-in.
 class IndriyoSettings {
+  final bool enabled;
   final bool isHudVisible;
   final bool isSimulationMode;
   final String streamUrl;
   final bool audioAlertsEnabled;
 
   const IndriyoSettings({
+    this.enabled = false,
     this.isHudVisible = false,
-    this.isSimulationMode =
-        true, // Default to demo simulation so user can test immediately
-    this.streamUrl = 'http://192.168.4.1:81/stream',
+    this.isSimulationMode = false,
+    this.streamUrl = kIndriyoDefaultStreamUrl,
     this.audioAlertsEnabled = true,
   });
 
   IndriyoSettings copyWith({
+    bool? enabled,
     bool? isHudVisible,
     bool? isSimulationMode,
     String? streamUrl,
     bool? audioAlertsEnabled,
   }) {
     return IndriyoSettings(
+      enabled: enabled ?? this.enabled,
       isHudVisible: isHudVisible ?? this.isHudVisible,
       isSimulationMode: isSimulationMode ?? this.isSimulationMode,
       streamUrl: streamUrl ?? this.streamUrl,
@@ -46,11 +50,7 @@ class IndriyoNotifier extends StateNotifier<IndriyoThreatState> {
     _startSimulation();
   }
 
-  void toggleHud() {
-    final settings = ref.read(indriyoSettingsProvider);
-    ref.read(indriyoSettingsProvider.notifier).state =
-        settings.copyWith(isHudVisible: !settings.isHudVisible);
-  }
+  void toggleHud() => ref.read(indriyoSettingsProvider.notifier).toggleHud();
 
   void setStreamConnected(bool connected) {
     state = state.copyWith(isConnected: connected);
@@ -117,8 +117,48 @@ class IndriyoNotifier extends StateNotifier<IndriyoThreatState> {
   }
 }
 
+/// Saved in SharedPreferences, except [IndriyoSettings.isHudVisible], which
+/// is per ride.
+class IndriyoSettingsNotifier extends StateNotifier<IndriyoSettings> {
+  IndriyoSettingsNotifier() : super(const IndriyoSettings()) {
+    _load();
+  }
+
+  static const _kEnabled = 'indriyo_enabled';
+  static const _kStreamUrl = 'indriyo_stream_url';
+  static const _kSimulation = 'indriyo_simulation';
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = state.copyWith(
+      enabled: prefs.getBool(_kEnabled),
+      streamUrl: prefs.getString(_kStreamUrl),
+      isSimulationMode: prefs.getBool(_kSimulation),
+    );
+  }
+
+  void toggleHud() => state = state.copyWith(isHudVisible: !state.isHudVisible);
+
+  /// Turning Indriyo off also hides the HUD.
+  Future<void> setEnabled(bool v) async {
+    state = state.copyWith(enabled: v, isHudVisible: v && state.isHudVisible);
+    await (await SharedPreferences.getInstance()).setBool(_kEnabled, v);
+  }
+
+  Future<void> setStreamUrl(String url) async {
+    state = state.copyWith(streamUrl: url);
+    await (await SharedPreferences.getInstance()).setString(_kStreamUrl, url);
+  }
+
+  Future<void> setSimulationMode(bool v) async {
+    state = state.copyWith(isSimulationMode: v);
+    await (await SharedPreferences.getInstance()).setBool(_kSimulation, v);
+  }
+}
+
 final indriyoSettingsProvider =
-    StateProvider<IndriyoSettings>((ref) => const IndriyoSettings());
+    StateNotifierProvider<IndriyoSettingsNotifier, IndriyoSettings>(
+        (ref) => IndriyoSettingsNotifier());
 
 final indriyoProvider =
     StateNotifierProvider<IndriyoNotifier, IndriyoThreatState>((ref) {

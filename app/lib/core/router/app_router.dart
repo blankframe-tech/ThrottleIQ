@@ -23,6 +23,7 @@ import '../../features/maintenance/presentation/screens/add_fuel_log_screen.dart
 import '../../features/stats/presentation/screens/stats_screen.dart';
 import '../../features/stats/presentation/screens/all_rides_screen.dart';
 import '../../features/profile/presentation/screens/settings_screen.dart';
+import '../../features/profile/presentation/screens/advanced_settings_screen.dart';
 import '../../features/profile/presentation/screens/blocked_users_screen.dart';
 import '../../features/profile/presentation/screens/sync_issues_screen.dart';
 import '../../features/profile/presentation/screens/safe_qr_screen.dart';
@@ -140,6 +141,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/settings', builder: (_, __) => const SettingsScreen()),
+      GoRoute(
+          path: '/settings/advanced',
+          builder: (_, __) => const AdvancedSettingsScreen()),
       GoRoute(
           path: '/blocked-users',
           builder: (_, __) => const BlockedUsersScreen()),

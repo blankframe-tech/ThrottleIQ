@@ -52,7 +52,8 @@ class _IndriyoMirrorHudState extends ConsumerState<IndriyoMirrorHud>
           _liveFrame = frame;
         });
       }
-    });
+      // Camera unreachable: keep the last frame (or none) rather than throw.
+    }, onError: (_) {});
     _streamService!.start();
   }
 

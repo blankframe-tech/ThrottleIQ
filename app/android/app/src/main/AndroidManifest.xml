@@ -78,6 +78,7 @@
          supported fine-grained exclusion (dataExtractionRules/
          fullBackupContent) needed on top of that once backup itself is off. -->
     <application
+        android:networkSecurityConfig="@xml/network_security_config"
         android:label="ThrottleIQ"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"

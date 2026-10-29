@@ -140,5 +140,12 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ThrottleIQ connects to the Indriyo rear camera on its Wi-Fi to show your rear-view mirror.</string>
 </dict>
 </plist>

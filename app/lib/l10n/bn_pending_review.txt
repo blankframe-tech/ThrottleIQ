@@ -1659,3 +1659,19 @@ dayStreakStat
 pinLimitReached
 couldntUpdatePins
 safeQrLocalOnlyDisclaimer
+# batch: settings advanced + indriyo pairing (2026-10-29)
+advancedSettingsTitle
+advancedSettingsSubtitle
+indriyoSection
+indriyoDescription
+indriyoEnableTitle
+indriyoEnableSubtitle
+indriyoPairingSteps
+indriyoStreamUrlLabel
+indriyoTestConnection
+indriyoTesting
+indriyoConnected
+indriyoNotConnected
+indriyoInvalidUrl
+indriyoSimulationTitle
+indriyoSimulationSubtitle

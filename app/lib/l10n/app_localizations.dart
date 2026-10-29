@@ -11645,6 +11645,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} of {max} groups'**
   String forumShareCount(int count, int max);
+
+  /// Settings row and screen title for less-used settings.
+  ///
+  /// In en, this message translates to:
+  /// **'Advanced'**
+  String get advancedSettingsTitle;
+
+  /// Settings → Advanced row subtitle: what is inside.
+  ///
+  /// In en, this message translates to:
+  /// **'App parts, offline data, research and the Indriyo mirror'**
+  String get advancedSettingsSubtitle;
+
+  /// Settings → Advanced: section heading for the Indriyo rear-camera mirror.
+  ///
+  /// In en, this message translates to:
+  /// **'Indriyo mirror'**
+  String get indriyoSection;
+
+  /// Settings → Advanced → Indriyo: what pairing the camera gives the rider.
+  ///
+  /// In en, this message translates to:
+  /// **'Pair the Indriyo rear camera to see a rear-view mirror with blind-spot alerts while you ride.'**
+  String get indriyoDescription;
+
+  /// Switch that turns the Indriyo mirror on for this phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Indriyo'**
+  String get indriyoEnableTitle;
+
+  /// Subtitle of the Use Indriyo switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a mirror button to the ride screen'**
+  String get indriyoEnableSubtitle;
+
+  /// Numbered pairing steps; keep the line breaks and Western digits.
+  ///
+  /// In en, this message translates to:
+  /// **'1. Turn the Indriyo camera on.\n2. Join its Wi-Fi in your phone\'s Wi-Fi settings.\n3. Tap Test connection.'**
+  String get indriyoPairingSteps;
+
+  /// Text field label: the camera's video stream URL.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera stream address'**
+  String get indriyoStreamUrlLabel;
+
+  /// Button: checks the camera answers at the stream address.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get indriyoTestConnection;
+
+  /// Button label while the connection test runs.
+  ///
+  /// In en, this message translates to:
+  /// **'Testing…'**
+  String get indriyoTesting;
+
+  /// Shown when the connection test reached the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera found. Indriyo is paired.'**
+  String get indriyoConnected;
+
+  /// Shown when the connection test could not reach the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t reach the camera. Check that you\'re on its Wi-Fi and the address is right.'**
+  String get indriyoNotConnected;
+
+  /// Error under the stream address field when it is not an http(s) URL.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an address that starts with http:// or https://'**
+  String get indriyoInvalidUrl;
+
+  /// Switch: show simulated traffic instead of the camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo mode'**
+  String get indriyoSimulationTitle;
+
+  /// Subtitle of the Demo mode switch; warns the alerts are fake.
+  ///
+  /// In en, this message translates to:
+  /// **'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.'**
+  String get indriyoSimulationSubtitle;
 }
 
 class _AppLocalizationsDelegate

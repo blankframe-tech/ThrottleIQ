@@ -206,9 +206,9 @@ void main() {
     expect(recorder.calls, ['pause']);
   });
 
-  testWidgets('the Indriyo mirror toggle is hidden without INDRIYO=true',
+  testWidgets('the Indriyo mirror toggle is hidden until Indriyo is turned on',
       (tester) async {
-    // Its HUD defaults to a simulation with fake collision alerts.
+    // Off by default (Settings → Advanced → Indriyo).
     await pump(tester, active);
     expect(find.byIcon(Icons.radar_rounded), findsNothing);
     expect(find.byTooltip('Toggle Indriyo ADAS Mirror'), findsNothing);

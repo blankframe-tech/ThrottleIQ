@@ -15,7 +15,7 @@ What a signed-in rider can do in the app today, organised by the bottom nav. Upd
 - The Realtime Database is retired. Its rules deny every read and write and release builds carry no `RTDB_URL`. The client code in `core/realtime/` (live-share position, chat "typing…") stays but does nothing.
 - Crash detection runs in **shadow mode only**: it records and asks after the ride, and sends no alert to anyone. See "Shadow-mode crash detection" below.
 
-## Your ThrottleIQ: app modules (Settings → Your ThrottleIQ)
+## Your ThrottleIQ: app modules (Settings → Advanced → Your ThrottleIQ)
 
 Lets minimalist or privacy-minded riders turn parts of the app off. Device-local (SharedPreferences `module_*`); nothing is deleted. Model: `core/services/app_modules.dart`. Turning a module off asks first, and the nav updates live.
 
@@ -181,10 +181,12 @@ Five Android widgets and an iOS WidgetKit extension (`app/ios/ThrottleIQWidget/`
 
 ## 8. Profile & settings (`features/profile`)
 
-- **Settings** (`/settings`): profile summary, Appearance (System / Dark / Light), Language (System / English / বাংলা), Your ThrottleIQ (modules), Auto-tracking and Active hours, **Emergency Contacts**, **SafeQR**, **Offline places** (clear the places cache), Privacy & Safety, feature tour, Blocked users, Sync issues, Sign out, Delete account.
+- **Settings** (`/settings`): profile summary, Appearance (System / Dark / Light), Language (System / English / বাংলা), Auto-tracking and Active hours, **Emergency Contacts**, **SafeQR**, Privacy & Safety, feature tour, bug report, **Advanced**, Blocked users, Sync issues, Sign out, Delete account.
+  - **Advanced** (`/settings/advanced`, since 2026-10-29): Your ThrottleIQ (modules), **Indriyo mirror** pairing, **Offline places** (clear the places cache), "Help improve crash detection".
+  - **Indriyo pairing:** "Use Indriyo" (off by default) adds the mirror button to the ride screen; then the camera's stream address (default `http://192.168.4.1:81/stream`), "Test connection" (HTTP 200 within 4 s) and Demo mode (fake traffic, off by default). Saved in SharedPreferences `indriyo_*`. Works in every build; the `INDRIYO` dart-define is gone. iOS has `NSAllowsLocalNetworking` + a local-network prompt; Android allows plain HTTP only to `192.168.4.1`. Not checked with a real camera.
   - **Emergency contacts are never contacted.** The list and a warning banner exist; the screen and a one-time acknowledgement say alerts are not sent automatically. `functions/src/crash-notifications.ts` is a mock that only logs, and Cloud Functions cannot deploy without the Blaze plan.
   - **SafeQR** (`/safe-qr`): a medical-info QR (blood group, allergies, conditions, medications, first emergency contact), plain text so any camera reads it, stored per uid in `users/{uid}/private/medical` so it survives a reinstall and a new phone (issues §117; was device-local before 2026-10-28). Save or share the QR image, or **print a sticker sheet** (six 50 mm stickers, English or Bangla). Not scanned off real paper.
-  - **Privacy & Safety:** "Password link (/r/@handle)" (off by default; asks for a password, "Change password" when on); "Share anonymous usage statistics" (on by default, off in debug; screen views and seven funnel steps, no location, rides, messages or names); "Help improve crash detection" (off by default, see below).
+  - **Privacy & Safety:** "Password link (/r/@handle)" (off by default; asks for a password, "Change password" when on); "Share anonymous usage statistics" (on by default, off in debug; screen views and seven funnel steps, no location, rides, messages or names); "Help improve crash detection" (moved to Advanced, off by default, see below).
   - **Sync issues** appears only when outbox writes failed for good.
   - **Delete account:** sign-in and phone data go at once; cloud data is deleted by hand within 30 days of an email to hello@blankframe.tech (no deletion function on Spark). Photos and voice notes are removed from Cloudinary once credentials are configured, names are stripped from forum posts, replies, comments and reviews, and the rider's side of chats is anonymised. Runbook: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`.
 - **Profile** (`/profile`): read-only view of your own profile (avatar, name, @username, nickname, bio, join date, garage), with **Edit** (`/profile/edit`): fields, audience (Everyone / Mutuals / Only me), "Who can see my bikes" (Everyone / My followers / Only me), My QR code, Scan QR.

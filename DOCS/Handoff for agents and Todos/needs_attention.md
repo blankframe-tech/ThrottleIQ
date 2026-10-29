@@ -107,8 +107,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 ## Decisions
 
 - [ ] **Unused code on `main` (#57, new 2026-10-28, critique #19):** park the Realtime Database code
-      (`core/realtime/`, typing channel, viewer RTDB path, `firebase_database`) and
-      `features/indriyo` on a branch (about 2,100 lines), or keep them. Ties to #3 (Blaze).
+      (`core/realtime/`, typing channel, viewer RTDB path, `firebase_database`) on a
+      branch, or keep it. Ties to #3 (Blaze). Indriyo decided 2026-10-29: kept, in every
+      build behind Settings → Advanced.
 
 - [ ] **Google Maps data in production (#1):** take it down or keep it. Decision card:
       `DOCS/agent_rooms/drafts/decision_card_scraped_places.md` (2026-10-22).
@@ -136,7 +137,7 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Indriyo training data (new 2026-10-29)
 
-Licences checked by an agent; nothing downloaded or trained. Waits on #57 (park indriyo or keep it on `main`).
+Licences checked by an agent; nothing downloaded or trained. Indriyo stays on `main` (decided 2026-10-29), so this no longer waits on #57.
 
 - [ ] **DhakaAI (#58):** [Harvard Dataverse](https://doi.org/10.7910/DVN/POREXF) (CC0, the original) /
       [Kaggle](https://www.kaggle.com/datasets/rifat963/dhakaai-dhaka-based-traffic-detection-dataset) (mirror, says GPL 2).

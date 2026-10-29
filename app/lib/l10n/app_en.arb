@@ -9324,5 +9324,65 @@
         "example": "5"
       }
     }
+  },
+  "advancedSettingsTitle": "Advanced",
+  "@advancedSettingsTitle": {
+    "description": "Settings row and screen title for less-used settings."
+  },
+  "advancedSettingsSubtitle": "App parts, offline data, research and the Indriyo mirror",
+  "@advancedSettingsSubtitle": {
+    "description": "Settings → Advanced row subtitle: what is inside."
+  },
+  "indriyoSection": "Indriyo mirror",
+  "@indriyoSection": {
+    "description": "Settings → Advanced: section heading for the Indriyo rear-camera mirror."
+  },
+  "indriyoDescription": "Pair the Indriyo rear camera to see a rear-view mirror with blind-spot alerts while you ride.",
+  "@indriyoDescription": {
+    "description": "Settings → Advanced → Indriyo: what pairing the camera gives the rider."
+  },
+  "indriyoEnableTitle": "Use Indriyo",
+  "@indriyoEnableTitle": {
+    "description": "Switch that turns the Indriyo mirror on for this phone."
+  },
+  "indriyoEnableSubtitle": "Adds a mirror button to the ride screen",
+  "@indriyoEnableSubtitle": {
+    "description": "Subtitle of the Use Indriyo switch."
+  },
+  "indriyoPairingSteps": "1. Turn the Indriyo camera on.\n2. Join its Wi-Fi in your phone's Wi-Fi settings.\n3. Tap Test connection.",
+  "@indriyoPairingSteps": {
+    "description": "Numbered pairing steps; keep the line breaks and Western digits."
+  },
+  "indriyoStreamUrlLabel": "Camera stream address",
+  "@indriyoStreamUrlLabel": {
+    "description": "Text field label: the camera's video stream URL."
+  },
+  "indriyoTestConnection": "Test connection",
+  "@indriyoTestConnection": {
+    "description": "Button: checks the camera answers at the stream address."
+  },
+  "indriyoTesting": "Testing…",
+  "@indriyoTesting": {
+    "description": "Button label while the connection test runs."
+  },
+  "indriyoConnected": "Camera found. Indriyo is paired.",
+  "@indriyoConnected": {
+    "description": "Shown when the connection test reached the camera."
+  },
+  "indriyoNotConnected": "Couldn't reach the camera. Check that you're on its Wi-Fi and the address is right.",
+  "@indriyoNotConnected": {
+    "description": "Shown when the connection test could not reach the camera."
+  },
+  "indriyoInvalidUrl": "Enter an address that starts with http:// or https://",
+  "@indriyoInvalidUrl": {
+    "description": "Error under the stream address field when it is not an http(s) URL."
+  },
+  "indriyoSimulationTitle": "Demo mode",
+  "@indriyoSimulationTitle": {
+    "description": "Switch: show simulated traffic instead of the camera."
+  },
+  "indriyoSimulationSubtitle": "Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.",
+  "@indriyoSimulationSubtitle": {
+    "description": "Subtitle of the Demo mode switch; warns the alerts are fake."
   }
 }

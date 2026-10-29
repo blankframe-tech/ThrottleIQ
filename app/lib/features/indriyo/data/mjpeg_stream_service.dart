@@ -88,6 +88,24 @@ class MjpegStreamService {
     }
   }
 
+  /// True when [url] answers 200 within 4 s: the camera is reachable.
+  static Future<bool> probe(String url) async {
+    final client = HttpClient()..connectionTimeout = const Duration(seconds: 4);
+    try {
+      final request = await client
+          .getUrl(Uri.parse(url))
+          .timeout(const Duration(seconds: 4));
+      final response =
+          await request.close().timeout(const Duration(seconds: 4));
+      return response.statusCode == 200;
+    } on Exception {
+      // Unreachable, refused or timed out: an expected "not paired", not a bug.
+      return false;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   void stop() {
     _subscription?.cancel();
     _subscription = null;

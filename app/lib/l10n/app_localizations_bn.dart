@@ -6768,4 +6768,56 @@ class AppLocalizationsBn extends AppLocalizations {
   String forumShareCount(int count, int max) {
     return '$maxটির মধ্যে $countটি গ্রুপ';
   }
+
+  @override
+  String get advancedSettingsTitle => 'অ্যাডভান্সড';
+
+  @override
+  String get advancedSettingsSubtitle =>
+      'অ্যাপের অংশ, অফলাইন ডেটা, গবেষণা ও ইন্দ্রিয় মিরর';
+
+  @override
+  String get indriyoSection => 'ইন্দ্রিয় মিরর';
+
+  @override
+  String get indriyoDescription =>
+      'রাইডের সময় ব্লাইন্ড-স্পট সতর্কতাসহ পেছনের দৃশ্য দেখতে ইন্দ্রিয় রিয়ার ক্যামেরা যুক্ত করুন।';
+
+  @override
+  String get indriyoEnableTitle => 'ইন্দ্রিয় ব্যবহার করুন';
+
+  @override
+  String get indriyoEnableSubtitle => 'রাইড স্ক্রিনে একটি মিরর বাটন যোগ করে';
+
+  @override
+  String get indriyoPairingSteps =>
+      '1. ইন্দ্রিয় ক্যামেরা চালু করুন।\n2. ফোনের Wi-Fi সেটিংসে এর Wi-Fi-তে যুক্ত হন।\n3. \"সংযোগ পরীক্ষা করুন\" চাপুন।';
+
+  @override
+  String get indriyoStreamUrlLabel => 'ক্যামেরা স্ট্রিমের ঠিকানা';
+
+  @override
+  String get indriyoTestConnection => 'সংযোগ পরীক্ষা করুন';
+
+  @override
+  String get indriyoTesting => 'পরীক্ষা চলছে…';
+
+  @override
+  String get indriyoConnected =>
+      'ক্যামেরা পাওয়া গেছে। ইন্দ্রিয় যুক্ত হয়েছে।';
+
+  @override
+  String get indriyoNotConnected =>
+      'ক্যামেরায় পৌঁছানো যায়নি। ক্যামেরার Wi-Fi-তে আছেন কি না এবং ঠিকানা ঠিক আছে কি না দেখুন।';
+
+  @override
+  String get indriyoInvalidUrl =>
+      'http:// বা https:// দিয়ে শুরু হওয়া একটি ঠিকানা দিন';
+
+  @override
+  String get indriyoSimulationTitle => 'ডেমো মোড';
+
+  @override
+  String get indriyoSimulationSubtitle =>
+      'ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।';
 }
