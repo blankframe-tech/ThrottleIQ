@@ -208,7 +208,9 @@ export async function deleteUserData(
     const creator = data.creatorId === uid;
     await step(creator ? `groupRides/${rideId} (creator)` : `groupRides/${rideId}`, () =>
       db.runTransaction(async (txn) => {
-        const snap = await txn.get(rideRef);
+        // issues §104.2: every rider's live position, one key per uid.
+        const positionsRef = rideRef.collection("positions").doc("all");
+        const [snap, positions] = await txn.getAll(rideRef, positionsRef);
         if (!snap.exists) return;
         // A ride created before the roster moved to its own subcollection
         // carries an inline `members` array with the rider's name and photo.
@@ -239,6 +241,10 @@ export async function deleteUserData(
         txn.delete(rideRef.collection("members").doc(uid));
         txn.delete(rideRef.collection("memberLocations").doc(uid));
         txn.delete(rideRef.collection("invitations").doc(uid));
+        // update, not set-merge: a ride with no positions doc must not get one.
+        if (positions.get(new FieldPath(uid)) !== undefined) {
+          txn.update(positionsRef, new FieldPath(uid), FieldValue.delete());
+        }
       })
     );
   }

@@ -542,3 +542,23 @@ test("a group ride the rider created loses their roster row and creator name", a
 test.after(async () => {
   await rtdb.app.delete();
 });
+
+// Security sweep 2026-10-30 C2: the shared positions doc (issues §104.2)
+// held the rider's last position after the erasure.
+test("the rider's key leaves every group ride's positions/all", async () => {
+  const pos = { lat: 23.8, lng: 90.4, timestamp: 1 };
+  await seedAndEraseTwice({
+    'groupRides/joined': { creatorId: OTHER, memberIds: [OTHER, UID], invitedIds: [], status: 'active' },
+    'groupRides/joined/positions/all': { [UID]: pos, [OTHER]: pos },
+    'groupRides/mine': { creatorId: UID, memberIds: [UID, OTHER], invitedIds: [], status: 'active' },
+    'groupRides/mine/positions/all': { [UID]: pos, [OTHER]: pos },
+    // Never published a position: no empty doc may be created for it.
+    'groupRides/quiet': { creatorId: OTHER, memberIds: [OTHER, UID], invitedIds: [], status: 'active' },
+  }, async () => {
+    for (const ride of ['joined', 'mine']) {
+      const all = (await db.doc(`groupRides/${ride}/positions/all`).get()).data();
+      assert.deepEqual(Object.keys(all), [OTHER], ride);
+    }
+    assert.equal(await exists('groupRides/quiet/positions/all'), false);
+  });
+});
