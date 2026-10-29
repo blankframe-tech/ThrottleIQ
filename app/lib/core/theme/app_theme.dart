@@ -15,6 +15,12 @@ class AppTheme {
   static Color primaryButtonForeground(AppColorPalette palette) =>
       palette.isDark ? palette.surface : Colors.white;
 
+  /// Text/icon color on a `danger` fill (Material `onError`). White on dark
+  /// danger is ~3:1; danger can't darken (it is also text on dark surfaces),
+  /// so dark themes use the surface color instead (issue #42).
+  static Color dangerForeground(AppColorPalette palette) =>
+      palette.isDark ? palette.surface : Colors.white;
+
   /// Builds the [ThemeData] for the given [AppAppearance]. Resolves the
   /// matching [AppColorPalette] and the [AppShapeProfile] and registers both
   /// as [ThemeData.extensions], which is how every widget reads them
@@ -78,7 +84,7 @@ class AppTheme {
               surface: palette.surface,
               onSurface: palette.textPrimary,
               error: palette.danger,
-              onError: Colors.white,
+              onError: dangerForeground(palette),
               outline: palette.border,
             )
           : ColorScheme.light(
@@ -89,7 +95,7 @@ class AppTheme {
               surface: palette.surface,
               onSurface: palette.textPrimary,
               error: palette.danger,
-              onError: Colors.white,
+              onError: dangerForeground(palette),
               outline: palette.border,
             ),
       textTheme: textTheme,

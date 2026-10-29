@@ -682,11 +682,12 @@ reports a deleted rider filed (S4).
     "Gear" tag. Darkening it would turn the tan into the same brown as `attention`.
   - The forum "Guide" tag draws `primary` on its own tint, at 4.05:1 light. Fixing that at
     token level would darken the brand sage to about `#44674C`.
-  - White on dark `danger` is 3.35:1: the notification badge count, the report submit button,
-    and Material's `onError: Colors.white`. It can't be fixed at token level, because danger
-    must stay light enough to read as text on the dark surfaces. Those widgets need a dark
-    foreground. `onSecondary: Colors.white` is 2.93 light / 3.64 dark, but nothing in lib
-    uses it directly.
+  - White on dark `danger`: badge, report button and `onError` FIXED 2026-10-29 (#42,
+    `issues_fixed.md` "Lane G"). Still white-ish on dark danger: the ~6 error snackbars that set
+    `backgroundColor: palette.danger` (`onInk` text, about 3:1; e.g. `settings_screen.dart`,
+    `report_bottom_sheet.dart` send failure). *Fix:* give them `colorScheme.onError` text, or
+    drop the danger fill. `onSecondary: Colors.white` is 2.93 light / 3.64 dark, but nothing in
+    lib uses it directly.
   - Light `textTertiary` is now 1.10:1 against `textSecondary` (`#66635D`), so the two levels
     differ mostly by size.
   - Light warning and attention are now near-identical dark browns (they were near-twins

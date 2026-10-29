@@ -218,18 +218,19 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                 _selectedReason == null || _isSubmitting ? null : _submitReport,
             style: ElevatedButton.styleFrom(
               backgroundColor: context.palette.danger,
-              foregroundColor: Colors.white,
+              foregroundColor: Theme.of(context).colorScheme.onError,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(context.shape.radiusMd),
               ),
             ),
             child: _isSubmitting
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
-                        color: Colors.white, strokeWidth: 2),
+                        color: Theme.of(context).colorScheme.onError,
+                        strokeWidth: 2),
                   )
                 : Text(context.l10n.submitReport,
                     style: const TextStyle(
