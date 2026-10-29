@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:throttleiq/core/utils/num_cast.dart';
 
+import '../database/database_helper.dart';
 import 'ride_track_loader.dart';
 
 /// Service for exporting ride data to various formats.
@@ -117,6 +118,28 @@ class ExportService {
       debugPrint('Error exporting to GPX: $e');
       return null;
     }
+  }
+
+  /// One GPX file per finished (completed or crash) ride on this phone,
+  /// oldest first, through [exportRideToGPX]. The "Update required" screen's way for a rider on a
+  /// blocked build to take their rides with them (GitHub #38); the files
+  /// import back with "Import GPX" on a bike.
+  Future<List<File>> exportAllRidesToGPX() async {
+    final db = await DatabaseHelper.instance.database;
+    final rides = await db.query('rides',
+        columns: ['id', 'start_time', 'distance_m'],
+        where: "status IN ('completed', 'crash')",
+        orderBy: 'start_time');
+    final files = <File>[];
+    for (final r in rides) {
+      final file = await exportRideToGPX({
+        'id': r['id'],
+        'startTime': r['start_time'],
+        'distanceM': r['distance_m'],
+      });
+      if (file != null) files.add(file);
+    }
+    return files;
   }
 
   /// Generate GPX XML string from ride data.

@@ -1653,6 +1653,8 @@
   "updateRequiredTitle": "আপডেট দরকার",
   "updateRequiredBody": "ThrottleIQ-এর এই সংস্করণটি আর সার্ভারের সঙ্গে কাজ করে না। অ্যাপটি ব্যবহার চালিয়ে যেতে সর্বশেষ সংস্করণ ইনস্টল করুন।",
   "updateRequiredAction": "সর্বশেষ সংস্করণ নিন",
+  "updateRequiredExportRides": "আমার রাইডগুলো এক্সপোর্ট করুন",
+  "updateRequiredNoRidesToExport": "এই ফোনে এক্সপোর্ট করার মতো কোনো রাইড নেই।",
   "sideloadBlockedTitle": "Google Play থেকে ThrottleIQ ইনস্টল করুন",
   "sideloadBlockedBody": "ThrottleIQ-এর এই কপিটি Google Play থেকে ইনস্টল করা হয়নি, তাই এটি সার্ভারের সঙ্গে যুক্ত হতে পারছে না। অ্যাপটি ব্যবহার চালিয়ে যেতে Play Store থেকে ThrottleIQ ইনস্টল করুন।",
   "sideloadBlockedPlayAction": "Play Store খুলুন",

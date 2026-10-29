@@ -8077,6 +8077,14 @@
   "@updateRequiredAction": {
     "description": "Button on the blocking update screen; opens the install page."
   },
+  "updateRequiredExportRides": "Export my rides",
+  "@updateRequiredExportRides": {
+    "description": "Second button on the Update required screen: shares every ride on this phone as GPX files, so the rider keeps their data even without updating."
+  },
+  "updateRequiredNoRidesToExport": "There are no rides on this phone to export.",
+  "@updateRequiredNoRidesToExport": {
+    "description": "Snackbar on the Update required screen when Export my rides finds no rides."
+  },
   "sideloadBlockedTitle": "Install ThrottleIQ from Google Play",
   "@sideloadBlockedTitle": {
     "description": "Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play."

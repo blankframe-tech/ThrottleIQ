@@ -5836,6 +5836,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRequiredAction => 'Get the latest version';
 
   @override
+  String get updateRequiredExportRides => 'Export my rides';
+
+  @override
+  String get updateRequiredNoRidesToExport =>
+      'There are no rides on this phone to export.';
+
+  @override
   String get sideloadBlockedTitle => 'Install ThrottleIQ from Google Play';
 
   @override

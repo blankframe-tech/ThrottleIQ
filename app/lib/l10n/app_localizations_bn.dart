@@ -5815,6 +5815,13 @@ class AppLocalizationsBn extends AppLocalizations {
   String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
 
   @override
+  String get updateRequiredExportRides => 'আমার রাইডগুলো এক্সপোর্ট করুন';
+
+  @override
+  String get updateRequiredNoRidesToExport =>
+      'এই ফোনে এক্সপোর্ট করার মতো কোনো রাইড নেই।';
+
+  @override
   String get sideloadBlockedTitle => 'Google Play থেকে ThrottleIQ ইনস্টল করুন';
 
   @override

@@ -10020,6 +10020,18 @@ abstract class AppLocalizations {
   /// **'Get the latest version'**
   String get updateRequiredAction;
 
+  /// Second button on the Update required screen: shares every ride on this phone as GPX files, so the rider keeps their data even without updating.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my rides'**
+  String get updateRequiredExportRides;
+
+  /// Snackbar on the Update required screen when Export my rides finds no rides.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no rides on this phone to export.'**
+  String get updateRequiredNoRidesToExport;
+
   /// Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play.
   ///
   /// In en, this message translates to:

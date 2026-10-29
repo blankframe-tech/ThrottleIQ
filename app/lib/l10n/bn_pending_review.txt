@@ -1678,3 +1678,6 @@ gpxImportTooLarge
 gpxImportNotGpx
 gpxImportNoTrack
 gpxImportOverlapsRide
+# batch: update required export (#38, 2026-10-29)
+updateRequiredExportRides
+updateRequiredNoRidesToExport
