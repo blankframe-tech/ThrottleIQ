@@ -977,14 +977,14 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get recordingNotificationTextUser =>
-      'ThrottleIQ ব্যাকগ্রাউন্ডে আপনার রাইড রেকর্ড করছে';
+      'ThrottleIQ আপনার রাইড ব্যাকগ্রাউন্ডে রেকর্ড করছে';
 
   @override
   String get recordingNotificationTextAuto =>
-      'ThrottleIQ একটি রাইড শনাক্ত করেছে এবং রেকর্ড করছে';
+      'ThrottleIQ একটি রাইড শনাক্ত করে রেকর্ড করছে';
 
   @override
-  String get rideRecordingActive => 'রাইড রেকর্ড চলছে';
+  String get rideRecordingActive => 'রাইড রেকর্ডিং চলছে';
 
   @override
   String get rideDetected => 'রাইড শনাক্ত হয়েছে';
@@ -995,7 +995,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get recordingPermissionDenied =>
-      'রাইড ট্র্যাক করতে ThrottleIQ-র লোকেশন অনুমতি দরকার। সেটিংসে গিয়ে অনুমতি দিন।';
+      'রাইড ট্র্যাক করতে ThrottleIQ-এর লোকেশনের অনুমতি দরকার। সেটিংসে গিয়ে অনুমতি দিন।';
 
   @override
   String get addBikeBeforeRecording =>
