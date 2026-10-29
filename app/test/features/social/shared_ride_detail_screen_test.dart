@@ -361,7 +361,9 @@ void main() {
 
     // Rider & Bike info
     expect(find.text('SpeedRider'), findsOneWidget);
-    expect(find.text('Yamaha R3 · Sport'), findsOneWidget);
+    // Bike name only (no raw bikeType), in the app bar and the rider card.
+    expect(find.text('Yamaha R3 · Sport'), findsNothing);
+    expect(find.text('Yamaha R3'), findsNWidgets(2));
     expect(find.text('Sunset cruise through the hills!'), findsOneWidget);
 
     // Telemetry & Speed section
@@ -373,6 +375,8 @@ void main() {
     expect(find.text('Distance'), findsOneWidget);
     expect(find.text('25.5'), findsOneWidget);
     expect(find.text('Duration'), findsOneWidget);
+    // No runner-style pace row (#33): avg speed above already covers it.
+    expect(find.text('Riding Pace'), findsNothing);
 
     // Vote net score (5 - 1 = 4)
     expect(find.text('4'), findsOneWidget);

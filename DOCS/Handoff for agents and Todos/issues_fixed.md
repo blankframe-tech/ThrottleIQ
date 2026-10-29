@@ -7524,11 +7524,14 @@ From the second §102 in `issues_open.md`. The open items (102.1, the Universal 
 - **102.8 Diff noise:** a `dart format` run may have reflowed `all_rides_screen.dart` and `badge_grid.dart` beyond their real edits.
   - **OBSOLETE** (2026-10-22): that pass was committed long ago.
 
-## 103. Shared-ride card / owner actions follow-ups — done parts (2026-10-15), moved 2026-10-22
+## 103. Shared-ride card / owner actions follow-ups — done (2026-10-15, rest 2026-10-29), moved 2026-10-22
 
 - **103.1 Push blocked:** ✅ resolved 2026-10-15. `1349db5` reverted the format-only churn; gate green, pushed to `origin/main`.
 - **103.4 E2E:** `integration_test/e2e_test.dart` not run (no simulator). It covers the Places full map, the Social card/owner menu, history Delete ride and the cockpit placement pill, all on `1349db5`.
   - **DONE:** E2E passed 4/4 on an iPhone 17 simulator on 2026-10-21 (§106).
+- **103.2 Delete ride rollback:** ✅ 2026-10-29 (lane B). `RideDao.deleteWithTombstone` now takes a `completed` ride's `distance_m` and one ride off its bike in the same transaction (floored at 0, `synced = 0` so the bike's LWW sync carries it). Keyed on the row still existing, so a second delete or tombstone replay subtracts nothing; `active`/`crash` rows (discard, recovery) were never credited and change nothing. History delete now tells the rider when the shared post couldn't be removed (permission-denied = never shared, ignored; offline deletes are queued by Firestore). My Shared Rides delete shows a SnackBar and `reportSilently` on failure (GitHub #28). *Tests:* `test/database/ride_delete_bike_rollback_test.dart`, `test/features/social/my_shared_rides_delete_test.dart`. Known limit: a ride whose `stopRide` stats step failed after finalize gets subtracted anyway (floor caps it); a stale copy of the ride on a second device, deleted there too, subtracts again.
+- **103.3 Detail rider card:** ✅ 2026-10-29. Shows the bike name only, like the feed card (GitHub #34). The runner-style pace row was removed; the Avg Speed tile above already shows km/h (GitHub #33; key `ridingPace` dropped).
+- **103.5 Cockpit:** ✅ 2026-10-29. The `_GroupRideTalkPill` comment moved above its widget (GitHub #60); the speed panel sits at `160 + bottom safe-area inset`, the same inset the bottom controls add. Not checked on a device.
 
 ## 104. Spark quota load test — the built outage mode (2026-10-21), moved 2026-10-22
 

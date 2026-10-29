@@ -1107,6 +1107,14 @@ class AppLocalizationsEn extends AppLocalizations {
       'This removes it from the feed for everyone. Your local ride history is unaffected.';
 
   @override
+  String get sharedRideDeleteFailed =>
+      'Couldn\'t delete the shared ride. Check your connection and try again.';
+
+  @override
+  String get sharedPostNotRemoved =>
+      'Ride deleted, but its shared post couldn\'t be removed. Delete it from My Shared Rides when you\'re online.';
+
+  @override
   String get delete => 'Delete';
 
   @override
@@ -1260,9 +1268,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get duration => 'Duration';
-
-  @override
-  String get ridingPace => 'Riding Pace';
 
   @override
   String trackPoints(Object polylineCount) {

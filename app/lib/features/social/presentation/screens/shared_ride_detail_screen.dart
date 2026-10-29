@@ -355,17 +355,6 @@ class _SharedRideDetailScreenState
     final polyline = ride.polyline;
     final netScore = _localUpvotes - _localDownvotes;
 
-    // Calculate pace
-    final paceFormatted = (ride.distanceKm > 0 && ride.durationSeconds > 0)
-        ? () {
-            final totalPaceSeconds =
-                (ride.durationSeconds / ride.distanceKm).round();
-            final paceMin = totalPaceSeconds ~/ 60;
-            final paceSec = totalPaceSeconds % 60;
-            return "$paceMin'${paceSec.toString().padLeft(2, '0')}\" /km";
-          }()
-        : '--';
-
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(
@@ -415,7 +404,7 @@ class _SharedRideDetailScreenState
                   ],
 
                   // 4. Detailed Speed & Telemetry Stats
-                  _buildTelemetrySection(ride, paceFormatted),
+                  _buildTelemetrySection(ride),
                   const SizedBox(height: 16),
 
                   // 5. Photos Gallery
@@ -663,8 +652,12 @@ class _SharedRideDetailScreenState
                     ),
                   ),
                   const SizedBox(height: 2),
+                  // Bike name only, like the feed card: bikeType is a raw
+                  // cc or an English "Motorcycle" fallback (§103.3).
                   Text(
-                    '${ride.bikeName} · ${ride.bikeType}',
+                    ride.bikeName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                         fontSize: 13, color: context.palette.textSecondary),
                   ),
@@ -721,7 +714,7 @@ class _SharedRideDetailScreenState
     );
   }
 
-  Widget _buildTelemetrySection(SharedRideEntity ride, String paceFormatted) {
+  Widget _buildTelemetrySection(SharedRideEntity ride) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -778,30 +771,6 @@ class _SharedRideDetailScreenState
           const SizedBox(height: 12),
           RidingScoreBadge(score: ride.ridingScore!),
         ],
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(context.shape.radiusMd),
-            border: Border.all(color: context.palette.border),
-          ),
-          child: Row(
-            children: [
-              Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
-              const SizedBox(width: 12),
-              Text(context.l10n.ridingPace,
-                  style: TextStyle(
-                      color: context.palette.textSecondary, fontSize: 13)),
-              const Spacer(),
-              Text(paceFormatted,
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: context.palette.textPrimary,
-                      fontSize: 14)),
-            ],
-          ),
-        ),
         if (ride.polyline.isNotEmpty) ...[
           const SizedBox(height: 12),
           _buildRouteInfoCard(ride),
