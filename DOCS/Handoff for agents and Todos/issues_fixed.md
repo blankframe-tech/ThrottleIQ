@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 121. Screen tests, goldens, recorder flow and the text-scale sweep — FIXED in part (2026-10-29, lane E)
+
+GitHub #50: `ride_recording_flow_test.dart` drives the real `RideRecordingNotifier` through start → pause → resume → stop with fake GPS and in-memory SQLite (§90.B9). GitHub #49: the first goldens, 6 PNGs (cockpit, login, Settings > Advanced, light and dark), with the app's real IBM Plex / Space Grotesk files in `app/test/fonts/` loaded through google_fonts' own cache lookup; macOS only, CI skips them; how to update in `app/test/README.md`. GitHub #48 step one: `text_scale_sweep_test.dart` (1.0–2.0×, English and Bangla) found three overflowing rows (cockpit stats, login and register footers), now `Wrap`. GitHub #24: register screen test. Still open (sweep coverage, the clamp, untested screens): `issues_open.md` §83.22 and §83.28.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.
