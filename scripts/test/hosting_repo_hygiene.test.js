@@ -127,6 +127,25 @@ test('CI workflow is read-only and pins firebase-tools', () => {
   assert.match(yml, /npm install -g firebase-tools@\d+/);
 });
 
+test('workflows pin every action to a commit SHA and run once per PR (#53)', () => {
+  const dir = path.join(ROOT, '.github/workflows');
+  for (const f of fs.readdirSync(dir).filter((n) => n.endsWith('.yml'))) {
+    const yml = read(`.github/workflows/${f}`);
+    for (const [, ref] of yml.matchAll(/^\s*(?:- )?uses:\s*(\S+)/gm)) {
+      assert.match(ref, /@[0-9a-f]{40}$/, `${f}: ${ref} must be pinned to a full SHA`);
+    }
+  }
+  for (const f of ['ci.yml', 'security.yml']) {
+    assert.match(read(`.github/workflows/${f}`), /^ {2}push:\n {4}branches: \[main\]$/m, f);
+  }
+});
+
+test('pre-push hook drops git env vars before the gate (#55)', () => {
+  const hook = read('.githooks/pre-push');
+  const unset = hook.indexOf('unset $(git rev-parse --local-env-vars)');
+  assert.ok(unset >= 0 && unset < hook.indexOf('scripts/check.sh"'), 'unset must come before check.sh');
+});
+
 test('.gitignore covers worktrees, .env variants and .p12 keys', () => {
   // check-ignore also reads the unshared .git/info/exclude, so assert the
   // shared file itself carries the worktrees pattern.
