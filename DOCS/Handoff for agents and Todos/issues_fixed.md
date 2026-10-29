@@ -11,6 +11,17 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 121. Lane D cleanup: bare catches, dead code, locale prefs, bug-report version — FIXED (2026-10-29)
+
+- **§83.14 / #22:** 25 bare `catch (_)` in `app/lib` now call `reportSilently(e, st, where:)`; the other 29 are expected and say why in a comment. `_bareCatchBaseline` 54 → 29. Behaviour unchanged.
+- **§110.1 / #29:** deleted the unused `n0NotGoogle` key (both ARBs, `bn_pending_review.txt`), regenerated.
+- **§110.2:** the PRD already marked AUT-7 built and kept only the day-totals question in open item 3; nothing left to change.
+- **#39 / 101.P7:** `LocaleNotifier` and `readSavedLocale` survive a failing `SharedPreferences`: a failed read keeps the default, a failed write keeps the in-memory choice; both `reportSilently`. Test in `locale_provider_test.dart`.
+- **#30 / 101.C9:** bug reports carry the real `version` and `build` from `PackageInfo` instead of `'1.0.0'`. Test in `bug_report_service_test.dart`.
+- **#31 / 90.B8 / 101.P6:** deleted the unused `RideRepository` trio and its test, `motorcycle_quotes.dart`, `user_entity.dart` (and the empty `auth/domain/`), the placeholder `test/widget_test.dart`, and `GeohashUtils.getGeohashesForViewport` with its tests. `datetime_extensions.dart` stays: `forums_pulse_view.dart` uses it.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.

@@ -219,7 +219,7 @@ injected Firestore, so the pattern was known, and the notifier calls the
 no-arg constructor anyway. **Same root cause as 83.28:** nothing that touches
 I/O is injectable, so nothing that touches I/O is tested.
 
-### 83.14 — 54 bare `catch (_)` blocks — PARTLY FIXED 2026-10-22
+### 83.14 — bare `catch (_)` blocks — PARTLY FIXED 2026-10-29
 
 54 in `app/lib` (2026-10-22, down from 65), held there by the ratchet test
 `app/test/core/utils/error_reporter_test.dart` (`_bareCatchBaseline = 54`; it
@@ -237,16 +237,15 @@ delete), ride (start-failure cleanup, public stats push), outbox payload
 decode (`outbox_dao.dart`, `database_helper.dart`), badge sync, malformed
 cloud bike, corrupt medical info, Cloudinary ledger write.
 
-**Still open:** triage the other 54. Non-UI first: `features/ride/`
-(`ride_recording_provider.dart` battery-opt prompt and wakelock,
-`ride_summary_screen.dart` 2, `active_ride_screen.dart` 1),
-`bug_report_service.dart`, `privacy_zone_salt.dart`, `nominatim_service.dart`.
-Then UI (`group_ride_map_screen.dart` 8, social providers and screens,
-`place_launch_actions.dart`). Some are expected and may stay (Google
-sign-out, "already gone" deletes in `group_ride_repository.dart`,
-`isServiceRunning`). `outbox.decodePayload` and `profile.parseBike` report
-again on every read of the same broken row; add a once-per-key guard if that
-gets noisy. Lower the baseline as they are replaced.
+Triaged 2026-10-29 (lane D, GitHub #22): 25 more now report
+`reportSilently` (forum, chat, follow suggestions, ride feed, group-ride map
+and voice notes, comments, SafeQR, profile bio, bike image, ride battery-opt
+prompt and wakelock). The 29 left are expected and carry a why-comment (map
+controller not attached, "already gone" deletes, Google sign-out, Timestamp
+parsing, `isServiceRunning`, Nominatim offline, `launchUrl` fallbacks,
+`reportNonFatal` itself); baseline 29. **Still open:** `outbox.decodePayload`
+and `profile.parseBike` report again on every read of the same broken row; add
+a once-per-key guard if that gets noisy.
 
 ### 83.16 (part) — the Cloudinary preset is still an open upload endpoint
 
@@ -389,7 +388,7 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
 - **90.B5 — MEDIUM — layering is partly nominal.** 7 presentation files still import
   `cloud_firestore`/`firebase_auth` directly. The other 2026-10-06 counts (presentation files
   importing `data/`, domain leaks, `core/` files importing features) were not re-measured.
-- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 54 bare `catch (_)` (2026-10-22),
+- **90.B6 — MEDIUM — bare catches** (update to §83.14). `app/lib` has 29 bare `catch (_)`, all expected (2026-10-29),
   held by the ratchet test in `error_reporter_test.dart`. Many catches only `debugPrint`,
   which is invisible in release (about 42 on 2026-10-06; not re-counted). *Fix:* route
   them to `reportNonFatal` (`core/utils/error_reporter.dart`), then lower the ratchet.
@@ -399,13 +398,6 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
   `shared_ride_detail_screen.dart` 1,094. The planned ride-provider split
   (`RideSessionController` / `GpsPositionHandler` / `CrashAlertCoordinator` /
   `LiveSessionManager`, old §92.A8) was never done.
-- **90.B8 — LOW — dead code is still in the tree.** `features/ride/domain/repositories/ride_repository.dart`,
-  `features/ride/data/repositories/ride_repository_impl.dart`,
-  `features/ride/presentation/providers/ride_repository_provider.dart` (and
-  `test/repositories/ride_repository_test.dart`), `core/constants/motorcycle_quotes.dart`,
-  `core/utils/extensions/datetime_extensions.dart`, `features/auth/domain/entities/user_entity.dart`,
-  and `test/widget_test.dart` (`expect(true, isTrue)`). The 2026-10-06 session's permission
-  check blocked the delete. Confirm nothing imports them, then delete.
 - **90.B9 — MEDIUM — test shape** (update to §83.28). `RideRecordingNotifier` can now be built
   in a test container (`ride_recording_dispose_test.dart`, `4b914c10`), but its
   start/pause/resume/stop flow has no direct test. There are no golden tests.
@@ -635,8 +627,7 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
   expiresAt)` though the field is `uid`, the `crashNotifications` COLLECTION_GROUP index, and the
   legacy `rides` indexes. Remove them only together with an index deploy (§84).
 - **101.C9** outbox `next_attempt_at` is stored as local time (needs a compat read); the router
-  treats auth loading/error as signed out; `bug_report_service.dart:74` hard-codes version
-  `'1.0.0'` (checked); some notification channel names are English.
+  treats auth loading/error as signed out; some notification channel names are English.
 - **101.R2** no warning when a log's odometer is below the previous one. **101.R3**
   `latestLogFor` picks the highest odometer, not the latest date (needs a product rule for
   odometer resets). **101.R5** a tiny `deltaT` inflates jerk. **101.R9** `forecast_strip`
@@ -645,9 +636,8 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 - **101.A4** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card
   and the username link.
 - **101.P5** the English `displayName` fallback is stored in Firestore; no ODbL attribution on
-  the places list and detail (the map tiles carry it). **101.P6** (`searchPlacesByName` was
-  deleted 2026-10-27, no callers); `getGeohashesForViewport` (`geohash_utils.dart:24`) has no callers.
-  **101.P7** `LocaleNotifier` has no try/catch around prefs.
+  the places list and detail (the map tiles carry it). **101.P6** done (`searchPlacesByName`
+  deleted 2026-10-27, `getGeohashesForViewport` 2026-10-29).
 - **101.B3** CI has no release build. **101.B5** proguard keep rules are over-broad;
   `targetSdk` follows Flutter. **101.B8** CI never runs `integration_test/` and has no coverage
   step.
@@ -795,7 +785,7 @@ Those six files are deleted (text in git history: `git show 3ebbd21d:"DOCS/Hando
   - Blocking (§83.18): rules can check a `blocked` doc on single-document reads (ride, profile, comment), which is testable in the emulator. They cannot filter a list query, so the feed needs `not-in` (small block lists) or a server edge (Blaze).
   - Cloudinary (§83.16): besides locking the preset in the dashboard (owner page), a signing proxy on a free edge worker that checks the Firebase ID token would work without Blaze, but it is a new vendor. Auto-expire voice notes in the preset.
 - **107.4 LOW — cop checkpoints have no abuse limit.** `ride_actions_menu.dart` lets any rider add a public `police` pin, permanent if chosen, with no dedupe or rate limit. Rules only bound `expiresAt` (`firestore.rules`, places create). A Firestore TTL policy on `places.expiresAt` is not set (production config, owner's go-ahead): expired docs stay, and the client hides them in `nearbyViaGeohashRanges`. Source: plan_ride_minimize_menu "Known limits".
-- **107.5** Same item as §110.1; tracked there.
+- **107.5** Done with §110.1 (2026-10-29, issues_fixed §121).
 - **107.6 LOW — marketing idea, not started:** `apify/facebook-posts-scraper` on motorcycle-brand and BikeBD pages, for launch timing and content that gets engagement. Source: todo_now_antigravity §11.
 - **107.7 MEDIUM — device checklist for the widgets and gauges (needs a phone; owner page item 5 covers the ride).** Source: todo_now_antigravity §8, F8.
   1. `cd app && flutter run --release -d 00008120-001E5D190A85A01E` (iPhone) or `flutter run` (Android). Launch once so `HomeWidgetService.bootstrap()` writes baseline values to the App Group `group.com.bft.throttleiq`.
@@ -841,8 +831,6 @@ Both critiques were retired on 2026-10-22 (old text: `git show 3ebbd21d:"DOCS/Ha
 
 Open developer items found while rewriting `HANDOFF_Document.md` that no other section tracks. Owner items went to the owner page; device checks are in the handoff's "Built but never run on a real phone" list.
 
-- **110.1 Unused l10n key `n0NotGoogle`.** `app/lib/l10n/app_en.arb:3767` and `app_bn.arb:806`; nothing in `app/lib` reads it since `4535b6e8` hid the Google column on place detail. *Fix:* delete the key in both ARB files and regenerate. Harmless, but it keeps a "Not on Google" string the app no longer shows. Source: HANDOFF 2026-10-19 (places).
-- **110.2 PRD says the fix purge is never called.** `DOCS/For Devs and Contributors/architecture/PRD.md:133` (AUT-7, "No code calls the purge yet") and open item 3 (`:310`). The purge runs: `auto_tracking_service.dart:367` calls `DailyRideSummaryRepository.purgeOldFixesIfDue()` (14 days, `auto_detection_dao.dart:354`). *Fix:* mark AUT-7 built; keep open item 3 only for its second question (store day totals before the purge, since purged detections drop out of older daily summaries, `auto_tracking_plan.md:249`). Source: HANDOFF 2026-10-15 (agent round).
 - **110.4 Admin check still falls back to an email.** `firestore.rules:136-141` (`isAdmin()` accepts a verified `the.abraar.rar@gmail.com` token), plus client copies in `forum_permissions.dart:5` and `jam_label_provider.dart:14`. Nobody recorded running `scripts/oneoff/set_admin_claim.js`, so the `admin` claim may not exist. *Fix:* after the owner sets the claim and signs in again, delete the email branch from `isAdmin()` and its rules tests. Why: admin rights should not depend on one mailbox's address. Source: HANDOFF Key facts, "Admin account" (2026-08-12).
 - **110.6 `main`'s pre-push hook lacks the linked-worktree fix.** `mayabi` (`ef83fe03`) unsets git's local env vars before the gate in `.githooks/pre-push`; without it, `GIT_DIR` made Flutter report `0.0.0-unknown` and `pub get` fail in a linked worktree. `main`'s hook has no such line. Not reproduced on `main`. *Fix:* write the same few lines on `main` (the owner asked for no cherry-picks from `mayabi` without asking). Source: `mayabi` branch HANDOFF, "Pre-push in a worktree".
 
