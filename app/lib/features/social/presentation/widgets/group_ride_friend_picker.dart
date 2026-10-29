@@ -79,7 +79,8 @@ class _GroupRideFriendPickerSheetState
 
     setState(() => _loading = true);
     final repo = ProfileRepository();
-    final looksLikeEmail = q.contains('@') && q.contains('.') && !q.startsWith('@');
+    final looksLikeEmail =
+        q.contains('@') && q.contains('.') && !q.startsWith('@');
     List<UserProfileEntity> results;
     try {
       results = looksLikeEmail
@@ -149,7 +150,8 @@ class _GroupRideFriendPickerSheetState
         left: AppDimensions.paddingMd,
         right: AppDimensions.paddingMd,
         top: AppDimensions.paddingMd,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom + AppDimensions.paddingMd,
       ),
       child: SizedBox(
         height: MediaQuery.of(context).size.height * 0.78,
@@ -179,7 +181,8 @@ class _GroupRideFriendPickerSheetState
                         BorderRadius.circular(context.shape.radiusFull),
                   ),
                   child: Text(
-                    context.l10n.selectedCount(_selected.length, kMaxGroupRideFriends),
+                    context.l10n
+                        .selectedCount(_selected.length, kMaxGroupRideFriends),
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -193,8 +196,10 @@ class _GroupRideFriendPickerSheetState
             ),
             const SizedBox(height: 4),
             Text(
-              context.l10n.pickRidersRideStarts(kMinGroupRideFriends, kMaxGroupRideFriends),
-              style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+              context.l10n.pickRidersRideStarts(
+                  kMinGroupRideFriends, kMaxGroupRideFriends),
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textSecondary),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -219,7 +224,8 @@ class _GroupRideFriendPickerSheetState
                     final rider = _selected.values.elementAt(i);
                     return InputChip(
                       label: Text(rider.bestName),
-                      onDeleted: () => setState(() => _selected.remove(rider.uid)),
+                      onDeleted: () =>
+                          setState(() => _selected.remove(rider.uid)),
                     );
                   },
                 ),
@@ -234,7 +240,8 @@ class _GroupRideFriendPickerSheetState
                 child: Text(
                   _problemText(context, problem),
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 12, color: context.palette.textSecondary),
+                  style: TextStyle(
+                      fontSize: 12, color: context.palette.textSecondary),
                 ),
               ),
             SizedBox(
@@ -242,7 +249,8 @@ class _GroupRideFriendPickerSheetState
               child: FilledButton(
                 onPressed: problem != null
                     ? null
-                    : () => Navigator.of(context).pop(_selected.values.toList()),
+                    : () =>
+                        Navigator.of(context).pop(_selected.values.toList()),
                 child: Text(
                   _selected.isEmpty
                       ? context.l10n.startGroupRide
@@ -258,7 +266,8 @@ class _GroupRideFriendPickerSheetState
 
   Widget _buildResults() {
     if (_loading) {
-      return Center(child: CircularProgressIndicator(color: context.palette.primary));
+      return Center(
+          child: CircularProgressIndicator(color: context.palette.primary));
     }
     if (_results.isEmpty) {
       return Center(
@@ -312,7 +321,8 @@ class _RiderPickTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(context.shape.radiusMd),
             border: Border.all(
-              color: selected ? context.palette.primary : context.palette.border,
+              color:
+                  selected ? context.palette.primary : context.palette.border,
             ),
           ),
           child: Row(
@@ -343,7 +353,9 @@ class _RiderPickTile extends StatelessWidget {
               ),
               Icon(
                 selected ? Icons.check_circle : Icons.radio_button_unchecked,
-                color: selected ? context.palette.primary : context.palette.textTertiary,
+                color: selected
+                    ? context.palette.primary
+                    : context.palette.textTertiary,
                 size: 22,
               ),
             ],

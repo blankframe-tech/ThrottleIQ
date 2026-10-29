@@ -42,7 +42,9 @@ void main() {
       addTearDown(container.dispose);
       await pumpEventQueue();
 
-      await container.read(localeProvider.notifier).setLocale(AppLocale.english);
+      await container
+          .read(localeProvider.notifier)
+          .setLocale(AppLocale.english);
 
       expect(container.read(localeProvider), AppLocale.english);
       // Pinned English is NOT the same as "follow the phone": it must resolve
@@ -113,8 +115,7 @@ void main() {
       expect(prefs.getString('locale'), isNull);
     });
 
-    test(
-        'disposing the container mid-load does not throw (the mounted guard)',
+    test('disposing the container mid-load does not throw (the mounted guard)',
         () async {
       // The regression this guards: SharedPreferences.getInstance() is async,
       // so a container torn down between construction and the await resolving

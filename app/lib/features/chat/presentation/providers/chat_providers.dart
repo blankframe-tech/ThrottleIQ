@@ -44,8 +44,7 @@ final peerTypingProvider = StreamProvider.autoDispose
     presence = null;
     emit();
   });
-  final offsetSub =
-      channel.services.store.watchServerTimeOffset().listen((o) {
+  final offsetSub = channel.services.store.watchServerTimeOffset().listen((o) {
     offsetMs = o;
     emit();
   }, onError: (Object _) {});
@@ -67,11 +66,13 @@ final userChatsProvider = StreamProvider.autoDispose<List<ChatEntity>>((ref) {
   return ref.watch(chatRepositoryProvider).watchUserChats(user.uid);
 });
 
-final chatMessagesProvider = StreamProvider.autoDispose.family<List<MessageEntity>, String>((ref, chatId) {
+final chatMessagesProvider = StreamProvider.autoDispose
+    .family<List<MessageEntity>, String>((ref, chatId) {
   return ref.watch(chatRepositoryProvider).watchMessages(chatId);
 });
 
-final singleChatProvider = FutureProvider.autoDispose.family<ChatEntity?, String>((ref, chatId) {
+final singleChatProvider =
+    FutureProvider.autoDispose.family<ChatEntity?, String>((ref, chatId) {
   return ref.watch(chatRepositoryProvider).getChat(chatId);
 });
 
@@ -90,7 +91,9 @@ final chatBlockedProvider =
   final myBlocks = await ref.watch(blockedUsersProvider.future);
   if (myBlocks.contains(otherUid)) return true;
   try {
-    return await ref.watch(profileRepositoryProvider).isBlockedBy(otherUid, myUid);
+    return await ref
+        .watch(profileRepositoryProvider)
+        .isBlockedBy(otherUid, myUid);
   } catch (e, st) {
     reportSilently(e, st, where: 'chat.isBlockedBy');
     return false;
@@ -106,7 +109,7 @@ List<ChatEntity> visibleChats(
 }) {
   if (blocked.isEmpty) return chats;
   return chats
-      .where((c) => !c.participants.any((id) => id != myUid && blocked.contains(id)))
+      .where((c) =>
+          !c.participants.any((id) => id != myUid && blocked.contains(id)))
       .toList();
 }
-

@@ -161,10 +161,8 @@ void main() {
     test('every English message carries an @-description', () {
       // The description is the only context a translator gets. Missing ones are
       // how "Add" ends up translated as the arithmetic kind.
-      final undocumented = messageKeys(en)
-          .where((k) => !en.containsKey('@$k'))
-          .toList()
-        ..sort();
+      final undocumented =
+          messageKeys(en).where((k) => !en.containsKey('@$k')).toList()..sort();
       expect(undocumented, isEmpty,
           reason: 'Missing @description in app_en.arb for: '
               '${undocumented.join(', ')}');
