@@ -562,6 +562,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Haptic and visual alert when exceeding this speed';
 
   @override
+  String get alertFlashSettingTitle => 'Flash the map on alerts';
+
+  @override
+  String get alertFlashSettingSubtitle =>
+      'Tints the ride screen on hard braking, overspeed and fatigue';
+
+  @override
   String get iosAutoTrackingAdvisory =>
       'For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.';
 
@@ -6347,6 +6354,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fuelLitersLabel => 'Litres *';
 
   @override
+  String get unitLitre => 'L';
+
+  @override
+  String get unitKmPerLitre => 'km/L';
+
+  @override
+  String get unitMpg => 'mpg';
+
+  @override
+  String widgetServiceIn(String item, String when) {
+    return '$item in $when';
+  }
+
+  @override
+  String widgetServiceOverdueBy(String item, String when) {
+    return '$item overdue by $when';
+  }
+
+  @override
+  String widgetServiceDueNow(String item) {
+    return '$item due now';
+  }
+
+  @override
+  String get widgetServiceFallback => 'Service';
+
+  @override
+  String widgetDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get widgetNoData => 'No data yet';
+
+  @override
+  String get widgetNoServiceData => 'No service data yet';
+
+  @override
   String get fuelTotalCostLabel => 'Total paid';
 
   @override
@@ -6548,6 +6599,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get oemGuideShowMe => 'Show me';
+
+  @override
+  String get oemGuideStepSleepingApps =>
+      'In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps.';
+
+  @override
+  String get oemGuideOpenBatterySettings => 'Open battery settings';
+
+  @override
+  String get oemGuideSettingsTitle => 'Rides keep stopping?';
+
+  @override
+  String oemGuideSettingsSubtitle(String brand) {
+    return 'Battery settings that keep $brand phones recording';
+  }
 
   @override
   String get yourThrottleIqSection => 'Your ThrottleIQ';

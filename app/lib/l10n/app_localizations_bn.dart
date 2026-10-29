@@ -562,6 +562,13 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই গতি অতিক্রম করলে হ্যাপটিক ও ভিজ্যুয়াল সতর্কতা';
 
   @override
+  String get alertFlashSettingTitle => 'সতর্কতায় ম্যাপে ঝলক';
+
+  @override
+  String get alertFlashSettingSubtitle =>
+      'জোরে ব্রেক, অতিরিক্ত গতি আর ক্লান্তিতে রাইড স্ক্রিনে রঙের ঝলক দেখায়';
+
+  @override
   String get iosAutoTrackingAdvisory =>
       'iOS-এ নিরবচ্ছিন্ন রাইড শনাক্তকরণের জন্য অ্যাপ সুইচার থেকে সোয়াইপ করে বন্ধ না করে থ্রটলআইকিউ ব্যাকগ্রাউন্ডে চালু রাখুন।';
 
@@ -6325,6 +6332,50 @@ class AppLocalizationsBn extends AppLocalizations {
   String get fuelLitersLabel => 'লিটার *';
 
   @override
+  String get unitLitre => 'লি.';
+
+  @override
+  String get unitKmPerLitre => 'km/L';
+
+  @override
+  String get unitMpg => 'mpg';
+
+  @override
+  String widgetServiceIn(String item, String when) {
+    return '$when পরে $item';
+  }
+
+  @override
+  String widgetServiceOverdueBy(String item, String when) {
+    return '$item-এর সময় $when পেরিয়ে গেছে';
+  }
+
+  @override
+  String widgetServiceDueNow(String item) {
+    return '$item এখনই করতে হবে';
+  }
+
+  @override
+  String get widgetServiceFallback => 'সার্ভিস';
+
+  @override
+  String widgetDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count দিন',
+      one: '1 দিন',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get widgetNoData => 'এখনও কোনো তথ্য নেই';
+
+  @override
+  String get widgetNoServiceData => 'এখনও সার্ভিসের তথ্য নেই';
+
+  @override
   String get fuelTotalCostLabel => 'মোট দাম';
 
   @override
@@ -6525,6 +6576,21 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get oemGuideShowMe => 'দেখান';
+
+  @override
+  String get oemGuideStepSleepingApps =>
+      'ব্যাটারি (ডিভাইস কেয়ার) → ব্যাকগ্রাউন্ড ব্যবহারের সীমা থেকে ThrottleIQ-কে স্লিপিং অ্যাপ আর ডিপ স্লিপিং অ্যাপের তালিকা থেকে সরিয়ে দিন।';
+
+  @override
+  String get oemGuideOpenBatterySettings => 'ব্যাটারি সেটিংস খুলুন';
+
+  @override
+  String get oemGuideSettingsTitle => 'রাইড বারবার থেমে যায়?';
+
+  @override
+  String oemGuideSettingsSubtitle(String brand) {
+    return '$brand ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস';
+  }
 
   @override
   String get yourThrottleIqSection => 'আপনার ThrottleIQ';

@@ -243,6 +243,8 @@
         <package android:name="com.oppo.safe" />
         <package android:name="com.vivo.permissionmanager" />
         <package android:name="com.iqoo.secure" />
+        <package android:name="com.transsion.phonemaster" />
+        <package android:name="com.samsung.android.lool" />
 
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>

@@ -205,9 +205,10 @@ class FuelLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.palette;
+    final litre = context.l10n.unitLitre;
     final details = [
-      '${formatLiters(log.liters)} L',
-      '৳${formatTaka(log.pricePerLiter)}/L',
+      '${formatLiters(log.liters)} $litre',
+      '৳${formatTaka(log.pricePerLiter)}/$litre',
       '${groupThousands(log.odometerKm)} km',
       if (log.station != null) log.station!,
     ].join(' · ');
@@ -255,7 +256,8 @@ class FuelLogTile extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                       color: p.textPrimary)),
               if (kmPerLiter != null)
-                Text('${kmPerLiter!.toStringAsFixed(1)} km/L',
+                Text(
+                    '${kmPerLiter!.toStringAsFixed(1)} ${context.l10n.unitKmPerLitre}',
                     style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

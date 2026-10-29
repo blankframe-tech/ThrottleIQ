@@ -81,7 +81,7 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     _visible = visible;
   }
 
-  /// The one-time Xiaomi/OPPO/vivo/realme battery-settings guide, offered
+  /// The one-time battery-settings guide for aggressive OEMs, offered
   /// once the rider has a finished ride (B5). See `maybeOfferOemGuide`.
   Future<void> _offerOemGuide() async {
     try {

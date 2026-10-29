@@ -1082,6 +1082,18 @@ abstract class AppLocalizations {
   /// **'Haptic and visual alert when exceeding this speed'**
   String get overspeedSettingSubtitle;
 
+  /// Settings toggle: tint the ride screen on hard braking, rapid acceleration, overspeed and fatigue.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash the map on alerts'**
+  String get alertFlashSettingTitle;
+
+  /// Subtitle of the cockpit alert flash toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tints the ride screen on hard braking, overspeed and fatigue'**
+  String get alertFlashSettingSubtitle;
+
   /// Advisory note for iOS users about app lifecycle constraint.
   ///
   /// In en, this message translates to:
@@ -10878,6 +10890,66 @@ abstract class AppLocalizations {
   /// **'Litres *'**
   String get fuelLitersLabel;
 
+  /// Short unit for litres of fuel, after a number (12.5 L).
+  ///
+  /// In en, this message translates to:
+  /// **'L'**
+  String get unitLitre;
+
+  /// Fuel efficiency unit, kilometres per litre.
+  ///
+  /// In en, this message translates to:
+  /// **'km/L'**
+  String get unitKmPerLitre;
+
+  /// Fuel efficiency unit, miles per US gallon.
+  ///
+  /// In en, this message translates to:
+  /// **'mpg'**
+  String get unitMpg;
+
+  /// Home-screen maintenance widget: the next service and how far off it is. when is a distance (240 km) or widgetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} in {when}'**
+  String widgetServiceIn(String item, String when);
+
+  /// Home-screen maintenance widget: a service past its limit. when is a distance or widgetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} overdue by {when}'**
+  String widgetServiceOverdueBy(String item, String when);
+
+  /// Home-screen maintenance widget: a service at its limit.
+  ///
+  /// In en, this message translates to:
+  /// **'{item} due now'**
+  String widgetServiceDueNow(String item);
+
+  /// Home-screen maintenance widget: name used when a check has no label.
+  ///
+  /// In en, this message translates to:
+  /// **'Service'**
+  String get widgetServiceFallback;
+
+  /// Home-screen maintenance widget: a number of days, used inside widgetServiceIn / widgetServiceOverdueBy.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String widgetDays(int count);
+
+  /// Home-screen ride stats widget before there is anything to show.
+  ///
+  /// In en, this message translates to:
+  /// **'No data yet'**
+  String get widgetNoData;
+
+  /// Home-screen maintenance widget before any service is tracked.
+  ///
+  /// In en, this message translates to:
+  /// **'No service data yet'**
+  String get widgetNoServiceData;
+
   /// Fuel form: total amount paid field label.
   ///
   /// In en, this message translates to:
@@ -11201,6 +11273,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Show me'**
   String get oemGuideShowMe;
+
+  /// OEM guide step 1 on Samsung phones, which have no autostart switch.
+  ///
+  /// In en, this message translates to:
+  /// **'In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps.'**
+  String get oemGuideStepSleepingApps;
+
+  /// Button opening Samsung's Device care battery screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open battery settings'**
+  String get oemGuideOpenBatterySettings;
+
+  /// Settings row that reopens the OEM battery guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides keep stopping?'**
+  String get oemGuideSettingsTitle;
+
+  /// Subtitle of the Settings row that reopens the OEM guide; brand is the phone maker.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery settings that keep {brand} phones recording'**
+  String oemGuideSettingsSubtitle(String brand);
 
   /// Settings → Your ThrottleIQ (app modules).
   ///

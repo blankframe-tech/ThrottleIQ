@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' show Brightness, Color;
+import 'package:flutter/material.dart' show Brightness, Color, Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +9,10 @@ import 'package:throttleiq/core/theme/theme_style_provider.dart';
 import 'package:throttleiq/features/maintenance/domain/calculators/maintenance_forecast.dart';
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
+
+final _en = lookupAppLocalizations(const Locale('en'));
+final _bn = lookupAppLocalizations(const Locale('bn'));
 
 MaintenanceEntity _log(ServiceType type, double odometerKm) =>
     MaintenanceEntity(
@@ -76,11 +80,11 @@ void main() {
 
   group('formatRideCount', () {
     test('pluralises and clamps', () {
-      expect(formatRideCount(0), '0 rides');
-      expect(formatRideCount(1), '1 ride');
-      expect(formatRideCount(2), '2 rides');
-      expect(formatRideCount(351), '351 rides');
-      expect(formatRideCount(-4), '0 rides');
+      expect(formatRideCount(0, _en), '0 rides');
+      expect(formatRideCount(1, _en), '1 ride');
+      expect(formatRideCount(2, _en), '2 rides');
+      expect(formatRideCount(351, _en), '351 rides');
+      expect(formatRideCount(-4, _en), '0 rides');
     });
   });
 
@@ -88,6 +92,7 @@ void main() {
     test('due-soon wording counts down to the limit', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Oil Change',
           kmUntilDue: 240,
           overdue: false,
@@ -96,6 +101,7 @@ void main() {
       );
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Chain Lube',
           kmUntilDue: 1200.4,
           overdue: false,
@@ -107,6 +113,7 @@ void main() {
     test('overdue wording counts up past the limit', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Oil Change',
           kmUntilDue: -240,
           overdue: true,
@@ -118,6 +125,7 @@ void main() {
     test('overdue uses the flag, not the sign, so magnitude also works', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Tire Check',
           kmUntilDue: 80,
           overdue: true,
@@ -129,6 +137,7 @@ void main() {
     test('exactly at the limit but not flagged overdue reads as due now', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Air Filter',
           kmUntilDue: 0,
           overdue: false,
@@ -137,6 +146,7 @@ void main() {
       );
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Air Filter',
           kmUntilDue: -5,
           overdue: false,
@@ -148,6 +158,7 @@ void main() {
     test('blank label falls back rather than rendering a leading space', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: '   ',
           kmUntilDue: 100,
           overdue: false,
@@ -156,6 +167,7 @@ void main() {
       );
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: '  Brake Fluid  ',
           kmUntilDue: 100,
           overdue: false,
@@ -167,11 +179,53 @@ void main() {
     test('NaN distance degrades to "due now" instead of "in NaN km"', () {
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: 'Oil Change',
           kmUntilDue: double.nan,
           overdue: false,
         ),
         'Oil Change due now',
+      );
+    });
+  });
+
+  group('rider language and km/mi (#43)', () {
+    test('miles when the rider chose them', () {
+      expect(formatKm(100, imperial: true), '62.1 mi');
+      expect(formatKm(2000, imperial: true), '1,243 mi');
+      expect(formatKm(0, imperial: true), '0 mi');
+      expect(
+        formatNextServiceSummary(
+          l10n: _en,
+          serviceLabel: 'Oil Change',
+          kmUntilDue: 100,
+          overdue: false,
+          imperial: true,
+        ),
+        'Oil Change in 62.1 mi',
+      );
+    });
+
+    test('Bangla text from the ARBs', () {
+      expect(formatRideCount(3, _bn), _bn.rideCountLabel(3));
+      expect(
+        formatNextServiceSummary(
+          l10n: _bn,
+          serviceLabel: '',
+          kmUntilDue: 0,
+          overdue: false,
+        ),
+        _bn.widgetServiceDueNow(_bn.widgetServiceFallback),
+      );
+      expect(
+        formatNextServiceSummary(
+          l10n: _bn,
+          serviceLabel: 'X',
+          kmUntilDue: 0,
+          overdue: true,
+          daysUntilDue: -2,
+        ),
+        _bn.widgetServiceOverdueBy('X', _bn.widgetDays(2)),
       );
     });
   });
@@ -219,26 +273,31 @@ void main() {
 
     test('follows the rider\'s own intervals, not a separate table', () {
       // A 3,000 km tyre interval used to read 8,000 on the widget.
-      final next = nextServiceDue(forecast(2900, const [], [
-        cfg(ServiceType.tire, 3000),
-        cfg(ServiceType.oilChange, 5000),
-      ]));
+      final next = nextServiceDue(
+          forecast(2900, const [], [
+            cfg(ServiceType.tire, 3000),
+            cfg(ServiceType.oilChange, 5000),
+          ]),
+          _en);
       expect(next!.serviceType, ServiceType.tire);
       expect(next.kmUntilDue, closeTo(100, 1e-9));
       expect(next.overdue, isFalse);
     });
 
     test('overdue reported as negative remaining and worded as overdue', () {
-      final next = nextServiceDue(forecast(
-        2000,
-        [_log(ServiceType.chain, 1900)],
-        [cfg(ServiceType.oilChange, 1500), cfg(ServiceType.chain, 700)],
-      ));
+      final next = nextServiceDue(
+          forecast(
+            2000,
+            [_log(ServiceType.chain, 1900)],
+            [cfg(ServiceType.oilChange, 1500), cfg(ServiceType.chain, 700)],
+          ),
+          _en);
       expect(next!.serviceType, ServiceType.oilChange);
       expect(next.overdue, isTrue);
       expect(next.kmUntilDue, -500);
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: next.label,
           kmUntilDue: next.kmUntilDue!,
           overdue: next.overdue,
@@ -248,37 +307,42 @@ void main() {
     });
 
     test('disabled checks and fuel never headline', () {
-      final next = nextServiceDue(forecast(10000, const [], [
-        cfg(ServiceType.fuel, 300),
-        const MaintenanceConfigEntity(
-            bikeId: 'bike-1',
-            serviceType: ServiceType.valveClearance,
-            intervalKm: 100,
-            isEnabled: false),
-        cfg(ServiceType.airFilter, 20000),
-      ]));
+      final next = nextServiceDue(
+          forecast(10000, const [], [
+            cfg(ServiceType.fuel, 300),
+            const MaintenanceConfigEntity(
+                bikeId: 'bike-1',
+                serviceType: ServiceType.valveClearance,
+                intervalKm: 100,
+                isEnabled: false),
+            cfg(ServiceType.airFilter, 20000),
+          ]),
+          _en);
       expect(next!.serviceType, ServiceType.airFilter);
     });
 
     test('a time-driven item is worded in days', () {
-      final next = nextServiceDue(forecastChecks(
-        configs: [cfg(ServiceType.brakeFluid, 0, 730)],
-        logs: [
-          MaintenanceEntity(
-            id: 'bf',
-            bikeId: 'bike-1',
-            serviceType: ServiceType.brakeFluid,
-            date: DateTime(2024, 10, 16),
-            odometerKm: 0,
-            createdAt: DateTime(2024, 10, 16),
+      final next = nextServiceDue(
+          forecastChecks(
+            configs: [cfg(ServiceType.brakeFluid, 0, 730)],
+            logs: [
+              MaintenanceEntity(
+                id: 'bf',
+                bikeId: 'bike-1',
+                serviceType: ServiceType.brakeFluid,
+                date: DateTime(2024, 10, 16),
+                odometerKm: 0,
+                createdAt: DateTime(2024, 10, 16),
+              ),
+            ],
+            input: ForecastInput(currentOdometerKm: 100, now: now),
           ),
-        ],
-        input: ForecastInput(currentOdometerKm: 100, now: now),
-      ));
+          _en);
       expect(next!.byTime, isTrue);
       expect(next.daysUntilDue, 10);
       expect(
         formatNextServiceSummary(
+          l10n: _en,
           serviceLabel: next.label,
           kmUntilDue: 0,
           overdue: next.overdue,
@@ -289,7 +353,7 @@ void main() {
     });
 
     test('nothing tracked means nothing to say', () {
-      expect(nextServiceDue(const []), isNull);
+      expect(nextServiceDue(const [], _en), isNull);
     });
   });
 

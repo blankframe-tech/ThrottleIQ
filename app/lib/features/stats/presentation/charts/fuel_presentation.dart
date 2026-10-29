@@ -11,7 +11,7 @@ final List<ChartPresentation> fuelPresentations = [
   _monthly(
     FuelCharts.fuelSpend,
     title: (l) => l.chartFuelSpend,
-    unit: kCurrencySymbol,
+    unit: (_) => kCurrencySymbol,
     icon: Icons.payments_outlined,
     color: (p) => p.attention,
     higherIsBetter: false,
@@ -19,7 +19,7 @@ final List<ChartPresentation> fuelPresentations = [
   _stretch(
     FuelCharts.fuelEfficiency,
     title: (l) => l.chartFuelEfficiency,
-    unit: 'km/L',
+    unit: (l) => l.unitKmPerLitre,
     icon: Icons.local_gas_station_outlined,
     color: (p) => p.success,
     higherIsBetter: true,
@@ -28,7 +28,7 @@ final List<ChartPresentation> fuelPresentations = [
   _stretch(
     FuelCharts.fuelCostPerKm,
     title: (l) => l.chartFuelCostPerKm,
-    unit: '$kCurrencySymbol/km',
+    unit: (_) => '$kCurrencySymbol/km',
     icon: Icons.price_change_outlined,
     color: (p) => p.attention,
     higherIsBetter: false,
@@ -37,7 +37,7 @@ final List<ChartPresentation> fuelPresentations = [
   _monthly(
     FuelCharts.fuelLiters,
     title: (l) => l.chartFuelLiters,
-    unit: 'L',
+    unit: (l) => l.unitLitre,
     icon: Icons.water_drop_outlined,
     color: (p) => p.secondary,
     higherIsBetter: null,
@@ -51,7 +51,7 @@ String _fillUps(AppLocalizations l) => l.analyticsColFillUps;
 ChartPresentation _monthly(
   FuelMonthlyChart chart, {
   required String Function(AppLocalizations l) title,
-  required String unit,
+  required String Function(AppLocalizations l) unit,
   required IconData icon,
   required Color Function(AppColorPalette p) color,
   required bool? higherIsBetter,
@@ -59,7 +59,7 @@ ChartPresentation _monthly(
     ChartPresentation(
       chart: chart,
       title: title,
-      unit: (_) => unit,
+      unit: unit,
       icon: icon,
       color: color,
       shape: ChartShape.bars,
@@ -78,7 +78,7 @@ ChartPresentation _monthly(
 ChartPresentation _stretch(
   FuelSegmentChart chart, {
   required String Function(AppLocalizations l) title,
-  required String unit,
+  required String Function(AppLocalizations l) unit,
   required IconData icon,
   required Color Function(AppColorPalette p) color,
   required bool? higherIsBetter,
@@ -87,7 +87,7 @@ ChartPresentation _stretch(
     ChartPresentation(
       chart: chart,
       title: title,
-      unit: (_) => unit,
+      unit: unit,
       icon: icon,
       color: color,
       shape: ChartShape.line,

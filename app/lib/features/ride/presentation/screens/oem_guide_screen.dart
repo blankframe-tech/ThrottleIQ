@@ -24,6 +24,17 @@ enum OemBrand {
     'com.vivo.permissionmanager/.activity.BgStartUpManagerActivity',
     'com.iqoo.secure/.ui.phoneoptimize.BgStartUpManager',
     'com.iqoo.secure/.ui.phoneoptimize.AddWhiteListActivity',
+  ]),
+  // Tecno, Infinix and itel are all Transsion phones sharing Phone Master;
+  // dontkillmyapp.com only has a Tecno page, which covers all three.
+  tecno('Tecno', 'tecno', _phoneMasterAutostart),
+  infinix('Infinix', 'tecno', _phoneMasterAutostart),
+  itel('itel', 'tecno', _phoneMasterAutostart),
+  // Samsung has no autostart switch; its killer is the Sleeping apps list in
+  // Device care's battery screen, so that's what the shortcut opens.
+  samsung('Samsung', 'samsung', [
+    'com.samsung.android.lool/com.samsung.android.sm.battery.ui.BatteryActivity',
+    'com.samsung.android.lool/com.samsung.android.sm.ui.battery.BatteryActivity',
   ]);
 
   const OemBrand(this.label, this.slug, this.autostart);
@@ -42,16 +53,28 @@ const _colorOsAutostart = [
   'com.oppo.safe/.permission.startup.StartupAppListActivity',
 ];
 
+const _phoneMasterAutostart = [
+  'com.transsion.phonemaster/com.cyin.himgr.autostart.AutoStartActivity',
+];
+
 /// The brand for Android's `Build.MANUFACTURER`, or null for any other maker.
-/// Redmi and POCO are Xiaomi; iQOO is vivo.
-OemBrand? oemBrandFor(String? manufacturer) =>
-    switch (manufacturer?.trim().toLowerCase()) {
-      'xiaomi' || 'redmi' || 'poco' => OemBrand.xiaomi,
-      'oppo' => OemBrand.oppo,
-      'realme' => OemBrand.realme,
-      'vivo' || 'iqoo' => OemBrand.vivo,
-      _ => null,
-    };
+/// Redmi and POCO are Xiaomi; iQOO is vivo. Transsion phones report either
+/// the bare brand or the company name ("INFINIX MOBILITY LIMITED"), so those
+/// match on the first word.
+OemBrand? oemBrandFor(String? manufacturer) {
+  final m = manufacturer?.trim().toLowerCase() ?? '';
+  return switch (m.split(' ').first) {
+    'xiaomi' || 'redmi' || 'poco' => OemBrand.xiaomi,
+    'oppo' => OemBrand.oppo,
+    'realme' => OemBrand.realme,
+    'vivo' || 'iqoo' => OemBrand.vivo,
+    'tecno' => OemBrand.tecno,
+    'infinix' => OemBrand.infinix,
+    'itel' => OemBrand.itel,
+    'samsung' => OemBrand.samsung,
+    _ => null,
+  };
+}
 
 const _channel = MethodChannel('throttleiq/oem');
 
@@ -70,7 +93,7 @@ Future<OemBrand?> currentOemBrand() async {
 const kOemGuideOfferedPref = 'oem_guide_offered';
 
 /// Offers the guide once, after the rider's first finished ride, on a phone
-/// from one of the four brands.
+/// from one of the [OemBrand] makers.
 Future<void> maybeOfferOemGuide(
   BuildContext context, {
   required bool hasFinishedRide,
@@ -160,11 +183,18 @@ class OemGuideScreen extends StatelessWidget {
               style: TextStyle(
                   fontSize: 15, color: context.palette.textSecondary)),
           const SizedBox(height: AppDimensions.paddingLg),
-          step(1, l10n.oemGuideStepAutostart,
-              action: TextButton(
-                onPressed: _openAutostart,
-                child: Text(l10n.oemGuideOpenAutostart),
-              )),
+          if (brand == OemBrand.samsung)
+            step(1, l10n.oemGuideStepSleepingApps,
+                action: TextButton(
+                  onPressed: _openAutostart,
+                  child: Text(l10n.oemGuideOpenBatterySettings),
+                ))
+          else
+            step(1, l10n.oemGuideStepAutostart,
+                action: TextButton(
+                  onPressed: _openAutostart,
+                  child: Text(l10n.oemGuideOpenAutostart),
+                )),
           step(2, l10n.oemGuideStepBattery,
               action: TextButton(
                 onPressed: Geolocator.openAppSettings,

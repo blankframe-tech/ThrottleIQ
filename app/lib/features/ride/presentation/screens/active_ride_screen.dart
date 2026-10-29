@@ -30,6 +30,7 @@ import '../../../routes/presentation/widgets/navigation_banner.dart';
 import '../../../social/presentation/providers/group_ride_providers.dart';
 import '../providers/parking_pin_provider.dart';
 import '../widgets/ride_actions_menu.dart';
+import '../../../profile/presentation/providers/speed_alert_provider.dart';
 
 /// Hosted live-share viewer (Firebase Hosting rewrites /live/** to the viewer).
 const _liveShareBaseUrl = 'https://throttleiqfb.web.app/live';
@@ -487,17 +488,19 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
             ),
 
-          // ── Alert overlay flash ───────────────────────────────────────────
-          AnimatedBuilder(
-            animation: _alertColor,
-            builder: (_, __) => IgnorePointer(
-              child: Container(
-                color: _alertColor.value,
-                width: double.infinity,
-                height: double.infinity,
+          // ── Alert overlay flash (Settings can turn it off) ────────────────
+          if (ref.watch(alertFlashProvider))
+            AnimatedBuilder(
+              key: const Key('alertFlashOverlay'),
+              animation: _alertColor,
+              builder: (_, __) => IgnorePointer(
+                child: Container(
+                  color: _alertColor.value,
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
               ),
             ),
-          ),
 
           // ── Top banner stack ──────────────────────────────────────────────
           //
