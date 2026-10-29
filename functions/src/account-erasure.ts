@@ -29,6 +29,9 @@ const ANONYMIZE_BATCH = 400;
 /** Two writes per forum follow (delete + followerCount decrement). */
 const FORUM_FOLLOW_BATCH = 200;
 
+/** A live-share token, as the app generates it. */
+const LIVE_TOKEN = /^[A-Za-z0-9]{32}$/;
+
 /** Where the per-deletion completion marker is written (issues §101.S4). */
 export const ACCOUNT_DELETIONS = "accountDeletions";
 
@@ -107,11 +110,15 @@ export async function deleteUserData(
       db.collection("livePointers").doc(uid).get(),
       db.collection("handleLinks").where("uid", "==", uid).get(),
     ]);
-    for (const doc of sessions.docs) tokens.add(doc.id);
-    for (const doc of [pointer, ...links.docs]) {
-      const pointed = doc.get("token");
-      if (typeof pointed === "string" && pointed.length > 0) tokens.add(pointed);
-    }
+    // Only well-formed tokens (createLiveSessionToken: 32 [A-Za-z0-9], the
+    // same check as firestore.rules). The pointers' `token` is client-written,
+    // and `live_shares/${token}` with a token of "/" or "x/y" names other
+    // riders' data.
+    const add = (t: unknown) => {
+      if (typeof t === "string" && LIVE_TOKEN.test(t)) tokens.add(t);
+    };
+    for (const doc of sessions.docs) add(doc.id);
+    for (const doc of [pointer, ...links.docs]) add(doc.get("token"));
     for (const doc of links.docs) handleLinks.push(doc.ref);
   });
 
@@ -208,7 +215,9 @@ export async function deleteUserData(
     const creator = data.creatorId === uid;
     await step(creator ? `groupRides/${rideId} (creator)` : `groupRides/${rideId}`, () =>
       db.runTransaction(async (txn) => {
-        const snap = await txn.get(rideRef);
+        // issues §104.2: every rider's live position, one key per uid.
+        const positionsRef = rideRef.collection("positions").doc("all");
+        const [snap, positions] = await txn.getAll(rideRef, positionsRef);
         if (!snap.exists) return;
         // A ride created before the roster moved to its own subcollection
         // carries an inline `members` array with the rider's name and photo.
@@ -239,6 +248,10 @@ export async function deleteUserData(
         txn.delete(rideRef.collection("members").doc(uid));
         txn.delete(rideRef.collection("memberLocations").doc(uid));
         txn.delete(rideRef.collection("invitations").doc(uid));
+        // update, not set-merge: a ride with no positions doc must not get one.
+        if (positions.get(new FieldPath(uid)) !== undefined) {
+          txn.update(positionsRef, new FieldPath(uid), FieldValue.delete());
+        }
       })
     );
   }
@@ -395,6 +408,17 @@ export async function deleteUserData(
       { senderId: DELETED_PARTICIPANT, senderName: DELETED_RIDER, senderPhotoUrl: "", audioUrl: "" },
     ],
     [
+      // A rider-made forum's moderators (canModerateForum in firestore.rules).
+      "forums created",
+      db.collection("forums").where("createdBy", "==", uid),
+      { createdBy: "" },
+    ],
+    [
+      "forums maintained",
+      db.collection("forums").where("maintainerIds", "array-contains", uid),
+      { maintainerIds: FieldValue.arrayRemove(uid) },
+    ],
+    [
       "places contributed",
       db.collection("places").where("createdBy", "==", uid),
       { createdBy: "" },
@@ -456,13 +480,22 @@ export async function deleteUserData(
     }
   });
 
-  // Cloudinary media. MUST run before the profile is recursively deleted —
-  // the ledger it reads lives at users/{uid}/cloudinaryAssets.
+  // The profile and everything under it except the media ledger go BEFORE
+  // the Cloudinary sweep: the sweep is one HTTP call per asset, the slowest
+  // step, and a timeout in it must not leave the rider's PII behind. The
+  // ledger (users/{uid}/cloudinaryAssets) stays until the sweep is done, so
+  // a retry can still find the media.
+  const profile = db.collection("users").doc(uid);
+  await step("delete profile", async () => {
+    for (const sub of await profile.listCollections()) {
+      if (sub.id !== "cloudinaryAssets") await db.recursiveDelete(sub);
+    }
+    await profile.delete();
+  });
+
   failedSteps.push(...(await destroyCloudinaryAssets(uid, db, opts.cloudinary)));
 
-  await step("delete profile", () =>
-    db.recursiveDelete(db.collection("users").doc(uid))
-  );
+  await step("delete media ledger", () => db.recursiveDelete(profile));
 
   const ok = failedSteps.length === 0;
   if (!ok) {
@@ -705,7 +738,8 @@ async function cloudinaryDestroy(opts: {
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${opts.cloud}/${opts.resourceType}/destroy`,
-    { method: "POST", body }
+    // Bounded, so one hung call can't use up the function's whole timeout.
+    { method: "POST", body, signal: AbortSignal.timeout(15000) }
   );
   if (!res.ok) {
     throw new Error(`Cloudinary destroy returned ${res.status}`);

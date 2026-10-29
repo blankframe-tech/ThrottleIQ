@@ -125,3 +125,33 @@ test('shouldClaimEscalation takes contacted, retakes only a stale escalating', (
     assert.equal(shouldClaimEscalation(status, STALE, NOW), false, status);
   }
 });
+
+// Security sweep 2026-10-30 C1: the 60 s default could stop the erasure
+// half-way with no marker and no second attempt.
+test('onUserAccountDeleted runs up to 540 s and is retried on failure', () => {
+  // The v1 auth trigger reads the project id while building its metadata.
+  process.env.GCLOUD_PROJECT ??= 'demo-throttleiq';
+  const { onUserAccountDeleted } = require('../lib/account-deletion');
+  assert.equal(onUserAccountDeleted.__endpoint.timeoutSeconds, 540);
+  assert.equal(onUserAccountDeleted.__endpoint.eventTrigger.retry, true);
+});
+
+// Security sweep 2026-10-30 C5: per-rider crash-alert rate limit.
+const { admitAlert, ALERT_LIMIT, ALERT_WINDOW_MS } = require('../lib/crash-claim');
+
+test('admitAlert admits up to the limit inside the window, then refuses', () => {
+  let sent = undefined;
+  for (let i = 0; i < ALERT_LIMIT; i++) {
+    sent = admitAlert(sent, NOW + i);
+    assert.ok(Array.isArray(sent), `alert ${i + 1} admitted`);
+  }
+  assert.equal(sent.length, ALERT_LIMIT);
+  assert.equal(admitAlert(sent, NOW + ALERT_LIMIT), null);
+});
+
+test('admitAlert forgets sends older than the window and ignores junk', () => {
+  const old = Array(ALERT_LIMIT).fill(NOW - ALERT_WINDOW_MS);
+  assert.deepEqual(admitAlert(old, NOW), [NOW]);
+  assert.deepEqual(admitAlert(['x', null, {}], NOW), [NOW]);
+  assert.deepEqual(admitAlert('not a list', NOW), [NOW]);
+});

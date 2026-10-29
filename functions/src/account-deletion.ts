@@ -88,7 +88,15 @@ const CLOUDINARY_CLOUD_NAME = "vjvcigkt";
  * be).
  */
 export const onUserAccountDeleted = functionsV1
-  .runWith({ secrets: [CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET] })
+  .runWith({
+    secrets: [CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET],
+    // The default 60 s could stop a large erasure half-way with no marker.
+    timeoutSeconds: 540,
+    // A timeout or crash is retried; every step is idempotent. A step that
+    // fails on its own is recorded in the marker and does not throw, so it
+    // is not retried (a missing secret or index would retry for days).
+    failurePolicy: true,
+  })
   .auth.user()
   .onDelete(async (user) => {
     await deleteUserData(getFirestore(), user.uid, {
