@@ -456,13 +456,22 @@ export async function deleteUserData(
     }
   });
 
-  // Cloudinary media. MUST run before the profile is recursively deleted —
-  // the ledger it reads lives at users/{uid}/cloudinaryAssets.
+  // The profile and everything under it except the media ledger go BEFORE
+  // the Cloudinary sweep: the sweep is one HTTP call per asset, the slowest
+  // step, and a timeout in it must not leave the rider's PII behind. The
+  // ledger (users/{uid}/cloudinaryAssets) stays until the sweep is done, so
+  // a retry can still find the media.
+  const profile = db.collection("users").doc(uid);
+  await step("delete profile", async () => {
+    for (const sub of await profile.listCollections()) {
+      if (sub.id !== "cloudinaryAssets") await db.recursiveDelete(sub);
+    }
+    await profile.delete();
+  });
+
   failedSteps.push(...(await destroyCloudinaryAssets(uid, db, opts.cloudinary)));
 
-  await step("delete profile", () =>
-    db.recursiveDelete(db.collection("users").doc(uid))
-  );
+  await step("delete media ledger", () => db.recursiveDelete(profile));
 
   const ok = failedSteps.length === 0;
   if (!ok) {
@@ -705,7 +714,8 @@ async function cloudinaryDestroy(opts: {
 
   const res = await fetch(
     `https://api.cloudinary.com/v1_1/${opts.cloud}/${opts.resourceType}/destroy`,
-    { method: "POST", body }
+    // Bounded, so one hung call can't use up the function's whole timeout.
+    { method: "POST", body, signal: AbortSignal.timeout(15000) }
   );
   if (!res.ok) {
     throw new Error(`Cloudinary destroy returned ${res.status}`);

@@ -391,6 +391,39 @@ test('with credentials, owned media is destroyed by a signed call; foreign rows 
   assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false, 'ledger deleted with the profile');
 });
 
+// Security sweep 2026-10-30 C1: the Cloudinary sweep is the slowest step (one
+// HTTP call per asset). A timeout in it must not leave the profile behind,
+// and the ledger must outlive it so a retry can still find the media.
+test('the profile goes before the Cloudinary sweep; the ledger after it', async () => {
+  await clearEmulators();
+  await db.doc(`users/${UID}`).set({ username: 'GoneRider' });
+  await db.doc(`users/${UID}/emergencyContacts/c1`).set({ name: 'Mum', phone: '+8801700000000' });
+  await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
+
+  const seen = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).startsWith('https://api.cloudinary.com/')) return realFetch(url, init);
+    seen.push({
+      profile: await exists(`users/${UID}`),
+      contact: await exists(`users/${UID}/emergencyContacts/c1`),
+      ledger: await exists(`users/${UID}/cloudinaryAssets/a1`),
+    });
+    return { ok: true, json: async () => ({ result: 'ok' }) };
+  };
+  try {
+    const result = await deleteUserData(db, UID, {
+      rtdb: null,
+      cloudinary: { cloud: 'demo-cloud', apiKey: 'k', apiSecret: 's' },
+    });
+    assert.deepEqual(result.failedSteps, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.deepEqual(seen, [{ profile: false, contact: false, ledger: true }]);
+  assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false);
+});
+
 test('empty credentials (an unset secret) skip the sweep without throwing', async () => {
   await clearEmulators();
   await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });

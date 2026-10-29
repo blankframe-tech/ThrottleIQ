@@ -125,3 +125,13 @@ test('shouldClaimEscalation takes contacted, retakes only a stale escalating', (
     assert.equal(shouldClaimEscalation(status, STALE, NOW), false, status);
   }
 });
+
+// Security sweep 2026-10-30 C1: the 60 s default could stop the erasure
+// half-way with no marker and no second attempt.
+test('onUserAccountDeleted runs up to 540 s and is retried on failure', () => {
+  // The v1 auth trigger reads the project id while building its metadata.
+  process.env.GCLOUD_PROJECT ??= 'demo-throttleiq';
+  const { onUserAccountDeleted } = require('../lib/account-deletion');
+  assert.equal(onUserAccountDeleted.__endpoint.timeoutSeconds, 540);
+  assert.equal(onUserAccountDeleted.__endpoint.eventTrigger.retry, true);
+});
