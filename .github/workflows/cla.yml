@@ -31,5 +31,5 @@ jobs:
           path-to-signatures: signatures/cla.json
           path-to-document: https://github.com/blankframe-tech/ThrottleIQ/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: the-abraar,blankframe-tech,dependabot[bot],bot*
+          allowlist: the-abraar,blankframe-tech,dependabot[bot],github-actions[bot]
           lock-pullrequest-aftermerge: false
