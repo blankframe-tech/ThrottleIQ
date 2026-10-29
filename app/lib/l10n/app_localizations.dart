@@ -6348,6 +6348,36 @@ abstract class AppLocalizations {
   /// **'Unknown bike'**
   String get analyticsUnknownBike;
 
+  /// Title of the screen and Rides-tab button for the shareable year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Year in review'**
+  String get yearInReviewTitle;
+
+  /// Heading on the shareable year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'My {year} on two wheels'**
+  String yearInReviewHeading(String year);
+
+  /// Stat label on the year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Longest ride'**
+  String get yearInReviewLongestRide;
+
+  /// Stat label on the year-in-review card: the bike ridden most that year.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite bike'**
+  String get yearInReviewFavouriteBike;
+
+  /// Snackbar when the year-in-review image can't be made or shared.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t create the image. Try again.'**
+  String get yearInReviewShareFailed;
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

@@ -3566,6 +3566,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get analyticsUnknownBike => 'Unknown bike';
 
   @override
+  String get yearInReviewTitle => 'Year in review';
+
+  @override
+  String yearInReviewHeading(String year) {
+    return 'My $year on two wheels';
+  }
+
+  @override
+  String get yearInReviewLongestRide => 'Longest ride';
+
+  @override
+  String get yearInReviewFavouriteBike => 'Favourite bike';
+
+  @override
+  String get yearInReviewShareFailed =>
+      'Couldn\'t create the image. Try again.';
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

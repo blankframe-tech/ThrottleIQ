@@ -4941,6 +4941,32 @@
   "@analyticsUnknownBike": {
     "description": "Label for rides whose bike no longer exists."
   },
+  "yearInReviewTitle": "Year in review",
+  "@yearInReviewTitle": {
+    "description": "Title of the screen and Rides-tab button for the shareable year-in-review card."
+  },
+  "yearInReviewHeading": "My {year} on two wheels",
+  "@yearInReviewHeading": {
+    "description": "Heading on the shareable year-in-review card.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "yearInReviewLongestRide": "Longest ride",
+  "@yearInReviewLongestRide": {
+    "description": "Stat label on the year-in-review card."
+  },
+  "yearInReviewFavouriteBike": "Favourite bike",
+  "@yearInReviewFavouriteBike": {
+    "description": "Stat label on the year-in-review card: the bike ridden most that year."
+  },
+  "yearInReviewShareFailed": "Couldn't create the image. Try again.",
+  "@yearInReviewShareFailed": {
+    "description": "Snackbar when the year-in-review image can't be made or shared."
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."
