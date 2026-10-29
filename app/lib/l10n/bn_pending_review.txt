@@ -486,7 +486,6 @@ submitReview
 reviews
 noReviewsYetBe
 officialPoint
-n0NotGoogle
 n00Reviews
 couldntOpenMapsApp
 couldntOpenDialler

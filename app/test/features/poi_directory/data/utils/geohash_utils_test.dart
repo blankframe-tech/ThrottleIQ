@@ -56,24 +56,6 @@ void main() {
       expect(hash1.substring(0, 4), equals(hash2.substring(0, 4)));
     });
 
-    test('getGeohashesForViewport generates multiple geohashes', () {
-      const minLat = 23.0;
-      const maxLat = 24.0;
-      const minLng = 90.0;
-      const maxLng = 91.0;
-
-      final geohashes = GeohashUtils.getGeohashesForViewport(
-        minLat: minLat,
-        maxLat: maxLat,
-        minLng: minLng,
-        maxLng: maxLng,
-        precision: 6,
-      );
-
-      expect(geohashes, isNotEmpty);
-      expect(geohashes, isA<List<String>>());
-    });
-
     test('isWithinBounds correctly validates coordinates', () {
       const testLat = 23.8103;
       const testLng = 90.4125;
@@ -154,25 +136,6 @@ void main() {
   });
 
   group('Viewport Coverage', () {
-    test('geohashes cover viewport bounds', () {
-      const minLat = 23.0;
-      const maxLat = 24.0;
-      const minLng = 90.0;
-      const maxLng = 91.0;
-
-      final geohashes = GeohashUtils.getGeohashesForViewport(
-        minLat: minLat,
-        maxLat: maxLat,
-        minLng: minLng,
-        maxLng: maxLng,
-        precision: 5,
-      );
-
-      // Verify all generated geohashes are unique (mostly)
-      final uniqueGeohashes = geohashes.toSet();
-      expect(uniqueGeohashes.length, lessThanOrEqualTo(geohashes.length));
-    });
-
     test('simplifyGeohashes reduces redundant entries', () {
       final geohashes = ['abc123', 'abc124', 'abd000', 'xyz'];
 

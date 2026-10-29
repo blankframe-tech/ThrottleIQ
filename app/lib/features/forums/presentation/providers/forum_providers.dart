@@ -5,6 +5,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/utils/slugify.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
@@ -102,7 +103,8 @@ List<ForumEntity> decodeCachedGarageForums(String? raw) {
             createdAt: DateTime.fromMillisecondsSinceEpoch(0),
           ),
     ];
-  } catch (_) {
+  } catch (e, st) {
+    reportSilently(e, st, where: 'forum.decodeCachedForums');
     return const [];
   }
 }
@@ -270,7 +272,8 @@ class ForumPostsNotifier extends StateNotifier<List<ForumPostEntity>> {
       _hasMore = page.hasMore;
       _loadingMore = false;
       state = [...state, ...page.posts.where((p) => !seen.contains(p.id))];
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'forum.loadMorePosts');
       if (!mounted) rethrow;
       _loadingMore = false;
       state = List.of(state);

@@ -84,7 +84,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
       final currentZoom = _controller.camera.zoom;
       _controller.move(
           _controller.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _zoomOut() {
@@ -92,7 +92,7 @@ class _FullScreenRouteMapScreenState extends State<FullScreenRouteMapScreen> {
       final currentZoom = _controller.camera.zoom;
       _controller.move(
           _controller.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _onMapTap(TapPosition tapPosition, LatLng point) {

@@ -436,7 +436,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           }
           await prefs.setBool(_prefsBatteryOptPrompted, true);
         }
-      } catch (_) {}
+      } catch (e, st) {
+        reportSilently(e, st, where: 'ride.batteryOptPrompt');
+      }
     }
     return true;
   }
@@ -604,7 +606,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       await _endHosting();
       try {
         await WakelockPlus.disable();
-      } catch (_) {}
+      } catch (e, st) {
+        reportSilently(e, st, where: 'ride.wakelockDisable');
+      }
       try {
         await _persistenceCoordinator.clearRecordingState();
         if (inserted != null) await _rideDao.delete(inserted.id);

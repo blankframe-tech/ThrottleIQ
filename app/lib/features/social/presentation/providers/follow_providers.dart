@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../profile/domain/entities/user_profile_entity.dart';
 import '../../../profile/presentation/providers/profile_providers.dart';
@@ -99,7 +100,8 @@ final suggestedProfilesProvider =
   Set<String> blocked;
   try {
     blocked = await ref.read(blockedUsersProvider.future);
-  } catch (_) {
+  } catch (e, st) {
+    reportSilently(e, st, where: 'social.suggestions.blocked');
     blocked = const <String>{};
   }
 
@@ -127,7 +129,8 @@ final suggestedProfilesProvider =
     try {
       recent =
           await profileRepo.getRecentUsers(limit: kSuggestionRecentUsersLimit);
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'social.suggestions.recentUsers');
       // The follow-back half is still worth showing on its own.
     }
   }

@@ -2805,9 +2805,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get officialPoint => 'Official point';
 
   @override
-  String get n0NotGoogle => '★ 0 (Not on Google)';
-
-  @override
   String get n00Reviews => '★ 0 (0 reviews)';
 
   @override

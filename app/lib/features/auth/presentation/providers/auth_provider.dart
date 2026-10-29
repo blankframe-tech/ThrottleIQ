@@ -289,7 +289,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       }
       try {
         await GoogleSignIn().signOut();
-      } catch (_) {}
+      } catch (_) {/* not signed in via Google, or already signed out */}
     });
     state = result;
 

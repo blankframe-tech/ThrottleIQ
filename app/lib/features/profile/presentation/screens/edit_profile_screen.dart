@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -345,7 +346,8 @@ class _BioPromptSheetState extends ConsumerState<_BioPromptSheet> {
         await ProfileRepository().updateProfile(uid: uid, bio: bio);
       }
       if (mounted) Navigator.of(context).pop();
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'profile.saveBio');
       if (mounted) setState(() => _saving = false);
     }
   }

@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -127,7 +128,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
         subject: l10n.safeQrTitle,
         sharePositionOrigin: origin,
       );
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'safeQr.shareImage');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.safeQrShareImageFailed)),
@@ -160,7 +162,8 @@ class _SafeQrScreenState extends ConsumerState<SafeQrScreen> {
         name: 'throttleiq_safeqr',
         onLayout: (_) async => bytes,
       );
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'safeQr.print');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(l10n.safeQrPrintFailed)),

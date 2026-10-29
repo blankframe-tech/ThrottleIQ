@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
@@ -78,7 +79,7 @@ class _SharedRideDetailScreenState
       final currentZoom = _mapController.camera.zoom;
       _mapController.move(
           _mapController.camera.center, (currentZoom + 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _zoomOut() {
@@ -86,7 +87,7 @@ class _SharedRideDetailScreenState
       final currentZoom = _mapController.camera.zoom;
       _mapController.move(
           _mapController.camera.center, (currentZoom - 1).clamp(1.0, 18.0));
-    } catch (_) {}
+    } catch (_) {/* controller not attached to a map yet */}
   }
 
   void _openFullScreenMap(List<LatLng> polyline, SharedRideEntity ride) {
@@ -130,7 +131,8 @@ class _SharedRideDetailScreenState
         _comments = comments;
         _loadingComments = false;
       });
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'social.rideDetail.loadComments');
       if (!mounted) return;
       setState(() => _loadingComments = false);
     }

@@ -132,7 +132,8 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
       try {
         final file = await DefaultCacheManager().getSingleFile(path);
         localSource = file.path;
-      } catch (_) {
+      } catch (e, st) {
+        reportSilently(e, st, where: 'garage.cacheRemoteImage');
         return;
       }
     } else {

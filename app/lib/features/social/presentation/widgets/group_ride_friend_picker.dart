@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -84,7 +85,8 @@ class _GroupRideFriendPickerSheetState
       results = looksLikeEmail
           ? await repo.searchByEmail(q)
           : await repo.searchByUsername(q);
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'groupRide.friendSearch');
       results = const [];
     }
     if (!mounted || seq != _searchSeq) return;

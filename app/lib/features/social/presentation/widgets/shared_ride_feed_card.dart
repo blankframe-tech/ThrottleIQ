@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
@@ -74,7 +75,8 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
         _comments = comments;
         _loadingComments = false;
       });
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'social.feedCard.loadComments');
       if (!mounted) return;
       setState(() => _loadingComments = false);
     }

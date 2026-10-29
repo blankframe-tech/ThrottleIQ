@@ -2814,9 +2814,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String get officialPoint => 'অফিসিয়াল পয়েন্ট';
 
   @override
-  String get n0NotGoogle => '★ 0 (Google-এ নেই)';
-
-  @override
   String get n00Reviews => '★ 0 (0টি রিভিউ)';
 
   @override

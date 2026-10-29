@@ -13,6 +13,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
+import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/services/cloudinary_upload_service.dart';
@@ -198,7 +199,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     if (ride.creatorId != uid || ride.status != GroupRideStatus.active) return;
     try {
       await ref.read(groupRideRepositoryProvider).heartbeat(widget.groupRideId);
-    } catch (_) {/* next beat is minutes away; cutoff is hours */}
+    } catch (e, st) {
+      // Next beat is minutes away; cutoff is hours.
+      reportSilently(e, st, where: 'groupRide.heartbeat');
+    }
   }
 
   /// Back to the ride cockpit (speed, distance, End). Pops when the map was
@@ -290,7 +294,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       _lastSentPosition = position;
       _lastSentAt = now;
     } catch (_) {
-      // A single dropped publish is not worth a visible error — the next tick
+      // Not reported: in a dead zone this fails every tick. A single dropped publish is not worth a visible error — the next tick
       // retries (the gate stays open since nothing was recorded as sent), and
       // the staleness badge already tells the group this rider has gone
       // quiet.
@@ -412,7 +416,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
                 s == ProcessingState.completed || s == ProcessingState.idle)
             .timeout(const Duration(seconds: 70));
       }
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'groupRide.playVoiceNote');
       // A clip that fails to load/play is skipped rather than stalling the
       // rest of the queue — one bad URL must not silence the whole group.
     } finally {
@@ -423,7 +428,9 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       // play() waits for it to finish.
       try {
         await _voicePlayer.stop();
-      } catch (_) {}
+      } catch (e, st) {
+        reportSilently(e, st, where: 'groupRide.voicePlayerStop');
+      }
       await _deactivateVoiceAudioSession();
       if (mounted) {
         setState(() {
@@ -443,7 +450,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
         avAudioSessionSetActiveOptions:
             AVAudioSessionSetActiveOptions.notifyOthersOnDeactivation,
       );
-    } catch (_) {/* best-effort */}
+    } catch (e, st) {
+      // Best-effort.
+      reportSilently(e, st, where: 'groupRide.deactivateAudioSession');
+    }
   }
 
   void _toggleVoiceNotesMuted() {
@@ -520,7 +530,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     String? path;
     try {
       path = await _voiceRecorder.stop();
-    } catch (_) {
+    } catch (e, st) {
+      reportSilently(e, st, where: 'groupRide.stopVoiceRecorder');
       path = _recordingPath;
     }
     await _deactivateVoiceAudioSession();

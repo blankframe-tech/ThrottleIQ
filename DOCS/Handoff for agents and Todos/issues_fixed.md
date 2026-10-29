@@ -23,6 +23,15 @@ New `app/lib/core/cloud/firebase_providers.dart`: `firestoreProvider`, `firebase
 - **#47:** the pulse feed, places list and all-rides list were already builders; the Hubs view's rider-club list (up to 50) was the last eager `Column`, now a `SliverList.builder` in a `CustomScrollView`.
 - **#61:** the bottom-nav shell is `StatefulShellRoute.indexedStack` (go_router 13 already has it, no upgrade), one branch per tab including `/home/maintenance`; `AppShell` and its `context.go` tab taps are unchanged. Since `RecordScreen` now stays alive offstage, its ride redirect runs only while the screen is visible (`TickerMode`) and re-checks each time it is shown, so a ride started from Places or a group ride does not pull the rider to the cockpit from another tab. *Test:* `app_router_test.dart` checks one branch per tab. Not checked on a device.
 
+## 121. Lane D cleanup: bare catches, dead code, locale prefs, bug-report version — FIXED (2026-10-29)
+
+- **§83.14 / #22:** 25 bare `catch (_)` in `app/lib` now call `reportSilently(e, st, where:)`; the other 29 are expected and say why in a comment. `_bareCatchBaseline` 54 → 30 (the group-ride location publish went back to a bare catch: it fails every tick in a dead zone and would flood Crashlytics). Behaviour unchanged.
+- **§110.1 / #29:** deleted the unused `n0NotGoogle` key (both ARBs, `bn_pending_review.txt`), regenerated.
+- **§110.2:** the PRD already marked AUT-7 built and kept only the day-totals question in open item 3; nothing left to change.
+- **#39 / 101.P7:** `LocaleNotifier` and `readSavedLocale` survive a failing `SharedPreferences`: a failed read keeps the default, a failed write keeps the in-memory choice; both `reportSilently`. Test in `locale_provider_test.dart`.
+- **#30 / 101.C9:** bug reports carry the real `version` and `build` from `PackageInfo` instead of `'1.0.0'`. Test in `bug_report_service_test.dart`.
+- **#31 / 90.B8 / 101.P6:** deleted the unused `RideRepository` trio and its test, `motorcycle_quotes.dart`, `user_entity.dart` (and the empty `auth/domain/`), the placeholder `test/widget_test.dart`, and `GeohashUtils.getGeohashesForViewport` with its tests. `datetime_extensions.dart` stays: `forums_pulse_view.dart` uses it.
+
 ---
 
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
