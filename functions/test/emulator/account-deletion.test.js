@@ -19,8 +19,9 @@ const { deleteUserData, DELETED_RIDER, DELETED_PARTICIPANT } = require('../../li
 
 const UID = 'deletedRiderUid000000000001';
 const OTHER = 'otherRiderUid0000000000002';
-const TOKEN = 'a'.repeat(40);
-const OTHER_TOKEN = 'b'.repeat(40);
+// Live-share tokens are 32 [A-Za-z0-9] (createLiveSessionToken).
+const TOKEN = 'a'.repeat(32);
+const OTHER_TOKEN = 'b'.repeat(32);
 const CHAT_ID = [UID, OTHER].sort().join('_');
 const EMAIL_HASH = 'c'.repeat(64);
 
@@ -577,4 +578,18 @@ test('forums lose the rider as creator and maintainer', async () => {
     assert.equal(theirs.createdBy, OTHER);
     assert.deepEqual(theirs.maintainerIds, [OTHER]);
   });
+});
+
+// Security sweep 2026-10-30 C4: the pointer docs' `token` is client-written,
+// and `live_shares/${token}` with a token of '/' named the whole channel.
+test("a malformed pointer token can't wipe other riders' live shares", async () => {
+  await clearEmulators();
+  await db.doc(`livePointers/${UID}`).set({ uid: UID, token: '/' });
+  await db.doc(`handleLinks/${'e'.repeat(64)}`).set({ uid: UID, token: `${OTHER_TOKEN}/location` });
+  await rtdb.ref(`live_shares/${OTHER_TOKEN}`).set({ uid: OTHER, location: { lat: 1, lng: 1, ts: 1, seq: 1 } });
+
+  const result = await deleteUserData(db, UID, { rtdb });
+  assert.deepEqual(result.failedSteps, []);
+  assert.notEqual(await rtdbVal(`live_shares/${OTHER_TOKEN}/location`), null);
+  assert.equal(await exists(`livePointers/${UID}`), false);
 });

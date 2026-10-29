@@ -29,6 +29,9 @@ const ANONYMIZE_BATCH = 400;
 /** Two writes per forum follow (delete + followerCount decrement). */
 const FORUM_FOLLOW_BATCH = 200;
 
+/** A live-share token, as the app generates it. */
+const LIVE_TOKEN = /^[A-Za-z0-9]{32}$/;
+
 /** Where the per-deletion completion marker is written (issues §101.S4). */
 export const ACCOUNT_DELETIONS = "accountDeletions";
 
@@ -107,11 +110,15 @@ export async function deleteUserData(
       db.collection("livePointers").doc(uid).get(),
       db.collection("handleLinks").where("uid", "==", uid).get(),
     ]);
-    for (const doc of sessions.docs) tokens.add(doc.id);
-    for (const doc of [pointer, ...links.docs]) {
-      const pointed = doc.get("token");
-      if (typeof pointed === "string" && pointed.length > 0) tokens.add(pointed);
-    }
+    // Only well-formed tokens (createLiveSessionToken: 32 [A-Za-z0-9], the
+    // same check as firestore.rules). The pointers' `token` is client-written,
+    // and `live_shares/${token}` with a token of "/" or "x/y" names other
+    // riders' data.
+    const add = (t: unknown) => {
+      if (typeof t === "string" && LIVE_TOKEN.test(t)) tokens.add(t);
+    };
+    for (const doc of sessions.docs) add(doc.id);
+    for (const doc of [pointer, ...links.docs]) add(doc.get("token"));
     for (const doc of links.docs) handleLinks.push(doc.ref);
   });
 
