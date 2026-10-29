@@ -37,9 +37,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      # Known vulnerabilities in the app's and the functions' locked deps.
+      # Known vulnerabilities in the app's, the functions' and the scripts' locked deps.
       - uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
         with:
           scan-args: |-
             -L=app/pubspec.lock
             -L=functions/package-lock.json
+            -L=scripts/package-lock.json
