@@ -2134,7 +2134,26 @@ service cloud.firestore {
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
           request.auth.uid in ride().get('invitedIds', []));
-        allow write: if request.auth != null && (
+        // Security sweep B7: a row is GroupRideMemberModel.toDocument's keys
+        // (unchanged since 2026-07), for this uid, with a capped name, an
+        // allow-listed avatar (every member's device shows it) and typed
+        // coordinates.
+        function rosterRowValid(before, after) {
+          return after.keys().hasOnly(['userId', 'userName', 'userPhotoUrl',
+              'joinedAt', 'status', 'currentLat', 'currentLng',
+              'lastLocationUpdate']) &&
+            after.get('userId', memberUid) == memberUid &&
+            after.get('status', 'pending') in ['joined', 'pending', 'declined'] &&
+            (keeps(before, after, 'userName') || optionalNameValid(after.get('userName', null))) &&
+            (keeps(before, after, 'userPhotoUrl') || photoUrlAllowed(after.get('userPhotoUrl', null))) &&
+            (after.get('currentLat', null) == null || after.currentLat is number) &&
+            (after.get('currentLng', null) == null || after.currentLng is number);
+        }
+        allow create, update: if rowWriter() &&
+          rosterRowValid(resource == null ? {} : resource.data, request.resource.data);
+        allow delete: if rowWriter();
+        function rowWriter() {
+          return request.auth != null && (
           request.auth.uid == writeRide().creatorId ||
           // Anyone else writes ONLY their own entry, and only while on the
           // ride or holding an open invitation. An accepting invitee is still
@@ -2155,6 +2174,7 @@ service cloud.firestore {
             // the parent, never on this subcollection's mere existence.
             (writeRide().status == 'active' &&
              !(request.auth.uid in writeRide().get('bannedIds', []))))));
+        }
       }
 
       // Invitation markers, one per invited rider at `invitations/{uid}`.

@@ -607,6 +607,41 @@ test('S3 join codes: the real createGroupRide batch succeeds (with invitees)', a
   await assertSucceeds(batch.commit());
 });
 
+// Security sweep B7: a roster row is exactly GroupRideMemberModel's shape.
+test('B7 roster: the app\'s accept, decline, join and invite row writes still pass', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groupRides', 'gr-b7'),
+      { ...groupRide(ALICE, 'B7B7B7', [BOB]), status: 'active' });
+  });
+  const row = (uid, path) => doc(dbFor(uid), 'groupRides', 'gr-b7', 'members', path);
+  // acceptInvitation (toDocument + lastLocationUpdate), then declineInvitation's merge.
+  await assertSucceeds(setDoc(row(BOB, BOB), rosterRow(BOB, 'Bob', 'joined')));
+  await assertSucceeds(setDoc(row(BOB, BOB), { userId: BOB, status: 'declined' }, { merge: true }));
+  // joinByCode's own row on an active ride.
+  await assertSucceeds(setDoc(row(MALLORY, MALLORY), rosterRow(MALLORY, 'Mallory', 'joined')));
+  // inviteUsers' merge by the creator.
+  await assertSucceeds(setDoc(row(ALICE, 'carol-uid'), { userId: 'carol-uid', userName: 'Carol',
+    userPhotoUrl: '', joinedAt: new Date(), status: 'pending' }, { merge: true }));
+});
+
+test('B7 roster: rows outside GroupRideMemberModel\'s shape are denied', async () => {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'groupRides', 'gr-b7'),
+      { ...groupRide(ALICE, 'B7B7B7', [BOB]), status: 'active' });
+  });
+  const mine = doc(dbFor(MALLORY), 'groupRides', 'gr-b7', 'members', MALLORY);
+  const ok = rosterRow(MALLORY, 'Mallory', 'joined');
+  await assertFails(setDoc(mine, { ...ok, isCreator: true }));
+  await assertFails(setDoc(mine, { ...ok, userName: 'x'.repeat(101) }));
+  await assertFails(setDoc(mine, { ...ok, userPhotoUrl: 'https://evil.example/pixel.gif' }));
+  await assertFails(setDoc(mine, { ...ok, status: 'creator' }));
+  await assertFails(setDoc(mine, { ...ok, userId: ALICE }));
+  await assertFails(setDoc(mine, { ...ok, currentLat: 'x'.repeat(5000) }));
+  // The creator is held to the same shape.
+  await assertFails(setDoc(doc(dbFor(ALICE), 'groupRides', 'gr-b7', 'members', BOB),
+    { ...rosterRow(BOB, 'Bob', 'pending'), userPhotoUrl: 'https://evil.example/pixel.gif' }));
+});
+
 test("S3 join codes: a code pointing at someone else's ride is denied", async () => {
   await testEnv.withSecurityRulesDisabled(async (ctx) => {
     await setDoc(doc(ctx.firestore(), 'groupRides', 'gr-alice'), groupRide(ALICE, 'AL1CE9'));
