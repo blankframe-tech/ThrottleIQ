@@ -293,9 +293,8 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
           );
       _lastSentPosition = position;
       _lastSentAt = now;
-    } catch (e, st) {
-      reportSilently(e, st, where: 'groupRide.publishLocation');
-      // A single dropped publish is not worth a visible error — the next tick
+    } catch (_) {
+      // Not reported: in a dead zone this fails every tick. A single dropped publish is not worth a visible error — the next tick
       // retries (the gate stays open since nothing was recorded as sent), and
       // the staleness badge already tells the group this rider has gone
       // quiet.

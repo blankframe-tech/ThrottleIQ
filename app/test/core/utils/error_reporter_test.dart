@@ -8,7 +8,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
 
-const _bareCatchBaseline = 29;
+const _bareCatchBaseline = 30;
 
 void main() {
   test('bare catch (_) count in lib/ does not grow past the baseline', () {
