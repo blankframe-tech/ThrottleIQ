@@ -562,3 +562,19 @@ test("the rider's key leaves every group ride's positions/all", async () => {
     assert.equal(await exists('groupRides/quiet/positions/all'), false);
   });
 });
+
+// Security sweep 2026-10-30 C3: a custom forum kept the rider's uid as its
+// creator and maintainer (canModerateForum reads both).
+test('forums lose the rider as creator and maintainer', async () => {
+  await seedAndEraseTwice({
+    'forums/c-mine': { type: 'custom', createdBy: UID, maintainerIds: [UID, OTHER], followerCount: 0, postCount: 0 },
+    'forums/c-theirs': { type: 'custom', createdBy: OTHER, maintainerIds: [OTHER, UID], followerCount: 0, postCount: 0 },
+  }, async () => {
+    const mine = (await db.doc('forums/c-mine').get()).data();
+    assert.equal(mine.createdBy, '');
+    assert.deepEqual(mine.maintainerIds, [OTHER]);
+    const theirs = (await db.doc('forums/c-theirs').get()).data();
+    assert.equal(theirs.createdBy, OTHER);
+    assert.deepEqual(theirs.maintainerIds, [OTHER]);
+  });
+});

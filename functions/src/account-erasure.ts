@@ -401,6 +401,17 @@ export async function deleteUserData(
       { senderId: DELETED_PARTICIPANT, senderName: DELETED_RIDER, senderPhotoUrl: "", audioUrl: "" },
     ],
     [
+      // A rider-made forum's moderators (canModerateForum in firestore.rules).
+      "forums created",
+      db.collection("forums").where("createdBy", "==", uid),
+      { createdBy: "" },
+    ],
+    [
+      "forums maintained",
+      db.collection("forums").where("maintainerIds", "array-contains", uid),
+      { maintainerIds: FieldValue.arrayRemove(uid) },
+    ],
+    [
       "places contributed",
       db.collection("places").where("createdBy", "==", uid),
       { createdBy: "" },
