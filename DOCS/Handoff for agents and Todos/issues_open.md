@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§121**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§123**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -282,6 +282,20 @@ cockpit rows, chips and stat tiles scale-tolerant so the clamp can be raised
 or dropped. For an app read outdoors in sunlight through gloves this is
 legibility work, not a minority feature.
 
+**2026-10-29 (lane E), GitHub #48 step one done:** `app/test/text_scale_sweep_test.dart`
+pumps the key screens of `test/key_screens.dart` (cockpit riding and paused,
+login, register, Settings > Advanced) at 1.0, 1.3, 1.6 and 2.0 in English and
+Bangla, with the app's real fonts (the default test font is about twice too
+wide and flagged everything). It found and fixed three rows: the cockpit
+Distance / Avg Speed / Confidence row (2.0×) and the login / register
+"account? Sign Up/In" rows (1.6–2.0×), now `Wrap`. **Still open:** the sweep
+covers 4 screens of ~60. Add the rest of the cockpit-adjacent screens (record,
+ride summary, stats tiles, maintenance chips, garage) to `KeyScreen`, fix what
+overflows, and only then raise the `_ClampedTextScale` clamp in `app.dart`
+(still 1.0–1.3×; deliberately not raised, other screens are untested above
+1.3×). `RecordScreen` can't be pumped until §83.13 lands
+(`FirebaseAuth.instance` in `initState`).
+
 ### 83.23 (part) — localization: what is left
 
 The main pass is done (`issues_fixed.md` §83.23 (rest) and (part)).
@@ -330,11 +344,30 @@ lived. Same root cause as 83.13.
   unmounts, and `if (!mounted) return` swallowed the result.
 - Maintenance already had screen tests (`test/features/maintenance/`).
 
+**2026-10-29 (lane E), now covered:** recorder flow (GitHub #50, §90.B9)
+in `test/features/ride/presentation/providers/ride_recording_flow_test.dart`:
+the real notifier, start → pause → resume → stop, against fake GPS
+(`GeolocatorPlatform`), in-memory SQLite and mocked plugin channels; ride
+row `active` → `completed`, GPS stream closed on pause and stop, clock frozen
+while paused, no-bike start, idle no-ops. Register (GitHub #24):
+`test/features/auth/register_screen_test.dart`. Goldens (GitHub #49): 6 PNGs
+in `test/goldens/` (cockpit, login, Settings > Advanced; light and dark)
+from `test/key_screens_golden_test.dart`, with the real fonts in
+`test/fonts/` (see `test/README.md`). They run on macOS only (`@TestOn`);
+CI (ubuntu) skips them, because text antialiasing differs on Linux.
+
 **Still open:** `RecordScreen` (its `initState` reads `FirebaseAuth.instance`,
 §83.13, so it can't be pumped without Firebase); the crash countdown overlay
 itself (private and unreachable while `SensorConstants.crashAlertsEnabled` is
 a `const false`; test it when tier 2 ships); settings and onboarding steps
-beyond `onboarding_tour_test.dart`; register; 0 goldens. The `_endingRide`
+beyond `onboarding_tour_test.dart`; ~29 screens under
+`features/*/presentation/screens/` with no test at all (GitHub #24 stays open
+for them, one screen per PR); goldens on Linux, if CI should check them too
+(regenerate there or add a tolerant comparator). Found while making the
+goldens: `_BlankTileProvider` in `app_tile_layer.dart` says "a 1×1 fully
+transparent PNG" but its pixel is RGBA (0, 0, 255, 127), half-opaque blue, so maps in tests
+and goldens are tinted (harmless; fix the bytes and regenerate the cockpit
+goldens). The `_endingRide`
 guard in `_cancelRide` has no test of its own (its redirect lands on the same
 `/home/record`); the one in `_stopRide` is covered.
 
@@ -407,9 +440,8 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
   `shared_ride_detail_screen.dart` 1,094. The planned ride-provider split
   (`RideSessionController` / `GpsPositionHandler` / `CrashAlertCoordinator` /
   `LiveSessionManager`, old §92.A8) was never done.
-- **90.B9 — MEDIUM — test shape** (update to §83.28). `RideRecordingNotifier` can now be built
-  in a test container (`ride_recording_dispose_test.dart`, `4b914c10`), but its
-  start/pause/resume/stop flow has no direct test. There are no golden tests.
+- **90.B9 — test shape:** done 2026-10-29 (flow test and first goldens, see §83.28 and
+  `issues_fixed.md` §122).
 - **90.B10 — MEDIUM — dependency majors held back** (unchanged since 2026-10-06):
   `google_sign_in ^6`, the FlutterFire set (`firebase_core ^3`, `firebase_auth ^5`,
   `cloud_firestore ^5`, …), `flutter_riverpod ^2.5`, `go_router ^13`, `geolocator ^11`,

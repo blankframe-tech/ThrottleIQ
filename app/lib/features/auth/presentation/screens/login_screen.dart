@@ -129,8 +129,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // Wraps the link under the prompt at large text sizes (#48).
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(context.l10n.noAccountPrompt,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),

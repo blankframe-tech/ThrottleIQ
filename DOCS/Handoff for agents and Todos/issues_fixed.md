@@ -56,6 +56,10 @@ New `app/lib/core/cloud/firebase_providers.dart`: `firestoreProvider`, `firebase
 - **#44 Garage header follow-QR button** — FIXED. The Garage tab header has a QR button before the bell. It opens `/profile/qr` (`MyFollowQrScreen`), which already links to the scanner. Its tooltip and semantic label reuse `myQrTitle` (EN + BN), so there are no new strings. No widget test: the change is one `IconButton`, and `GarageScreen` has no test harness.
 - **#43 Home-screen widgets: language and km/mi** — PARTLY FIXED. `home_widget_service.dart` now writes every value in the rider's saved language (`savedL10n()`) and their km/mi choice (`maintenance_imperial_units`, the same one in-app alerts follow). That covers the distances, the ride count (`rideCountLabel`), the next-service sentence and its service name (`forecastLabel`), and the no-data placeholders. The new keys are `widget*`, with BN queued in `bn_pending_review.txt`. No native code changed. *Test:* `test/core/services/home_widget_service_test.dart` (miles, Bangla). Not checked on a device. Still open: see `issues_open.md`, Lane H leftovers.
 
+## 122. Screen tests, goldens, recorder flow and the text-scale sweep — FIXED in part (2026-10-29, lane E)
+
+GitHub #50: `ride_recording_flow_test.dart` drives the real `RideRecordingNotifier` through start → pause → resume → stop with fake GPS and in-memory SQLite (§90.B9). GitHub #49: the first goldens, 6 PNGs (cockpit, login, Settings > Advanced, light and dark), with the app's real IBM Plex / Space Grotesk files in `app/test/fonts/` loaded through google_fonts' own cache lookup; macOS only, CI skips them; how to update in `app/test/README.md`. GitHub #48 step one: `text_scale_sweep_test.dart` (1.0–2.0×, English and Bangla) found three overflowing rows (cockpit stats, login and register footers), now `Wrap`. GitHub #24: register screen test. Still open (sweep coverage, the clamp, untested screens): `issues_open.md` §83.22 and §83.28.
+
 ---
 
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)

@@ -162,8 +162,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                // Wraps the link under the prompt at large text sizes (#48).
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(context.l10n.alreadyHaveAccount,
                         style: TextStyle(color: context.palette.textSecondary, fontSize: 14)),

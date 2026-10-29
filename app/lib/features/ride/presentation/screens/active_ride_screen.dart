@@ -868,22 +868,22 @@ class _SpeedPanel extends ConsumerWidget {
                 ),
                 Text('km/h', style: AppTypography.cockpitLabel(context)),
                 const SizedBox(height: 10),
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                // Wraps at large text sizes instead of overflowing (#48).
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 24,
+                  runSpacing: 8,
                   children: [
                     _RideStat(
                         label: context.l10n.distanceLabel,
                         value: SpeedFormatter.distanceKm(s.distanceM)),
-                    const SizedBox(width: 24),
                     _RideStat(
                         label: context.l10n.avgSpeed,
                         value: '${avgSpeedKmh.toStringAsFixed(0)} km/h'),
-                    if (s.confidence > 0) ...[
-                      const SizedBox(width: 24),
+                    if (s.confidence > 0)
                       _RideStat(
                           label: context.l10n.confidence,
                           value: '${s.confidence}%'),
-                    ],
                   ],
                 ),
                 // Sensor G-force indicator, only once the IMU axis is known:
