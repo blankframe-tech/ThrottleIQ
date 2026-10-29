@@ -704,6 +704,24 @@ abstract class AppLocalizations {
   /// **'Ride updated.'**
   String get bikeConfirmationUpdatedMessage;
 
+  /// Action on the bike-confirmation card for an auto-detected ride: it was a bus or car trip, not a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a motorcycle ride'**
+  String get notAMotorcycleRideAction;
+
+  /// Title of the dialog confirming an auto-detected ride should be deleted because it was not on a motorcycle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not a motorcycle ride?'**
+  String get notAMotorcycleRideConfirmTitle;
+
+  /// Body of the not-a-motorcycle-ride confirmation dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes the ride and takes its distance back off the bike, so service reminders stay accurate. Its shared post, if any, is removed too. This can\'t be undone.'**
+  String get notAMotorcycleRideConfirmBody;
+
   /// Row on the ride summary screen (most recent ride only) showing which bike the ride was logged to, next to a Change action.
   ///
   /// In en, this message translates to:
@@ -3848,6 +3866,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Ride History'**
   String get rideHistory;
+
+  /// Button next to a bike's ride history: pick a .gpx file (e.g. from another app) and save it as a ride on this bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Import GPX'**
+  String get importGpxAction;
+
+  /// Snackbar after a GPX file was saved as a ride. The distance is added to the bike's total, which drives service reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Ride imported: {distance}. It now counts toward this bike\'s distance.'**
+  String gpxImportedMessage(String distance);
+
+  /// Error when the picked GPX file is over the size or point limit.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is too big to import (10 MB or 100,000 points at most).'**
+  String get gpxImportTooLarge;
+
+  /// Error when the picked file is empty, unreadable or not GPX.
+  ///
+  /// In en, this message translates to:
+  /// **'This isn\'t a GPX file.'**
+  String get gpxImportNotGpx;
+
+  /// Error when a GPX file has fewer than two track points with a time (e.g. a route or waypoints only).
+  ///
+  /// In en, this message translates to:
+  /// **'This GPX file has no timed track to import.'**
+  String get gpxImportNoTrack;
+
+  /// Error when the GPX track overlaps a ride already saved (e.g. the same file imported twice).
+  ///
+  /// In en, this message translates to:
+  /// **'You already have a ride at this time, so this one wasn\'t imported.'**
+  String get gpxImportOverlapsRide;
 
   /// Text in bike_detail_screen.
   ///
@@ -10007,6 +10061,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get the latest version'**
   String get updateRequiredAction;
+
+  /// Second button on the Update required screen: shares every ride on this phone as GPX files, so the rider keeps their data even without updating.
+  ///
+  /// In en, this message translates to:
+  /// **'Export my rides'**
+  String get updateRequiredExportRides;
+
+  /// Snackbar on the Update required screen when Export my rides finds no rides.
+  ///
+  /// In en, this message translates to:
+  /// **'There are no rides on this phone to export.'**
+  String get updateRequiredNoRidesToExport;
 
   /// Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play.
   ///

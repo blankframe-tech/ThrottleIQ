@@ -1683,3 +1683,18 @@ yearInReviewShareFailed
 
 # batch: lane g bugs (2026-10-29)
 visitOdometerBelowEarlier
+
+# batch: not a motorcycle ride (#56, 2026-10-29)
+notAMotorcycleRideAction
+notAMotorcycleRideConfirmTitle
+notAMotorcycleRideConfirmBody
+# batch: GPX import (#58, 2026-10-29)
+importGpxAction
+gpxImportedMessage
+gpxImportTooLarge
+gpxImportNotGpx
+gpxImportNoTrack
+gpxImportOverlapsRide
+# batch: update required export (#38, 2026-10-29)
+updateRequiredExportRides
+updateRequiredNoRidesToExport

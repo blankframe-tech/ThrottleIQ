@@ -167,6 +167,9 @@ dependencies:
   pdf: ^3.13.1
   # SHA-256 for the emailLookup doc id (ProfileRepository's emailLookupId).
   crypto: ^3.0.6
+  # "Import GPX" on a bike (features/ride/data/gpx_ride_importer.dart).
+  # Official flutter.dev plugin; image_picker can't open arbitrary files.
+  file_selector: ^1.1.0
 
 dev_dependencies:
   flutter_test:

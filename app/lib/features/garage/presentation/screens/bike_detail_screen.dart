@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +13,7 @@ import '../widgets/bike_photo.dart';
 import '../../domain/entities/bike_entity.dart';
 import '../../../forums/data/repositories/forum_repository.dart';
 import '../../../forums/presentation/screens/new_forum_post_screen.dart';
+import '../../../ride/data/gpx_ride_importer.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
 import '../../../maintenance/presentation/widgets/forecast_text.dart'
@@ -196,11 +198,24 @@ class BikeDetailScreen extends ConsumerWidget {
             // Ride history; hidden for maintenance-only riders.
             if (modules.rideTracking) ...[
               const SizedBox(height: 24),
-              Text(context.l10n.rideHistory,
-                  style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: context.palette.textPrimary)),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(context.l10n.rideHistory,
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: context.palette.textPrimary)),
+                  ),
+                  if (!bike.isArchived)
+                    TextButton.icon(
+                      key: const Key('bike_import_gpx'),
+                      onPressed: () => _importGpx(context, ref, bike),
+                      icon: const Icon(Icons.file_upload_outlined, size: 18),
+                      label: Text(context.l10n.importGpxAction),
+                    ),
+                ],
+              ),
               const SizedBox(height: 12),
               ridesAsync.when(
                 loading: () => Center(
@@ -389,6 +404,43 @@ class BikeDetailScreen extends ConsumerWidget {
         SnackBar(content: Text(context.l10n.couldNotExportBike(e))),
       );
     }
+  }
+
+  /// Saves a GPX file (e.g. history from another app) as a ride on [bike].
+  Future<void> _importGpx(
+      BuildContext context, WidgetRef ref, BikeEntity bike) async {
+    // No type filter: neither platform knows a GPX type, so a filter would
+    // grey the files out. parseGpx checks the content instead.
+    final file = await openFile();
+    if (file == null || !context.mounted) return;
+    final l10n = context.l10n;
+    String message;
+    try {
+      if (await file.length() > kMaxGpxBytes) {
+        throw const GpxImportException(GpxImportError.tooLarge);
+      }
+      final ride = await GpxRideImporter().importGpx(
+          userId: bike.userId, bikeId: bike.id, gpx: await file.readAsString());
+      message =
+          l10n.gpxImportedMessage(SpeedFormatter.distanceKm(ride.distanceM));
+      ref.invalidate(rideHistoryProvider(bike.id));
+      ref.invalidate(garageProvider);
+      ref.invalidate(allBikesProvider);
+    } on GpxImportException catch (e) {
+      message = switch (e.reason) {
+        GpxImportError.tooLarge => l10n.gpxImportTooLarge,
+        GpxImportError.notGpx => l10n.gpxImportNotGpx,
+        GpxImportError.noTrack => l10n.gpxImportNoTrack,
+        GpxImportError.overlapsRide => l10n.gpxImportOverlapsRide,
+      };
+    } catch (e) {
+      // e.g. a binary file that isn't UTF-8 text.
+      debugPrint('[BikeDetail] GPX import failed: $e');
+      message = l10n.gpxImportNotGpx;
+    }
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _unarchive(BuildContext context, WidgetRef ref) async {

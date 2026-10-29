@@ -18,9 +18,13 @@ import '../providers/auto_tracking_provider.dart';
 /// allowed to guess, but it is not allowed to guess *quietly*, because the
 /// guess feeds distance-based maintenance reminders on two bikes at once.
 class BikeConfirmationCard extends ConsumerWidget {
-  const BikeConfirmationCard({super.key, required this.ride});
+  const BikeConfirmationCard({super.key, required this.ride, this.onRejected});
 
   final RideEntity ride;
+
+  /// Called after the rider marks this as not a motorcycle ride and it has
+  /// been deleted; the host screen leaves the (now gone) ride.
+  final VoidCallback? onRejected;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -38,14 +42,16 @@ class BikeConfirmationCard extends ConsumerWidget {
       decoration: BoxDecoration(
         color: context.palette.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: context.palette.primary.withValues(alpha: 0.4)),
+        border:
+            Border.all(color: context.palette.primary.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.help_outline, size: 18, color: context.palette.primary),
+              Icon(Icons.help_outline,
+                  size: 18, color: context.palette.primary),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -58,7 +64,8 @@ class BikeConfirmationCard extends ConsumerWidget {
           const SizedBox(height: 4),
           Text(
             l10n.bikeConfirmationBody,
-            style: TextStyle(fontSize: 13, color: context.palette.textSecondary),
+            style:
+                TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -73,9 +80,48 @@ class BikeConfirmationCard extends ConsumerWidget {
                 ),
             ],
           ),
+          const SizedBox(height: 4),
+          TextButton.icon(
+            key: const Key('not-a-motorcycle-ride'),
+            onPressed: () => _reject(context, ref),
+            icon: Icon(Icons.directions_bus_outlined,
+                size: 18, color: context.palette.danger),
+            label: Text(l10n.notAMotorcycleRideAction,
+                style: TextStyle(color: context.palette.danger)),
+          ),
         ],
       ),
     );
+  }
+
+  Future<void> _reject(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.notAMotorcycleRideConfirmTitle),
+        content: Text(l10n.notAMotorcycleRideConfirmBody),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.cancelAction)),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.delete,
+                  style: TextStyle(color: ctx.palette.danger))),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    try {
+      await ref.read(rideAttributionProvider).rejectAsNotMotorcycle(ride);
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.couldNotDelete(e))));
+      return;
+    }
+    onRejected?.call();
   }
 
   Future<void> _confirm(
@@ -86,7 +132,9 @@ class BikeConfirmationCard extends ConsumerWidget {
     await ref.read(rideAttributionProvider).confirm(ride: ride, bikeId: bikeId);
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context).bikeConfirmationUpdatedMessage)),
+      SnackBar(
+          content: Text(
+              AppLocalizations.of(context).bikeConfirmationUpdatedMessage)),
     );
   }
 }

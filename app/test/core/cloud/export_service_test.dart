@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/cloud/export_service.dart';
+import 'package:throttleiq/core/database/database_helper.dart';
 
 void main() {
   late ExportService service;
@@ -100,6 +105,64 @@ void main() {
           gpx,
           contains(
               '<trkpt lat="23.82" lon="90.42"><time>2026-10-22T04:05:00.000Z</time></trkpt>'));
+    });
+  });
+
+  group('ExportService.exportAllRidesToGPX (#38)', () {
+    const pathChannel = MethodChannel('plugins.flutter.io/path_provider');
+    late Database db;
+    late Directory docs;
+
+    setUp(() async {
+      TestWidgetsFlutterBinding.ensureInitialized();
+      docs = await Directory.systemTemp.createTemp('export_all_');
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathChannel, (_) async => docs.path);
+      sqfliteFfiInit();
+      databaseFactory = databaseFactoryFfi;
+      db = await databaseFactory.openDatabase(inMemoryDatabasePath);
+      await DatabaseHelper.instance.createSchemaForTesting(db);
+      DatabaseHelper.overrideDatabaseForTesting(db);
+      for (final (id, status) in [
+        ('done', 'completed'),
+        ('crashed', 'crash'),
+        ('live', 'active'),
+      ]) {
+        await db.insert('rides', {
+          'id': id,
+          'user_id': 'u1',
+          'bike_id': 'b1',
+          'start_time': '2026-10-22T10:00:00.000',
+          'distance_m': 1000.0,
+          'status': status,
+          'created_at': '2026-10-22T10:00:00.000',
+        });
+        await db.insert('ride_points', {
+          'ride_id': id,
+          'timestamp': '2026-10-22T10:00:00.000',
+          'lat': 23.8,
+          'lng': 90.4,
+          'speed_ms': 0.0,
+        });
+      }
+    });
+
+    tearDown(() async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(pathChannel, null);
+      DatabaseHelper.overrideDatabaseForTesting(null);
+      await db.close();
+      await docs.delete(recursive: true);
+    });
+
+    test('writes one GPX per finished ride, skipping the live one', () async {
+      final files = await service.exportAllRidesToGPX();
+      expect(files.map((f) => f.uri.pathSegments.last),
+          everyElement(endsWith('.gpx')));
+      expect(files.map((f) => f.path.contains('ride_live_')), [false, false]);
+      for (final f in files) {
+        expect(await f.readAsString(), contains('<trkpt lat="23.8"'));
+      }
     });
   });
 }

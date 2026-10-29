@@ -344,6 +344,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get bikeConfirmationUpdatedMessage => 'রাইড আপডেট হয়েছে।';
 
   @override
+  String get notAMotorcycleRideAction => 'এটি মোটরসাইকেল রাইড নয়';
+
+  @override
+  String get notAMotorcycleRideConfirmTitle => 'এটি মোটরসাইকেল রাইড নয়?';
+
+  @override
+  String get notAMotorcycleRideConfirmBody =>
+      'এতে রাইডটি মুছে যাবে এবং এর দূরত্ব বাইক থেকে বাদ যাবে, যাতে সার্ভিসের রিমাইন্ডার ঠিক থাকে। শেয়ার করা পোস্ট থাকলে সেটিও সরানো হবে। এটি আর ফেরানো যাবে না।';
+
+  @override
   String loggedToBikeLabel(String bikeName) {
     return '$bikeName-এ লগ করা হয়েছে';
   }
@@ -2141,6 +2151,29 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get rideHistory => 'রাইডের ইতিহাস';
+
+  @override
+  String get importGpxAction => 'GPX ইমপোর্ট';
+
+  @override
+  String gpxImportedMessage(String distance) {
+    return 'রাইড ইমপোর্ট হয়েছে: $distance। এটি এখন এই বাইকের মোট দূরত্বে যোগ হয়েছে।';
+  }
+
+  @override
+  String get gpxImportTooLarge =>
+      'ফাইলটি ইমপোর্ট করার জন্য অনেক বড় (সর্বোচ্চ 10 MB বা 100,000 পয়েন্ট)।';
+
+  @override
+  String get gpxImportNotGpx => 'এটি GPX ফাইল নয়।';
+
+  @override
+  String get gpxImportNoTrack =>
+      'এই GPX ফাইলে ইমপোর্ট করার মতো সময়সহ কোনো ট্র্যাক নেই।';
+
+  @override
+  String get gpxImportOverlapsRide =>
+      'এই সময়ে আপনার আরেকটি রাইড আছে, তাই এটি ইমপোর্ট করা হয়নি।';
 
   @override
   String get noRidesYetThis => 'এই বাইকের এখনো কোনো রাইড নেই';
@@ -5806,6 +5839,13 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
+
+  @override
+  String get updateRequiredExportRides => 'আমার রাইডগুলো এক্সপোর্ট করুন';
+
+  @override
+  String get updateRequiredNoRidesToExport =>
+      'এই ফোনে এক্সপোর্ট করার মতো কোনো রাইড নেই।';
 
   @override
   String get sideloadBlockedTitle => 'Google Play থেকে ThrottleIQ ইনস্টল করুন';

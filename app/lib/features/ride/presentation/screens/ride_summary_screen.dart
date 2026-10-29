@@ -301,7 +301,13 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 // Only renders for an auto-detected ride whose bike the
                 // app guessed and the rider hasn't confirmed — see
                 // BikeConfirmationCard. No-op on every other ride.
-                BikeConfirmationCard(ride: ride),
+                BikeConfirmationCard(
+                  ride: ride,
+                  onRejected: () {
+                    ref.invalidate(myRidesProvider);
+                    if (mounted) _dismiss(context);
+                  },
+                ),
 
                 // Lets the rider fix a wrong bike pick, but only on the ride
                 // they just finished — see ChangeBikeControl. No-op on
