@@ -666,7 +666,7 @@ async function main() {
     rule('-');
     log('  Sample rider:');
     rule('-');
-    log(JSON.stringify(riders[0], null, 2));
+    log(JSON.stringify({ ...riders[0], password: '[redacted]' }, null, 2));
     log('');
     log('  This was a DRY RUN — nothing was created, no credentials were used.');
     log(`  To actually create these, set FIREBASE_PROJECT_ID=${EXPECTED_PROJECT_ID} and`);

@@ -226,7 +226,7 @@ async function main() {
   rule('=');
   log('');
   log(`  Email:         ${opts.email}`);
-  log(`  Password:      ${opts.passwordExplicit ? opts.password : '(auto-generated on creation; left unchanged if the account already exists)'}`);
+  log(`  Password:      ${opts.passwordExplicit ? '(as provided, not echoed)' : '(auto-generated on creation; left unchanged if the account already exists)'}`);
   log(`  Display name:  ${opts.displayName}`);
   log(`  Username:      @${opts.username}`);
   log('');
@@ -337,7 +337,10 @@ async function main() {
   log('');
   log('  Paste these into Play Console → App content → App access → Admin Account:');
   log(`    Username, email address, or phone number:  ${opts.email}`);
-  if (passwordWasSet) {
+  if (passwordWasSet && opts.passwordExplicit) {
+    // The caller already has a provided password; don't copy it into logs.
+    log('    Password:                                   (the one you provided)');
+  } else if (passwordWasSet) {
     log(`    Password:                                   ${opts.password}`);
     log('');
     log('  SAVE THIS PASSWORD NOW — it is generated once and never printed again.');
