@@ -165,6 +165,15 @@ test('F1 ride comments: addComment\'s transaction still works', async () => {
   }));
 });
 
+test('B1 ride comments: a bare comment create (no comments +1) is denied', async () => {
+  await seed({ 'rides/r1': RIDE });
+  // Bare create, then the counted delete, would drive `comments` below zero.
+  await assertFails(setDoc(doc(db(MALLORY), 'rides/r1/comments/c1'), {
+    id: 'c1', rideId: 'r1', userId: MALLORY, userName: 'M', userPhotoUrl: '',
+    text: 'spam', createdAt: serverTimestamp(), updatedAt: null,
+  }));
+});
+
 test('F1 ride comments: deleteSharedRide (list, delete the ride, then its comments) works', async () => {
   await seed({
     'rides/r1': { ...RIDE, comments: 2 },
@@ -291,6 +300,22 @@ test('F2 forums: getOrCreateForum, getOrCreateGeneralForum and createCustomForum
     description: null, createdBy: BOB, maintainerIds: [BOB],
     followerCount: 0, postCount: 0, createdAt: serverTimestamp(),
   }));
+});
+
+// Security sweep B6: forum create text is capped.
+test('B6 forums: oversized forum text on create is denied', async () => {
+  const f = db(MALLORY);
+  const custom = { type: 'custom', brand: '', model: null, topic: null, displayName: 'X', description: null,
+    createdBy: MALLORY, maintainerIds: [MALLORY], followerCount: 0, postCount: 0, createdAt: serverTimestamp() };
+  await assertFails(setDoc(doc(f, 'forums/c-x1'), { ...custom, displayName: 'x'.repeat(501) }));
+  await assertFails(setDoc(doc(f, 'forums/c-x2'), { ...custom, description: 'x'.repeat(2001) }));
+  await assertFails(setDoc(doc(f, 'forums/c-x3'), { ...custom, displayName: { blob: 1 } }));
+  const bike = { type: 'bikeModel', brand: 'Yamaha', model: 'R15', displayName: 'Yamaha R15',
+    followerCount: 0, postCount: 0, createdAt: serverTimestamp() };
+  await assertFails(setDoc(doc(f, 'forums/b1'), { ...bike, brand: 'x'.repeat(201) }));
+  await assertFails(setDoc(doc(f, 'forums/b2'), { ...bike, model: 'x'.repeat(201) }));
+  await assertFails(setDoc(doc(f, 'forums/t1'), { ...bike, type: 'general', brand: '', model: null,
+    topic: 'x'.repeat(201) }));
 });
 
 test('F2 forums: a c- forum must be custom and name the caller as creator', async () => {

@@ -304,6 +304,14 @@ test('B3: a block refuses a follow edge in either direction', async () => {
   await assertSucceeds(follow(dbFor(BOB), BOB, ALICE));
 });
 
+// Security sweep B8: an edge is exactly follow()'s three keys.
+test('B8: a follow edge with extra keys is denied', async () => {
+  await assertFails(setDoc(doc(dbFor(MALLORY), 'follows', `${MALLORY}_${ALICE}`), {
+    followerUid: MALLORY, followeeUid: ALICE, createdAt: serverTimestamp(), note: 'x'.repeat(5000),
+  }));
+  await assertSucceeds(follow(dbFor(MALLORY), MALLORY, ALICE));
+});
+
 // ---------------------------------------------------------------------------
 // config/app: the forced-update gate
 // ---------------------------------------------------------------------------

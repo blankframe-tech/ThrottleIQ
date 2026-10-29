@@ -24,7 +24,7 @@ const {
 
 const {
   doc, collection, query, where, limit, getDoc, getDocs, setDoc, updateDoc,
-  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp, increment,
+  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp, increment, serverTimestamp, deleteField,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -157,6 +157,39 @@ test('a profile is written only by its owner', async () => {
   await assertSucceeds(updateDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby' }));
   await assertFails(updateDoc(doc(db(ALICE), `users/${BOB}`), { displayName: 'pwned' }));
   await assertFails(deleteDoc(doc(db(ALICE), `users/${BOB}`)));
+});
+
+test('profile: every ProfileRepository write still lands (ensureProfile, edits, stats, pins, visibility)', async () => {
+  await seed({ [`users/${BOB}`]: { displayName: 'Bob', email: 'bob@example.com', emailLower: 'bob@example.com' } });
+  const ref = (uid) => doc(db(uid), `users/${uid}`);
+  const now = serverTimestamp();
+  // ensureProfile, first sign-in (plain merge-set fallback).
+  await assertSucceeds(setDoc(ref(ALICE), { displayName: 'Alice', photoUrl: 'https://lh3.googleusercontent.com/a/x',
+    visibility: 'public', followerCount: 0, followingCount: 0, createdAt: now, updatedAt: now }, { merge: true }));
+  // ensureProfile on a legacy doc strips the public email.
+  await assertSucceeds(setDoc(ref(BOB), { displayName: 'Bob', email: deleteField(), emailLower: deleteField(),
+    visibility: 'public', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { displayName: 'A', nickname: 'Al', bio: 'hi', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { publicStats: { totalDistanceKm: 1, totalRides: 1, badgeIds: [],
+    longestRideKm: 1, longestDayStreak: 1 }, updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { pinnedRideIds: ['r1'], updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { visibility: 'mutual', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { bikesVisibility: 'followers', updatedAt: now }, { merge: true }));
+  // setUsername's transaction.
+  const d = db(ALICE);
+  await assertSucceeds(runTransaction(d, async (tx) => {
+    tx.set(doc(d, 'usernames/alice_1'), { uid: ALICE });
+    tx.set(doc(d, `users/${ALICE}`), { username: 'Alice_1', usernameLower: 'alice_1', updatedAt: now }, { merge: true });
+  }));
+});
+
+test('B4 profile: keys outside the profile allow-list are denied on create and update', async () => {
+  await assertFails(setDoc(doc(db(CAROL), `users/${CAROL}`), { displayName: 'C', isVerified: true }));
+  await seed({ [`users/${BOB}`]: { displayName: 'Bob', legacyField: 1 } });
+  await assertFails(updateDoc(doc(db(BOB), `users/${BOB}`), { role: 'admin' }));
+  await assertFails(setDoc(doc(db(BOB), `users/${BOB}`), { blob: 'x'.repeat(5000) }, { merge: true }));
+  // An unrelated edit on a doc carrying a legacy key still passes.
+  await assertSucceeds(updateDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby' }));
 });
 
 // ── Email harvesting ────────────────────────────────────────────────────────
@@ -375,6 +408,42 @@ test('reviews: own id and uid only, whole stars, capped text, no extra keys or i
   await assertFails(setDoc(doc(d, `reviews/${ALICE}_seed1`), review({ flagged: true })));
   await assertFails(setDoc(doc(d, `reviews/${ALICE}_seed1`), review({ extra: 1 })));
   await assertSucceeds(setDoc(doc(d, `reviews/${ALICE}_seed1`), review({})));
+});
+
+// ── Saved routes (security sweep B3) ────────────────────────────────────────
+
+/** RouteModel.toFirestore() as RouteRepository.saveRoute writes it. */
+function route(overrides) {
+  return { id: 'rt1', userId: ALICE, name: 'Home loop', description: null, distanceKm: 12.5,
+    polyline: [{ lat: 23.8, lng: 90.4 }], mapSnapshotUrl: null, timesRidden: 1,
+    createdAt: Timestamp.now(), isPublic: false, sharedWithUserIds: [], ...overrides };
+}
+
+test('routes: saveRoute, setPublic both ways, incrementTimesRidden and delete still work', async () => {
+  const d = db(ALICE);
+  const ref = doc(d, `users/${ALICE}/routes/rt1`);
+  await assertSucceeds(setDoc(ref, route({ name: `${'A'.repeat(100)}'s ${'B'.repeat(40)} Route` })));
+  await assertSucceeds(updateDoc(ref, { isPublic: true, polyline: [{ lat: 23.81, lng: 90.41 }] }));
+  await assertSucceeds(updateDoc(ref, { timesRidden: increment(1) }));
+  await assertSucceeds(updateDoc(ref, { isPublic: false }));
+  await assertSucceeds(deleteDoc(ref));
+});
+
+test('B3 routes: a Discover-bound route is shape-checked and timesRidden only goes +1', async () => {
+  const d = db(ALICE);
+  const at = (id) => doc(d, `users/${ALICE}/routes/${id}`);
+  await assertFails(setDoc(at('x1'), route({ extra: 'payload' })));
+  await assertFails(setDoc(at('x2'), route({ name: 'x'.repeat(301) })));
+  await assertFails(setDoc(at('x3'), route({ description: 'x'.repeat(2001) })));
+  await assertFails(setDoc(at('x4'), route({ mapSnapshotUrl: 'https://evil.example/pixel.gif' })));
+  await assertFails(setDoc(at('x5'), route({ timesRidden: 1e6 })));
+  await assertFails(setDoc(at('x6'), route({ timesRidden: '1' })));
+  await assertSucceeds(setDoc(at('ok'), route({})));
+  await assertFails(updateDoc(at('ok'), { timesRidden: increment(5) }));
+  await assertFails(updateDoc(at('ok'), { timesRidden: 999 }));
+  await assertFails(updateDoc(at('ok'), { mapSnapshotUrl: 'https://evil.example/pixel.gif' }));
+  await assertFails(updateDoc(at('ok'), { name: 'x'.repeat(301) }));
+  await assertFails(updateDoc(at('ok'), { pinned: true }));
 });
 
 // ── Admin paths ─────────────────────────────────────────────────────────────

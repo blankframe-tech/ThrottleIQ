@@ -623,3 +623,24 @@ test('A9: a re-set cannot change shape, and nobody else can rewrite it', async (
   await assertSucceeds(updateDoc(doc(dbFor(ALICE), 'users', ALICE, 'notifications', `follow_${BOB}`),
     { read: true }));
 });
+
+// Security sweep B2: a notification is exactly NotificationRepository's shape,
+// so a sender can't flood an inbox (follow rows at random ids) or pin a row
+// on top (future createdAt, pre-read, giant groupRideId, extra keys).
+test('B2: notifications outside the app\'s shape are denied', async () => {
+  const m = dbFor(MALLORY);
+  const inbox = collection(m, 'users', ALICE, 'notifications');
+  const invite = (o = {}) => ({
+    type: 'groupRideInvite', fromUid: MALLORY, fromName: 'M', fromPhotoUrl: null,
+    groupRideId: 'gr1', createdAt: serverTimestamp(), read: false, ...o,
+  });
+  // The app's own writes pass.
+  await assertSucceeds(setDoc(doc(inbox, `follow_${MALLORY}`), followNotif(MALLORY)));
+  await assertSucceeds(addDoc(inbox, invite()));
+  // A follow row anywhere but follow_{fromUid}.
+  await assertFails(addDoc(inbox, followNotif(MALLORY)));
+  await assertFails(addDoc(inbox, invite({ createdAt: Timestamp.fromDate(new Date(Date.now() + 864e8)) })));
+  await assertFails(addDoc(inbox, invite({ read: true })));
+  await assertFails(addDoc(inbox, invite({ groupRideId: 'g'.repeat(129) })));
+  await assertFails(addDoc(inbox, invite({ pinned: true })));
+});

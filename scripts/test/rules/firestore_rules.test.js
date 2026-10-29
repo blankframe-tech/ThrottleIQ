@@ -497,11 +497,12 @@ function notificationRef(db, ownerUid = ALICE) {
 test('a valid follow notification (no photo) is allowed', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: null,
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -510,11 +511,12 @@ test('a valid follow notification (no photo) is allowed', async () => {
 test('a valid follow notification with an allowlisted Cloudinary photo is allowed', async () => {
   const db = dbFor(MALLORY);
   await assertSucceeds(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: 'https://res.cloudinary.com/vjvcigkt/image/upload/v1/avatars/mallory.jpg',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -529,6 +531,7 @@ test('a valid groupRideInvite notification with a groupRideId is allowed', async
       fromName: 'Mallory',
       fromPhotoUrl: '',
       groupRideId: 'ride-123',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -543,6 +546,7 @@ test('a valid groupRideJoined notification with a groupRideId is allowed', async
       fromName: 'Mallory',
       fromPhotoUrl: '',
       groupRideId: 'ride-123',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -556,6 +560,7 @@ test('a groupRideJoined notification with no groupRideId is denied', async () =>
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: '',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -568,6 +573,7 @@ test('a notification with an unknown type is denied', async () => {
       type: 'systemAlert',
       fromUid: MALLORY,
       fromName: 'Admin: verify your account',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -576,11 +582,12 @@ test('a notification with an unknown type is denied', async () => {
 test('a notification with a non-allowlisted fromPhotoUrl (the tracking-pixel vector) is denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: 'https://attacker.example/pixel.png',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -594,6 +601,7 @@ test('a groupRideInvite notification with no groupRideId is denied', async () =>
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: '',
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -602,11 +610,12 @@ test('a groupRideInvite notification with no groupRideId is denied', async () =>
 test('a notification spoofing fromUid as someone else is still denied', async () => {
   const db = dbFor(MALLORY);
   await assertFails(
-    setDoc(notificationRef(db), {
+    setDoc(doc(db, 'users', ALICE, 'notifications', `follow_${MALLORY}`), {
       type: 'follow',
       fromUid: ALICE,
       fromName: 'Alice',
       fromPhotoUrl: null,
+      createdAt: serverTimestamp(),
       read: false,
     })
   );
@@ -1254,15 +1263,38 @@ test('a rider can create, update and delete only their own handleLinks doc', asy
   const alice = dbFor(ALICE);
   const ref = doc(alice, 'handleLinks', LINK_KEY);
   await assertFails(setDoc(doc(alice, 'handleLinks', 'not-a-hash'), { uid: ALICE }));
-  await assertFails(setDoc(ref, { uid: MALLORY, token: 't', active: true }));
+  await assertFails(setDoc(ref, { uid: MALLORY, token: 'b'.repeat(32), active: true }));
   await assertFails(setDoc(ref, { uid: ALICE, password: 'x' }));
-  await assertSucceeds(setDoc(ref, { uid: ALICE, token: 't', active: true }));
+  await assertSucceeds(setDoc(ref, { uid: ALICE, token: 'b'.repeat(32), active: true }));
   await assertSucceeds(updateDoc(ref, { active: false, lastLat: 23.7, lastLng: 90.4 }));
 
   const mallory = doc(dbFor(MALLORY), 'handleLinks', LINK_KEY);
-  await assertFails(setDoc(mallory, { uid: MALLORY, token: 'evil', active: true }));
+  await assertFails(setDoc(mallory, { uid: MALLORY, token: 'b'.repeat(32), active: true }));
   await assertFails(deleteDoc(mallory));
   await assertSucceeds(deleteDoc(ref));
+});
+
+// Security sweep B9 (pairs with C4): account erasure deletes live_shares/{token}
+// for the token on these docs, so a token of '/' would wipe every rider's.
+test('B9: a live-share pointer token must be 32 alphanumerics or null', async () => {
+  const alice = dbFor(ALICE);
+  const pointer = doc(alice, 'livePointers', ALICE);
+  const link = doc(alice, 'handleLinks', LINK_KEY);
+  const TOKEN = 'Ab3'.repeat(10) + 'xY';
+  for (const bad of ['/', '../x', 'a'.repeat(31), 'a'.repeat(33), 'a/'.repeat(16)]) {
+    await assertFails(setDoc(pointer, { uid: ALICE, token: bad, active: true }));
+    await assertFails(setDoc(link, { uid: ALICE, token: bad, active: true }));
+  }
+  // _maybePublishLivePointer, then the outbox teardown's merge.
+  await assertSucceeds(setDoc(link, { uid: ALICE, token: TOKEN, active: true, updatedAt: serverTimestamp() },
+    { merge: true }));
+  await assertFails(updateDoc(link, { token: '/' }));
+  await assertSucceeds(setDoc(link, { uid: ALICE, token: null, active: false, lastLat: 23.7, lastLng: 90.4,
+    lastSeenAt: new Date(), updatedAt: serverTimestamp() }, { merge: true }));
+  // Build 29's uid-keyed pointer: publish, then clear.
+  await assertSucceeds(setDoc(pointer, { uid: ALICE, token: TOKEN, active: true }));
+  await assertFails(updateDoc(pointer, { token: '/' }));
+  await assertSucceeds(setDoc(pointer, { uid: ALICE, token: null, active: false }));
 });
 
 // §78.14: new chats live at the deterministic DM id `<uidA>_<uidB>` (sorted),
