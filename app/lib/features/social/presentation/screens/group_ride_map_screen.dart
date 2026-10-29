@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:audio_session/audio_session.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show FirebaseException;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -78,6 +79,10 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
   Map<String, Map<String, dynamic>> _locations = const {};
 
+  /// Live positions come from polling the shared positions doc; false once
+  /// the rules refused it (not deployed yet), then a listener is used.
+  bool _sharedPositions = true;
+
   String? _locationError;
   bool _hasLocationPermission = false;
   bool _leaving = false;
@@ -145,36 +150,14 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
     await _ensureLocationPermission();
     if (!mounted) return;
 
-    _locationsSub = ref
-        .read(groupRideRepositoryProvider)
-        .streamMemberLocations(widget.groupRideId)
-        .listen(
-      (locations) {
-        if (!mounted) return;
-        setState(() => _locations = locations);
-        // Bigger group, slower ticks (§104.2); restart only on a change,
-        // and never after _leave() stopped publishing (timer null).
-        final every = groupRideBroadcastInterval(locations.length);
-        if (every != _broadcastEvery && _broadcastTimer != null) {
-          _broadcastEvery = every;
-          _broadcastTimer?.cancel();
-          _broadcastTimer = Timer.periodic(every, (_) => _broadcastPosition());
-        }
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(
-            () => _locationError = context.l10n.livePositionsUnavailable(e));
-      },
-    );
+    // Decides _sharedPositions (§104.2) before the first publish.
+    await _pollPositions();
+    if (!mounted) return;
 
     // Publish once immediately so the rest of the group sees this rider
     // without waiting a full interval, then keep it ticking.
-    unawaited(_broadcastPosition());
-    _broadcastTimer = Timer.periodic(
-      _broadcastEvery,
-      (_) => _broadcastPosition(),
-    );
+    unawaited(_tick());
+    _broadcastTimer = Timer.periodic(_broadcastEvery, (_) => _tick());
     _staleTicker = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted) return;
       setState(() {});
@@ -191,6 +174,52 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   }
 
   Timer? _heartbeatTimer;
+
+  /// Publish, then (shared mode) poll: the poll then includes this rider's
+  /// own new position.
+  Future<void> _tick() async {
+    await _broadcastPosition();
+    if (_sharedPositions && mounted) await _pollPositions();
+  }
+
+  /// One read of the shared positions doc (issues §104.2). A
+  /// `permission-denied` means the deployed rules predate it: switch to the
+  /// `memberLocations` listener for good, as before §104.2.
+  Future<void> _pollPositions() async {
+    final repo = ref.read(groupRideRepositoryProvider);
+    final ride = ref.read(groupRideProvider(widget.groupRideId)).valueOrNull;
+    try {
+      _onLocations(await repo.fetchLivePositions(widget.groupRideId, [
+        if (ride != null) ...[ride.creatorId, ...ride.memberIds]
+      ]));
+    } on FirebaseException catch (e) {
+      if (e.code != 'permission-denied' || !mounted || !_sharedPositions) {
+        return;
+      }
+      _sharedPositions = false;
+      _locationsSub = repo.streamMemberLocations(widget.groupRideId).listen(
+        _onLocations,
+        onError: (Object e) {
+          if (!mounted) return;
+          setState(
+              () => _locationError = context.l10n.livePositionsUnavailable(e));
+        },
+      );
+    } catch (_) {/* offline: keep the last positions; staleness shows it */}
+  }
+
+  void _onLocations(Map<String, Map<String, dynamic>> locations) {
+    if (!mounted) return;
+    setState(() => _locations = locations);
+    // Bigger group, slower ticks (§104.2); restart only on a change, and
+    // never after _leave() stopped publishing (timer null).
+    final every = groupRideBroadcastInterval(locations.length);
+    if (every == _broadcastEvery) return;
+    _broadcastEvery = every;
+    if (_broadcastTimer == null) return;
+    _broadcastTimer!.cancel();
+    _broadcastTimer = Timer.periodic(every, (_) => _tick());
+  }
 
   Future<void> _heartbeatIfCreator() async {
     final uid = ref.read(currentUserProvider)?.uid;
@@ -290,6 +319,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
             userId: uid,
             lat: position.latitude,
             lng: position.longitude,
+            shared: _sharedPositions,
           );
       _lastSentPosition = position;
       _lastSentAt = now;
