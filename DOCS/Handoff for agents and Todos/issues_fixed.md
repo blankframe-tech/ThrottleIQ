@@ -11,13 +11,14 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
-## Lane G: contributor-issue bugs (GitHub #57, #59, #41, #40, #42) — FIXED (2026-10-29, branch `lane/g-bugs`)
+## Lane G: contributor-issue bugs (GitHub #57, #59, #41, #40, #42, #46) — FIXED (2026-10-29, branch `lane/g-bugs`)
 
 - **#57 / §101.R5 Jerk spiked on GPS fixes milliseconds apart (`448bc8e6`).** `MotionCalculator` only guarded `deltaT <= 0`. It now skips acceleration and jerk under the same 0.1 s floor `evaluateFix` uses; distance is still reported. *Test:* `app/test/calculators/motion_calculator_test.dart`.
 - **#59 / §95.12 Maintenance day counts went stale past midnight (`fdbeebdf`).** New `maintenanceTodayProvider` holds today's date; the forecast provider and `MaintenanceScreen` watch it, and the screen moves it on with a midnight timer and on app resume. Clock injectable. *Test:* `app/test/features/maintenance/maintenance_screen_test.dart`.
 - **#41 / §95.12 Deleting a visit left its receipt photo on disk (`167ed9f6`).** `MaintenanceDao.delete` and `deleteWithTombstone` delete the receipt file once no remaining log references it (a visit's items share one receipt); remote URLs and missing files are skipped. *Test:* `app/test/features/maintenance/maintenance_visits_db_test.dart` (temp dir).
 - **#40 / §101.R2 No warning for an odometer below an earlier log (`77d457e7`).** `odometerBelowEarlierLog` (`service_visit.dart`) drives non-blocking helper text under the odometer field of `AddMaintenanceLogScreen`; saving still works (odometers get replaced). New key EN + BN, BN queued in `bn_pending_review.txt`. *Test:* `service_visit_test.dart`, `maintenance_screen_test.dart`.
 - **#42 / §101.P2 White text on dark `danger` was ~3:1.** New `AppTheme.dangerForeground` (dark: `surface`, light: white, unchanged) is Material's `onError`; the notification badge count and the report submit button (label and spinner) use `colorScheme.onError`. Danger-filled snackbars are still open (§101.P2). *Test:* `palette_contrast_test.dart` checks the pair in both themes.
+- **#46 / §108.2 Forum post and reply failed offline.** `addReply` moved from a transaction to an atomic batch through `ackOrQueued` (like `createPost`), so it queues offline; `firestore.rules` already checks the same writes for a batch, so no rules change. `getOrCreateForum` / `getOrCreateGeneralForum` share `_getOrCreate`, which tries a plain read first (served from cache offline) and only runs the transaction for a missing forum, so posting into a known topic board or All Riders queues too. A failed photo upload shows the mapped error (e.g. "You're offline…") instead of the raw exception. `ForumRepository.withFirestore` added for tests. *Test:* `app/test/features/forums/forum_repository_test.dart` (fake Firestore). Open remainder: §108.2.
 
 ---
 

@@ -186,7 +186,8 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
         setState(() => _submitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(context.l10n.forumPhotoUploadFailed(e.toString()))),
+              content: Text(context.l10n
+                  .forumPhotoUploadFailed(mapFirestoreError(e, context.l10n)))),
         );
         return;
       }

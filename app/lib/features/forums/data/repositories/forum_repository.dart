@@ -142,9 +142,12 @@ class ForumRepository {
 
   factory ForumRepository() => _instance;
 
-  ForumRepository._internal();
+  ForumRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  @visibleForTesting
+  ForumRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
 
   late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
 
@@ -178,21 +181,35 @@ class ForumRepository {
     final type = hasModel ? ForumType.bikeModel : ForumType.brand;
     final displayName = hasModel ? '$brand $normalizedModel' : brand;
 
+    return _getOrCreate(docRef, {
+      'type': type.name,
+      'brand': brand,
+      'model': normalizedModel,
+      'displayName': displayName,
+      'followerCount': 0,
+      'postCount': 0,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// The create-if-missing shared by [getOrCreateForum] and
+  /// [getOrCreateGeneralForum]. A plain read first: it is served from the
+  /// cache offline, so a forum this phone has seen resolves without a
+  /// transaction (transactions fail offline, which blocked posting into a
+  /// topic board offline, issue #46). Only a missing forum takes the
+  /// transaction.
+  Future<ForumEntity> _getOrCreate(
+      DocumentReference<Map<String, dynamic>> docRef,
+      Map<String, dynamic> fields) async {
+    final known = await docRef.get();
+    if (known.exists) return ForumModel.fromFirestore(known).toEntity();
+
     final snapshot = await _firestore.runTransaction((transaction) async {
       final existing = await transaction.get(docRef);
       if (existing.exists) {
         return existing;
       }
-
-      transaction.set(docRef, {
-        'type': type.name,
-        'brand': brand,
-        'model': normalizedModel,
-        'displayName': displayName,
-        'followerCount': 0,
-        'postCount': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      transaction.set(docRef, fields);
       return null;
     });
 
@@ -208,27 +225,16 @@ class ForumRepository {
     final slug = generalForumSlug(topic);
     final docRef = _forums.doc(slug);
 
-    final snapshot = await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(docRef);
-      if (existing.exists) {
-        return existing;
-      }
-
-      transaction.set(docRef, {
-        'type': ForumType.general.name,
-        'brand': '',
-        'model': null,
-        'topic': topic,
-        'displayName': topic,
-        'followerCount': 0,
-        'postCount': 0,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      return null;
+    return _getOrCreate(docRef, {
+      'type': ForumType.general.name,
+      'brand': '',
+      'model': null,
+      'topic': topic,
+      'displayName': topic,
+      'followerCount': 0,
+      'postCount': 0,
+      'createdAt': FieldValue.serverTimestamp(),
     });
-
-    final doc = snapshot ?? await docRef.get();
-    return ForumModel.fromFirestore(doc).toEntity();
   }
 
   /// Creates a rider-owned forum. Unlike [getOrCreateForum] this is NOT
@@ -811,25 +817,26 @@ class ForumRepository {
     final postRef = _forums.doc(forumId).collection('posts').doc(postId);
     final replyRef = postRef.collection('replies').doc();
 
-    // One transaction, and the bump carries the new reply's id, so
+    // One atomic batch, and the bump carries the new reply's id, so
     // firestore.rules can tie the `replyCount` +1 to a reply doc actually
-    // being created in the same commit (issues §24.7). Mirrors
-    // RideShareRepository.addComment().
-    await _firestore.runTransaction((transaction) async {
-      transaction.set(replyRef, {
-        'postId': postId,
-        'forumId': forumId,
-        'userId': userId,
-        'userName': userName,
-        'userPhotoUrl': userPhotoUrl,
-        'body': body,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      transaction.update(postRef, {
-        'replyCount': FieldValue.increment(1),
-        'lastReplyId': replyRef.id,
-      });
+    // being created in the same commit (issues §24.7). A batch, not a
+    // transaction: it queues offline and lands when the phone reconnects
+    // (issue #46), like [createPost].
+    final batch = _firestore.batch();
+    batch.set(replyRef, {
+      'postId': postId,
+      'forumId': forumId,
+      'userId': userId,
+      'userName': userName,
+      'userPhotoUrl': userPhotoUrl,
+      'body': body,
+      'createdAt': FieldValue.serverTimestamp(),
     });
+    batch.update(postRef, {
+      'replyCount': FieldValue.increment(1),
+      'lastReplyId': replyRef.id,
+    });
+    await ackOrQueued(batch.commit());
 
     return replyRef.id;
   }
