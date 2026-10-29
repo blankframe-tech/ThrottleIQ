@@ -6488,6 +6488,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get oemGuideOpenBatterySettings => 'Open battery settings';
 
   @override
+  String get oemGuideSettingsTitle => 'Rides keep stopping?';
+
+  @override
+  String oemGuideSettingsSubtitle(String brand) {
+    return 'Battery settings that keep $brand phones recording';
+  }
+
+  @override
   String get yourThrottleIqSection => 'Your ThrottleIQ';
 
   @override

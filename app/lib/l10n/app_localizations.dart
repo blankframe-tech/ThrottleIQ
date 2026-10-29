@@ -11100,6 +11100,18 @@ abstract class AppLocalizations {
   /// **'Open battery settings'**
   String get oemGuideOpenBatterySettings;
 
+  /// Settings row that reopens the OEM battery guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides keep stopping?'**
+  String get oemGuideSettingsTitle;
+
+  /// Subtitle of the Settings row that reopens the OEM guide; brand is the phone maker.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery settings that keep {brand} phones recording'**
+  String oemGuideSettingsSubtitle(String brand);
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:

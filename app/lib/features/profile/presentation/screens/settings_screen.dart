@@ -9,6 +9,7 @@ import '../widgets/settings_appearance_section.dart';
 import '../widgets/settings_emergency_contacts_section.dart';
 import '../widgets/settings_language_section.dart';
 import '../widgets/settings_link_tile.dart';
+import '../widgets/settings_oem_guide_tile.dart';
 import '../widgets/settings_overspeed_tile.dart';
 import '../widgets/settings_privacy_section.dart';
 import '../widgets/settings_profile_card.dart';
@@ -53,6 +54,7 @@ class SettingsScreen extends ConsumerWidget {
                 const AutoTrackingScheduleTile(),
                 const SizedBox(height: 12),
                 const SettingsOverspeedLimitTile(),
+                const SettingsOemGuideTile(),
                 const SizedBox(height: 24),
               ],
 

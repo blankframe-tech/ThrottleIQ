@@ -6464,6 +6464,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get oemGuideOpenBatterySettings => 'ব্যাটারি সেটিংস খুলুন';
 
   @override
+  String get oemGuideSettingsTitle => 'রাইড বারবার থেমে যায়?';
+
+  @override
+  String oemGuideSettingsSubtitle(String brand) {
+    return '$brand ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস';
+  }
+
+  @override
   String get yourThrottleIqSection => 'আপনার ThrottleIQ';
 
   @override

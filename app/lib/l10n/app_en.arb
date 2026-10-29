@@ -8903,6 +8903,19 @@
   "@oemGuideOpenBatterySettings": {
     "description": "Button opening Samsung's Device care battery screen."
   },
+  "oemGuideSettingsTitle": "Rides keep stopping?",
+  "@oemGuideSettingsTitle": {
+    "description": "Settings row that reopens the OEM battery guide."
+  },
+  "oemGuideSettingsSubtitle": "Battery settings that keep {brand} phones recording",
+  "@oemGuideSettingsSubtitle": {
+    "description": "Subtitle of the Settings row that reopens the OEM guide; brand is the phone maker.",
+    "placeholders": {
+      "brand": {
+        "type": "String"
+      }
+    }
+  },
   "yourThrottleIqSection": "Your ThrottleIQ",
   "@yourThrottleIqSection": {
     "description": "Settings → Your ThrottleIQ (app modules)."

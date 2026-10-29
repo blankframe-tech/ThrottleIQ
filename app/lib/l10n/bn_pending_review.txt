@@ -1670,3 +1670,6 @@ indriyoSimulationSubtitle
 # batch: battery guide Tecno/Infinix/itel/Samsung (2026-10-29)
 oemGuideStepSleepingApps
 oemGuideOpenBatterySettings
+# batch: Settings reopens battery guide (2026-10-29)
+oemGuideSettingsTitle
+oemGuideSettingsSubtitle

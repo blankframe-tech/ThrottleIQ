@@ -1833,6 +1833,8 @@
   "oemGuideShowMe": "দেখান",
   "oemGuideStepSleepingApps": "ব্যাটারি (ডিভাইস কেয়ার) → ব্যাকগ্রাউন্ড ব্যবহারের সীমা থেকে ThrottleIQ-কে স্লিপিং অ্যাপ আর ডিপ স্লিপিং অ্যাপের তালিকা থেকে সরিয়ে দিন।",
   "oemGuideOpenBatterySettings": "ব্যাটারি সেটিংস খুলুন",
+  "oemGuideSettingsTitle": "রাইড বারবার থেমে যায়?",
+  "oemGuideSettingsSubtitle": "{brand} ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস",
   "yourThrottleIqSection": "আপনার ThrottleIQ",
   "yourThrottleIqDescription": "শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।",
   "communityFieldLabel": "কমিউনিটি",

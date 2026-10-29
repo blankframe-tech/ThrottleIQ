@@ -11,6 +11,14 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## Lane H (2026-10-29): Settings and UX GitHub issues
+
+- **#52 Split `settings_screen.dart`** — FIXED (`26f15f8a`). Each section moved to its own file in `app/lib/features/profile/presentation/widgets/settings_*.dart`; the six copies of the link-row markup are one `SettingsLinkTile`. The screen is now ~110 lines. No visual or behaviour change. Settings > Advanced (Indriyo pairing) is kept.
+- **#36 Battery guide: Tecno, Infinix, itel, Samsung** — FIXED (`01c29cca`). `oemBrandFor` maps the bare brand names and the company names (`TECNO MOBILE LIMITED`, …). The three Transsion brands open Phone Master's autostart screen and share dontkillmyapp's Tecno page. Samsung gets a Sleeping apps step and opens Device care's battery screen. `<queries>` in `AndroidManifest.xml` adds `com.transsion.phonemaster` and `com.samsung.android.lool`. *Test:* `app/test/features/ride/oem_guide_test.dart`. Not checked on a real Transsion or Samsung phone: the activity names come from dontkillmyapp, and each one falls back to app info if it is missing.
+- **#37 Settings reopens the battery guide** — FIXED. The new "Rides keep stopping?" row (`settings_oem_guide_tile.dart`, under Ride tracking) opens `OemGuideScreen` for this phone's brand. It shows only when `currentOemBrand()` returns a covered brand (Android only, never on iOS). EN + BN, with the BN strings queued in `bn_pending_review.txt`. *Test:* `app/test/features/profile/settings_oem_guide_tile_test.dart`.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.
