@@ -49,6 +49,15 @@ test('install page has no links to files public/ does not have', () => {
   assert.ok(fs.existsSync(path.join(ROOT, 'public', 'icon-dark.svg')));
 });
 
+test('live viewer loads unpkg assets with SRI (security sweep D4)', () => {
+  const tags = read('public/live-viewer.html').match(/<(?:script|link)\b[^>]*unpkg\.com[^>]*>/g) || [];
+  assert.ok(tags.length >= 2, 'expected the Leaflet css and js tags');
+  for (const tag of tags) {
+    assert.match(tag, /integrity="sha384-[A-Za-z0-9+/=]+"/, tag);
+    assert.match(tag, /crossorigin="anonymous"/, tag);
+  }
+});
+
 test('install page claims only what is true (CrtiQue_Oct15 N4)', () => {
   const html = read('public/install/index.html');
   // The old iOS "waitlist" kept emails in the visitor's own browser and said

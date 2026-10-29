@@ -2464,10 +2464,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get publicLiveLinkPasswordBody =>
-      'আপনার লিংক খুলতে এই পাসওয়ার্ড দিতে হবে। কমপক্ষে 8 অক্ষর দিন, আর শুধু বিশ্বস্ত মানুষদের জানান। নতুন পাসওয়ার্ড দিলে পুরনোটা আর কাজ করবে না।';
+      'আপনার লিংক খুলতে এই পাসওয়ার্ড দিতে হবে। কমপক্ষে 12 অক্ষর দিন, আর শুধু বিশ্বস্ত মানুষদের জানান। নতুন পাসওয়ার্ড দিলে পুরনোটা আর কাজ করবে না।';
 
   @override
-  String get publicLiveLinkPasswordTooShort => 'কমপক্ষে 8 অক্ষর দিন।';
+  String get publicLiveLinkPasswordTooShort => 'কমপক্ষে 12 অক্ষর দিন।';
 
   @override
   String get publicLiveLinkChangePassword => 'পাসওয়ার্ড বদলান';

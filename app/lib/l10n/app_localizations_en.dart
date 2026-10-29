@@ -2456,10 +2456,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get publicLiveLinkPasswordBody =>
-      'Anyone opening your link must enter this. Use at least 8 characters and share it only with people you trust. A new password turns the old one off.';
+      'Anyone opening your link must enter this. Use at least 12 characters and share it only with people you trust. A new password turns the old one off.';
 
   @override
-  String get publicLiveLinkPasswordTooShort => 'Use at least 8 characters.';
+  String get publicLiveLinkPasswordTooShort => 'Use at least 12 characters.';
 
   @override
   String get publicLiveLinkChangePassword => 'Change password';
