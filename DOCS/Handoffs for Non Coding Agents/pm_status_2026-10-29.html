@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ThrottleIQ: PM status and priorities (2026-10-29)</title>
+<style>
+  :root {
+    --bg:#fafaf8; --card:#fff; --ink:#1c1c1a; --muted:#5f5f5a; --line:#e3e2dc;
+    --p0:#b42318; --p1:#b54708; --p2:#3e5c76; --ok:#1e7a46; --chip:#f0efe9;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141413; --card:#1d1d1b; --ink:#ecebe6; --muted:#a3a29b; --line:#33322f;
+      --p0:#f97066; --p1:#fdb022; --p2:#8fb3d4; --ok:#5fd18f; --chip:#2a2a27; }
+  }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif }
+  main { max-width:980px; margin:0 auto; padding:40px 20px 80px }
+  h1 { font-size:28px; margin:0 0 4px; letter-spacing:-.01em }
+  h2 { font-size:19px; margin:44px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--line) }
+  h3 { font-size:15px; margin:0 0 4px }
+  p { margin:6px 0 }
+  .sub { color:var(--muted); margin-bottom:24px }
+  .tldr { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--p0);
+    border-radius:8px; padding:16px 20px }
+  .tldr p { margin:6px 0 }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:12px; margin-top:20px }
+  .kpi { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 14px }
+  .kpi b { display:block; font-size:22px; font-variant-numeric:tabular-nums }
+  .kpi span { color:var(--muted); font-size:13px }
+  table { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line);
+    border-radius:8px; overflow:hidden; font-size:14px }
+  th, td { text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top }
+  th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); background:var(--chip) }
+  tr:last-child td { border-bottom:0 }
+  .g { color:var(--ok); font-weight:600 } .y { color:var(--p1); font-weight:600 } .r { color:var(--p0); font-weight:600 }
+  .tier { margin-top:18px; display:grid; gap:10px }
+  .item { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:12px 16px;
+    display:grid; grid-template-columns:44px 1fr; gap:12px }
+  .n { font-weight:700; font-size:13px; border-radius:6px; text-align:center; padding:4px 0; height:fit-content; color:#fff }
+  .P0 .n { background:var(--p0) } .P1 .n { background:var(--p1) } .P2 .n { background:var(--p2) }
+  @media (prefers-color-scheme: dark) { .n { color:#141413 } }
+  .meta { color:var(--muted); font-size:13px; margin-top:4px }
+  .tag { display:inline-block; background:var(--chip); border-radius:4px; padding:0 6px; font-size:12px; margin-right:4px }
+  .lbl { font-weight:700; font-size:13px; letter-spacing:.03em; text-transform:uppercase; margin-top:26px }
+  .P0l { color:var(--p0) } .P1l { color:var(--p1) } .P2l { color:var(--p2) }
+  ul { margin:6px 0; padding-left:20px } li { margin:3px 0 }
+  code { font:13px ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--chip); padding:0 4px; border-radius:3px }
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:14px }
+  @media (max-width:700px) { .two { grid-template-columns:1fr } }
+  .box { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:14px 16px }
+  footer { color:var(--muted); font-size:13px; margin-top:40px }
+</style>
+</head>
+<body>
+<main>
+
+<h1>ThrottleIQ: where we are and what to do next</h1>
+<div class="sub">Product manager view · 29 Oct 2026 · Budget: <b>$0, free tiers only</b> ·
+Sources: <code>HANDOFF_Document.md</code>, <code>needs_attention.md</code>, <code>issues_open.md</code>, <code>judge.md</code>, git log</div>
+
+<div class="tldr">
+  <p><b>In short:</b> the product is far ahead of its users. October had 441 commits and about 2,300 passing tests,
+  but the last build on Google Play is from <b>29 August</b>. Builds +32, +33 and +34 were made and never uploaded,
+  and almost nothing on <code>main</code> has run on a real phone.</p>
+  <p><b>What to do:</b> stop adding features for two weeks. Test on a phone, ship one build to a Play closed test,
+  and get 10–15 real riders onto it. The free Firebase plan (Spark) fits a beta that size. Leave everything
+  that costs money for after riders show they come back.</p>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><b>40%</b><span>Launch-readiness score (<code>judge.md</code>, was 45%)</span></div>
+  <div class="kpi"><b>Aug 29</b><span>Last build on Play (internal track, <code>beta.1+3</code>)</span></div>
+  <div class="kpi"><b>3</b><span>Finished builds never uploaded (+32, +33, +34)</span></div>
+  <div class="kpi"><b>~53</b><span>Accounts in production (from the email migration)</span></div>
+  <div class="kpi"><b>~18</b><span>Daily riders before Spark reads run out (measured before the §104 read savings)</span></div>
+  <div class="kpi"><b>0</b><span>Riders interviewed so far (owner item #6)</span></div>
+</div>
+
+<h2>1. Current status</h2>
+<table>
+  <tr><th>Area</th><th>State</th><th>Notes</th></tr>
+  <tr><td>Core app (ride, garage, maintenance, places, social, group rides, EN/BN)</td><td class="g">Built</td>
+      <td>Wide feature set. New on 29 Oct: ride replay, Year in Review, GPX import.</td></tr>
+  <tr><td>Quality gate</td><td class="g">Strong</td><td>About 2,300 Flutter tests, 387 rules tests, CI on every PR.</td></tr>
+  <tr><td>Real-device testing</td><td class="r">Missing</td><td>Background recording, offline, auto-tracking, group ride and widgets have not been tested on a real phone. The simulator E2E test mostly checks launch.</td></tr>
+  <tr><td>Distribution</td><td class="r">Stalled</td><td>No public Play listing. No iOS build (personal Apple team only). Release notes on GitHub only.</td></tr>
+  <tr><td>Firestore rules, indexes, Hosting</td><td class="g">Live</td><td>Deployed 27–29 Oct, including the vote <code>uid</code> backfill and the admin claim.</td></tr>
+  <tr><td>Cloud Functions</td><td class="y">Blocked</td><td>They need Blaze (a card on file). Account deletion is handled by hand within 30 days.</td></tr>
+  <tr><td>Crash detection</td><td class="y">Shadow mode</td><td>Not calibrated, alerts nobody. Marketing must not claim it.</td></tr>
+  <tr><td>Legal / compliance</td><td class="r">Weak</td><td>Scraped Google Maps places in production (ToS risk), no Terms of Service, <code>privacy.html</code> is behind the app, Data Safety form not filled.</td></tr>
+  <tr><td>Market validation</td><td class="r">None</td><td>No rider count, no retention data, no interviews.</td></tr>
+  <tr><td>Indriyo (rear camera HUD), Mayabi (partner kit)</td><td class="y">Side bets</td><td>Indriyo is off by default and has never run with a real camera. Mayabi lives on its own branch.</td></tr>
+</table>
+
+<h2>2. What "free tiers only" means here</h2>
+<div class="two">
+  <div class="box">
+    <h3 class="g">Free, use it</h3>
+    <ul>
+      <li>Firebase Spark: Firestore (50k reads / 20k writes a day), Auth, Hosting, Analytics, Crashlytics</li>
+      <li>App Check with Play Integrity (free in normal volume)</li>
+      <li>Google Play: the developer account is already paid for</li>
+      <li>Cloudinary free tier (add a size cap); Thunderforest tiles, 150k a month</li>
+      <li>GitHub Actions, CodeQL, secret scanning, Dependabot</li>
+      <li>Kaggle / Colab free GPUs if Indriyo training restarts</li>
+    </ul>
+  </div>
+  <div class="box">
+    <h3 class="r">Costs money, defer</h3>
+    <ul>
+      <li><b>Blaze</b>: $0 at today's use, but it needs a card and has no hard spending cap. Wait for a trigger (below).</li>
+      <li><b>Apple Developer</b> ($99/yr): iOS stays on the founder's phone</li>
+      <li><b>Lawyer</b> (ToS, PDPO, CLA): hold the contributor announcement until then</li>
+      <li><b>Apify</b> (up to $10/mo): turn it off; Facebook research is done</li>
+      <li><b>Contributor T-shirts</b> (costing draft): park</li>
+      <li>SMS provider for crash alerts: not before calibration anyway</li>
+    </ul>
+  </div>
+</div>
+<p class="meta">Move to Blaze when one of these happens: daily riders pass about 15 (Spark's ceiling is close), deletion requests become regular,
+or the Play / App Store review requires in-app account deletion that runs on the server.</p>
+
+<h2>3. Priority list</h2>
+
+<div class="lbl P0l">P0 · This week: ship a build to real riders</div>
+<div class="tier P0">
+  <div class="item"><div class="n">1</div><div>
+    <h3>Freeze features on <code>main</code></h3>
+    <p>Bug fixes only until the beta build ships. Nothing new from the parallel lanes. Close or park the 37 GitHub contributor issues that add features.</p>
+    <div class="meta"><span class="tag">Owner decision</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">2</div><div>
+    <h3>Test the core ride on two phones</h3>
+    <p>The owner's iPhone plus any Android phone: a 10+ minute ride with the screen locked, swipe the app away mid-ride, end a ride offline, share with a photo,
+    the critique checklist (vote, comment, follow a forum). Write down what breaks. Fix only those bugs.</p>
+    <div class="meta"><span class="tag">Owner #5</span><span class="tag">Critique checklist</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">3</div><div>
+    <h3>Remove the scraped Google Maps places</h3>
+    <p>717 places scraped from Google Maps are the biggest legal risk, and they made each places fetch read 2.4× more. The revert script is ready
+    (<code>scripts/oneoff/revert_google_places.js</code>). Run it with dry run first.</p>
+    <div class="meta"><span class="tag">Owner #1</span> Cost: $0 · lowers Spark reads</div></div></div>
+  <div class="item"><div class="n">4</div><div>
+    <h3>Get App Check ready without enforcing it</h3>
+    <p>Register Play Integrity so the Play build doesn't block itself (it has the sideload gate). Don't enforce yet.
+    Check that the two <code>posts</code> indexes show Enabled and that the quota alert emails arrive.</p>
+    <div class="meta"><span class="tag">Owner #17 #32 #50 #24</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">5</div><div>
+    <h3>Upload one fresh build to a Play closed test</h3>
+    <p>Build +35 from the frozen <code>main</code> (run <code>pod install</code> for <code>file_selector</code> first). Fill the Data Safety form from the draft CSV
+    (tick Health info for SafeQR). Fix the <code>privacy.html</code> gaps and deploy Hosting. Then move to the closed test track and add testers.</p>
+    <div class="meta"><span class="tag">Owner #26 #4 #8 #46</span> Cost: $0</div></div></div>
+</div>
+
+<div class="lbl P1l">P1 · Next 2–3 weeks: learn whether riders come back</div>
+<div class="tier P1">
+  <div class="item"><div class="n">6</div><div>
+    <h3>Recruit 10–15 beta riders and talk to five</h3>
+    <p>Recruit from the Dhaka Facebook bike groups you already studied, and from friends who commute. Fifteen is about what Spark can carry. Ask:
+    what made you open it again? What did you expect that wasn't there?</p>
+    <div class="meta"><span class="tag">Owner #6</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">7</div><div>
+    <h3>Post the BRTA front number plate guide before 15 Nov</h3>
+    <p>This was the top topic in the bike groups, and it stops being useful after the deadline. A forum post and poster that link to the closed test is free reach.</p>
+    <div class="meta"><span class="tag">Owner #35</span> Cost: $0 · <b>deadline 15 Nov</b></div></div></div>
+  <div class="item"><div class="n">8</div><div>
+    <h3>Set three success metrics and watch them</h3>
+    <p>Suggested: share of week-1 riders who ride again in week 2, rides per active rider per week, and crash-free sessions. Use Firebase Analytics and Crashlytics, both free.
+    Confirm the PRD §10 targets.</p>
+    <div class="meta"><span class="tag">PRD §10</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">9</div><div>
+    <h3>Close the free security gaps</h3>
+    <p>Rotate the Apify token and move keys out of the Drive-synced repo. Commit the gitleaks / osv-scanner workflow and make the CI checks required.
+    Turn on secret scanning. Put a size cap on the Cloudinary preset.</p>
+    <div class="meta"><span class="tag">Owner #9 #55 #16 #11 #49</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">10</div><div>
+    <h3>Bangla review from a beta rider</h3>
+    <p>Ask a native-speaker tester to read <code>bn_pending_review.txt</code> and the store listing, and thank them in the app credits.</p>
+    <div class="meta"><span class="tag">Owner #12 #28</span> Cost: $0</div></div></div>
+  <div class="item"><div class="n">11</div><div>
+    <h3>Once most riders have updated: raise minBuild and clean up</h3>
+    <p>Set <code>config/app.minBuild</code> to the beta build, then have an agent do the §115 cleanup and remove the legacy likes rule. Re-run the vote backfill.</p>
+    <div class="meta"><span class="tag">Owner #56 #45</span> Cost: $0</div></div></div>
+</div>
+
+<div class="lbl P2l">P2 · Park until the beta data says otherwise</div>
+<div class="tier P2">
+  <div class="item"><div class="n">12</div><div>
+    <h3>Blaze upgrade</h3>
+    <p>Do it when one of the triggers in section 2 happens. The code it unblocks (deletion, data retention, signed uploads) is already written.</p>
+    <div class="meta"><span class="tag">Owner #3</span> Needs a card</div></div></div>
+  <div class="item"><div class="n">13</div><div>
+    <h3>Crash detection calibration</h3>
+    <p>The free part can start any time: phyphox recordings on the bike. Alerts need Blaze plus an SMS provider, so they wait.</p>
+    <div class="meta"><span class="tag">§78.1</span></div></div></div>
+  <div class="item"><div class="n">14</div><div>
+    <h3>Contributor program, ToS, lawyer</h3>
+    <p>Don't post the outreach until a lawyer has read LICENSE §1A and the CLA. Until then, accept PRs quietly.</p>
+    <div class="meta"><span class="tag">Owner #53 #54</span> Costs money</div></div></div>
+  <div class="item"><div class="n">15</div><div>
+    <h3>iOS / App Store</h3>
+    <p>$99 a year. Revisit once the Android beta keeps riders.</p>
+    <div class="meta"><span class="tag">Owner #21</span> Costs money</div></div></div>
+  <div class="item"><div class="n">16</div><div>
+    <h3>Side bets: Indriyo training, Mayabi pilot, unused Realtime Database code</h3>
+    <p>None of them helps the beta. Recommendation: move the Realtime Database code to a branch (#57), and pause Indriyo dataset work (#58, #59) and the Maya pilot (#7)
+    until the core loop works.</p>
+    <div class="meta"><span class="tag">Owner #57 #58 #59 #7</span></div></div></div>
+</div>
+
+<h2>4. Risks to watch</h2>
+<table>
+  <tr><th>Risk</th><th>Why it matters</th><th>Free mitigation</th></tr>
+  <tr><td>Spark read quota</td><td>About 18 daily riders and the app stops syncing for the day</td><td>Outage mode is built. Removing the Google places lowers reads. Cap the beta at about 15 riders.</td></tr>
+  <tr><td>Too much scope for one builder</td><td>441 commits in a month, and almost none of it tested on a phone</td><td>Feature freeze (P0 #1). Every new feature needs a rider asking for it.</td></tr>
+  <tr><td>Play review</td><td>Background location and full-screen intent declarations, Data Safety form, no in-app server-side deletion</td><td>Draft declarations exist. The manual deletion runbook and the email are already in the privacy policy.</td></tr>
+  <tr><td>Overclaiming safety</td><td>Crash detection alerts nobody</td><td>Keep it out of all copy (already the rule).</td></tr>
+  <tr><td>Secrets in a Drive-synced folder</td><td>The keystore and service account keys sit in a folder that syncs to the cloud</td><td>Move them out (P1 #9).</td></tr>
+</table>
+
+<footer>Item numbers (#N) match the owner page <code>~/Everything/dev/housekeeping/owner_works_now.html</code> and <code>needs_attention.md</code>.
+Rider count, retention and Spark headroom after the §104 savings are not measured. They are estimates or unknown.</footer>
+</main>
+</body>
+</html>
