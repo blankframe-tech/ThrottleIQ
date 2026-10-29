@@ -39,14 +39,19 @@ class GarageScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header: profile summary (tap for Profile / My Places / My
-            // Shared Rides), then Notifications and Settings — the two
-            // account-level actions RecordScreen used to carry.
+            // Shared Rides), then the follow QR, Notifications and Settings.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                   AppDimensions.paddingMd, 12, AppDimensions.paddingMd, 4),
               child: Row(
                 children: [
                   const Expanded(child: _ProfileSummary()),
+                  // The follow-QR screen links on to the scanner.
+                  IconButton(
+                    onPressed: () => context.push('/profile/qr'),
+                    icon: const Icon(Icons.qr_code_2),
+                    tooltip: context.l10n.myQrTitle,
+                  ),
                   NotificationBellButton(
                       unreadCount: ref.watch(unreadNotificationCountProvider)),
                   IconButton(
