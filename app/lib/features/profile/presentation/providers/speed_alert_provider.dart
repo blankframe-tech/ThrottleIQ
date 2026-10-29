@@ -38,3 +38,30 @@ class OverspeedLimitNotifier extends StateNotifier<double> {
   /// Speed threshold in m/s for domain calculators.
   double get thresholdMs => state / 3.6;
 }
+
+const String _prefsAlertFlash = 'settings_alert_flash';
+
+/// Whether the cockpit tints the map on hard braking, rapid acceleration,
+/// overspeed and fatigue. On by default.
+final alertFlashProvider =
+    StateNotifierProvider<AlertFlashNotifier, bool>((ref) {
+  return AlertFlashNotifier();
+});
+
+class AlertFlashNotifier extends StateNotifier<bool> {
+  AlertFlashNotifier() : super(true) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getBool(_prefsAlertFlash);
+    if (saved != null && mounted) state = saved;
+  }
+
+  Future<void> setEnabled(bool on) async {
+    state = on;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_prefsAlertFlash, on);
+  }
+}

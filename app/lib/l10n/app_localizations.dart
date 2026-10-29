@@ -1052,6 +1052,18 @@ abstract class AppLocalizations {
   /// **'Haptic and visual alert when exceeding this speed'**
   String get overspeedSettingSubtitle;
 
+  /// Settings toggle: tint the ride screen on hard braking, rapid acceleration, overspeed and fatigue.
+  ///
+  /// In en, this message translates to:
+  /// **'Flash the map on alerts'**
+  String get alertFlashSettingTitle;
+
+  /// Subtitle of the cockpit alert flash toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Tints the ride screen on hard braking, overspeed and fatigue'**
+  String get alertFlashSettingSubtitle;
+
   /// Advisory note for iOS users about app lifecycle constraint.
   ///
   /// In en, this message translates to:

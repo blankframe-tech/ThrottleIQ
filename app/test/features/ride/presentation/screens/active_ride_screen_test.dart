@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
+import 'package:throttleiq/features/ride/domain/calculators/event_detector.dart';
 import 'package:throttleiq/features/ride/presentation/providers/jam_label_provider.dart';
 import 'package:throttleiq/features/ride/presentation/providers/live_ride_places_provider.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
@@ -62,8 +63,9 @@ class _NoPlaces extends StateNotifier<List<PlaceEntity>>
 void main() {
   late _FakeRecorder recorder;
 
-  Future<void> pump(WidgetTester tester, RideRecordingState initial) async {
-    SharedPreferences.setMockInitialValues({});
+  Future<void> pump(WidgetTester tester, RideRecordingState initial,
+      {Map<String, Object> prefs = const {}}) async {
+    SharedPreferences.setMockInitialValues(prefs);
     tester.view.physicalSize = const Size(420, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
@@ -228,5 +230,22 @@ void main() {
       (tester) async {
     await pump(tester, const RideRecordingState());
     expect(find.text('Record tab'), findsOneWidget);
+  });
+
+  group('alert flash (#32)', () {
+    const braking = RideRecordingState(
+        status: RecordingStatus.active, activeAlert: RideAlert.hardBraking);
+    final overlay = find.byKey(const Key('alertFlashOverlay'));
+
+    testWidgets('on by default: hard braking flashes the map', (tester) async {
+      await pump(tester, braking);
+      expect(overlay, findsOneWidget);
+    });
+
+    testWidgets('turned off in Settings: no flash overlay', (tester) async {
+      await pump(tester, braking, prefs: {'settings_alert_flash': false});
+      expect(overlay, findsNothing);
+      expect(find.text('Pause'), findsOneWidget);
+    });
   });
 }

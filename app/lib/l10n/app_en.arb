@@ -704,6 +704,14 @@
   "@overspeedSettingSubtitle": {
     "description": "Subtitle explaining the overspeed alert."
   },
+  "alertFlashSettingTitle": "Flash the map on alerts",
+  "@alertFlashSettingTitle": {
+    "description": "Settings toggle: tint the ride screen on hard braking, rapid acceleration, overspeed and fatigue."
+  },
+  "alertFlashSettingSubtitle": "Tints the ride screen on hard braking, overspeed and fatigue",
+  "@alertFlashSettingSubtitle": {
+    "description": "Subtitle of the cockpit alert flash toggle."
+  },
   "iosAutoTrackingAdvisory": "For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.",
   "@iosAutoTrackingAdvisory": {
     "description": "Advisory note for iOS users about app lifecycle constraint."

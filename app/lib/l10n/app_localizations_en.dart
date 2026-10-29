@@ -546,6 +546,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Haptic and visual alert when exceeding this speed';
 
   @override
+  String get alertFlashSettingTitle => 'Flash the map on alerts';
+
+  @override
+  String get alertFlashSettingSubtitle =>
+      'Tints the ride screen on hard braking, overspeed and fatigue';
+
+  @override
   String get iosAutoTrackingAdvisory =>
       'For uninterrupted ride detection on iOS, keep ThrottleIQ in the background rather than force-closing it from the app switcher.';
 

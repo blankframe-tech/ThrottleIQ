@@ -546,6 +546,13 @@ class AppLocalizationsBn extends AppLocalizations {
       'এই গতি অতিক্রম করলে হ্যাপটিক ও ভিজ্যুয়াল সতর্কতা';
 
   @override
+  String get alertFlashSettingTitle => 'সতর্কতায় ম্যাপে ঝলক';
+
+  @override
+  String get alertFlashSettingSubtitle =>
+      'জোরে ব্রেক, অতিরিক্ত গতি আর ক্লান্তিতে রাইড স্ক্রিনে রঙের ঝলক দেখায়';
+
+  @override
   String get iosAutoTrackingAdvisory =>
       'iOS-এ নিরবচ্ছিন্ন রাইড শনাক্তকরণের জন্য অ্যাপ সুইচার থেকে সোয়াইপ করে বন্ধ না করে থ্রটলআইকিউ ব্যাকগ্রাউন্ডে চালু রাখুন।';
 

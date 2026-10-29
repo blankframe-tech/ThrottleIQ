@@ -5,6 +5,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../ride/presentation/widgets/auto_tracking_tile.dart';
 import '../widgets/settings_account_actions.dart';
+import '../widgets/settings_alert_flash_tile.dart';
 import '../widgets/settings_appearance_section.dart';
 import '../widgets/settings_emergency_contacts_section.dart';
 import '../widgets/settings_language_section.dart';
@@ -54,6 +55,8 @@ class SettingsScreen extends ConsumerWidget {
                 const AutoTrackingScheduleTile(),
                 const SizedBox(height: 12),
                 const SettingsOverspeedLimitTile(),
+                const SizedBox(height: 12),
+                const SettingsAlertFlashTile(),
                 const SettingsOemGuideTile(),
                 const SizedBox(height: 24),
               ],

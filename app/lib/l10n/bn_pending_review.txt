@@ -1673,3 +1673,6 @@ oemGuideOpenBatterySettings
 # batch: Settings reopens battery guide (2026-10-29)
 oemGuideSettingsTitle
 oemGuideSettingsSubtitle
+# batch: cockpit alert flash toggle (2026-10-29)
+alertFlashSettingTitle
+alertFlashSettingSubtitle
