@@ -69,7 +69,7 @@ function stagingBlock() {
   assert.doesNotMatch(sh, /git add (\.|--all)(\s|$)/);
   const start = sh.indexOf('UNTRACKED_FILES=');
   assert.ok(start >= 0, 'deploy.sh must check for untracked files before committing');
-  const end = sh.indexOf('\nfi\n', sh.indexOf('git add -u', start));
+  const end = sh.indexOf('\nfi\n', sh.indexOf('git add app/pubspec.yaml', start));
   assert.ok(end > start, 'staging block not found');
   // Stop before the commit so the test never creates commits.
   return sh.slice(start, end).replace(/\n\s*git commit[^\n]*/, '') + '\nfi\n';
@@ -81,8 +81,10 @@ function scratchRepo() {
   git('init', '-q');
   git('config', 'user.email', 't@example.com');
   git('config', 'user.name', 't');
-  fs.writeFileSync(path.join(dir, 'pubspec.yaml'), 'version: 1\n');
-  git('add', 'pubspec.yaml');
+  fs.mkdirSync(path.join(dir, 'app'));
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 1\n');
+  fs.writeFileSync(path.join(dir, 'README.md'), 'x\n');
+  git('add', '.');
   git('commit', '-qm', 'init');
   return { dir, git };
 }
@@ -90,7 +92,7 @@ function scratchRepo() {
 test('deploy.sh staging aborts when there are untracked files', () => {
   const block = stagingBlock();
   const { dir, git } = scratchRepo();
-  fs.writeFileSync(path.join(dir, 'pubspec.yaml'), 'version: 2\n');
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 2\n');
   fs.writeFileSync(path.join(dir, '.env.production'), 'SECRET=1\n');
   const r = spawnSync('bash', ['-euo', 'pipefail', '-c', block], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 1, r.stdout + r.stderr);
@@ -98,13 +100,24 @@ test('deploy.sh staging aborts when there are untracked files', () => {
   assert.equal(git('diff', '--cached', '--name-only').trim(), '');
 });
 
-test('deploy.sh staging stages only tracked changes on a clean-untracked tree', () => {
+test('deploy.sh staging aborts when other tracked files are dirty', () => {
   const block = stagingBlock();
   const { dir, git } = scratchRepo();
-  fs.writeFileSync(path.join(dir, 'pubspec.yaml'), 'version: 2\n');
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 2\n');
+  fs.writeFileSync(path.join(dir, 'README.md'), 'changed\n');
+  const r = spawnSync('bash', ['-euo', 'pipefail', '-c', block], { cwd: dir, encoding: 'utf8' });
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  assert.match(r.stdout, /README\.md/);
+  assert.equal(git('diff', '--cached', '--name-only').trim(), '');
+});
+
+test('deploy.sh staging stages only the version bump', () => {
+  const block = stagingBlock();
+  const { dir, git } = scratchRepo();
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 2\n');
   const r = spawnSync('bash', ['-euo', 'pipefail', '-c', block], { cwd: dir, encoding: 'utf8' });
   assert.equal(r.status, 0, r.stdout + r.stderr);
-  assert.equal(git('diff', '--cached', '--name-only').trim(), 'pubspec.yaml');
+  assert.equal(git('diff', '--cached', '--name-only').trim(), 'app/pubspec.yaml');
 });
 
 test('CI workflow is read-only and pins firebase-tools', () => {

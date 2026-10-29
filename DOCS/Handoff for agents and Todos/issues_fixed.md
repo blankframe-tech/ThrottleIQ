@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
+
+`5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.
+
+---
+
 ## 119. Play Console flagged the deprecated SafetyNet SDK — FIXED (2026-10-28, uncommitted)
 
 Play Console SDK note (8 Oct, on build 21; every later build too): `play-services-safetynet:18.0.0` is deprecated. *Cause:* `firebase_app_check` 0.3.2+10 always bundled `firebase-appcheck-safetynet:16.1.2`, even though the app only ever used Play Integrity (`lib/main.dart`). *Fix:* moved every Firebase plugin up exactly one major version, to the `firebase_core` 4.x / Android BoM 34 line, which drops SafetyNet: core 4.15.2, auth 6.7.1, cloud_firestore 6.10.2, crashlytics 5.4.1, database 12.6.1, analytics 12.6.1, app_check 0.4.9, and dev deps fake_cloud_firestore 4.4.0 (4.1.1 can't compile against cloud_firestore 6.10's generic `WriteBatch.update`) and firebase_core_platform_interface ^8.0.0. *Trap:* keep the dev pin on platform interface 8.x. With `^7`, pub picks mid-line releases (e.g. cloud_firestore 6.7.0, auth 6.5.5) that extend `FirebasePlugin`, a class that only exists in platform interface 8.x even though their pubspecs allow 7.1.0. `flutter analyze` stays clean, but every test fails to compile. `google_sign_in` stays on 6.x. `_activateAppCheck` moves to the new `providerAndroid` / `providerApple` provider classes (same providers as before). We skipped the 5.x line (iOS SDK 13, minSdk 24) on purpose. Not yet checked on a device: sign-in, App Check token, Firestore sync, and a crash report on a real build. The Play note clears once a build with this change is uploaded.
