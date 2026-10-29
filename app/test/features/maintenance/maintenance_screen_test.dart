@@ -83,7 +83,8 @@ void main() {
                 onboardedAt: now,
               )
             : null)),
-        isMaintenanceCustomizedProvider.overrideWith((ref, id) async => onboarded),
+        isMaintenanceCustomizedProvider
+            .overrideWith((ref, id) async => onboarded),
         bikeUsageProvider.overrideWith((ref, id) async => const BikeUsage(
             UsageStats(
               avgDailyKm: 30,
@@ -132,7 +133,8 @@ void main() {
 
     expect(find.text('UP NEXT'), findsOneWidget);
     expect(find.byKey(const Key('heroDoneIt')), findsOneWidget);
-    expect(find.textContaining('NEEDS ATTENTION'), findsOneWidget); // labels are upper-cased
+    expect(find.textContaining('NEEDS ATTENTION'),
+        findsOneWidget); // labels are upper-cased
     expect(find.text('Chain'), findsWidgets); // quick-check issue row
     expect(find.text('Service visit'), findsOneWidget); // 3-item visit
     expect(find.text('Rahim Motors', findRichText: true), findsNothing);
@@ -143,10 +145,10 @@ void main() {
     expect(find.textContaining('Dusty or wet roads'), findsWidgets);
   });
 
-  testWidgets('log a visit: due items pre-ticked, bundles, oil details', (tester) async {
+  testWidgets('log a visit: due items pre-ticked, bundles, oil details',
+      (tester) async {
     await pump(tester,
-        onboarded: true,
-        screen: const AddMaintenanceLogScreen(bikeId: 'b1'));
+        onboarded: true, screen: const AddMaintenanceLogScreen(bikeId: 'b1'));
     expect(tester.takeException(), isNull);
     expect(find.text('Log a visit'), findsOneWidget);
     expect(find.text('General servicing'), findsOneWidget);
@@ -158,16 +160,36 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('log a visit warns, without blocking, on a low odometer (#40)',
+      (tester) async {
+    await pump(tester,
+        onboarded: true, screen: const AddMaintenanceLogScreen(bikeId: 'b1'));
+    const warning = "Lower than an earlier visit's reading. "
+        'If the odometer was replaced, you can still save.';
+    await tester.enterText(find.byKey(const Key('visitOdometer')), '20000');
+    await tester.pump();
+    expect(find.text(warning), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('visitOdometer')), '5000');
+    await tester.pump();
+    expect(find.text(warning), findsOneWidget);
+    // A warning, not a validation error: the form still validates.
+    final form = tester.state<FormState>(find.byType(Form));
+    expect(form.validate(), isTrue);
+  });
+
   testWidgets('setup screen renders the suggested schedule', (tester) async {
     await pump(tester,
         onboarded: false, screen: const MaintenanceSetupScreen(bikeId: 'b1'));
     expect(tester.takeException(), isNull);
     expect(find.text('Bajaj Pulsar 150'), findsWidgets); // bike + schedule
-    expect(find.text('FROM THE MANUAL'), findsOneWidget); // pills are upper-cased
+    expect(
+        find.text('FROM THE MANUAL'), findsOneWidget); // pills are upper-cased
     expect(find.byKey(const Key('setupSave')), findsOneWidget);
   });
 
-  testWidgets('part detail renders history and interval source', (tester) async {
+  testWidgets('part detail renders history and interval source',
+      (tester) async {
     await pump(tester,
         onboarded: true,
         screen: const CheckDetailScreen(bikeId: 'b1', checkKey: 'oilChange'));
@@ -176,7 +198,27 @@ void main() {
     expect(find.text('HISTORY'), findsOneWidget);
   });
 
-  testWidgets('a bike that was never set up gets the setup card', (tester) async {
+  testWidgets('day moves on at midnight and on resume (#59)', (tester) async {
+    var clock = DateTime(2026, 3, 9, 23, 59, 30);
+    await pump(tester,
+        onboarded: true,
+        screen: MaintenanceScreen(bikeId: 'b1', clock: () => clock));
+    final container = ProviderScope.containerOf(
+        tester.element(find.byType(MaintenanceScreen)));
+    expect(container.read(maintenanceTodayProvider), DateTime(2026, 3, 9));
+
+    clock = DateTime(2026, 3, 10, 0, 0, 1);
+    await tester.pump(const Duration(seconds: 31));
+    expect(container.read(maintenanceTodayProvider), DateTime(2026, 3, 10));
+
+    clock = DateTime(2026, 3, 12, 8);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    expect(container.read(maintenanceTodayProvider), DateTime(2026, 3, 12));
+  });
+
+  testWidgets('a bike that was never set up gets the setup card',
+      (tester) async {
     await pump(tester, onboarded: false);
     expect(tester.takeException(), isNull);
     expect(find.byKey(const Key('maintenanceSetupCard')), findsOneWidget);

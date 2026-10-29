@@ -561,9 +561,6 @@ part of the Bangla review in `needs_attention.md`. Still open:
     sync or a reinstall (credits are local) can push "km at add" past 500, and
     never-logged checks then flip to "unknown". Fix: store the odometer reading
     at add time.
-  - Receipt image files aren't deleted with their visit (no delete path found 2026-10-22).
-  - A page left open past midnight shows yesterday's day counts until something
-    refreshes it.
   - The home-screen widget text is English and km-only (`home_widget_service.dart`). Alerts
     follow the km/mi choice since §101.R10.
   - On a fresh install, paperwork added *before* the first sync restores still
@@ -635,9 +632,9 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
   legacy `rides` indexes. Remove them only together with an index deploy (§84).
 - **101.C9** outbox `next_attempt_at` is stored as local time (needs a compat read); the router
   treats auth loading/error as signed out; some notification channel names are English.
-- **101.R2** no warning when a log's odometer is below the previous one. **101.R3**
-  `latestLogFor` picks the highest odometer, not the latest date (needs a product rule for
-  odometer resets). **101.R5** a tiny `deltaT` inflates jerk. **101.R9** `forecast_strip`
+- **101.R3** `latestLogFor` picks the highest odometer, not the latest date (needs a product
+  rule for odometer resets). (R2 and R5 fixed 2026-10-29, `issues_fixed.md` "Lane G".)
+  **101.R9** `forecast_strip`
   diamond semantics, `_UnitSegment` visual size, the swatch Auto tile reads 'Bike color'.
   **101.R10** the recording clock isn't a `Stopwatch`.
 - **101.A4** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card
@@ -682,11 +679,12 @@ reports a deleted rider filed (S4).
     "Gear" tag. Darkening it would turn the tan into the same brown as `attention`.
   - The forum "Guide" tag draws `primary` on its own tint, at 4.05:1 light. Fixing that at
     token level would darken the brand sage to about `#44674C`.
-  - White on dark `danger` is 3.35:1: the notification badge count, the report submit button,
-    and Material's `onError: Colors.white`. It can't be fixed at token level, because danger
-    must stay light enough to read as text on the dark surfaces. Those widgets need a dark
-    foreground. `onSecondary: Colors.white` is 2.93 light / 3.64 dark, but nothing in lib
-    uses it directly.
+  - White on dark `danger`: badge, report button and `onError` FIXED 2026-10-29 (#42,
+    `issues_fixed.md` "Lane G"). Still white-ish on dark danger: the ~6 error snackbars that set
+    `backgroundColor: palette.danger` (`onInk` text, about 3:1; e.g. `settings_screen.dart`,
+    `report_bottom_sheet.dart` send failure). *Fix:* give them `colorScheme.onError` text, or
+    drop the danger fill. `onSecondary: Colors.white` is 2.93 light / 3.64 dark, but nothing in
+    lib uses it directly.
   - Light `textTertiary` is now 1.10:1 against `textSecondary` (`#66635D`), so the two levels
     differ mostly by size.
   - Light warning and attention are now near-identical dark browns (they were near-twins
@@ -796,7 +794,7 @@ Those six files are deleted (text in git history: `git show 3ebbd21d:"DOCS/Hando
 The five grill files (2026-09-20 critique plus the `claude_sol.md` verification pass) and `issues_solved.md` were deleted. Fixed parts: `issues_fixed.md` §78. Still-open parts were already in §78 and §91. Code comments that say `grill §N` or `claude_sol §N` point into the deleted text; read it with `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/grillings/claude_sol.md"`. Only items checked against the code on 2026-10-22 and found neither fixed nor tracked are listed here. All LOW.
 
 - **108.1 Auto rides: no "Not a motorcycle ride" action.** `auto_ride_reconciler.dart` attributes a bus or car trip to the active bike and calls `incrementStats` at once, even at `bike_confidence='low'`. The daily prompt (`ride_dao.getUnconfirmedAutoRides`, `auto_tracking_provider.dart`) only asks which bike. Fix: add the action (delete the ride, reverse `incrementStats`); defer odometer and maintenance increments until confirmed or 48 h pass; add a bus-pattern and max-speed filter. Source: grill `claude_sol` §2 item 4.2.
-- **108.2 Forum create and reply transactions fail offline.** `app/lib/features/forums/data/repositories/forum_repository.dart` has about 8 `runTransaction` calls (lines 178, 208, 253, 419, 437, 723, 764). Plain writes queue offline, transactions don't. Fix: move counters to `FieldValue.increment` in a batch, or catch `unavailable` and show "You're offline"; don't `await` fire-and-forget writes in UI handlers. Source: `claude_sol` §2 item 2.2.
+- **108.2 Forum transactions fail offline: post and reply FIXED 2026-10-29 (#46, `issues_fixed.md` "Lane G").** Still transactions, so still fail offline (with the mapped "You're offline" text): `followForum`/`unfollowForum`, `votePost`, `createCustomForum`, and creating a forum this phone has never seen. An offline reply now shows after the 8 s `ackOrQueued` wait with no "will post when online" note. The `firestore.rules` comments on the reply counter still say "addReply's transaction" (behaviour unchanged; fix the wording with the next rules change).
 - **108.3 Haversine is copied in about 7 files** beside `app/lib/core/utils/geo_math.dart` (`motion_calculator.dart`, `auto_ride_reconciler.dart`, `daily_ride_summary.dart`, `ride_resume.dart`, `privacy_zone_clipper.dart`, `live_session_coordinator.dart`, `turn_instruction.dart`). Fix: one shared function. Source: `codebase.md` item 6.1 (scoreboard #32).
 - **108.4 The shared-ride detail still shows runner pace.** `shared_ride_detail_screen.dart:358` builds `m'ss" /km`; the ride summary already shows average moving speed. Fix: show km/h there too. Source: `claude_sol` §3 item 3.4.
 - **108.5 No GPX import.** Export exists (`export_service.dart`); import doesn't. Feature idea, not a bug. Source: `other_gaps.md` item 3.4 (scoreboard #38).
@@ -828,13 +826,6 @@ Both critiques were retired on 2026-10-22 (old text: `git show 3ebbd21d:"DOCS/Ha
 Open developer items found while rewriting `HANDOFF_Document.md` that no other section tracks. Owner items went to the owner page; device checks are in the handoff's "Built but never run on a real phone" list.
 
 - **110.4 Admin check still falls back to an email.** `firestore.rules:136-141` (`isAdmin()` accepts a verified `the.abraar.rar@gmail.com` token), plus client copies in `forum_permissions.dart:5` and `jam_label_provider.dart:14`. Nobody recorded running `scripts/oneoff/set_admin_claim.js`, so the `admin` claim may not exist. *Fix:* after the owner sets the claim and signs in again, delete the email branch from `isAdmin()` and its rules tests. Why: admin rights should not depend on one mailbox's address. Source: HANDOFF Key facts, "Admin account" (2026-08-12).
-
-## 111. People tab: suggested-rider cards overflow by 1 px (2026-10-22)
-
-Found by the UI screenshot tour (debug build, iPhone 17 simulator, dark theme). On Social → People, every "Suggested for you" card overflows its fixed-height row by 1 px at the bottom: `A RenderFlex overflowed by 1.00 pixels on the bottom`, once per card. Debug builds draw the yellow-black stripe under the Follow button; release builds clip 1 px of the card instead.
-
-- **Where:** the row is a `SizedBox(height: 140)` in `app/lib/features/social/presentation/screens/social_people_tab.dart:172-173`; the card is `_SuggestedRiderCard` (same file, `:254`), whose column comes out 1 px taller than the row.
-- *Fix:* let the row size to the card (or raise the height by the 1 px, or trim one gap), then check at 1.3× text scale and in Bangla, where the name line runs taller.
 
 ## Cloud Functions audit leftovers, architect to-do #5 (2026-10-22, lane C)
 

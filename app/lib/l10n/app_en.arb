@@ -8723,6 +8723,10 @@
   "@fuelOdometerBelowEarlier": {
     "description": "Fuel form: odometer validation, reading would run backwards."
   },
+  "visitOdometerBelowEarlier": "Lower than an earlier visit's reading. If the odometer was replaced, you can still save.",
+  "@visitOdometerBelowEarlier": {
+    "description": "Log a visit: non-blocking warning under the odometer field when the reading is below an earlier service log for this bike."
+  },
   "fuelOdometerAboveLater": "Higher than a later fill-up's odometer",
   "@fuelOdometerAboveLater": {
     "description": "Fuel form: odometer validation, reading is above a later fill."

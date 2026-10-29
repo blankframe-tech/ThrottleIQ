@@ -1,6 +1,8 @@
 @Timeout(Duration(seconds: 20))
 library;
 
+import 'dart:io';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -50,7 +52,8 @@ void main() {
     return c;
   }
 
-  test('a visit is one entry with many items; editing updates in place', () async {
+  test('a visit is one entry with many items; editing updates in place',
+      () async {
     final c = container();
     final n = c.read(maintenanceProvider('b1').notifier);
     final visitId = await n.saveVisit(VisitDraft(
@@ -68,7 +71,8 @@ void main() {
     var logs = await c.read(maintenanceProvider('b1').future);
     expect(logs, hasLength(3));
     expect(groupVisits(logs).single.totalCost, 1400);
-    final oilId = logs.firstWhere((l) => l.serviceType == ServiceType.oilChange).id;
+    final oilId =
+        logs.firstWhere((l) => l.serviceType == ServiceType.oilChange).id;
 
     await n.updateVisit(
         visitId,
@@ -90,7 +94,8 @@ void main() {
     expect(await MaintenanceDao().deletedIds(), hasLength(2));
   });
 
-  test('deleting a visit tombstones every item and drops queued uploads', () async {
+  test('deleting a visit tombstones every item and drops queued uploads',
+      () async {
     final c = container();
     final n = c.read(maintenanceProvider('b1').notifier);
     final visitId = await n.saveVisit(VisitDraft(
@@ -144,15 +149,18 @@ void main() {
     expect(profile.onboardedAt, isNotNull);
 
     final configs = await c.read(maintenanceConfigProvider('b1').future);
-    final oil = configs.firstWhere((x) => x.serviceType == ServiceType.oilChange);
+    final oil =
+        configs.firstWhere((x) => x.serviceType == ServiceType.oilChange);
     expect(oil.intervalKm, 2500); // semi-synthetic
     expect(oil.baselineKm, 23500);
     // "Everything else at the same time" was not ticked.
-    final air = configs.firstWhere((x) => x.serviceType == ServiceType.airFilter);
+    final air =
+        configs.firstWhere((x) => x.serviceType == ServiceType.airFilter);
     expect(air.hasBaseline, isFalse);
   });
 
-  test('profile and paperwork survive a reinstall via the settings backup', () async {
+  test('profile and paperwork survive a reinstall via the settings backup',
+      () async {
     final c = container();
     await c.read(maintenanceProfileProvider('b1').notifier).completeSetup(
           MaintenanceSetupDraft(template: templateById('generic_mid')),
@@ -174,7 +182,8 @@ void main() {
     await db.delete('bike_maintenance_configs');
     expect(await MaintenanceSettingsSync.bikesMissingSettings('u1'), ['b1']);
 
-    expect(await MaintenanceSettingsSync.applyDownloaded('b1', payload), isTrue);
+    expect(
+        await MaintenanceSettingsSync.applyDownloaded('b1', payload), isTrue);
     expect((await db.query('bike_maintenance_profiles')).single['template_id'],
         'generic_mid');
     expect((await db.query('bike_paperwork')).single['kind'], 'taxToken');
@@ -186,22 +195,61 @@ void main() {
 
   test('quick-check failures become open issues until fixed', () async {
     final c = container();
-    await c.read(precheckIssuesProvider('b1').notifier)
+    await c
+        .read(precheckIssuesProvider('b1').notifier)
         .record([PrecheckItem.chain, PrecheckItem.lights]);
     var issues = await c.read(precheckIssuesProvider('b1').future);
     expect(issues.map((i) => i.item).toSet(),
         {PrecheckItem.chain, PrecheckItem.lights});
     // The same failure again doesn't duplicate an open issue.
-    await c.read(precheckIssuesProvider('b1').notifier)
+    await c
+        .read(precheckIssuesProvider('b1').notifier)
         .record([PrecheckItem.chain]);
     issues = await c.read(precheckIssuesProvider('b1').future);
     expect(issues, hasLength(2));
 
-    await c.read(precheckIssuesProvider('b1').notifier)
+    await c
+        .read(precheckIssuesProvider('b1').notifier)
         .resolve(issues.first.id);
     expect(await c.read(precheckIssuesProvider('b1').future), hasLength(1));
     final profile = await c.read(maintenanceProfileProvider('b1').future);
     expect(profile!.lastPrecheckAt, isNotNull);
+  });
+
+  test('deleting a visit deletes its receipt once no item uses it (#41)',
+      () async {
+    final tmp = await Directory.systemTemp.createTemp('receipts');
+    addTearDown(() => tmp.delete(recursive: true));
+    final receipt = File('${tmp.path}/r.jpg')..writeAsBytesSync([1, 2, 3]);
+    final c = container();
+    final n = c.read(maintenanceProvider('b1').notifier);
+    final visitId = await n.saveVisit(VisitDraft(
+      date: DateTime(2026, 10, 1),
+      odometerKm: 24500,
+      receiptPath: receipt.path,
+      items: const [
+        VisitItemDraft(type: ServiceType.oilChange),
+        VisitItemDraft(type: ServiceType.chain),
+      ],
+    ));
+    final logs = await c.read(maintenanceProvider('b1').future);
+
+    // One item of two: the other still shows the receipt.
+    await n.deleteLog(logs.first.id);
+    expect(receipt.existsSync(), isTrue);
+
+    await n.deleteVisit(visitId);
+    expect(receipt.existsSync(), isFalse);
+
+    // A log whose receipt file is already gone deletes without error.
+    final gone = await n.saveVisit(VisitDraft(
+      date: DateTime(2026, 10, 2),
+      odometerKm: 24600,
+      receiptPath: '${tmp.path}/missing.jpg',
+      items: const [VisitItemDraft(type: ServiceType.tire)],
+    ));
+    await n.deleteVisit(gone);
+    expect(await c.read(maintenanceProvider('b1').future), isEmpty);
   });
 
   test('a custom check can be added, tracked and removed', () async {
@@ -228,8 +276,14 @@ void main() {
         'onboarded_at': DateTime(2026, 9, 1).toIso8601String(),
       },
       'paperwork': [
-        {'kind': 'taxToken', 'expires_on': DateTime(2027, 1, 1).toIso8601String()},
-        {'kind': 'insurance', 'expires_on': DateTime(2027, 2, 1).toIso8601String()},
+        {
+          'kind': 'taxToken',
+          'expires_on': DateTime(2027, 1, 1).toIso8601String()
+        },
+        {
+          'kind': 'insurance',
+          'expires_on': DateTime(2027, 2, 1).toIso8601String()
+        },
       ],
     };
     // Before the restore ran, the rider added insurance (creating a
@@ -256,4 +310,3 @@ void main() {
     expect(papers['insurance'], DateTime(2027, 6, 1).toIso8601String());
   });
 }
-

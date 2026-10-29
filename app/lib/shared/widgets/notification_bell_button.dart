@@ -42,8 +42,8 @@ class NotificationBellButton extends ConsumerWidget {
               child: Text(
                 unreadCount > 9 ? '9+' : '$unreadCount',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.onError,
                     fontSize: 10,
                     fontWeight: FontWeight.w700),
               ),

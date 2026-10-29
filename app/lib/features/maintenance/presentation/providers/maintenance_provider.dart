@@ -485,8 +485,16 @@ final bikeUsageProvider =
 
 /// Every enabled check's forecast, most urgent first. Empty until the bike,
 /// its logs and its checks have loaded.
+/// Today's date. [MaintenanceScreen] moves it on at midnight and on app
+/// resume, so "due in N days" never shows yesterday's count (issue #59).
+final maintenanceTodayProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
+});
+
 final maintenanceForecastProvider =
     Provider.family<List<CheckForecast>, String>((ref, bikeId) {
+  ref.watch(maintenanceTodayProvider); // recompute when the day changes
   final bike = ref
       .watch(garageProvider)
       .valueOrNull

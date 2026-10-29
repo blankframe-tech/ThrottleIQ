@@ -24,14 +24,23 @@ class MotionCalculator {
     required double currentLng,
     required DateTime currentTime,
   }) {
-    final deltaT = currentTime.difference(prev.timestamp).inMilliseconds / 1000.0;
+    final deltaT =
+        currentTime.difference(prev.timestamp).inMilliseconds / 1000.0;
     if (deltaT <= 0) {
       return MotionResult(speedMs: currentSpeedMs, distanceDeltaM: 0);
     }
 
-    final accel = (currentSpeedMs - prev.speedMs) / deltaT;
-    final jerk = prev.acceleration != null ? (accel - prev.acceleration!) / deltaT : null;
     final dist = haversineMeters(prev.lat, prev.lng, currentLat, currentLng);
+    // Under 0.1 s, dividing by deltaT (twice for jerk) turns GPS noise into
+    // huge spikes; same floor as evaluateFix (issue #57).
+    if (deltaT < 0.1) {
+      return MotionResult(speedMs: currentSpeedMs, distanceDeltaM: dist);
+    }
+
+    final accel = (currentSpeedMs - prev.speedMs) / deltaT;
+    final jerk = prev.acceleration != null
+        ? (accel - prev.acceleration!) / deltaT
+        : null;
 
     return MotionResult(
       speedMs: currentSpeedMs,

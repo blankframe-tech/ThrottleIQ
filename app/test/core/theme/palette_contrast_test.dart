@@ -76,6 +76,8 @@ void main() {
         'onInk on ink': (p.onInk, p.ink),
         'onInkMuted on ink': (p.onInkMuted, p.ink),
         'snackbar action on ink': (p.primaryHighlight, p.ink),
+        // Notification badge, report button, Material onError (issue #42).
+        'danger foreground on danger': (AppTheme.dangerForeground(p), p.danger),
       };
       final failures = [
         for (final MapEntry(key: name, value: (fg, bg)) in pairs.entries)

@@ -6357,6 +6357,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Lower than an earlier fill-up\'s odometer';
 
   @override
+  String get visitOdometerBelowEarlier =>
+      'Lower than an earlier visit\'s reading. If the odometer was replaced, you can still save.';
+
+  @override
   String get fuelOdometerAboveLater =>
       'Higher than a later fill-up\'s odometer';
 

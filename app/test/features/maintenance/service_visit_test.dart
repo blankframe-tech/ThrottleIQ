@@ -111,11 +111,13 @@ void main() {
       ]);
       expect(visits.map((v) => v.id), ['v1', 'a']);
       expect(visits.first.items, hasLength(2));
-      expect(totalSpend([
-        row('a', null, DateTime(2026, 1, 1), cost: 100),
-        row('b', 'v1', DateTime(2026, 5, 1), total: 900),
-        row('c', 'v1', DateTime(2026, 5, 1), total: 900),
-      ]), 1000);
+      expect(
+          totalSpend([
+            row('a', null, DateTime(2026, 1, 1), cost: 100),
+            row('b', 'v1', DateTime(2026, 5, 1), total: 900),
+            row('c', 'v1', DateTime(2026, 5, 1), total: 900),
+          ]),
+          1000);
     });
 
     test('free-service label is read back', () {
@@ -146,9 +148,11 @@ void main() {
         fuelPricePerLitre: 130,
         kmPerLitre: 40,
         logs: [
-          row('1', 'a', ServiceType.oilChange, DateTime(2026, 9, 10), cost: 650),
+          row('1', 'a', ServiceType.oilChange, DateTime(2026, 9, 10),
+              cost: 650),
           row('2', 'b', ServiceType.chain, DateTime(2026, 10, 1), total: 1350),
-          row('3', 'b', ServiceType.airFilter, DateTime(2026, 10, 1), total: 1350),
+          row('3', 'b', ServiceType.airFilter, DateTime(2026, 10, 1),
+              total: 1350),
           // Older than 12 months: not in the per-km figure.
           row('4', 'c', ServiceType.tire, DateTime(2025, 1, 1), cost: 3000),
         ],
@@ -172,6 +176,54 @@ void main() {
       );
       expect(money.maintenancePerKm, isNull);
       expect(money.isEmpty, isFalse);
+    });
+  });
+
+  group('odometerBelowEarlierLog (#40)', () {
+    MaintenanceEntity log(String id, DateTime date, double km) =>
+        MaintenanceEntity(
+          id: id,
+          bikeId: 'b',
+          serviceType: ServiceType.chain,
+          date: date,
+          odometerKm: km,
+          createdAt: date,
+        );
+    final logs = [
+      log('a', DateTime(2026, 9, 1, 10), 12000),
+      log('b', DateTime(2026, 10, 1, 18), 13000),
+    ];
+
+    test('warns below an earlier or same-day log', () {
+      expect(
+          odometerBelowEarlierLog(
+              odometerKm: 12500, date: DateTime(2026, 10, 5), logs: logs),
+          isTrue);
+      expect(
+          odometerBelowEarlierLog(
+              odometerKm: 12500, date: DateTime(2026, 10, 1), logs: logs),
+          isTrue);
+    });
+
+    test('quiet when at or above, or only later logs are higher', () {
+      expect(
+          odometerBelowEarlierLog(
+              odometerKm: 13000, date: DateTime(2026, 10, 5), logs: logs),
+          isFalse);
+      expect(
+          odometerBelowEarlierLog(
+              odometerKm: 12500, date: DateTime(2026, 9, 15), logs: logs),
+          isFalse);
+    });
+
+    test('ignores the visit being edited', () {
+      expect(
+          odometerBelowEarlierLog(
+              odometerKm: 12500,
+              date: DateTime(2026, 10, 5),
+              logs: logs,
+              excludeVisitKey: 'b'),
+          isFalse);
     });
   });
 }

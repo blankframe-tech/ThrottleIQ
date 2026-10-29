@@ -6333,6 +6333,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'আগের একটি ফিল-আপের ওডোমিটারের চেয়ে কম';
 
   @override
+  String get visitOdometerBelowEarlier =>
+      'আগের একটি ভিজিটের রিডিংয়ের চেয়ে কম। ওডোমিটার বদলানো হলে তবুও সেভ করতে পারবেন।';
+
+  @override
   String get fuelOdometerAboveLater =>
       'পরের একটি ফিল-আপের ওডোমিটারের চেয়ে বেশি';
 

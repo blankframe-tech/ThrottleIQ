@@ -378,7 +378,8 @@ void main() {
         expect(result.distanceDeltaM, greaterThan(19000000.0));
       });
 
-      test('calculates distance for well-known locations (Dhaka to Chattogram)', () {
+      test('calculates distance for well-known locations (Dhaka to Chattogram)',
+          () {
         final prev = RidePointEntity(
           rideId: 'test-ride',
           timestamp: DateTime(2026, 7, 12, 10, 0, 0),
@@ -402,8 +403,34 @@ void main() {
       });
     });
 
+    group('Tiny Delta Time Handling (#57)', () {
+      test('skips accel and jerk when fixes are under 0.1 s apart', () {
+        final prev = RidePointEntity(
+          rideId: 'test-ride',
+          timestamp: DateTime(2026, 7, 12, 10, 0, 0, 0),
+          lat: 0.0,
+          lng: 0.0,
+          speedMs: 10.0,
+          acceleration: 1.0,
+        );
+
+        final result = calculator.calculate(
+          prev: prev,
+          currentSpeedMs: 10.5,
+          currentLat: 0.00009,
+          currentLng: 0.0,
+          currentTime: DateTime(2026, 7, 12, 10, 0, 0, 5), // 5 ms later
+        );
+
+        expect(result.acceleration, isNull);
+        expect(result.jerk, isNull);
+        expect(result.distanceDeltaM, greaterThan(8.0));
+      });
+    });
+
     group('Zero Delta Time Handling', () {
-      test('returns zero distance and no accel/jerk when time delta is zero', () {
+      test('returns zero distance and no accel/jerk when time delta is zero',
+          () {
         final prev = RidePointEntity(
           rideId: 'test-ride',
           timestamp: DateTime(2026, 7, 12, 10, 0, 0),

@@ -1,3 +1,4 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/forums/data/repositories/forum_repository.dart';
 import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
@@ -8,14 +9,69 @@ import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
 /// 125" should also surface when viewing "Honda", but nothing else should.
 ForumEntity forum(String id,
         {required ForumType type, required String brand, int postCount = 0}) =>
-    ForumEntity(id: id, type: type, brand: brand, postCount: postCount, displayName: id,
+    ForumEntity(
+        id: id,
+        type: type,
+        brand: brand,
+        postCount: postCount,
+        displayName: id,
         createdAt: DateTime(2026, 1, 1));
 
 void main() {
+  // Issue #46: replies go through a batch (queues offline) and a known forum
+  // resolves from a plain read, so neither needs a transaction.
+  group('offline-safe writes', () {
+    test('addReply writes the reply and bumps replyCount with its id',
+        () async {
+      final fs = FakeFirebaseFirestore();
+      final post = fs.doc('forums/f1/posts/p1');
+      await post.set({'replyCount': 2});
+
+      final id = await ForumRepository.withFirestore(fs).addReply(
+          forumId: 'f1',
+          postId: 'p1',
+          userId: 'u1',
+          userName: 'Rider',
+          userPhotoUrl: '',
+          body: 'hi');
+
+      final reply = await post.collection('replies').doc(id).get();
+      expect(reply.data()?['body'], 'hi');
+      expect(reply.data()?['userId'], 'u1');
+      final bumped = (await post.get()).data()!;
+      expect(bumped['replyCount'], 3);
+      expect(bumped['lastReplyId'], id);
+    });
+
+    test('getOrCreateGeneralForum returns an existing forum untouched',
+        () async {
+      final fs = FakeFirebaseFirestore();
+      final repo = ForumRepository.withFirestore(fs);
+      final created = await repo.getOrCreateGeneralForum(topic: 'Maintenance');
+      await fs.doc('forums/${created.id}').update({'postCount': 7});
+
+      final again = await repo.getOrCreateGeneralForum(topic: 'Maintenance');
+
+      expect(again.id, created.id);
+      expect(again.postCount, 7);
+      expect((await fs.collection('forums').get()).docs, hasLength(1));
+    });
+
+    test('getOrCreateForum creates a missing bike forum', () async {
+      final fs = FakeFirebaseFirestore();
+      final forum = await ForumRepository.withFirestore(fs)
+          .getOrCreateForum(brand: 'Honda');
+      final doc = await fs.doc('forums/${forum.id}').get();
+      expect(doc.data()?['type'], ForumType.brand.name);
+      expect(doc.data()?['postCount'], 0);
+    });
+  });
+
   group('modelForumsToMergeInto', () {
     test('a bike-model forum with posts, under the right brand, qualifies', () {
       final candidates = [
-        forum('honda__cb_shine_125', type: ForumType.bikeModel, brand: 'Honda', postCount: 3),
+        forum('honda__cb_shine_125',
+            type: ForumType.bikeModel, brand: 'Honda', postCount: 3),
       ];
 
       final merged = modelForumsToMergeInto('Honda', candidates);
@@ -33,24 +89,31 @@ void main() {
 
     test('a model forum under a different brand is excluded', () {
       final candidates = [
-        forum('yamaha__mt_15', type: ForumType.bikeModel, brand: 'Yamaha', postCount: 3),
+        forum('yamaha__mt_15',
+            type: ForumType.bikeModel, brand: 'Yamaha', postCount: 3),
       ];
 
       expect(modelForumsToMergeInto('Honda', candidates), isEmpty);
     });
 
-    test('a general or custom forum that happens to carry the brand string is excluded', () {
+    test(
+        'a general or custom forum that happens to carry the brand string is excluded',
+        () {
       final candidates = [
-        forum('maintenance', type: ForumType.general, brand: 'Honda', postCount: 10),
-        forum('c-honda-owners-club', type: ForumType.custom, brand: 'Honda', postCount: 10),
+        forum('maintenance',
+            type: ForumType.general, brand: 'Honda', postCount: 10),
+        forum('c-honda-owners-club',
+            type: ForumType.custom, brand: 'Honda', postCount: 10),
       ];
 
       expect(modelForumsToMergeInto('Honda', candidates), isEmpty);
     });
 
-    test('an empty model forum is skipped — not worth a read for zero posts', () {
+    test('an empty model forum is skipped — not worth a read for zero posts',
+        () {
       final candidates = [
-        forum('honda__x_blade_160', type: ForumType.bikeModel, brand: 'Honda', postCount: 0),
+        forum('honda__x_blade_160',
+            type: ForumType.bikeModel, brand: 'Honda', postCount: 0),
       ];
 
       expect(modelForumsToMergeInto('Honda', candidates), isEmpty);
@@ -58,15 +121,20 @@ void main() {
 
     test('several model forums under the same brand all qualify', () {
       final candidates = [
-        forum('honda__cb_shine_125', type: ForumType.bikeModel, brand: 'Honda', postCount: 1),
-        forum('honda__x_blade_160', type: ForumType.bikeModel, brand: 'Honda', postCount: 2),
-        forum('honda__cbr250rr', type: ForumType.bikeModel, brand: 'Honda', postCount: 0),
-        forum('yamaha__mt_15', type: ForumType.bikeModel, brand: 'Yamaha', postCount: 4),
+        forum('honda__cb_shine_125',
+            type: ForumType.bikeModel, brand: 'Honda', postCount: 1),
+        forum('honda__x_blade_160',
+            type: ForumType.bikeModel, brand: 'Honda', postCount: 2),
+        forum('honda__cbr250rr',
+            type: ForumType.bikeModel, brand: 'Honda', postCount: 0),
+        forum('yamaha__mt_15',
+            type: ForumType.bikeModel, brand: 'Yamaha', postCount: 4),
       ];
 
       final merged = modelForumsToMergeInto('Honda', candidates);
 
-      expect(merged.map((f) => f.id), ['honda__cb_shine_125', 'honda__x_blade_160']);
+      expect(merged.map((f) => f.id),
+          ['honda__cb_shine_125', 'honda__x_blade_160']);
     });
   });
 }

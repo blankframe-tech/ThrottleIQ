@@ -10902,6 +10902,12 @@ abstract class AppLocalizations {
   /// **'Lower than an earlier fill-up\'s odometer'**
   String get fuelOdometerBelowEarlier;
 
+  /// Log a visit: non-blocking warning under the odometer field when the reading is below an earlier service log for this bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Lower than an earlier visit\'s reading. If the odometer was replaced, you can still save.'**
+  String get visitOdometerBelowEarlier;
+
   /// Fuel form: odometer validation, reading is above a later fill.
   ///
   /// In en, this message translates to:
