@@ -107,7 +107,8 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     );
 
     final activeBike = ref.watch(activeBikeProvider);
-    final rideState = ref.watch(rideRecordingProvider);
+    final rideState = ref.watch(rideRecordingProvider
+        .select((s) => (error: s.error, blockKind: s.blockKind)));
     final quote =
         resolveQuote(ref.watch(dashboardQuoteIndexProvider), context.l10n);
     final greeting = resolveGreeting(_greetingPick, context.l10n, name: _name);
@@ -205,7 +206,11 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text(recordingErrorText(context.l10n, rideState),
+                              Text(
+                                  // Text depends only on error + blockKind,
+                                  // which the select above already watches.
+                                  recordingErrorText(context.l10n,
+                                      ref.read(rideRecordingProvider)),
                                   style: TextStyle(
                                       color: context.palette.danger,
                                       fontSize: 13),
@@ -323,7 +328,7 @@ class _HoldToStartControl extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(rideRecordingProvider).status;
+    final status = ref.watch(rideRecordingProvider.select((s) => s.status));
 
     return HoldToStartButton(
       enabled: enabled,
