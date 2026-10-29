@@ -11,6 +11,17 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 123. Security sweep of 2026-10-30: 25 fixed, 1 skipped (PR #98, merged `31bd0b41`)
+
+The plan, every row's commit, and the deploy notes are in `security_sweep_2026-10-30.md`. GitHub issues #65–#97 (one per row; the fix issues closed with the PR). Four agents ran in parallel worktrees, one per group, and were merged one at a time; `scripts/check.sh` passed on the merged branch and CI passed on the PR.
+- **A, dependencies and CI:** `scripts/` npm audit 20 (6 high) → 0 (firebase-admin 13.10, firebase 13.1, rules-unit-testing 6, overrides for `@grpc/grpc-js` and `uuid`); `scripts/package-lock.json` tracked, `npm ci` and OSV in CI; CLA allow-list uses exact names; `summary.yml` has no checkout.
+- **B, Firestore rules (deny test per row, suite 402 → 416):** comment create must bump the counter; notification shape; public routes (keys, sizes, `timesRidden` +1 only, photo URL); profile key allow-list; place tags and fields; forum `alsoIn` and text sizes; roster rows; follow edges `hasOnly`; live-share token `[A-Za-z0-9]{32}`. **Not deployed.**
+- **C, Cloud Functions:** account erasure runs 540 s with retries and deletes the profile before the Cloudinary sweep; it removes the rider from `groupRides/*/positions/all`, clears forum `createdBy`/`maintainerIds`, and only erases well-formed `live_shares` tokens; crash alerts reach at most 5 contacts and 3 alerts per rider per hour. **Not deployed (Spark).**
+- **D:** old shared test passwords redacted from the current files (5 places); passwords no longer logged by the QA/review scripts; `DOCS/old/ui_stuff/*.html` deleted (15 CodeQL alerts); SRI on Leaflet in `public/live-viewer.html` (not deployed to Hosting); live-link password minimum 12; the live-share token is no longer logged. CodeQL #46, #24, #28 dismissed with reasons.
+- Open parts: `issues_open.md` §123.
+
+---
+
 ## 83.13. Firebase singletons and ride-recorder collaborators were not injectable — PARTLY FIXED (2026-10-29)
 
 New `app/lib/core/cloud/firebase_providers.dart`: `firestoreProvider`, `firebaseAuthProvider` (moved from `auth_provider.dart`, which re-exports it) and `currentUidProvider` (rebuilds on a uid change). Converted, behaviour-neutral: `emergency_contacts_provider.dart` (3 uses), `record_screen.dart` greeting name, and the providers that build `SyncManager`, `JamLabelRepository` and `MedicalInfoNotifier` now pass the provider value. `RideRecordingNotifier` takes optional `rideDao`, `pointDao`, `impactEventDao`, `crashCoordinator`, `persistenceCoordinator`, `sensorCoordinator` (defaults unchanged; Firestore comes from `firestoreProvider`), and `maintenance_provider.dart`'s file-level DAO is now `maintenanceDaoProvider`. *Guard:* `app/test/core/cloud/firebase_providers_test.dart` fails if direct `FirebaseFirestore.instance` / `FirebaseAuth.instance` in `lib/` grows past 33 (was 38), and tests `currentUidProvider`. The rest is open in `issues_open.md` §83.13. GitHub issue #51.

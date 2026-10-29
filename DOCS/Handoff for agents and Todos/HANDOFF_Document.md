@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-29._
+_Last updated: 2026-10-30._
 
 **Branches (2026-10-25):**
 - `main` and `mayabi` are the only long-lived branches (plus `experimental`, which trails `main`). On 2026-10-25 every lane, `worktree-agent-*`, `fix/reads-104`, `integration/agent-rooms-2026-10-22` and `indriyo` branch was merged into `main` (or already in it) and deleted locally and on `origin`.
@@ -53,13 +53,15 @@ Everything after `5a935e93` (the 4.7.1 bump):
 
 - 2026-10-29 parallel lanes (A–K, see Recent sessions): ride delete rolls back bike stats, GPX import and "Export my rides", "Not a motorcycle ride", ride replay, Year in Review, tab state kept across switches, Settings OEM guide and cockpit-flash switch, forum replies queue offline, Firebase providers, bare-catch triage, first goldens and the text-scale sweep, CI pinned and once per PR. **Needs a rules deploy** for the §104.2 shared group-ride positions doc and the §104.3 own-votes query (both fall back until then; additive, build 29 safe). New plugin `file_selector`: run `pod install` before the next iOS build.
 
+- **Security sweep 2026-10-30 (PR #98, `31bd0b41`):** 25 fixes across rules, functions, scripts, CI, the app and docs; C6 skipped. Rules and functions are **not deployed**; the app parts (live-link password minimum 12, token no longer logged) ship with the next release. Plan, results and deploy notes: `security_sweep_2026-10-30.md`; leftovers `issues_open.md` §123.
+
 Shipping these is owner item 26.
 
 ### Production backend
 
 | Part | State |
 |---|---|
-| Firestore rules and indexes | Deployed 2026-10-27 from `5bbb53f1` (includes §104.1 places `updatedAt` and the 2026-10-27 follow-graph/places/reviews/legacy-blocks rules). **Email migration ran 2026-10-27:** 53/53 profile emails moved to `private/account`, 8 verified got an `emailLookup`, re-run reports 0 (owner item 2 done). The critique-fix rules and indexes (`7822003a`, `c3f9072c`) were deployed the same day (`SECURITY.md` step 10). **Deployed 2026-10-29 from `4a16cc37`:** the vote `uid` rules and `votes.uid` index (`7a3b2add`), the §104.2 positions doc, the §104.3 own-votes list rule and the 20-rider cap. Vote backfill ran 2026-10-29 (110/110; re-run once `config/app.minBuild` passes the next release). |
+| Firestore rules and indexes | Deployed 2026-10-27 from `5bbb53f1` (includes §104.1 places `updatedAt` and the 2026-10-27 follow-graph/places/reviews/legacy-blocks rules). **Email migration ran 2026-10-27:** 53/53 profile emails moved to `private/account`, 8 verified got an `emailLookup`, re-run reports 0 (owner item 2 done). The critique-fix rules and indexes (`7822003a`, `c3f9072c`) were deployed the same day (`SECURITY.md` step 10). **Deployed 2026-10-29 from `4a16cc37`:** the vote `uid` rules and `votes.uid` index (`7a3b2add`), the §104.2 positions doc, the §104.3 own-votes list rule and the 20-rider cap. Vote backfill ran 2026-10-29 (110/110; re-run once `config/app.minBuild` passes the next release). **Not deployed yet:** the 2026-10-30 security sweep rules (PR #98, nine tightenings with deny tests; GitHub #97). |
 | Hosting | Deployed 2026-10-27 (`privacy.html` §5: email no longer visible to riders, effective date 27 Oct; earlier §1/§8/§9 and `community.html`). |
 | Cloud Functions | Never deployed: the project is on Spark (owner item 3). So `onUserAccountDeleted`, `purgeOldGpsTracks`, the report-snapshot purge and chat moderation don't run. Account deletion is manual: `DOCS/For Devs and Contributors/guides/account_deletion_runbook.md`. |
 | Quota alert | Live since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, policy `alertPolicies/13055223357814148266`). Production used 3-14% of daily reads in the week before. |
@@ -184,6 +186,16 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-10-30
+
+- **Security sweep, merged into `main` (PR #98, merge `31bd0b41`):** the plan from the morning scan (`security_sweep_2026-10-30.md`) was filed as GitHub issues #65–#97, all assigned to the-abraar, then fixed by four parallel agents in worktrees (A deps/CI, B rules, C functions, D scripts/app/hosting/docs), one commit per row, merged one group at a time. `scripts/check.sh` passed on the merged branch (rules 416/416, functions 15/15), plus `scripts` tests 101/101 and the functions emulator suite 26/26; CI passed on the PR, and the PR was merged on the owner's instruction. Each rules and functions fix has a test that failed first.
+  - Done: 25 rows; the 25 fix issues closed with the PR. CodeQL #46/#24/#28 dismissed (#91), the 15 mockup alerts close with the deleted files. Push protection was already on (#95).
+  - Skipped: C6 (#84, legacy-votes scan still needed) and the legacy-likes part of C3.
+  - Changed from the plan: B3 route name cap 300 (not 100), B6 caps generous, firebase-admin 13 not 14 in `scripts/`.
+  - Owner: deploy rules, Cloudinary preset, API keys, review password, `secret/` (GitHub #92 #93 #94 #96 #97, owner page item "Security sweep 2026-10-30", `needs_attention.md`).
+  - Machine note: port 8080 is held by Docker on the Mac, so local rules runs need a copy of `firebase.json` with other emulator ports (`CHECK_FIREBASE_CONFIG`); add it to `.git/info/exclude` so `check.sh` can stamp a pass.
+  - Not checked: nothing on a device; Admin SDK writers against the new rules; builds 26 and older.
 
 ### 2026-10-29
 

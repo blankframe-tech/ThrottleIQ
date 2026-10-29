@@ -7,6 +7,12 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Release and deploy
 
+- [ ] **Security sweep follow-ups (new 2026-10-30, PR #98, GitHub #92 #93 #94 #96 #97):** deploy
+      `firestore.rules` (`--only firestore:rules`; the fixes are public in the repo, the live rules are
+      not); rotate the Play review account password (old one is in git history); restrict the
+      Cloudinary `throttleiq_unsigned` preset; check the Firebase API key restrictions; decide on
+      `secret/`. Before functions go live on Blaze, confirm the crash-alert caps (5 contacts, 3 alerts
+      an hour). Details: `security_sweep_2026-10-30.md` "Before you deploy".
 - [ ] **Deploy (#30, #31):** rules, indexes and Hosting last went out 2026-10-27 (critique fixes
       included). Left: Cloud Functions once on Blaze (deletion, retention, chat moderation).
 - [x] **Vote `uid` (`SECURITY.md` step 11):** rules and indexes deployed 2026-10-29 (`4a16cc37`);

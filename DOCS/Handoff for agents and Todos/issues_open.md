@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§123**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§124**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -887,3 +887,12 @@ Findings 1-9, 11-18 and 20 were fixed 2026-10-27 (see `issues_fixed.md` §115). 
   - **Lean ratings.** STREET, CANYON, SPORT and KNEE DOWN (`resolveLeanRating`) are still English.
   - **Refresh.** Changing the language or km/mi does not refresh the widgets. They update on the next refresh: app start, ride save or a maintenance change.
   - **Device check.** Check on a device, with Bangla and miles selected, on both platforms.
+
+## 123. Security sweep of 2026-10-30, leftovers (`security_sweep_2026-10-30.md`, PR #98)
+The fixed rows are in `issues_fixed.md` §123. Still open:
+- **C6 skipped (GitHub #84):** the legacy-votes full scan in account erasure stays; same condition as §115 #16. C1 turned on retries, so each retry pays for that scan again.
+- **C5 shortcut:** the app has no limit on emergency contacts (`emergency_contacts_provider.dart`). The function sends to the first 5 by document id. Cap contacts at 5 in the app, or let the rider choose, before `DELIVERY_IMPLEMENTED` goes on.
+- **Rules vs builds ≤ 26:** builds 26 and older have no update gate; their writes were not checked against the tightened rules (profile, notifications, routes, follows, roster).
+- **firebase-admin 14 in `scripts/`:** stays on 13.10; 14 drops `admin.firestore()` / `admin.auth()` / `admin.credential`, used about 80 times in the scripts. Optional: add `/scripts` to `.github/dependabot.yml`.
+- **Old live-link passwords:** riders who set an 8–11 character password before D5 keep it until they change it (only the hash is stored).
+- **Owner-only (GitHub #92 #93 #94 #96 #97):** rotate the Play review password (the old one is in git history), restrict the Cloudinary unsigned preset, check API key restrictions / App Check, decide on `secret/`, deploy rules (and functions on Blaze).
