@@ -57,6 +57,7 @@ Update these in the same session as the change they describe.
 | [`marketing/marketing_kit.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/marketing_kit.md) | Ready-to-use copy: outreach templates, captions, FAQ, press fact sheet, tester onboarding message, Play shot list, launch calendar. |
 | [`marketing/pitch_deck.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/pitch_deck.md) | Pitch deck outline. |
 | [`marketing/iDEA_PITCH_SUBMISSION.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/iDEA_PITCH_SUBMISSION.md) | The iDEA government-grant submission (used by the `idea-pitch` skill). |
+| [`marketing/contributor_tshirt_costing.md`](Handoffs%20for%20Non%20Coding%20Agents/marketing/contributor_tshirt_costing.md) | Task: price the contributor tees (`General/partnerships/for_contributors/`) from Customizely and Dhaka DTF. |
 | [`posters/`](Handoffs%20for%20Non%20Coding%20Agents/posters) | `batch_one/`: the 61 numbered posters as made. `batch_two/`: the posters that used an old colour scheme, redone in the current brand (same numbers). How they are made and the colour mapping: [`generator_helper_files/README.md`](Handoffs%20for%20Non%20Coding%20Agents/posters/generator_helper_files/README.md). |
 | [`social/facebook/`](Handoffs%20for%20Non%20Coding%20Agents/social/facebook) | Facebook page cover (`cover.html` is the source of `cover_photo.png`). |
 
