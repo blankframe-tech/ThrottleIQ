@@ -142,7 +142,7 @@ Do these in order.
    `firebase deploy --only firestore:rules,firestore:indexes --project throttleiqfb`,
    wait for the `votes.uid` override to show "Enabled", then from `scripts/`:
    `node oneoff/backfill_vote_uid.js --service-account=../secret/<throttleiqfb key>.json`
-   (dry run), then the same with `--yes-i-really-mean-it`. Run the backfill
+   (dry run), then the same with `--yes-i-really-mean-it` (done 2026-10-29, 110/110). Run the backfill
    again once `config/app.minBuild` passes that release.
 
 ### App Check enforcement

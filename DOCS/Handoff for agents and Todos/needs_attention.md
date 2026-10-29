@@ -9,10 +9,9 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 - [ ] **Deploy (#30, #31):** rules, indexes and Hosting last went out 2026-10-27 (critique fixes
       included). Left: Cloud Functions once on Blaze (deletion, retention, chat moderation).
-- [ ] **Vote `uid`, before the next release (new 2026-10-28, `SECURITY.md` step 11):** otherwise
-      the new build's votes are denied. Rules and indexes deployed 2026-10-29 (`4a16cc37`). Left: wait for the `votes.uid` override to show Enabled, then from `scripts/`
-      run `node oneoff/backfill_vote_uid.js --service-account=../secret/throttleiqfb-firebase-adminsdk-fbsvc-033db7e607.json`
-      (dry run), then the same with `--yes-i-really-mean-it` (type `BACKFILL VOTES`).
+- [x] **Vote `uid` (`SECURITY.md` step 11):** rules and indexes deployed 2026-10-29 (`4a16cc37`);
+      backfill ran 2026-10-29, 110/110 vote docs, re-run reports 0. Run it again once
+      `config/app.minBuild` passes the next release (item below).
 - [ ] **After the next release is the minimum build (#56, new 2026-10-28, issues §115):** raise
       `config/app.minBuild`, ask an agent for the §115 cleanup (vote `uid` required, polyline cap
       of 1,000 points, drop the legacy comment-delete clause, remove the vote scan), deploy the
