@@ -11,8 +11,7 @@ import 'ride_recording_provider.dart';
 
 /// Whether the signed-in rider gets the beta jam-labelling buttons.
 final canLabelJamsProvider = Provider<bool>((ref) {
-  final user = ref.watch(currentUserProvider);
-  if (user?.email == 'the.abraar.rar@gmail.com') return true;
+  if (ref.watch(isAdminProvider).valueOrNull ?? false) return true;
   final profile = ref.watch(myProfileProvider).valueOrNull;
   return BetaTesters.canLabelJams(profile?.username);
 });

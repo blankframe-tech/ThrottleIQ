@@ -379,15 +379,15 @@ test('reviews: own id and uid only, whole stars, capped text, no extra keys or i
 
 // ── Admin paths ─────────────────────────────────────────────────────────────
 
-test('admin: the claim, or the verified owner email, reads and closes reports; nobody else', async () => {
+test('admin: only the claim reads and closes reports, not the owner email (§110.4)', async () => {
   await seed({ 'reports/r1': { reporterId: BOB, reportedId: CAROL, status: 'pending' } });
   const claim = db('admin-uid', { admin: true });
   const email = db('owner-uid', { email: 'the.abraar.rar@gmail.com', email_verified: true });
-  const unverified = db('fake-uid', { email: 'the.abraar.rar@gmail.com', email_verified: false });
   await assertSucceeds(getDoc(doc(claim, 'reports/r1')));
   await assertSucceeds(getDocs(collection(claim, 'reports')));
-  await assertSucceeds(updateDoc(doc(email, 'reports/r1'), { status: 'actioned' }));
-  await assertFails(getDoc(doc(unverified, 'reports/r1')));
+  await assertSucceeds(updateDoc(doc(claim, 'reports/r1'), { status: 'actioned' }));
+  await assertFails(getDoc(doc(email, 'reports/r1')));
+  await assertFails(updateDoc(doc(email, 'reports/r1'), { status: 'dismissed' }));
   await assertFails(getDoc(doc(db(BOB), 'reports/r1')));
   await assertFails(getDocs(collection(db(BOB), 'reports')));
   await assertFails(updateDoc(doc(db(BOB), 'reports/r1'), { status: 'dismissed' }));

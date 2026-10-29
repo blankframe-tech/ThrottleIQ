@@ -859,7 +859,6 @@ Both critiques were retired on 2026-10-22 (old text: `git show 3ebbd21d:"DOCS/Ha
 
 Open developer items found while rewriting `HANDOFF_Document.md` that no other section tracks. Owner items went to the owner page; device checks are in the handoff's "Built but never run on a real phone" list.
 
-- **110.4 Admin check still falls back to an email.** `firestore.rules:136-141` (`isAdmin()` accepts a verified `the.abraar.rar@gmail.com` token), plus client copies in `forum_permissions.dart:5` and `jam_label_provider.dart:14`. Nobody recorded running `scripts/oneoff/set_admin_claim.js`, so the `admin` claim may not exist. *Fix:* after the owner sets the claim and signs in again, delete the email branch from `isAdmin()` and its rules tests. Why: admin rights should not depend on one mailbox's address. Source: HANDOFF Key facts, "Admin account" (2026-08-12).
 
 ## Cloud Functions audit leftovers, architect to-do #5 (2026-10-22, lane C)
 

@@ -114,34 +114,15 @@ service cloud.firestore {
             !exists(/databases/$(database)/documents/users/$(uid)/blocks/$(request.auth.uid))))));
     }
 
-    // The single global admin. Mirrors kAdminEmail in the app's
-    // forum_permissions.dart, but is enforced HERE independently — the client
-    // check is only cosmetic (it hides buttons); this is what actually stops
-    // a non-admin from deleting other riders' content.
-    //
-    // issues §24.9: prefers the `admin` custom claim
-    // (request.auth.token.admin) — set via scripts/oneoff/set_admin_claim.js, which
-    // only this project's own service-account credentials can run — over the
-    // email-string comparison this used to be exclusively. A custom claim can
-    // only ever be written server-side with the Admin SDK, never by a client
-    // regardless of what a Firestore rule or Cloud Function bug might
-    // otherwise allow; an email claim is only as trustworthy as the auth
-    // provider's verification of it. The email check remains as a fallback so
-    // nothing breaks before set_admin_claim.js has actually been run once —
-    // it can be deleted after that.
-    // Note the `.get(key, default)` form on email_verified/email, not direct
-    // property access: a token that simply lacks the claim (any non-email
-    // sign-in method — anonymous, phone) makes `request.auth.token.email_verified`
-    // an evaluation ERROR, not `false`. That error propagates out of every
-    // rule that calls this, including through the `||` chains in
-    // canModerateForum() and the clauses that use it, denying writes that
-    // should have been allowed on their other branch. Caught by the rules
-    // tests in scripts/test/rules/ (issues §24.11).
+    // The global admin: the `admin` custom claim, set only by
+    // scripts/oneoff/set_admin_claim.js with this project's service-account
+    // credentials (issues §24.9, §110.4). The app's isAdminProvider reads the
+    // same claim, but only to hide buttons; this is what enforces it. The old
+    // verified-email fallback was removed 2026-10-29 once the claim was set.
+    // `.get('admin', false)`: a token without the claim must be false, not an
+    // evaluation error that would sink the `||` chains calling this (§24.11).
     function isAdmin() {
-      return request.auth != null && (
-        request.auth.token.get('admin', false) == true ||
-        (request.auth.token.get('email_verified', false) == true &&
-         request.auth.token.get('email', '').lower() == 'the.abraar.rar@gmail.com'));
+      return request.auth != null && request.auth.token.get('admin', false) == true;
     }
 
     // Ties an engagement-counter bump to the SAME transaction

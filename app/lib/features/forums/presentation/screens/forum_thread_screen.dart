@@ -44,7 +44,10 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
     final user = ref.watch(currentUserProvider);
     final forum = forumAsync.valueOrNull;
     final showMaintainers = forum != null &&
-        canManageMaintainers(forum: forum, uid: user?.uid, email: user?.email);
+        canManageMaintainers(
+            forum: forum,
+            uid: user?.uid,
+            isAdmin: ref.watch(isAdminProvider).valueOrNull ?? false);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -245,7 +248,10 @@ class _PostCard extends ConsumerWidget {
     // whichever forum the post actually lives in.
     final canDelete = post.userId == user?.uid ||
         (postForum != null &&
-            canModerate(forum: postForum, uid: user?.uid, email: user?.email));
+            canModerate(
+                forum: postForum,
+                uid: user?.uid,
+                isAdmin: ref.watch(isAdminProvider).valueOrNull ?? false));
     // Shown only when this card is a mention merged in from a narrower
     // bike-model forum onto its brand forum's list — a native post of the
     // forum being viewed needs no origin tag.

@@ -29,6 +29,16 @@ final currentUserProvider = Provider<User?>((ref) {
   return ref.watch(authStateProvider).valueOrNull;
 });
 
+/// Whether the signed-in rider holds the `admin` custom claim (set by
+/// scripts/oneoff/set_admin_claim.js), the same check as firestore.rules'
+/// isAdmin(). Only hides or shows admin buttons; the rules enforce it.
+final isAdminProvider = FutureProvider<bool>((ref) async {
+  final user = ref.watch(currentUserProvider);
+  if (user == null) return false;
+  final token = await user.getIdTokenResult();
+  return token.claims?['admin'] == true;
+});
+
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   AuthNotifier(this._auth, {Future<void> Function()? beforeSignOut})
       : _beforeSignOut = beforeSignOut,

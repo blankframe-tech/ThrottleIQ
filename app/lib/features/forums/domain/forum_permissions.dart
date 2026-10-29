@@ -1,15 +1,5 @@
 import 'entities/forum_entity.dart';
 
-/// The single global admin account. Hardcoded for beta; move to a Firestore
-/// custom claim before public launch.
-const String kAdminEmail = 'the.abraar.rar@gmail.com';
-
-/// Whether [email] belongs to the global admin. Case-insensitive — Firebase
-/// preserves whatever casing the rider typed at sign-up, so a raw `==`
-/// against the constant would miss `The.Abraar.Rar@gmail.com`.
-bool isAdmin(String? email) =>
-    email != null && email.toLowerCase() == kAdminEmail;
-
 /// Who may delete other riders' posts/replies in a forum: the global admin,
 /// anyone on the forum's maintainer list, or the rider who created it.
 ///
@@ -19,9 +9,9 @@ bool isAdmin(String? email) =>
 bool canModerate({
   required ForumEntity forum,
   required String? uid,
-  required String? email,
+  required bool isAdmin,
 }) {
-  if (isAdmin(email)) return true;
+  if (isAdmin) return true;
   if (uid == null) return false;
   return uid == forum.createdBy || forum.maintainerIds.contains(uid);
 }
@@ -33,9 +23,9 @@ bool canModerate({
 bool canManageMaintainers({
   required ForumEntity forum,
   required String? uid,
-  required String? email,
+  required bool isAdmin,
 }) {
-  if (isAdmin(email)) return true;
+  if (isAdmin) return true;
   if (uid == null) return false;
   return uid == forum.createdBy;
 }
