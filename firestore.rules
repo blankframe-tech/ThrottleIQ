@@ -1929,6 +1929,8 @@ service cloud.firestore {
           get(/databases/$(database)/documents/users/$(resource.data.followerUid)).data));
       allow create: if request.auth != null &&
         request.resource.data.followerUid == request.auth.uid &&
+        // Security sweep B8: FollowRepository.follow's keys only.
+        request.resource.data.keys().hasOnly(['followerUid', 'followeeUid', 'createdAt']) &&
         edgeId == (request.auth.uid + '_' + request.resource.data.followeeUid) &&
         !exists(/databases/$(database)/documents/users/$(request.resource.data.followeeUid)/blocks/$(request.auth.uid)) &&
         !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(request.resource.data.followeeUid));
