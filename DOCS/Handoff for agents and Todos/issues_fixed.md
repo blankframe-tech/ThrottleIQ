@@ -11,6 +11,14 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 83.12 / 90.B13 / 91.4 leftovers: rebuilds, eager lists, tab state — FIXED (2026-10-29)
+
+- **#45:** `RecordScreen` and `_HoldToStartControl` `select` only `error`/`blockKind` and `status` instead of watching the whole `RideRecordingState`.
+- **#47:** the pulse feed, places list and all-rides list were already builders; the Hubs view's rider-club list (up to 50) was the last eager `Column`, now a `SliverList.builder` in a `CustomScrollView`.
+- **#61:** the bottom-nav shell is `StatefulShellRoute.indexedStack` (go_router 13 already has it, no upgrade), one branch per tab including `/home/maintenance`; `AppShell` and its `context.go` tab taps are unchanged. Since `RecordScreen` now stays alive offstage, its ride redirect runs only while the screen is visible (`TickerMode`) and re-checks each time it is shown, so a ride started from Places or a group ride does not pull the rider to the cockpit from another tab. *Test:* `app_router_test.dart` checks one branch per tab. Not checked on a device.
+
+---
+
 ## 120. CI was red on `main`: two `deploy.sh` staging tests failed — FIXED (2026-10-29)
 
 `5cb5879a` changed the staging step in `scripts/deploy.sh` from `git add -u` to `git add app/pubspec.yaml`, but `scripts/test/hosting_repo_hygiene.test.js` still looked for `git add -u`, so two tests failed with `staging block not found` and the `rules` CI job was red on every push and PR (#26 was merged with `--admin` for this reason). *Fix:* `stagingBlock()` now ends at the `git add app/pubspec.yaml` block and the scratch repo uses `app/pubspec.yaml`; `deploy.sh` unchanged. Added a test that the block aborts when a tracked file other than `app/pubspec.yaml` is dirty. *Test:* `npm test` in `scripts/`: 96/96 pass. GitHub issue #27.

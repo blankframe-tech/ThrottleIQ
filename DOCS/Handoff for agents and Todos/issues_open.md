@@ -204,9 +204,7 @@ What is still open:
 
 **Still open:** the argument is structural and **has not been measured on a
 device** (profile a real ride for battery, heat and frame times).
-`app/lib/features/ride/presentation/screens/record_screen.dart:110` and
-`:326` still watch the whole `RideRecordingState`: the pre-ride screen, far
-lower stakes than the cockpit, but the same pattern.
+(`RecordScreen`'s two whole-state watches now `select`: fixed 2026-10-29, #45.)
 
 ### 83.13 — DI is inconsistent with the "clean architecture" claim
 
@@ -416,9 +414,8 @@ Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
   `flutter_lints ^3`. *Order:* FlutterFire + `google_sign_in` in one PR, then
   permissions/geolocator/notifications, then go_router/riverpod after launch. Plugin bumps
   need a device pass.
-- **90.B13 — LOW — router.** The bottom nav is a plain `ShellRoute`, so every tab switch
-  rebuilds the screen and loses its scroll state. *Fix:* `StatefulShellRoute.indexedStack`,
-  together with the go_router upgrade (B10) and a device pass.
+- **90.B13 — LOW — router.** FIXED 2026-10-29 (#61), see `issues_fixed.md`. Left: a device
+  pass (tab switching, deep links, ride start from Places while Record is kept alive).
 - **90.B14 — LOW — repo hygiene, what is left.** The generated
   `app/lib/l10n/app_localizations*.dart` files are tracked, so every regen adds diff noise.
   (The root clutter is gone, `DOCS/General/screenshots_ui/` was untracked in `44c131eb`, and
@@ -455,9 +452,9 @@ tracked in §83. The original writeup is in git history:
   `active_ride_screen.dart:231-243` washes the live map with a translucent colour on brake /
   accel / overspeed / fatigue. Only the overspeed threshold is configurable. Add an off switch
   in settings.
-- **91.4 — LOW — eager lists.** On 2026-10-22, `app/lib` had 32 `SingleChildScrollView` uses
-  and 34 `ListView.builder`/`.separated`. Convert the long lists (rides list, forum threads,
-  places list) to lazy builders. `SavedPlacesTab` was converted on 2026-10-07 (`b600f103`).
+- **91.4 — LOW — eager lists.** FIXED 2026-10-29 (#47), see `issues_fixed.md`. Left: the
+  shared-rides list on a rider profile (`user_profile_screen.dart`) is still a `Column` inside
+  the page's `SingleChildScrollView`; making it lazy means moving that screen to slivers.
 - **91.5 — LOW — the onboarding tour before the first ride is long and English-heavy**
   (`onboarding_manifest.dart`, `kOnboardingManifestVersion = 5`). Consider cutting it to the
   Record tab's hold-to-start. Related: §102.6, §83.26 and §83.23.

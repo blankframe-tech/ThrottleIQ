@@ -53,13 +53,27 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
     super.initState();
     _name = FirebaseAuth.instance.currentUser?.displayName?.split(' ').first;
     _greetingPick = pickGreeting(DateTime.now());
-    // One-shot: this screen can be *built* while a ride is already running
-    // (cold start onto Record, or a restored interrupted ride), and a
-    // `ref.listen` only fires on a change, never on the current value.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _redirectIfRiding();
       unawaited(_offerOemGuide());
     });
+  }
+
+  /// Whether this screen is on screen. The tab shell keeps it alive offstage
+  /// (#61), and `TickerMode` is off there.
+  bool _visible = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Each time the screen is shown, not only when built: it can appear while
+    // a ride is already running (cold start onto Record, a restored
+    // interrupted ride, or switching back to this tab), and a `ref.listen`
+    // only fires on a change, never on the current value.
+    final visible = TickerMode.valuesOf(context).enabled;
+    if (visible && !_visible) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _redirectIfRiding());
+    }
+    _visible = visible;
   }
 
   /// The one-time Xiaomi/OPPO/vivo/realme battery-settings guide, offered
@@ -84,7 +98,9 @@ class _RecordScreenState extends ConsumerState<RecordScreen> {
   /// reasons that have nothing to do with recording (unread count, active
   /// bike, appearance change). §83.11.
   void _redirectIfRiding() {
-    if (!mounted) return;
+    // Offstage (another tab, or a route on top): a ride started from Places
+    // or a group ride must not pull the rider away. Re-checked when shown.
+    if (!mounted || !_visible) return;
     final status = ref.read(rideRecordingProvider).status;
     if (status == RecordingStatus.active || status == RecordingStatus.paused) {
       context.go('/ride/active');

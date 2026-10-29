@@ -279,124 +279,131 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-      // Shell with bottom nav
-      ShellRoute(
-        builder: (_, __, child) => AppShell(child: child),
-        routes: [
-          // `?tab=people` opens on the People tab (who you follow) — where a
-          // follow from a scanned/opened follow link lands.
-          GoRoute(
-            path: '/home/social',
-            builder: (_, state) => SocialScreen(
-              // Keyed on the tab so re-opening /home/social?tab=people while
-              // already on Social actually switches tabs (DefaultTabController
-              // only reads initialIndex once per State).
-              key: ValueKey('social-${state.uri.queryParameters['tab']}'),
-              initialTab: state.uri.queryParameters['tab'] == 'people'
-                  ? SocialScreen.peopleTab
-                  : 0,
+      // Shell with bottom nav. One branch per tab, so each tab keeps its
+      // state and scroll position across tab switches (#61).
+      StatefulShellRoute.indexedStack(
+        builder: (_, __, navigationShell) => AppShell(child: navigationShell),
+        branches: [
+          for (final route in <RouteBase>[
+            // `?tab=people` opens on the People tab (who you follow) — where a
+            // follow from a scanned/opened follow link lands.
+            GoRoute(
+              path: '/home/social',
+              builder: (_, state) => SocialScreen(
+                // Keyed on the tab so re-opening /home/social?tab=people while
+                // already on Social actually switches tabs (DefaultTabController
+                // only reads initialIndex once per State).
+                key: ValueKey('social-${state.uri.queryParameters['tab']}'),
+                initialTab: state.uri.queryParameters['tab'] == 'people'
+                    ? SocialScreen.peopleTab
+                    : 0,
+              ),
             ),
-          ),
-          GoRoute(path: '/home/stats', builder: (_, __) => const StatsScreen()),
-          GoRoute(
-              path: '/home/record', builder: (_, __) => const RecordScreen()),
-          GoRoute(
-            path: '/home/places',
-            builder: (_, __) => const PlacesListScreen(),
-            routes: [
-              GoRoute(path: 'add', builder: (_, __) => const AddPlaceScreen()),
-              GoRoute(
-                path: ':placeId',
-                builder: (_, state) => PlaceDetailScreen(
-                    placeId: state.pathParameters['placeId']!),
-              ),
-            ],
-          ),
-          GoRoute(
-            path: '/home/maintenance',
-            builder: (_, state) => MaintenanceScreen(
-              bikeId: state.uri.queryParameters['bikeId'],
+            GoRoute(
+                path: '/home/stats', builder: (_, __) => const StatsScreen()),
+            GoRoute(
+                path: '/home/record', builder: (_, __) => const RecordScreen()),
+            GoRoute(
+              path: '/home/places',
+              builder: (_, __) => const PlacesListScreen(),
+              routes: [
+                GoRoute(
+                    path: 'add', builder: (_, __) => const AddPlaceScreen()),
+                GoRoute(
+                  path: ':placeId',
+                  builder: (_, state) => PlaceDetailScreen(
+                      placeId: state.pathParameters['placeId']!),
+                ),
+              ],
             ),
-            routes: [
-              GoRoute(
-                path: 'configure',
-                // A new bike's first visit here is setup now (schedule,
-                // roads, last oil change), not the bare checks list.
-                builder: (_, state) =>
-                    state.uri.queryParameters['isFirstTime'] == 'true'
-                        ? MaintenanceSetupScreen(
-                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                            firstTime: true,
-                          )
-                        : MaintenanceConfigScreen(
-                            bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                          ),
+            GoRoute(
+              path: '/home/maintenance',
+              builder: (_, state) => MaintenanceScreen(
+                bikeId: state.uri.queryParameters['bikeId'],
               ),
-              GoRoute(
-                path: 'setup',
-                builder: (_, state) => MaintenanceSetupScreen(
-                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                  firstTime: state.uri.queryParameters['firstTime'] == 'true',
+              routes: [
+                GoRoute(
+                  path: 'configure',
+                  // A new bike's first visit here is setup now (schedule,
+                  // roads, last oil change), not the bare checks list.
+                  builder: (_, state) =>
+                      state.uri.queryParameters['isFirstTime'] == 'true'
+                          ? MaintenanceSetupScreen(
+                              bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                              firstTime: true,
+                            )
+                          : MaintenanceConfigScreen(
+                              bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                            ),
                 ),
-              ),
-              GoRoute(
-                path: 'add',
-                builder: (_, state) => AddMaintenanceLogScreen(
-                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                  initialServiceType: state.uri.queryParameters['serviceType'],
-                  visitId: state.uri.queryParameters['visitId'],
-                ),
-              ),
-              GoRoute(
-                path: 'fuel',
-                builder: (_, state) => FuelScreen(
-                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                ),
-                routes: [
-                  GoRoute(
-                    path: 'add',
-                    builder: (_, state) => AddFuelLogScreen(
-                      bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                      logId: state.uri.queryParameters['logId'],
-                    ),
+                GoRoute(
+                  path: 'setup',
+                  builder: (_, state) => MaintenanceSetupScreen(
+                    bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                    firstTime: state.uri.queryParameters['firstTime'] == 'true',
                   ),
-                ],
-              ),
-              GoRoute(
-                path: 'check',
-                builder: (_, state) => CheckDetailScreen(
-                  bikeId: state.uri.queryParameters['bikeId'] ?? '',
-                  checkKey: state.uri.queryParameters['key'] ?? '',
                 ),
-              ),
-            ],
-          ),
-          // Renamed from '/home/garage': the bottom-nav tab is now "Profile"
-          // and this screen leads with the profile summary and the
-          // Settings/Notifications entry points that used to live in
-          // RecordScreen's header, with the bike list (GarageScreen) still
-          // underneath — see HANDOFF_Document.md.
-          GoRoute(
-            path: '/home/profile',
-            builder: (_, __) => const GarageScreen(),
-            routes: [
-              GoRoute(
-                  path: 'add', builder: (_, __) => const AddEditBikeScreen()),
-              GoRoute(
-                path: ':bikeId',
-                builder: (_, state) =>
-                    BikeDetailScreen(bikeId: state.pathParameters['bikeId']!),
-                routes: [
-                  GoRoute(
-                    path: 'edit',
-                    builder: (_, state) => AddEditBikeScreen(
-                      bikeId: state.pathParameters['bikeId'],
-                    ),
+                GoRoute(
+                  path: 'add',
+                  builder: (_, state) => AddMaintenanceLogScreen(
+                    bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                    initialServiceType:
+                        state.uri.queryParameters['serviceType'],
+                    visitId: state.uri.queryParameters['visitId'],
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+                GoRoute(
+                  path: 'fuel',
+                  builder: (_, state) => FuelScreen(
+                    bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  ),
+                  routes: [
+                    GoRoute(
+                      path: 'add',
+                      builder: (_, state) => AddFuelLogScreen(
+                        bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                        logId: state.uri.queryParameters['logId'],
+                      ),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'check',
+                  builder: (_, state) => CheckDetailScreen(
+                    bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                    checkKey: state.uri.queryParameters['key'] ?? '',
+                  ),
+                ),
+              ],
+            ),
+            // Renamed from '/home/garage': the bottom-nav tab is now "Profile"
+            // and this screen leads with the profile summary and the
+            // Settings/Notifications entry points that used to live in
+            // RecordScreen's header, with the bike list (GarageScreen) still
+            // underneath — see HANDOFF_Document.md.
+            GoRoute(
+              path: '/home/profile',
+              builder: (_, __) => const GarageScreen(),
+              routes: [
+                GoRoute(
+                    path: 'add', builder: (_, __) => const AddEditBikeScreen()),
+                GoRoute(
+                  path: ':bikeId',
+                  builder: (_, state) =>
+                      BikeDetailScreen(bikeId: state.pathParameters['bikeId']!),
+                  routes: [
+                    GoRoute(
+                      path: 'edit',
+                      builder: (_, state) => AddEditBikeScreen(
+                        bikeId: state.pathParameters['bikeId'],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ])
+            StatefulShellBranch(routes: [route]),
         ],
       ),
     ],
