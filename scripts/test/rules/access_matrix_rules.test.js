@@ -24,7 +24,7 @@ const {
 
 const {
   doc, collection, query, where, limit, getDoc, getDocs, setDoc, updateDoc,
-  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp, increment,
+  deleteDoc, writeBatch, runTransaction, getCountFromServer, Timestamp, increment, serverTimestamp, deleteField,
 } = require('firebase/firestore');
 
 const RULES = fs.readFileSync(
@@ -157,6 +157,39 @@ test('a profile is written only by its owner', async () => {
   await assertSucceeds(updateDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby' }));
   await assertFails(updateDoc(doc(db(ALICE), `users/${BOB}`), { displayName: 'pwned' }));
   await assertFails(deleteDoc(doc(db(ALICE), `users/${BOB}`)));
+});
+
+test('profile: every ProfileRepository write still lands (ensureProfile, edits, stats, pins, visibility)', async () => {
+  await seed({ [`users/${BOB}`]: { displayName: 'Bob', email: 'bob@example.com', emailLower: 'bob@example.com' } });
+  const ref = (uid) => doc(db(uid), `users/${uid}`);
+  const now = serverTimestamp();
+  // ensureProfile, first sign-in (plain merge-set fallback).
+  await assertSucceeds(setDoc(ref(ALICE), { displayName: 'Alice', photoUrl: 'https://lh3.googleusercontent.com/a/x',
+    visibility: 'public', followerCount: 0, followingCount: 0, createdAt: now, updatedAt: now }, { merge: true }));
+  // ensureProfile on a legacy doc strips the public email.
+  await assertSucceeds(setDoc(ref(BOB), { displayName: 'Bob', email: deleteField(), emailLower: deleteField(),
+    visibility: 'public', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { displayName: 'A', nickname: 'Al', bio: 'hi', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { publicStats: { totalDistanceKm: 1, totalRides: 1, badgeIds: [],
+    longestRideKm: 1, longestDayStreak: 1 }, updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { pinnedRideIds: ['r1'], updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { visibility: 'mutual', updatedAt: now }, { merge: true }));
+  await assertSucceeds(setDoc(ref(ALICE), { bikesVisibility: 'followers', updatedAt: now }, { merge: true }));
+  // setUsername's transaction.
+  const d = db(ALICE);
+  await assertSucceeds(runTransaction(d, async (tx) => {
+    tx.set(doc(d, 'usernames/alice_1'), { uid: ALICE });
+    tx.set(doc(d, `users/${ALICE}`), { username: 'Alice_1', usernameLower: 'alice_1', updatedAt: now }, { merge: true });
+  }));
+});
+
+test('B4 profile: keys outside the profile allow-list are denied on create and update', async () => {
+  await assertFails(setDoc(doc(db(CAROL), `users/${CAROL}`), { displayName: 'C', isVerified: true }));
+  await seed({ [`users/${BOB}`]: { displayName: 'Bob', legacyField: 1 } });
+  await assertFails(updateDoc(doc(db(BOB), `users/${BOB}`), { role: 'admin' }));
+  await assertFails(setDoc(doc(db(BOB), `users/${BOB}`), { blob: 'x'.repeat(5000) }, { merge: true }));
+  // An unrelated edit on a doc carrying a legacy key still passes.
+  await assertSucceeds(updateDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby' }));
 });
 
 // ── Email harvesting ────────────────────────────────────────────────────────

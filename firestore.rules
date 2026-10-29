@@ -593,7 +593,17 @@ service cloud.firestore {
         (!('publicStats' in request.resource.data) ||
          publicStatsValid(resource == null ? {} : resource.data, request.resource.data.publicStats)) &&
         profileFieldsValid(resource == null ? {} : resource.data, request.resource.data) &&
-        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data);
+        badgeStatsFlagValid(resource == null ? {} : resource.data, request.resource.data) &&
+        // Security sweep B4: only keys ProfileRepository / BadgeStatsCounter
+        // write (email/emailLower: ensureProfile deletes legacy ones). An
+        // update is judged on the keys it changes, so a legacy key on an old
+        // doc doesn't block unrelated edits.
+        (resource == null ? request.resource.data.keys().toSet()
+          : request.resource.data.diff(resource.data).affectedKeys()).hasOnly([
+          'displayName', 'photoUrl', 'nickname', 'bio', 'username',
+          'usernameLower', 'visibility', 'bikesVisibility', 'publicStats',
+          'pinnedRideIds', 'followerCount', 'followingCount', 'createdAt',
+          'updatedAt', 'badgeStatsCountedAt', 'email', 'emailLower']);
       // A profile already counted in stats/badges.totalRiders can't be
       // deleted by its owner: delete-and-recreate would count them again.
       // Account deletion removes it with the Admin SDK.
