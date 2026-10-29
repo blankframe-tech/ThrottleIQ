@@ -1664,7 +1664,19 @@ service cloud.firestore {
         (!('tags' in request.resource.data) ||
           (request.resource.data.tags is list &&
            request.resource.data.tags.size() <= 12 &&
-           request.resource.data.tags.toSet().size() == request.resource.data.tags.size())) &&
+           request.resource.data.tags.toSet().size() == request.resource.data.tags.size() &&
+           // Security sweep B5: each tag a short PlaceTag-style name.
+           request.resource.data.tags.join(',').matches('^([A-Za-z0-9_]{1,40}(,[A-Za-z0-9_]{1,40})*)?$'))) &&
+        // B5: the fields every viewer's map and the ride cache parse.
+        request.resource.data.category is string &&
+        request.resource.data.category.size() <= 40 &&
+        request.resource.data.latitude is number &&
+        request.resource.data.latitude >= -90 && request.resource.data.latitude <= 90 &&
+        request.resource.data.longitude is number &&
+        request.resource.data.longitude >= -180 && request.resource.data.longitude <= 180 &&
+        request.resource.data.geohash is string && request.resource.data.geohash.size() <= 12 &&
+        optionalText(request.resource.data, 'osmId', 64) &&
+        request.resource.data.createdAt is timestamp &&
         (!('expiresAt' in request.resource.data) ||
           (request.resource.data.expiresAt is timestamp &&
            request.resource.data.expiresAt > request.time &&
