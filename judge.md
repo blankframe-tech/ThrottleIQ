@@ -201,3 +201,11 @@ Everything ran in the Local Emulator Suite under `demo-throttleiq` (Homebrew JDK
 - **Also:** `test:rules` pointed at a deleted Android Studio JDK; it now uses `$JAVA_HOME` or Homebrew's. Rules and RTDB tests use `demo-` project ids. `check.sh` already runs the rules suite when rules change; it passed.
 - **Owner, in order** (SECURITY.md runbook): finish step 3 (email migration, then Hosting for `privacy.html`), then step 9: `firebase deploy --only firestore:rules --project throttleiqfb` (no new build needed), then check one rider's follower count and one place add with a photo on a real build. Steps 4 to 6 (RTDB rules, Blaze, functions) unchanged.
 Score unchanged at 40%.
+
+## Update (2026-10-30, agent round): CodeQL re-check and emulator tests for function-written docs
+
+- **CodeQL:** 0 open alerts on `main` `77749bd7` (issue #109, closed with the result). Nothing to fix.
+- **Rules (`scripts/test/rules/function_written_shapes_rules.test.js`, 10 tests):** the sweep's "Not checked" item, docs Cloud Functions write through the Admin SDK, read back under client rules. An erased rider's DM (`deleted-rider` participant) stays readable to the other rider, closed to outsiders and to the old uid, and the uid can't be put back. Detached forum posts, replies and ride comments (`userId: ''`) stay readable and nobody can claim them. The automated toxicity report is admin-only, even for the rider it names; a hidden message can't be restored by either side. **Known gaps, pinned by tests:** (1) the remaining rider can still send into a room with a deleted rider (writes only, nobody reads them); (2) issues_open 109.10 confirmed: a creator can put a rider who blocked them in `invitedIds` (rules can't loop over added uids; the invite notification is still refused).
+- **Functions emulator:** first tests for `onMessageCreate` (report holds the original text before the hide, whole-word match, retry files no duplicate, no-text message) and `reconcileRideIdentity` (spoof overwritten, no loop, counter bumps skip the profile read, nickname fallback, no profile / no userId left alone). Suite 26 → 35.
+- **Not checked:** `badge-*.ts` (not deployed), crash-claim lease edge cases beyond the existing suite, anything on a device or against production. Nothing deployed.
+Score unchanged at 40%.
