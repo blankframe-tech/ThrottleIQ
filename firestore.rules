@@ -517,7 +517,11 @@ service cloud.firestore {
           after.get('visibility', null) in ['public', 'mutual', 'private']) &&
         // Rides pinned to the profile: kMaxPinnedRides (profile_rides.dart).
         (keeps(before, after, 'pinnedRideIds') ||
-          (after.pinnedRideIds is list && after.pinnedRideIds.size() <= 5));
+          (after.pinnedRideIds is list && after.pinnedRideIds.size() <= 5)) &&
+        // Shown counts come from count() over follows/; the app only seeds 0
+        // on create (ProfileRepository.ensureProfile), so a rider can't set them.
+        (keeps(before, after, 'followerCount') || after.get('followerCount', 0) == 0) &&
+        (keeps(before, after, 'followingCount') || after.get('followingCount', 0) == 0);
     }
 
     // Whether the requester may moderate (delete other people's content in)
