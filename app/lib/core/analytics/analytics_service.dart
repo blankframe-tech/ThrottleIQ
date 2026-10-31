@@ -16,7 +16,8 @@ enum AnalyticsEvent {
   rideEnded('ride_ended'),
   rideShared('ride_shared'),
   bikeAdded('bike_added'),
-  routeSaved('route_saved');
+  routeSaved('route_saved'),
+  yearInReviewShared('year_in_review_shared');
 
   const AnalyticsEvent(this.wireName);
   final String wireName;
@@ -29,6 +30,10 @@ enum AnalyticsParam {
 
   /// `manual` | `auto` (ride started / ended).
   source,
+
+  /// Which year-in-review page was shared: a `StorySlide` name such as
+  /// `distance` or `clock`, never the figures on it.
+  slide,
 }
 
 /// Where events actually go. Swapped for a fake in tests.
@@ -115,7 +120,8 @@ class AnalyticsService {
 
   /// Records a funnel step. [param] is the one coarse parameter that event
   /// allows, or null.
-  Future<void> log(AnalyticsEvent event, {AnalyticsParam? param, String? value}) async {
+  Future<void> log(AnalyticsEvent event,
+      {AnalyticsParam? param, String? value}) async {
     if (!_enabled || _debugMode) return;
     try {
       await _sink.logEvent(

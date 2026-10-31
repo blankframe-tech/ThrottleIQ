@@ -97,7 +97,8 @@ page's own consistency rule (above) requires updating together.
 Source: `app/lib/core/analytics/analytics_service.dart` (Firebase Analytics). Screen
 views (route *patterns*, never resolved ids) and a **closed list** of funnel events
 (`sign_up`, `login`, `ride_started`, `ride_ended`, `ride_shared`, `bike_added`,
-`route_saved`) with at most one coarse parameter (`method`/`source`). No user id, name,
+`route_saved`, `year_in_review_shared`) with at most one coarse parameter
+(`method`/`source`/`slide`, the last being which story page was shared, e.g. `distance`). No user id, name,
 email, location or ride figures are ever sent, and there is no code path that could
 send them. Off in debug builds. Advertising ID is not collected (`AD_ID` permission is
 removed; `google_analytics_adid_collection_enabled` and the ad-personalisation /

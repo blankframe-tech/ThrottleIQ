@@ -5088,6 +5088,316 @@
       }
     }
   },
+  "yearStoryCoverSub": "A ride recap by ThrottleIQ",
+  "@yearStoryCoverSub": {
+    "description": "Year-in-review story cover: small line above the big year."
+  },
+  "yearStoryFooter": "Free on Google Play",
+  "@yearStoryFooter": {
+    "description": "Footer on every shared year-in-review story page, next to the app name."
+  },
+  "yearStoryDistanceKicker": "Distance ridden",
+  "@yearStoryDistanceKicker": {
+    "description": "Year-in-review story page label above the total distance."
+  },
+  "yearStoryEarthLaps": "{laps}× around the Earth",
+  "@yearStoryEarthLaps": {
+    "description": "Year-in-review story: the year's distance in laps of the Earth's equator.",
+    "placeholders": {
+      "laps": {
+        "type": "String",
+        "example": "1.2"
+      }
+    }
+  },
+  "yearStoryEarthShare": "{percent}% of the way around the Earth",
+  "@yearStoryEarthShare": {
+    "description": "Year-in-review story: the year's distance as a share of the Earth's equator.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "10.5"
+      }
+    }
+  },
+  "yearStoryCoxTrips": "Dhaka to Cox's Bazar, {times}× over",
+  "@yearStoryCoxTrips": {
+    "description": "Year-in-review story: the year's distance in Dhaka to Cox's Bazar trips (about 400 km each).",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "10.5"
+      }
+    }
+  },
+  "yearStoryRidesKicker": "Rides this year",
+  "@yearStoryRidesKicker": {
+    "description": "Year-in-review story page label above the number of rides."
+  },
+  "yearStoryActiveDays": "{days, plural, =1{On 1 day} other{On {days} different days}}",
+  "@yearStoryActiveDays": {
+    "description": "Year-in-review story: how many different days had a ride.",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "96"
+      }
+    }
+  },
+  "yearStoryStreak": "Longest streak: {days} days in a row",
+  "@yearStoryStreak": {
+    "description": "Year-in-review story: most consecutive days with a ride (always 2 or more).",
+    "placeholders": {
+      "days": {
+        "type": "int",
+        "example": "9"
+      }
+    }
+  },
+  "yearStoryTimeKicker": "Hours in the saddle",
+  "@yearStoryTimeKicker": {
+    "description": "Year-in-review story page label above total riding hours."
+  },
+  "yearStoryHoursUnit": "h",
+  "@yearStoryHoursUnit": {
+    "description": "Unit after the big hours figure on the year-in-review story."
+  },
+  "yearStoryTimeDays": "That's {days} days, around the clock",
+  "@yearStoryTimeDays": {
+    "description": "Year-in-review story: total riding time in 24-hour days.",
+    "placeholders": {
+      "days": {
+        "type": "String",
+        "example": "5.1"
+      }
+    }
+  },
+  "yearStoryAvgRide": "Average ride: {minutes} min",
+  "@yearStoryAvgRide": {
+    "description": "Year-in-review story: average ride duration in minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "String",
+        "example": "34"
+      }
+    }
+  },
+  "yearStoryMonthKm": "{distance} ridden that month",
+  "@yearStoryMonthKm": {
+    "description": "Year-in-review story: distance in the busiest month, e.g. \"420 km ridden that month\".",
+    "placeholders": {
+      "distance": {
+        "type": "String",
+        "example": "420 km"
+      }
+    }
+  },
+  "yearStoryWeekdayKicker": "Favourite day to ride",
+  "@yearStoryWeekdayKicker": {
+    "description": "Year-in-review story page label above the weekday with the most rides."
+  },
+  "yearStoryWeekdayShare": "{percent}% of my rides",
+  "@yearStoryWeekdayShare": {
+    "description": "Year-in-review story: share of the year's rides on the favourite weekday. First person: the page is shared by the rider.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "24"
+      }
+    }
+  },
+  "yearStoryClockKicker": "My riding clock",
+  "@yearStoryClockKicker": {
+    "description": "Year-in-review story page label above the rider's time-of-day personality."
+  },
+  "yearStoryEarlyBird": "Early Bird",
+  "@yearStoryEarlyBird": {
+    "description": "Year-in-review rider personality: rides mostly at dawn."
+  },
+  "yearStoryDaylight": "Daylight Cruiser",
+  "@yearStoryDaylight": {
+    "description": "Year-in-review rider personality: rides mostly in daytime."
+  },
+  "yearStorySunset": "Sunset Chaser",
+  "@yearStorySunset": {
+    "description": "Year-in-review rider personality: rides mostly around sunset."
+  },
+  "yearStoryNightOwl": "Night Owl",
+  "@yearStoryNightOwl": {
+    "description": "Year-in-review rider personality: rides mostly after dark."
+  },
+  "yearStoryEarlyBirdLine": "{percent}% of my rides started at dawn",
+  "@yearStoryEarlyBirdLine": {
+    "description": "Under the Early Bird personality.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "22"
+      }
+    }
+  },
+  "yearStoryDaylightLine": "{percent}% of my rides were in broad daylight",
+  "@yearStoryDaylightLine": {
+    "description": "Under the Daylight Cruiser personality.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "64"
+      }
+    }
+  },
+  "yearStorySunsetLine": "{percent}% of my rides started around sunset",
+  "@yearStorySunsetLine": {
+    "description": "Under the Sunset Chaser personality.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "35"
+      }
+    }
+  },
+  "yearStoryNightOwlLine": "{percent}% of my rides started after dark",
+  "@yearStoryNightOwlLine": {
+    "description": "Under the Night Owl personality.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "41"
+      }
+    }
+  },
+  "yearStoryOnDate": "On {date}",
+  "@yearStoryOnDate": {
+    "description": "Year-in-review story: the date of a record ride, e.g. \"On 14 March\".",
+    "placeholders": {
+      "date": {
+        "type": "String",
+        "example": "14 March"
+      }
+    }
+  },
+  "yearStoryRoute": "Route: {name}",
+  "@yearStoryRoute": {
+    "description": "Year-in-review story: the saved route the longest ride followed.",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Dhaka to Sylhet"
+      }
+    }
+  },
+  "yearStoryLongestVsAvg": "{times}× my average ride",
+  "@yearStoryLongestVsAvg": {
+    "description": "Year-in-review story: the longest ride as a multiple of the average ride.",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "6.2"
+      }
+    }
+  },
+  "yearStoryClimbKicker": "Metres climbed",
+  "@yearStoryClimbKicker": {
+    "description": "Year-in-review story page label above total elevation gain."
+  },
+  "yearStoryMetresUnit": "m",
+  "@yearStoryMetresUnit": {
+    "description": "Unit after the big metres-climbed figure."
+  },
+  "yearStoryEverestTimes": "{times}× Mount Everest",
+  "@yearStoryEverestTimes": {
+    "description": "Year-in-review story: metres climbed as multiples of Everest's height.",
+    "placeholders": {
+      "times": {
+        "type": "String",
+        "example": "1.4"
+      }
+    }
+  },
+  "yearStoryEverestShare": "{percent}% of Mount Everest",
+  "@yearStoryEverestShare": {
+    "description": "Year-in-review story: metres climbed as a share of Everest's height.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "38"
+      }
+    }
+  },
+  "yearStoryLeanKicker": "Deepest lean",
+  "@yearStoryLeanKicker": {
+    "description": "Year-in-review story page label above the peak lean angle."
+  },
+  "yearStoryLeanNote": "Estimated from GPS",
+  "@yearStoryLeanNote": {
+    "description": "Year-in-review story: the lean angle is an estimate."
+  },
+  "yearStoryBikeShare": "{count} of my {total} rides",
+  "@yearStoryBikeShare": {
+    "description": "Year-in-review story: rides on the favourite bike out of all rides.",
+    "placeholders": {
+      "count": {
+        "type": "String",
+        "example": "98"
+      },
+      "total": {
+        "type": "String",
+        "example": "128"
+      }
+    }
+  },
+  "yearStoryGrowthKicker": "Levelled up",
+  "@yearStoryGrowthKicker": {
+    "description": "Year-in-review story page label above the distance growth on last year."
+  },
+  "yearStoryGrowthMore": "more kilometres than {year}",
+  "@yearStoryGrowthMore": {
+    "description": "Under the big \"+25%\" on the year-in-review growth page.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2025"
+      }
+    }
+  },
+  "yearStoryGrowthMoreSoFar": "more kilometres than this point in {year}",
+  "@yearStoryGrowthMoreSoFar": {
+    "description": "Under the big \"+25%\" for the current year, compared with the same date a year earlier.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2025"
+      }
+    }
+  },
+  "yearStoryMute": "Mute music",
+  "@yearStoryMute": {
+    "description": "Tooltip: mute the year-in-review story's background music."
+  },
+  "yearStoryUnmute": "Play music",
+  "@yearStoryUnmute": {
+    "description": "Tooltip: unmute the year-in-review story's background music."
+  },
+  "yearStoryNext": "Next page",
+  "@yearStoryNext": {
+    "description": "Tooltip: next page of the year-in-review story."
+  },
+  "yearStoryPrevious": "Previous page",
+  "@yearStoryPrevious": {
+    "description": "Tooltip: previous page of the year-in-review story."
+  },
+  "yearStoryReplay": "Replay",
+  "@yearStoryReplay": {
+    "description": "Button on the last year-in-review story page: start again."
+  },
+  "yearStoryChooseYear": "Choose year",
+  "@yearStoryChooseYear": {
+    "description": "Tooltip: pick which year's story to play."
+  },
+  "yearStoryShareSlide": "Share this",
+  "@yearStoryShareSlide": {
+    "description": "Button: share the year-in-review story page on screen as an image."
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."

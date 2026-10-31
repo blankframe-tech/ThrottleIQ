@@ -6498,6 +6498,276 @@ abstract class AppLocalizations {
   /// **'Your {year} on two wheels is ready. Tap to see and share it.'**
   String yearInReviewBanner(String year);
 
+  /// Year-in-review story cover: small line above the big year.
+  ///
+  /// In en, this message translates to:
+  /// **'A ride recap by ThrottleIQ'**
+  String get yearStoryCoverSub;
+
+  /// Footer on every shared year-in-review story page, next to the app name.
+  ///
+  /// In en, this message translates to:
+  /// **'Free on Google Play'**
+  String get yearStoryFooter;
+
+  /// Year-in-review story page label above the total distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance ridden'**
+  String get yearStoryDistanceKicker;
+
+  /// Year-in-review story: the year's distance in laps of the Earth's equator.
+  ///
+  /// In en, this message translates to:
+  /// **'{laps}× around the Earth'**
+  String yearStoryEarthLaps(String laps);
+
+  /// Year-in-review story: the year's distance as a share of the Earth's equator.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of the way around the Earth'**
+  String yearStoryEarthShare(String percent);
+
+  /// Year-in-review story: the year's distance in Dhaka to Cox's Bazar trips (about 400 km each).
+  ///
+  /// In en, this message translates to:
+  /// **'Dhaka to Cox\'s Bazar, {times}× over'**
+  String yearStoryCoxTrips(String times);
+
+  /// Year-in-review story page label above the number of rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides this year'**
+  String get yearStoryRidesKicker;
+
+  /// Year-in-review story: how many different days had a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'{days, plural, =1{On 1 day} other{On {days} different days}}'**
+  String yearStoryActiveDays(int days);
+
+  /// Year-in-review story: most consecutive days with a ride (always 2 or more).
+  ///
+  /// In en, this message translates to:
+  /// **'Longest streak: {days} days in a row'**
+  String yearStoryStreak(int days);
+
+  /// Year-in-review story page label above total riding hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours in the saddle'**
+  String get yearStoryTimeKicker;
+
+  /// Unit after the big hours figure on the year-in-review story.
+  ///
+  /// In en, this message translates to:
+  /// **'h'**
+  String get yearStoryHoursUnit;
+
+  /// Year-in-review story: total riding time in 24-hour days.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s {days} days, around the clock'**
+  String yearStoryTimeDays(String days);
+
+  /// Year-in-review story: average ride duration in minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Average ride: {minutes} min'**
+  String yearStoryAvgRide(String minutes);
+
+  /// Year-in-review story: distance in the busiest month, e.g. "420 km ridden that month".
+  ///
+  /// In en, this message translates to:
+  /// **'{distance} ridden that month'**
+  String yearStoryMonthKm(String distance);
+
+  /// Year-in-review story page label above the weekday with the most rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourite day to ride'**
+  String get yearStoryWeekdayKicker;
+
+  /// Year-in-review story: share of the year's rides on the favourite weekday. First person: the page is shared by the rider.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of my rides'**
+  String yearStoryWeekdayShare(String percent);
+
+  /// Year-in-review story page label above the rider's time-of-day personality.
+  ///
+  /// In en, this message translates to:
+  /// **'My riding clock'**
+  String get yearStoryClockKicker;
+
+  /// Year-in-review rider personality: rides mostly at dawn.
+  ///
+  /// In en, this message translates to:
+  /// **'Early Bird'**
+  String get yearStoryEarlyBird;
+
+  /// Year-in-review rider personality: rides mostly in daytime.
+  ///
+  /// In en, this message translates to:
+  /// **'Daylight Cruiser'**
+  String get yearStoryDaylight;
+
+  /// Year-in-review rider personality: rides mostly around sunset.
+  ///
+  /// In en, this message translates to:
+  /// **'Sunset Chaser'**
+  String get yearStorySunset;
+
+  /// Year-in-review rider personality: rides mostly after dark.
+  ///
+  /// In en, this message translates to:
+  /// **'Night Owl'**
+  String get yearStoryNightOwl;
+
+  /// Under the Early Bird personality.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of my rides started at dawn'**
+  String yearStoryEarlyBirdLine(String percent);
+
+  /// Under the Daylight Cruiser personality.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of my rides were in broad daylight'**
+  String yearStoryDaylightLine(String percent);
+
+  /// Under the Sunset Chaser personality.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of my rides started around sunset'**
+  String yearStorySunsetLine(String percent);
+
+  /// Under the Night Owl personality.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of my rides started after dark'**
+  String yearStoryNightOwlLine(String percent);
+
+  /// Year-in-review story: the date of a record ride, e.g. "On 14 March".
+  ///
+  /// In en, this message translates to:
+  /// **'On {date}'**
+  String yearStoryOnDate(String date);
+
+  /// Year-in-review story: the saved route the longest ride followed.
+  ///
+  /// In en, this message translates to:
+  /// **'Route: {name}'**
+  String yearStoryRoute(String name);
+
+  /// Year-in-review story: the longest ride as a multiple of the average ride.
+  ///
+  /// In en, this message translates to:
+  /// **'{times}× my average ride'**
+  String yearStoryLongestVsAvg(String times);
+
+  /// Year-in-review story page label above total elevation gain.
+  ///
+  /// In en, this message translates to:
+  /// **'Metres climbed'**
+  String get yearStoryClimbKicker;
+
+  /// Unit after the big metres-climbed figure.
+  ///
+  /// In en, this message translates to:
+  /// **'m'**
+  String get yearStoryMetresUnit;
+
+  /// Year-in-review story: metres climbed as multiples of Everest's height.
+  ///
+  /// In en, this message translates to:
+  /// **'{times}× Mount Everest'**
+  String yearStoryEverestTimes(String times);
+
+  /// Year-in-review story: metres climbed as a share of Everest's height.
+  ///
+  /// In en, this message translates to:
+  /// **'{percent}% of Mount Everest'**
+  String yearStoryEverestShare(String percent);
+
+  /// Year-in-review story page label above the peak lean angle.
+  ///
+  /// In en, this message translates to:
+  /// **'Deepest lean'**
+  String get yearStoryLeanKicker;
+
+  /// Year-in-review story: the lean angle is an estimate.
+  ///
+  /// In en, this message translates to:
+  /// **'Estimated from GPS'**
+  String get yearStoryLeanNote;
+
+  /// Year-in-review story: rides on the favourite bike out of all rides.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of my {total} rides'**
+  String yearStoryBikeShare(String count, String total);
+
+  /// Year-in-review story page label above the distance growth on last year.
+  ///
+  /// In en, this message translates to:
+  /// **'Levelled up'**
+  String get yearStoryGrowthKicker;
+
+  /// Under the big "+25%" on the year-in-review growth page.
+  ///
+  /// In en, this message translates to:
+  /// **'more kilometres than {year}'**
+  String yearStoryGrowthMore(String year);
+
+  /// Under the big "+25%" for the current year, compared with the same date a year earlier.
+  ///
+  /// In en, this message translates to:
+  /// **'more kilometres than this point in {year}'**
+  String yearStoryGrowthMoreSoFar(String year);
+
+  /// Tooltip: mute the year-in-review story's background music.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute music'**
+  String get yearStoryMute;
+
+  /// Tooltip: unmute the year-in-review story's background music.
+  ///
+  /// In en, this message translates to:
+  /// **'Play music'**
+  String get yearStoryUnmute;
+
+  /// Tooltip: next page of the year-in-review story.
+  ///
+  /// In en, this message translates to:
+  /// **'Next page'**
+  String get yearStoryNext;
+
+  /// Tooltip: previous page of the year-in-review story.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous page'**
+  String get yearStoryPrevious;
+
+  /// Button on the last year-in-review story page: start again.
+  ///
+  /// In en, this message translates to:
+  /// **'Replay'**
+  String get yearStoryReplay;
+
+  /// Tooltip: pick which year's story to play.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose year'**
+  String get yearStoryChooseYear;
+
+  /// Button: share the year-in-review story page on screen as an image.
+  ///
+  /// In en, this message translates to:
+  /// **'Share this'**
+  String get yearStoryShareSlide;
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

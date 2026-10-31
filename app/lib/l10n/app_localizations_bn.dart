@@ -3662,6 +3662,188 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get yearStoryCoverSub => 'ThrottleIQ-এর রাইড রিক্যাপ';
+
+  @override
+  String get yearStoryFooter => 'Google Play-তে ফ্রি';
+
+  @override
+  String get yearStoryDistanceKicker => 'মোট পাড়ি দেওয়া পথ';
+
+  @override
+  String yearStoryEarthLaps(String laps) {
+    return 'পৃথিবীকে $laps বার চক্কর';
+  }
+
+  @override
+  String yearStoryEarthShare(String percent) {
+    return 'পৃথিবী ঘোরার $percent% পথ';
+  }
+
+  @override
+  String yearStoryCoxTrips(String times) {
+    return 'ঢাকা থেকে কক্সবাজার, $times বার';
+  }
+
+  @override
+  String get yearStoryRidesKicker => 'এ বছরের রাইড';
+
+  @override
+  String yearStoryActiveDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: '$daysটি আলাদা দিনে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearStoryStreak(int days) {
+    return 'টানা সবচেয়ে বেশি: $days দিন';
+  }
+
+  @override
+  String get yearStoryTimeKicker => 'বাইকে কাটানো ঘণ্টা';
+
+  @override
+  String get yearStoryHoursUnit => 'ঘণ্টা';
+
+  @override
+  String yearStoryTimeDays(String days) {
+    return 'মানে টানা $days দিন, দিনরাত';
+  }
+
+  @override
+  String yearStoryAvgRide(String minutes) {
+    return 'গড় রাইড: $minutes মিনিট';
+  }
+
+  @override
+  String yearStoryMonthKm(String distance) {
+    return 'সেই মাসে $distance রাইড';
+  }
+
+  @override
+  String get yearStoryWeekdayKicker => 'রাইডের প্রিয় দিন';
+
+  @override
+  String yearStoryWeekdayShare(String percent) {
+    return 'আমার রাইডের $percent%';
+  }
+
+  @override
+  String get yearStoryClockKicker => 'আমার রাইডের ঘড়ি';
+
+  @override
+  String get yearStoryEarlyBird => 'ভোরের পাখি';
+
+  @override
+  String get yearStoryDaylight => 'দিনের আলোর রাইডার';
+
+  @override
+  String get yearStorySunset => 'গোধূলির রাইডার';
+
+  @override
+  String get yearStoryNightOwl => 'রাতজাগা পেঁচা';
+
+  @override
+  String yearStoryEarlyBirdLine(String percent) {
+    return 'আমার $percent% রাইড শুরু ভোরে';
+  }
+
+  @override
+  String yearStoryDaylightLine(String percent) {
+    return 'আমার $percent% রাইড দিনের আলোয়';
+  }
+
+  @override
+  String yearStorySunsetLine(String percent) {
+    return 'আমার $percent% রাইড শুরু গোধূলিতে';
+  }
+
+  @override
+  String yearStoryNightOwlLine(String percent) {
+    return 'আমার $percent% রাইড শুরু রাতে';
+  }
+
+  @override
+  String yearStoryOnDate(String date) {
+    return '$date তারিখে';
+  }
+
+  @override
+  String yearStoryRoute(String name) {
+    return 'রুট: $name';
+  }
+
+  @override
+  String yearStoryLongestVsAvg(String times) {
+    return 'আমার গড় রাইডের $times গুণ';
+  }
+
+  @override
+  String get yearStoryClimbKicker => 'মোট চড়াই';
+
+  @override
+  String get yearStoryMetresUnit => 'মি';
+
+  @override
+  String yearStoryEverestTimes(String times) {
+    return '$times বার এভারেস্টের সমান';
+  }
+
+  @override
+  String yearStoryEverestShare(String percent) {
+    return 'এভারেস্টের $percent%';
+  }
+
+  @override
+  String get yearStoryLeanKicker => 'সবচেয়ে বেশি কাত';
+
+  @override
+  String get yearStoryLeanNote => 'GPS থেকে আনুমানিক';
+
+  @override
+  String yearStoryBikeShare(String count, String total) {
+    return 'আমার $totalটি রাইডের $countটি';
+  }
+
+  @override
+  String get yearStoryGrowthKicker => 'আরও এগিয়ে';
+
+  @override
+  String yearStoryGrowthMore(String year) {
+    return '$year-এর চেয়ে বেশি কিলোমিটার';
+  }
+
+  @override
+  String yearStoryGrowthMoreSoFar(String year) {
+    return '$year-এর এই সময়ের চেয়ে বেশি কিলোমিটার';
+  }
+
+  @override
+  String get yearStoryMute => 'মিউজিক বন্ধ';
+
+  @override
+  String get yearStoryUnmute => 'মিউজিক চালু';
+
+  @override
+  String get yearStoryNext => 'পরের পাতা';
+
+  @override
+  String get yearStoryPrevious => 'আগের পাতা';
+
+  @override
+  String get yearStoryReplay => 'আবার দেখুন';
+
+  @override
+  String get yearStoryChooseYear => 'বছর বেছে নিন';
+
+  @override
+  String get yearStoryShareSlide => 'এটি শেয়ার করুন';
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

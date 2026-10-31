@@ -60,7 +60,7 @@ Widget _harness(Future<RiderStatsSummary> Function() load,
           GlobalCupertinoLocalizations.delegate,
         ],
         supportedLocales: AppLocalizations.supportedLocales,
-        home: const YearInReviewScreen(),
+        home: const YearInReviewScreen(music: false),
       ),
     );
 
@@ -202,14 +202,15 @@ void main() {
     expect(find.text('+100% vs this point in ${now.year - 1}'), findsOneWidget);
   });
 
-  testWidgets('year chips switch the card between years', (tester) async {
+  testWidgets('the year menu switches the story between years', (tester) async {
     await tester.pumpWidget(_harness(() async => _stats(all: [
           _ride(DateTime(2023, 5, 1), 10),
           _ride(DateTime(2024, 5, 1), 20),
         ])));
     await tester.pumpAndSettle();
-    expect(find.byType(ChoiceChip), findsNWidgets(2));
     expect(find.text('My 2024 on two wheels'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('year_in_review_year')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('year_in_review_year_2023')));
     await tester.pumpAndSettle();
     expect(find.text('My 2023 on two wheels'), findsOneWidget);
@@ -267,7 +268,8 @@ void main() {
                 body: TextButton(
                   onPressed: () => Navigator.of(context, rootNavigator: true)
                       .push(MaterialPageRoute<void>(
-                          builder: (_) => const YearInReviewScreen())),
+                          builder: (_) =>
+                              const YearInReviewScreen(music: false))),
                   child: const Text('open'),
                 ),
               ),

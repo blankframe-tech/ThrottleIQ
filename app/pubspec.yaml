@@ -211,6 +211,8 @@ flutter:
   assets:
     - assets/images/
     - assets/icons/
+    # Year in Review story music: an original loop, see scripts/year_in_review_music.py.
+    - assets/audio/
   fonts:
     # Bundled (not fetched via google_fonts at runtime) so Bangla glyphs are
     # available offline from first launch — the app's Bangla-speaking riders

@@ -3663,6 +3663,189 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get yearStoryCoverSub => 'A ride recap by ThrottleIQ';
+
+  @override
+  String get yearStoryFooter => 'Free on Google Play';
+
+  @override
+  String get yearStoryDistanceKicker => 'Distance ridden';
+
+  @override
+  String yearStoryEarthLaps(String laps) {
+    return '$laps× around the Earth';
+  }
+
+  @override
+  String yearStoryEarthShare(String percent) {
+    return '$percent% of the way around the Earth';
+  }
+
+  @override
+  String yearStoryCoxTrips(String times) {
+    return 'Dhaka to Cox\'s Bazar, $times× over';
+  }
+
+  @override
+  String get yearStoryRidesKicker => 'Rides this year';
+
+  @override
+  String yearStoryActiveDays(int days) {
+    String _temp0 = intl.Intl.pluralLogic(
+      days,
+      locale: localeName,
+      other: 'On $days different days',
+      one: 'On 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String yearStoryStreak(int days) {
+    return 'Longest streak: $days days in a row';
+  }
+
+  @override
+  String get yearStoryTimeKicker => 'Hours in the saddle';
+
+  @override
+  String get yearStoryHoursUnit => 'h';
+
+  @override
+  String yearStoryTimeDays(String days) {
+    return 'That\'s $days days, around the clock';
+  }
+
+  @override
+  String yearStoryAvgRide(String minutes) {
+    return 'Average ride: $minutes min';
+  }
+
+  @override
+  String yearStoryMonthKm(String distance) {
+    return '$distance ridden that month';
+  }
+
+  @override
+  String get yearStoryWeekdayKicker => 'Favourite day to ride';
+
+  @override
+  String yearStoryWeekdayShare(String percent) {
+    return '$percent% of my rides';
+  }
+
+  @override
+  String get yearStoryClockKicker => 'My riding clock';
+
+  @override
+  String get yearStoryEarlyBird => 'Early Bird';
+
+  @override
+  String get yearStoryDaylight => 'Daylight Cruiser';
+
+  @override
+  String get yearStorySunset => 'Sunset Chaser';
+
+  @override
+  String get yearStoryNightOwl => 'Night Owl';
+
+  @override
+  String yearStoryEarlyBirdLine(String percent) {
+    return '$percent% of my rides started at dawn';
+  }
+
+  @override
+  String yearStoryDaylightLine(String percent) {
+    return '$percent% of my rides were in broad daylight';
+  }
+
+  @override
+  String yearStorySunsetLine(String percent) {
+    return '$percent% of my rides started around sunset';
+  }
+
+  @override
+  String yearStoryNightOwlLine(String percent) {
+    return '$percent% of my rides started after dark';
+  }
+
+  @override
+  String yearStoryOnDate(String date) {
+    return 'On $date';
+  }
+
+  @override
+  String yearStoryRoute(String name) {
+    return 'Route: $name';
+  }
+
+  @override
+  String yearStoryLongestVsAvg(String times) {
+    return '$times× my average ride';
+  }
+
+  @override
+  String get yearStoryClimbKicker => 'Metres climbed';
+
+  @override
+  String get yearStoryMetresUnit => 'm';
+
+  @override
+  String yearStoryEverestTimes(String times) {
+    return '$times× Mount Everest';
+  }
+
+  @override
+  String yearStoryEverestShare(String percent) {
+    return '$percent% of Mount Everest';
+  }
+
+  @override
+  String get yearStoryLeanKicker => 'Deepest lean';
+
+  @override
+  String get yearStoryLeanNote => 'Estimated from GPS';
+
+  @override
+  String yearStoryBikeShare(String count, String total) {
+    return '$count of my $total rides';
+  }
+
+  @override
+  String get yearStoryGrowthKicker => 'Levelled up';
+
+  @override
+  String yearStoryGrowthMore(String year) {
+    return 'more kilometres than $year';
+  }
+
+  @override
+  String yearStoryGrowthMoreSoFar(String year) {
+    return 'more kilometres than this point in $year';
+  }
+
+  @override
+  String get yearStoryMute => 'Mute music';
+
+  @override
+  String get yearStoryUnmute => 'Play music';
+
+  @override
+  String get yearStoryNext => 'Next page';
+
+  @override
+  String get yearStoryPrevious => 'Previous page';
+
+  @override
+  String get yearStoryReplay => 'Replay';
+
+  @override
+  String get yearStoryChooseYear => 'Choose year';
+
+  @override
+  String get yearStoryShareSlide => 'Share this';
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

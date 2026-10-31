@@ -1,59 +1,177 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../../core/analytics/analytics_service.dart';
 import '../../../../core/i18n/l10n_context.dart';
-import '../../../../core/services/app_check_gate.dart' show kPlayStoreUrl;
-import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/theme/app_theme_context.dart';
-import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/utils/error_reporter.dart';
-import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/year_in_review.dart';
 import '../providers/rider_stats_provider.dart';
+import '../widgets/year_review_card.dart';
+import '../widgets/year_story_slides.dart';
 
-/// A shareable image of one year's riding, built from local stats.
+/// A rider's year as a story: full-screen pages that advance every few
+/// seconds over a music loop, each one shareable as a 1080x1920 image.
+/// Tap right/left to skip, hold to pause, swipe down to close.
 class YearInReviewScreen extends ConsumerStatefulWidget {
-  const YearInReviewScreen({super.key, this.initialYear});
+  const YearInReviewScreen({super.key, this.initialYear, this.music = true});
 
   /// Year to open on, if the rider has rides in it; else the newest.
   final int? initialYear;
+
+  /// False in widget tests, which have no audio plugin.
+  final bool music;
+
+  /// How long each page shows before the next.
+  static const slideDuration = Duration(seconds: 5);
 
   @override
   ConsumerState<YearInReviewScreen> createState() => _YearInReviewScreenState();
 }
 
-class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
-  final GlobalKey _cardKey = GlobalKey();
+class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  final GlobalKey _slideKey = GlobalKey();
   // Anchors the iOS/iPad share popover — see active_ride_screen.dart.
   final GlobalKey _shareButtonKey = GlobalKey();
+  late final AnimationController _clock;
   late int? _year = widget.initialYear;
+  int _index = 0;
+  int _count = 0;
+  bool _started = false;
+  bool _holding = false;
   bool _sharing = false;
+  bool _muted = false;
+  bool _background = false;
+  AudioPlayer? _player;
 
-  Future<void> _share(int year) async {
+  /// With a screen reader on, pages wait for the rider instead of moving
+  /// on by themselves.
+  bool get _manual => MediaQuery.of(context).accessibleNavigation;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _clock = AnimationController(
+        vsync: this, duration: YearInReviewScreen.slideDuration)
+      ..addStatusListener((s) {
+        if (s == AnimationStatus.completed && !_manual) _next();
+      });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _clock.dispose();
+    _player?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startMusic() async {
+    try {
+      // Ambient: obeys the iPhone's silent switch and plays under the
+      // rider's own music instead of stopping it.
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.ambient,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.music,
+          usage: AndroidAudioUsage.media,
+        ),
+        androidAudioFocusGainType:
+            AndroidAudioFocusGainType.gainTransientMayDuck,
+      ));
+      final player = AudioPlayer();
+      if (!mounted) return player.dispose();
+      _player = player;
+      await player.setAsset('assets/audio/year_in_review_loop.m4a');
+      await player.setLoopMode(LoopMode.one);
+      await player.setVolume(0.7);
+      _syncMusic();
+    } catch (e, st) {
+      reportSilently(e, st, where: 'yearInReview.music');
+    }
+  }
+
+  /// Plays while the story is on screen and unmuted; never while held,
+  /// sharing or in the background.
+  void _syncMusic() {
+    final p = _player;
+    if (p == null) return;
+    if (!_muted && !_background) {
+      if (!p.playing) unawaited(p.play().catchError((Object _) {}));
+    } else {
+      unawaited(p.pause().catchError((Object _) {}));
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _background = state != AppLifecycleState.resumed;
+    _background ? _clock.stop() : _resume();
+    _syncMusic();
+  }
+
+  void _resume() {
+    if (!_started || _holding || _sharing || _background || _manual) return;
+    if (_clock.value < 1) _clock.forward();
+  }
+
+  void _goTo(int i) {
+    setState(() => _index = i.clamp(0, _count - 1));
+    if (_manual) {
+      _clock.stop();
+    } else {
+      _clock.value = 0;
+      _resume();
+    }
+  }
+
+  void _next() {
+    if (_index < _count - 1) {
+      _goTo(_index + 1);
+    } else {
+      _clock.value = 1; // rest on the last page
+    }
+  }
+
+  void _previous() => _goTo(_index - 1);
+
+  void _hold(bool on) {
+    setState(() => _holding = on);
+    on ? _clock.stop() : _resume();
+  }
+
+  Future<void> _share(int year, StorySlide slide) async {
     if (_sharing) return;
     final l10n = context.l10n;
-    setState(() => _sharing = true);
+    setState(() => _sharing = true); // draws the page finished
+    _clock.stop();
     try {
-      final boundary =
-          _cardKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-      if (boundary == null) throw StateError('card not laid out');
+      await WidgetsBinding.instance.endOfFrame;
+      final boundary = _slideKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      if (boundary == null) throw StateError('slide not laid out');
       final image = await boundary.toImage(pixelRatio: 3);
       final bytes = await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
       if (bytes == null) throw StateError('PNG encode failed');
       final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/throttleiq_year_$year.png');
+      final file = File('${dir.path}/throttleiq_${year}_${slide.name}.png');
       await file.writeAsBytes(bytes.buffer.asUint8List(), flush: true);
       if (!mounted) return;
 
@@ -63,11 +181,17 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
       if (box != null && box.hasSize) {
         origin = box.localToGlobal(Offset.zero) & box.size;
       }
-      await Share.shareXFiles(
+      final result = await Share.shareXFiles(
         [XFile(file.path, mimeType: 'image/png')],
         subject: l10n.yearInReviewHeading('$year'),
         sharePositionOrigin: origin,
       );
+      if (result.status != ShareResultStatus.dismissed) {
+        unawaited(AnalyticsService.instance.log(
+            AnalyticsEvent.yearInReviewShared,
+            param: AnalyticsParam.slide,
+            value: slide.name));
+      }
     } catch (e, st) {
       reportNonFatal(e, st, reason: 'year in review share');
       if (mounted) {
@@ -76,7 +200,10 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
         );
       }
     } finally {
-      if (mounted) setState(() => _sharing = false);
+      if (mounted) {
+        setState(() => _sharing = false);
+        _resume();
+      }
     }
   }
 
@@ -89,33 +216,27 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
     final rides = stats == null
         ? const <RideEntity>[]
         : (stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides);
-    final bikes = ref.watch(allBikesProvider).valueOrNull ?? [];
     final years = rideYears(rides);
 
-    return Scaffold(
-      backgroundColor: context.palette.background,
-      appBar: AppBar(title: Text(l10n.yearInReviewTitle)),
-      body: stats == null && statsAsync.hasError
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(l10n.yearInReviewLoadFailed),
-                  const SizedBox(height: 12),
-                  OutlinedButton(
-                    onPressed: () => ref.invalidate(riderStatsProvider),
-                    child: Text(l10n.tryAgain),
-                  ),
-                ],
-              ),
-            )
-          : stats == null
-              ? const Center(child: CircularProgressIndicator())
-              : years.isEmpty
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
+    if (stats == null || years.isEmpty) {
+      return Scaffold(
+        backgroundColor: context.palette.background,
+        appBar: AppBar(title: Text(l10n.yearInReviewTitle)),
+        body: Center(
+          child: stats == null && !statsAsync.hasError
+              ? const CircularProgressIndicator()
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: stats == null
+                      ? [
+                          Text(l10n.yearInReviewLoadFailed),
+                          const SizedBox(height: 12),
+                          OutlinedButton(
+                            onPressed: () => ref.invalidate(riderStatsProvider),
+                            child: Text(l10n.tryAgain),
+                          ),
+                        ]
+                      : [
                           Text(l10n.noRidesYetDot),
                           const SizedBox(height: 12),
                           FilledButton(
@@ -129,302 +250,266 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                             child: Text(l10n.startRide),
                           ),
                         ],
-                      ),
-                    )
-                  : Builder(builder: (context) {
-                      final year = years.contains(_year) ? _year! : years.first;
-                      final review = computeYearInReview(rides, year);
-                      // A deleted bike has no name; leave the row off a public image.
-                      final bikeName = bikes
-                          .where((b) => b.id == review.favouriteBikeId)
-                          .map((b) => b.displayName)
-                          .firstOrNull;
-                      return ListView(
-                        padding: const EdgeInsets.all(16),
-                        children: [
-                          if (years.length > 1)
-                            SingleChildScrollView(
-                              key: const Key('year_in_review_year'),
-                              scrollDirection: Axis.horizontal,
-                              child: Row(
-                                children: [
-                                  for (final y in years) ...[
-                                    ChoiceChip(
-                                      key: Key('year_in_review_year_$y'),
-                                      label: Text('$y'),
-                                      selected: y == year,
-                                      onSelected: (_) =>
-                                          setState(() => _year = y),
-                                      selectedColor: context.palette.primary
-                                          .withValues(alpha: 0.18),
-                                      labelStyle: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        color: y == year
-                                            ? context.palette.primary
-                                            : context.palette.textSecondary,
+                ),
+        ),
+      );
+    }
+
+    final year = years.contains(_year) ? _year! : years.first;
+    final review = computeYearInReview(rides, year);
+    final bikes = ref.watch(allBikesProvider).valueOrNull ?? [];
+    // A deleted bike has no name; leave it off a public image.
+    final bikeName = bikes
+        .where((b) => b.id == review.favouriteBikeId)
+        .map((b) => b.displayName)
+        .firstOrNull;
+    final slides = storySlides(review, hasBikeName: bikeName != null);
+    _count = slides.length;
+    if (_index >= _count) _index = _count - 1;
+    final slide = slides[_index];
+    final last = _index == _count - 1;
+    if (!_started) {
+      _started = true;
+      // Music only once there's a story: never over a spinner or an error.
+      if (widget.music) unawaited(_startMusic());
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _goTo(_index);
+      });
+    }
+    final still =
+        _sharing || _manual || MediaQuery.of(context).disableAnimations;
+    const fg = Colors.white;
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: SafeArea(
+          child: Column(
+            children: [
+              // Chrome fades while held, so the page can be seen whole.
+              AnimatedOpacity(
+                opacity: _holding ? 0 : 1,
+                duration: const Duration(milliseconds: 150),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 4, 0),
+                  child: Column(
+                    children: [
+                      ExcludeSemantics(
+                        child: AnimatedBuilder(
+                          animation: _clock,
+                          builder: (context, _) => Row(
+                            children: [
+                              for (var i = 0; i < _count; i++)
+                                Expanded(
+                                  child: Container(
+                                    height: 3,
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 2),
+                                    decoration: BoxDecoration(
+                                      color: fg.withValues(alpha: 0.3),
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: i < _index
+                                          ? 1
+                                          : i == _index
+                                              ? (_manual ? 1 : _clock.value)
+                                              : 0,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: fg,
+                                          borderRadius:
+                                              BorderRadius.circular(2),
+                                        ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
-                                  ],
-                                ],
-                              ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${l10n.yearInReviewTitle} · $year',
+                              style: const TextStyle(
+                                  color: fg, fontWeight: FontWeight.w700),
                             ),
-                          const SizedBox(height: 12),
-                          Center(
-                            // Preview scaled to fit; the boundary is always
-                            // 360×640, so the PNG is 1080×1920 (9:16).
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                  maxHeight:
-                                      MediaQuery.sizeOf(context).height * 0.62),
-                              child: AspectRatio(
-                                aspectRatio: _YearCard.size.aspectRatio,
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      context.shape.radiusXl),
-                                  child: FittedBox(
-                                    child: RepaintBoundary(
-                                      key: _cardKey,
-                                      child: _YearCard(
-                                          review: review, bikeName: bikeName),
-                                    ),
+                          ),
+                          if (years.length > 1)
+                            PopupMenuButton<int>(
+                              key: const Key('year_in_review_year'),
+                              tooltip: l10n.yearStoryChooseYear,
+                              icon: const Icon(Icons.calendar_month_outlined,
+                                  color: fg),
+                              initialValue: year,
+                              onOpened: () => _hold(true),
+                              onCanceled: () => _hold(false),
+                              onSelected: (y) {
+                                setState(() {
+                                  _year = y;
+                                  _holding = false;
+                                });
+                                _goTo(0);
+                              },
+                              itemBuilder: (_) => [
+                                for (final y in years)
+                                  PopupMenuItem(
+                                    key: Key('year_in_review_year_$y'),
+                                    value: y,
+                                    child: Text('$y'),
+                                  ),
+                              ],
+                            ),
+                          if (widget.music)
+                            IconButton(
+                              tooltip: _muted
+                                  ? l10n.yearStoryUnmute
+                                  : l10n.yearStoryMute,
+                              icon: Icon(
+                                  _muted
+                                      ? Icons.volume_off_rounded
+                                      : Icons.volume_up_rounded,
+                                  color: fg),
+                              onPressed: () {
+                                setState(() => _muted = !_muted);
+                                _syncMusic();
+                              },
+                            ),
+                          IconButton(
+                            tooltip: l10n.close,
+                            icon: const Icon(Icons.close_rounded, color: fg),
+                            onPressed: () => Navigator.of(context).maybePop(),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, box) => GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    // Back is the page's own left third (plus the margin
+                    // beside it), however wide the screen is.
+                    onTapUp: (d) {
+                      final w = (box.maxWidth - 16).clamp(0.0,
+                          (box.maxHeight - 16) * YearCard.size.aspectRatio);
+                      d.localPosition.dx < (box.maxWidth - w) / 2 + w / 3
+                          ? _previous()
+                          : _next();
+                    },
+                    onLongPressStart: (_) => _hold(true),
+                    onLongPressEnd: (_) => _hold(false),
+                    onVerticalDragEnd: (d) {
+                      if ((d.primaryVelocity ?? 0) > 400) {
+                        Navigator.of(context).maybePop();
+                      }
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 8),
+                      child: Center(
+                        // Preview scaled to fit; the boundary is always
+                        // 360x640, so the PNG is 1080x1920 (9:16).
+                        child: AspectRatio(
+                          aspectRatio: YearCard.size.aspectRatio,
+                          child: ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(context.shape.radiusXl),
+                            child: FittedBox(
+                              child: RepaintBoundary(
+                                key: _slideKey,
+                                child: AnimatedBuilder(
+                                  animation: _clock,
+                                  builder: (context, _) => YearStorySlide(
+                                    key: ValueKey('$year/${slide.name}'),
+                                    slide: slide,
+                                    review: review,
+                                    bikeName: bikeName,
+                                    // The entrance plays in the first 40%.
+                                    t: still
+                                        ? 1
+                                        : (_clock.value / 0.4).clamp(0, 1),
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            key: _shareButtonKey,
-                            onPressed: _sharing ? null : () => _share(year),
-                            icon: _sharing
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.ios_share),
-                            label: Text(l10n.shareAction),
-                          ),
-                        ],
-                      );
-                    }),
-    );
-  }
-}
-
-class _YearCard extends StatelessWidget {
-  final YearInReview review;
-  final String? bikeName;
-
-  const _YearCard({required this.review, this.bikeName});
-
-  /// Logical size of the exported image; ×3 pixel ratio gives 1080×1920.
-  static const size = Size(360, 640);
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    // One format for every distance: grouped, at most one decimal. Digits
-    // stay Western in Bangla too, per core/i18n/numeric_locale.dart.
-    final km = NumberFormat('#,##0.#', kNumericLocale);
-    final change = review.changeVsPrevious;
-    final busiest = review.busiestMonth;
-    // The current year isn't over: say so, or a shared total reads as final.
-    final soFar = review.inProgress;
-    // Fixed colours, not the sharer's theme: every exported image looks the
-    // same whether the rider uses the light or the dark skin.
-    const p = AppColorPalette.carbonMonoDark;
-    final labelStyle = TextStyle(
-        fontSize: 12, fontWeight: FontWeight.bold, color: p.textSecondary);
-    // MergeSemantics: a screen reader hears "Total rides, 42", not two items.
-    Widget stat(String label, String value) => MergeSemantics(
-            child: Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: labelStyle),
-              const SizedBox(height: 2),
-              Text(value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: display(context, 20, color: p.onInk)),
-            ],
-          ),
-        ));
-    // Supporting figures sit two to a row under the hero distance.
-    final tiles = [
-      stat(l10n.totalRides, '${review.rideCount}'),
-      stat(l10n.yearInReviewRideTime,
-          l10n.yearInReviewHours(km.format(review.rideSeconds / 3600))),
-      stat(l10n.yearInReviewLongestRide,
-          '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
-      if (busiest != null)
-        stat(
-            l10n.yearInReviewBusiestMonth,
-            // Month names follow the UI language; only digits are pinned Western.
-            DateFormat.MMMM(Localizations.localeOf(context).toLanguageTag())
-                .format(DateTime(review.year, busiest))),
-      if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
-    ];
-
-    // A fixed 360x640 canvas: the system text size would overflow it, and
-    // the preview scales as a whole anyway.
-    return MediaQuery.withNoTextScaling(
-        child: Container(
-      key: const Key('year_in_review_card'),
-      width: size.width,
-      height: size.height,
-      padding: const EdgeInsets.all(20),
-      // Its own look, not a settings card: an ink panel warming into the
-      // brand colour, light display type on top.
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          // A light tint only: at 0.3 the grey text fell to ~2:1 in the
-          // bottom corner. textSecondary keeps >= 4.5:1 across it.
-          colors: [p.ink, Color.lerp(p.ink, p.primary, 0.15)!],
-        ),
-        // Square: rounded corners export as transparent pixels that chat
-        // apps fill with black or white. The preview is rounded outside.
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(6),
-                child: Image.asset('assets/images/app_icon.png',
-                    width: 28, height: 28),
-              ),
-              const SizedBox(width: 8),
-              Text('ThrottleIQ', style: display(context, 18, color: p.onInk)),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Text(
-              soFar
-                  ? l10n.yearInReviewHeadingSoFar('${review.year}')
-                  : l10n.yearInReviewHeading('${review.year}'),
-              style: display(context, 22, color: p.onInk)),
-          const SizedBox(height: 12),
-          MergeSemantics(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.totalDistance, style: labelStyle),
-                FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text.rich(TextSpan(children: [
-                    TextSpan(
-                        text: km.format(review.distanceKm),
-                        style: display(context, 56,
-                            height: 1.05, color: p.primary)),
-                    TextSpan(
-                        text: ' ${l10n.distanceStatLabel}',
-                        style: display(context, 24, color: p.onInk)),
-                  ])),
-                ),
-                if (change != null)
-                  Text(
-                      (soFar
-                              ? l10n.yearInReviewVsYearSoFar
-                              : l10n.yearInReviewVsYear)(
-                          '${change >= 0 ? '+' : '−'}${(change.abs() * 100).round()}%',
-                          '${review.year - 1}'),
-                      style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: change >= 0 ? p.primary : p.textSecondary)),
-              ],
-            ),
-          ),
-          for (var t = 0; t < tiles.length; t += 2)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: tiles[t]),
-                const SizedBox(width: 12),
-                Expanded(
-                    child: t + 1 < tiles.length
-                        ? tiles[t + 1]
-                        : const SizedBox.shrink()),
-              ],
-            ),
-          const Spacer(),
-          _MonthBars(review.monthKm,
-              highlight: busiest,
-              color: p.primary,
-              muted: p.onInk.withValues(alpha: 0.18)),
-          const SizedBox(height: 16),
-          // The image travels without the app; this is the way back to it.
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                color: p.onInk,
-                child: QrImageView(
-                  data: kPlayStoreUrl,
-                  size: 56,
-                  padding: EdgeInsets.zero,
-                  backgroundColor: p.onInk,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(l10n.yearInReviewGetApp,
-                    style: TextStyle(fontSize: 12, color: p.textSecondary)),
-              ),
-            ],
-          ),
-        ],
-      ),
-    ));
-  }
-}
-
-/// Twelve bars, January to December, scaled to the biggest month. Decorative:
-/// the busiest month is also stated in words, so screen readers skip it.
-class _MonthBars extends StatelessWidget {
-  final List<double> monthKm;
-  final int? highlight;
-  final Color color;
-  final Color muted;
-
-  const _MonthBars(this.monthKm,
-      {required this.highlight, required this.color, required this.muted});
-
-  @override
-  Widget build(BuildContext context) {
-    final top = monthKm.fold<double>(0, (a, b) => b > a ? b : a);
-    return ExcludeSemantics(
-      child: SizedBox(
-        height: 48,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            for (var m = 0; m < 12; m++)
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: FractionallySizedBox(
-                    // A month with no riding still shows a sliver.
-                    heightFactor:
-                        top == 0 ? 0.06 : 0.06 + 0.94 * monthKm[m] / top,
-                    alignment: Alignment.bottomCenter,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: m + 1 == highlight ? color : muted,
-                        borderRadius: BorderRadius.circular(3),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-          ],
+              AnimatedOpacity(
+                opacity: _holding ? 0 : 1,
+                duration: const Duration(milliseconds: 150),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: l10n.yearStoryPrevious,
+                        onPressed: _index == 0 ? null : _previous,
+                        icon: const Icon(Icons.chevron_left_rounded),
+                        color: fg,
+                        disabledColor: fg.withValues(alpha: 0.3),
+                      ),
+                      if (last)
+                        Flexible(
+                            child: TextButton.icon(
+                          key: const Key('year_story_replay'),
+                          onPressed: () => _goTo(0),
+                          icon: const Icon(Icons.replay_rounded),
+                          label: Text(l10n.yearStoryReplay),
+                          style: TextButton.styleFrom(foregroundColor: fg),
+                        ))
+                      else
+                        IconButton(
+                          tooltip: l10n.yearStoryNext,
+                          onPressed: _next,
+                          icon: const Icon(Icons.chevron_right_rounded),
+                          color: fg,
+                        ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                          child: Align(
+                        alignment: Alignment.centerRight,
+                        child: FilledButton.icon(
+                          key: _shareButtonKey,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFC8FF3D),
+                            foregroundColor: Colors.black,
+                            disabledBackgroundColor:
+                                const Color(0xFFC8FF3D).withValues(alpha: 0.5),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 14),
+                          ),
+                          onPressed:
+                              _sharing ? null : () => _share(year, slide),
+                          icon: _sharing
+                              ? const SizedBox.square(
+                                  dimension: 18,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.black),
+                                )
+                              : const Icon(Icons.ios_share),
+                          label: Text(l10n.yearStoryShareSlide,
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      )),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

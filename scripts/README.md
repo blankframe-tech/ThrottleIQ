@@ -21,6 +21,7 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
 | [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
 | [`monitoring/firestore-quota-alert.yaml`](#monitoringfirestore-quota-alertyaml--the-quota-email-alert) | Cloud Monitoring alert: emails the owner at 80% of a daily Firestore limit and when requests start being refused (§104) | Yes — `gcloud monitoring policies delete` |
+| [`year_in_review_music.py`](year_in_review_music.py) | Not an ops script: synthesizes the original background loop for the Year in Review story (`python3 year_in_review_music.py loop.wav`, then `afconvert -f m4af -d aac -b 128000 loop.wav app/assets/audio/year_in_review_loop.m4a`). No samples, so no licence to track | n/a — writes a local file |
 | [`loadtest/quota_rehearsal.js`](#loadtestquota_rehearsaljs--rehearse-a-quota-outage) | Spends a **throwaway** Spark project's daily Firestore quota and records how the SDK reports it (§104). Refuses any project id without `quota-lab` | n/a — the lab project is deleted afterwards |
 
 All share the same safety posture: `--dry-run` is the default, `FIREBASE_PROJECT_ID`
