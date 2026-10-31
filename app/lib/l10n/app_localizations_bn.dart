@@ -3657,6 +3657,11 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String yearInReviewBanner(String year) {
+    return 'দুই চাকায় আপনার $year তৈরি। দেখতে ও শেয়ার করতে ট্যাপ করুন।';
+  }
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

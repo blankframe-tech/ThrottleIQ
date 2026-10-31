@@ -44,6 +44,14 @@ class YearInReview {
       : (distanceKm - previousKm!) / previousKm!;
 }
 
+/// The year a Rides-tab banner should invite the rider to review: the
+/// current year in December, last year in January, otherwise null.
+int? reviewSeasonYear(DateTime now) => switch (now.month) {
+      12 => now.year,
+      1 => now.year - 1,
+      _ => null,
+    };
+
 /// Years that have at least one ride, newest first.
 List<int> rideYears(List<RideEntity> rides) =>
     ({for (final r in rides) r.startTime.year}.toList()

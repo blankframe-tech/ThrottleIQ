@@ -5078,6 +5078,16 @@
       }
     }
   },
+  "yearInReviewBanner": "Your {year} on two wheels is ready. Tap to see and share it.",
+  "@yearInReviewBanner": {
+    "description": "Banner on the Rides tab in December and January inviting the rider to open their year-in-review card.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."

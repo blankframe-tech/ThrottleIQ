@@ -9,6 +9,7 @@ import '../../../../core/utils/rider_stats.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_sort.dart';
+import '../../domain/year_in_review.dart';
 import '../providers/badge_sync_provider.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
@@ -208,6 +209,17 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
   }) {
     // Deliberately compact (one slim level bar + one dense stats strip) so
     // the analytics charts start above the fold on a ~800dp phone.
+    // December and January only: a banner for the year in review.
+    final seasonYear = reviewSeasonYear(DateTime.now());
+    final RiderStatsSummary summary = stats;
+    final rides =
+        summary.allRides.isNotEmpty ? summary.allRides : summary.recentRides;
+    void openReview(int? year) =>
+        Navigator.of(context, rootNavigator: true).push(
+          MaterialPageRoute<void>(
+            builder: (_) => YearInReviewScreen(initialYear: year),
+          ),
+        );
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         AppDimensions.paddingMd,
@@ -223,20 +235,40 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
               Expanded(
                 child: Text(context.l10n.journey, style: display(context, 22)),
               ),
-              IconButton(
+              // Labelled: an icon alone, tooltip on long-press, went unfound.
+              TextButton.icon(
                 key: const Key('year_in_review_button'),
-                tooltip: context.l10n.yearInReviewTitle,
-                color: context.palette.primary,
-                icon: const Icon(Icons.auto_awesome_outlined),
-                onPressed: () =>
-                    Navigator.of(context, rootNavigator: true).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const YearInReviewScreen(),
-                  ),
-                ),
+                icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+                label: Text(context.l10n.yearInReviewTitle),
+                onPressed: () => openReview(null),
               ),
             ],
           ),
+          if (seasonYear != null && rideYears(rides).contains(seasonYear)) ...[
+            const SizedBox(height: 8),
+            EditorialCard(
+              key: const Key('year_in_review_banner'),
+              color: context.palette.ink,
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              onTap: () => openReview(seasonYear),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome,
+                      color: context.palette.primaryHighlight),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      context.l10n.yearInReviewBanner('$seasonYear'),
+                      style: TextStyle(
+                          color: context.palette.onInk,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: context.palette.onInkMuted),
+                ],
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           EditorialCard(
             padding: const EdgeInsets.fromLTRB(12, 9, 12, 9),

@@ -3658,6 +3658,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String yearInReviewBanner(String year) {
+    return 'Your $year on two wheels is ready. Tap to see and share it.';
+  }
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

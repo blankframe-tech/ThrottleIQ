@@ -87,4 +87,11 @@ void main() {
     expect(r.changeVsPrevious, isNull);
     expect(computeYearInReview(rides, 2024).busiestMonth, isNull);
   });
+
+  test('the review banner season is December and January', () {
+    expect(reviewSeasonYear(DateTime(2026, 12, 1)), 2026);
+    expect(reviewSeasonYear(DateTime(2027, 1, 31)), 2026);
+    expect(reviewSeasonYear(DateTime(2026, 11, 30)), isNull);
+    expect(reviewSeasonYear(DateTime(2027, 2, 1)), isNull);
+  });
 }

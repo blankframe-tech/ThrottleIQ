@@ -24,7 +24,10 @@ import '../providers/rider_stats_provider.dart';
 
 /// A shareable image of one year's riding, built from local stats.
 class YearInReviewScreen extends ConsumerStatefulWidget {
-  const YearInReviewScreen({super.key});
+  const YearInReviewScreen({super.key, this.initialYear});
+
+  /// Year to open on, if the rider has rides in it; else the newest.
+  final int? initialYear;
 
   @override
   ConsumerState<YearInReviewScreen> createState() => _YearInReviewScreenState();
@@ -34,7 +37,7 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
   final GlobalKey _cardKey = GlobalKey();
   // Anchors the iOS/iPad share popover — see active_ride_screen.dart.
   final GlobalKey _shareButtonKey = GlobalKey();
-  int? _year;
+  late int? _year = widget.initialYear;
   bool _sharing = false;
 
   Future<void> _share(int year) async {
