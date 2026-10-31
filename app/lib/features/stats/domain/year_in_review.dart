@@ -42,11 +42,15 @@ class YearInReview {
     this.inProgress = false,
   });
 
+  /// Below this, a percentage change is noise ("+4300%"), so none is shown.
+  static const double minComparableKm = 50;
+
   /// Distance change against [previousKm] as a fraction (0.25 = +25%); null
-  /// when there is nothing to compare against.
-  double? get changeVsPrevious => previousKm == null || previousKm == 0
-      ? null
-      : (distanceKm - previousKm!) / previousKm!;
+  /// when there is nothing worth comparing against.
+  double? get changeVsPrevious =>
+      previousKm == null || previousKm! < minComparableKm
+          ? null
+          : (distanceKm - previousKm!) / previousKm!;
 }
 
 /// The year a Rides-tab banner should invite the rider to review: the
