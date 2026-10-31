@@ -900,4 +900,5 @@ The fixed rows are in `issues_fixed.md` §123. Still open:
 ## 124. osv-scanner ignores two functions advisories until 2026-12-31 (2026-10-31)
 The `security / dependencies` job failed on `1044c3ea`: GHSA-3g3m-2fjr-6pw4 (`glob` 10.5.0) and GHSA-g3hv-75wg-m249 (`minimatch` 9.0.9), published 2026-10-30, in `functions/package-lock.json` only. Path: `firebase-admin` > `@google-cloud/firestore` > `@google-cloud/firestore-api` > `google-gax` 5.0.8 > `rimraf` 5 > `glob` > `minimatch`. `google-gax` declares `rimraf` but its build never requires it, so neither package loads. Fixes exist only in `glob` 14 / `minimatch` 11.
 - **Done:** `functions/osv-scanner.toml` ignores both IDs until 2026-12-31, with reasons.
-- **Open:** confirm the next `security` run is green (the scanner was not run locally). When the ignore expires, check whether `google-gax` dropped `rimraf`; if not, extend it or override.
+- **Confirmed:** the `security` run on `65353330` is green.
+- **Open:** when the ignore expires, check whether `google-gax` dropped `rimraf`; if not, extend it or override.
