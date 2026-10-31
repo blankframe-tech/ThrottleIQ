@@ -3625,6 +3625,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t create the image. Try again.';
 
   @override
+  String get yearInReviewLoadFailed => 'Couldn\'t load your rides.';
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

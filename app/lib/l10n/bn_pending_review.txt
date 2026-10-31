@@ -1680,6 +1680,7 @@ yearInReviewHeading
 yearInReviewLongestRide
 yearInReviewFavouriteBike
 yearInReviewShareFailed
+yearInReviewLoadFailed
 
 # batch: lane g bugs (2026-10-29)
 visitOdometerBelowEarlier
