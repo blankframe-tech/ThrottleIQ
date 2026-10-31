@@ -187,6 +187,11 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ## Recent sessions (newest first)
 
+### 2026-10-31
+
+- **Build 1.0.0-beta.4.12.0 (+35):** AAB built from `main` after `903cb6dd` (upload key `8542b8ad…`, versionCode 35 checked in the built manifest) for a manual Play upload; `check.sh` green (2,515 tests). Carries everything since +34: the 2026-10-29 lanes and the sweep's app fixes. Release build installed and launched on the iPhone. No GitHub release or tag yet.
+- **Rules and indexes deployed by the owner** from a checkout 5 commits behind `origin/main`, so the sweep rules are live but `903cb6dd` (follower counts) is not: deploy `firestore:rules` once more.
+
 ### 2026-10-30
 
 - **Security sweep, merged into `main` (PR #98, merge `31bd0b41`):** the plan from the morning scan (`security_sweep_2026-10-30.md`) was filed as GitHub issues #65–#97, all assigned to the-abraar, then fixed by four parallel agents in worktrees (A deps/CI, B rules, C functions, D scripts/app/hosting/docs), one commit per row, merged one group at a time. `scripts/check.sh` passed on the merged branch (rules 416/416, functions 15/15), plus `scripts` tests 101/101 and the functions emulator suite 26/26; CI passed on the PR, and the PR was merged on the owner's instruction. Each rules and functions fix has a test that failed first.
