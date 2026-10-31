@@ -165,17 +165,17 @@ class _YearCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    // One format for every distance: grouped, at most one decimal.
+    // One format for every distance: grouped, at most one decimal. Digits
+    // stay Western in Bangla too, per core/i18n/numeric_locale.dart.
     final km = NumberFormat('#,##0.#', kNumericLocale);
     Widget stat(String label, String value) => Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label.toUpperCase(),
+              Text(label,
                   style: TextStyle(
-                      fontSize: 11,
-                      letterSpacing: 1.2,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: context.palette.textSecondary)),
               const SizedBox(height: 2),
@@ -200,10 +200,11 @@ class _YearCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(l10n.yearInReviewHeading('${review.year}'),
               style: display(context, 28)),
-          stat(l10n.totalDistance, '${km.format(review.distanceKm)} km'),
+          stat(l10n.totalDistance,
+              '${km.format(review.distanceKm)} ${l10n.distanceStatLabel}'),
           stat(l10n.totalRides, '${review.rideCount}'),
           stat(l10n.yearInReviewLongestRide,
-              '${km.format(review.longestRideKm)} km'),
+              '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
           stat(l10n.yearInReviewFavouriteBike, bikeName),
         ],
       ),
