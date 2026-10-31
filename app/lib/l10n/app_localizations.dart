@@ -6492,6 +6492,12 @@ abstract class AppLocalizations {
   /// **'{change} vs this point in {year}'**
   String yearInReviewVsYearSoFar(String change, String year);
 
+  /// Banner on the Rides tab in December and January inviting the rider to open their year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {year} on two wheels is ready. Tap to see and share it.'**
+  String yearInReviewBanner(String year);
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:
