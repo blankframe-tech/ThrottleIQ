@@ -189,8 +189,9 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-11-01
 
+- **Build 1.0.0-beta.4.13.0 (+36):** pubspec bumped (not committed yet) and AAB built from `53f1d1c9` (upload key `8542b8ad…`) for a manual Play upload; bilingual Play release notes in `app/build/app/outputs/bundle/release/release note.md`. Carries the year in review redesign and follow-ups. Release build installed and launched on the iPhone. `check.sh` not run for this build; no GitHub release or tag.
 - **Year in review follow-ups:** issues #140–#145, PRs #146–#150 merged; #144 (QR only to Google Play) stays open until the App Store listing exists. See `issues_fixed.md`.
-- **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. Not yet on a device.
+- **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. On the iPhone and in build +36.
 
 ### 2026-10-31
 
