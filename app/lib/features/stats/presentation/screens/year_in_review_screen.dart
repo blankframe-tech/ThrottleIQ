@@ -225,7 +225,7 @@ class _YearCard extends StatelessWidget {
     final change = review.changeVsPrevious;
     final busiest = review.busiestMonth;
     // The current year isn't over: say so, or a shared total reads as final.
-    final soFar = review.year == DateTime.now().year;
+    final soFar = review.inProgress;
     // Fixed colours, not the sharer's theme: every exported image looks the
     // same whether the rider uses the light or the dark skin.
     const p = AppColorPalette.carbonMonoDark;
@@ -295,8 +295,7 @@ class _YearCard extends StatelessWidget {
               Text('ThrottleIQ', style: display(context, 18, color: p.onInk)),
             ],
           ),
-          const SizedBox(height: 8),
-          const SizedBox(height: 6),
+          const SizedBox(height: 14),
           Text(
               soFar
                   ? l10n.yearInReviewHeadingSoFar('${review.year}')

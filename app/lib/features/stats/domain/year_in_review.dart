@@ -25,6 +25,10 @@ class YearInReview {
   /// has no rides in that span, so there is nothing to compare.
   final double? previousKm;
 
+  /// True when [year] is the current year at the time of the calculation,
+  /// so the card can say "so far".
+  final bool inProgress;
+
   const YearInReview({
     required this.year,
     required this.rideCount,
@@ -35,6 +39,7 @@ class YearInReview {
     this.monthKm = const [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     this.busiestMonth,
     this.previousKm,
+    this.inProgress = false,
   });
 
   /// Distance change against [previousKm] as a fraction (0.25 = +25%); null
@@ -111,5 +116,6 @@ YearInReview computeYearInReview(List<RideEntity> rides, int year,
     previousKm: before.isEmpty
         ? null
         : before.fold<double>(0, (a, r) => a + r.distanceKm),
+    inProgress: year == now.year,
   );
 }

@@ -94,4 +94,14 @@ void main() {
     expect(reviewSeasonYear(DateTime(2026, 11, 30)), isNull);
     expect(reviewSeasonYear(DateTime(2027, 2, 1)), isNull);
   });
+
+  test('inProgress follows the now given to the calculation', () {
+    expect(
+        computeYearInReview(rides, 2026, now: DateTime(2026, 10, 31))
+            .inProgress,
+        isTrue);
+    expect(
+        computeYearInReview(rides, 2026, now: DateTime(2027, 1, 1)).inProgress,
+        isFalse);
+  });
 }
