@@ -7,9 +7,8 @@ number. Done items are deleted, not ticked; git history keeps them._
 
 ## Release and deploy
 
-- [ ] **Security sweep follow-ups (new 2026-10-30, PR #98, GitHub #92 #93 #94 #96 #97):** deploy
-      `firestore.rules` (`--only firestore:rules`; the fixes are public in the repo, the live rules are
-      not); rotate the Play review account password (old one is in git history); restrict the
+- [ ] **Security sweep follow-ups (new 2026-10-30, PR #98, GitHub #92 #93 #94 #96 #97):** sweep
+      rules deployed 2026-10-31 from `main` at `1044c3ea` (done); rotate the Play review account password (old one is in git history); restrict the
       Cloudinary `throttleiq_unsigned` preset; check the Firebase API key restrictions; decide on
       `secret/`. Before functions go live on Blaze, confirm the crash-alert caps (5 contacts, 3 alerts
       an hour). Details: `security_sweep_2026-10-30.md` "Before you deploy".
@@ -18,18 +17,12 @@ number. Done items are deleted, not ticked; git history keeps them._
 - [x] **Vote `uid` (`SECURITY.md` step 11):** rules and indexes deployed 2026-10-29 (`4a16cc37`);
       backfill ran 2026-10-29, 110/110 vote docs, re-run reports 0. Run it again once
       `config/app.minBuild` passes the next release (item below).
-- [ ] **After the next release is the minimum build (#56, new 2026-10-28, issues §115):** raise
-      `config/app.minBuild`, ask an agent for the §115 cleanup (vote `uid` required, polyline cap
+- [ ] **After the next release is the minimum build (#56, new 2026-10-28, issues §115):** `+35`
+      was uploaded to Play on 2026-10-31. Once testers can install it from Play, raise
+      `config/app.minBuild` to 35 (not before: older builds would see "Update required" with nothing
+      to update to), ask an agent for the §115 cleanup (vote `uid` required, polyline cap
       of 1,000 points, drop the legacy comment-delete clause, remove the vote scan), deploy the
       rules, and run the vote backfill once more.
-- [ ] **Next release (#26):** ships the Firestore quota outage mode (merged 2026-10-22, `c751968e`).
-      Since 2026-10-28 it also carries the 2026-10-27 critique fixes (`issues_fixed.md` §115).
-      Builds from `main` also carry the App Check sideload gate, so settle #17 and #32 first
-      (`For Devs and Contributors/guides/app_check.md`). Since 2026-10-22 it also carries the §104 read
-      savings, the 8 s screen-write timeout, hour-rounded crash timestamps and the legacy-likes removal.
-- [ ] **Rules and indexes for share-to-groups (#50, new 2026-10-25):** deployed 2026-10-25. Left:
-      confirm the two new `posts` indexes show Enabled (Firebase console › Firestore › Indexes) before
-      releasing; until then the All Riders feed errors and cross-posts are missing from group feeds.
 - [ ] **Legacy likes, steps 2-3 (#45, new 2026-10-22):** after that release, raise
       `config/app.minBuild`, then delete the `likes` rule and deploy rules (issues §80).
 - [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.

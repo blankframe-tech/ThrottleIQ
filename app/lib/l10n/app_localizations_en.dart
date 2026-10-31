@@ -3625,6 +3625,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t create the image. Try again.';
 
   @override
+  String get yearInReviewLoadFailed => 'Couldn\'t load your rides.';
+
+  @override
+  String get yearInReviewRideTime => 'Time riding';
+
+  @override
+  String yearInReviewHours(String hours) {
+    return '$hours h';
+  }
+
+  @override
+  String get yearInReviewBusiestMonth => 'Busiest month';
+
+  @override
+  String yearInReviewVsYear(String change, String year) {
+    return '$change vs $year';
+  }
+
+  @override
+  String get yearInReviewGetApp =>
+      'Track your rides free with ThrottleIQ. Scan to get it on Google Play.';
+
+  @override
+  String yearInReviewHeadingSoFar(String year) {
+    return 'My $year so far on two wheels';
+  }
+
+  @override
+  String yearInReviewVsYearSoFar(String change, String year) {
+    return '$change vs this point in $year';
+  }
+
+  @override
+  String yearInReviewBanner(String year) {
+    return 'Your $year on two wheels is ready. Tap to see and share it.';
+  }
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

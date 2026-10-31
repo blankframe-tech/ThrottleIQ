@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-30._
+_Last updated: 2026-11-01._
 
 **Branches (2026-10-25):**
 - `main` and `mayabi` are the only long-lived branches (plus `experimental`, which trails `main`). On 2026-10-25 every lane, `worktree-agent-*`, `fix/reads-104`, `integration/agent-rooms-2026-10-22` and `indriyo` branch was merged into `main` (or already in it) and deleted locally and on `origin`.
@@ -33,7 +33,7 @@ _Last updated: 2026-10-30._
 - **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, notes only. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
 - **`config/app.minBuild = 29`** is live (set 2026-10-18). Builds 27 and 28 see the update screen; builds 26 and older have no gate.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
-- **Google Play:** no public listing. The last build on record on the internal track is `1.0.0-beta.1+3` (2026-08-29, no update gate). Owner item 4.
+- **Google Play:** no public listing. `1.0.0-beta.4.12.0+35` uploaded to the Play Console on 2026-10-31 (before it, the last build on record on the internal track was `1.0.0-beta.1+3` from 2026-08-29, which has no update gate). Owner item 4.
 - **iPhone:** no TestFlight or App Store build. The founder's iPhone gets `flutter run --release` builds signed by personal team `NJ4675FFUX`. Apple enrolment: owner item 21.
 
 ### On `main`, not released yet
@@ -186,6 +186,16 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-11-01
+
+- **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. Not yet on a device.
+
+### 2026-10-31
+
+- **Build 1.0.0-beta.4.12.0 (+35):** AAB built from `main` after `903cb6dd` (upload key `8542b8ad…`, versionCode 35 checked in the built manifest) and uploaded to the Play Console by the owner; `check.sh` green (2,515 tests). The two `posts` indexes (#50) show Enabled. Carries everything since +34: the 2026-10-29 lanes and the sweep's app fixes. Release build installed and launched on the iPhone. No GitHub release or tag yet.
+- **Rules and indexes deployed by the owner:** the sweep rules (PR #98), then `firestore:rules` again from `main` at `1044c3ea`, so `903cb6dd` (follower counts) is live too.
+- **`security / dependencies` failed on `1044c3ea`:** two new advisories on `glob`/`minimatch`, which reach `functions/` only through an unused `rimraf` in `google-gax`. `functions/osv-scanner.toml` ignores them until 2026-12-31 (issues §124).
 
 ### 2026-10-30
 

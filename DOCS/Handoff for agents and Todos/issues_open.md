@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§124**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§125**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -895,4 +895,10 @@ The fixed rows are in `issues_fixed.md` §123. Still open:
 - **Rules vs builds ≤ 26:** builds 26 and older have no update gate; their writes were not checked against the tightened rules (profile, notifications, routes, follows, roster).
 - **firebase-admin 14 in `scripts/`:** stays on 13.10; 14 drops `admin.firestore()` / `admin.auth()` / `admin.credential`, used about 80 times in the scripts. Optional: add `/scripts` to `.github/dependabot.yml`.
 - **Old live-link passwords:** riders who set an 8–11 character password before D5 keep it until they change it (only the hash is stored).
-- **Owner-only (GitHub #92 #93 #94 #96 #97):** rotate the Play review password (the old one is in git history), restrict the Cloudinary unsigned preset, check API key restrictions / App Check, decide on `secret/`, deploy rules (and functions on Blaze).
+- **Owner-only (GitHub #92 #93 #94 #96 #97):** rotate the Play review password (the old one is in git history), restrict the Cloudinary unsigned preset, check API key restrictions / App Check, decide on `secret/`, deploy functions on Blaze. Rules deployed 2026-10-31.
+
+## 124. osv-scanner ignores two functions advisories until 2026-12-31 (2026-10-31)
+The `security / dependencies` job failed on `1044c3ea`: GHSA-3g3m-2fjr-6pw4 (`glob` 10.5.0) and GHSA-g3hv-75wg-m249 (`minimatch` 9.0.9), published 2026-10-30, in `functions/package-lock.json` only. Path: `firebase-admin` > `@google-cloud/firestore` > `@google-cloud/firestore-api` > `google-gax` 5.0.8 > `rimraf` 5 > `glob` > `minimatch`. `google-gax` declares `rimraf` but its build never requires it, so neither package loads. Fixes exist only in `glob` 14 / `minimatch` 11.
+- **Done:** `functions/osv-scanner.toml` ignores both IDs until 2026-12-31, with reasons.
+- **Confirmed:** the `security` run on `65353330` is green.
+- **Open:** when the ignore expires, check whether `google-gax` dropped `rimraf`; if not, extend it or override.

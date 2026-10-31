@@ -3624,6 +3624,44 @@ class AppLocalizationsBn extends AppLocalizations {
       'ছবি তৈরি করা যায়নি। আবার চেষ্টা করুন।';
 
   @override
+  String get yearInReviewLoadFailed => 'আপনার রাইড লোড করা যায়নি।';
+
+  @override
+  String get yearInReviewRideTime => 'রাইডে কাটানো সময়';
+
+  @override
+  String yearInReviewHours(String hours) {
+    return '$hours ঘণ্টা';
+  }
+
+  @override
+  String get yearInReviewBusiestMonth => 'সবচেয়ে ব্যস্ত মাস';
+
+  @override
+  String yearInReviewVsYear(String change, String year) {
+    return '$year-এর তুলনায় $change';
+  }
+
+  @override
+  String get yearInReviewGetApp =>
+      'ThrottleIQ দিয়ে বিনা খরচে রাইড ট্র্যাক করুন। Google Play থেকে নিতে স্ক্যান করুন।';
+
+  @override
+  String yearInReviewHeadingSoFar(String year) {
+    return 'দুই চাকায় আমার $year, এখন পর্যন্ত';
+  }
+
+  @override
+  String yearInReviewVsYearSoFar(String change, String year) {
+    return '$year-এর এই সময়ের তুলনায় $change';
+  }
+
+  @override
+  String yearInReviewBanner(String year) {
+    return 'দুই চাকায় আপনার $year তৈরি। দেখতে ও শেয়ার করতে ট্যাপ করুন।';
+  }
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

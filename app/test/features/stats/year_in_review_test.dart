@@ -2,13 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 import 'package:throttleiq/features/stats/domain/year_in_review.dart';
 
-RideEntity _ride(String id, DateTime start, double km, {String bike = 'b1'}) =>
+RideEntity _ride(String id, DateTime start, double km,
+        {String bike = 'b1', int? seconds}) =>
     RideEntity(
       id: id,
       userId: 'u1',
       bikeId: bike,
       startTime: start,
       distanceM: km * 1000,
+      durationSeconds: seconds,
     );
 
 void main() {
@@ -48,5 +50,67 @@ void main() {
     expect(r.distanceKm, 0);
     expect(r.longestRideKm, 0);
     expect(r.favouriteBikeId, isNull);
+  });
+
+  test('ride time, month totals and the busiest month', () {
+    final r = computeYearInReview([
+      _ride('a', DateTime(2026, 3, 2), 10, seconds: 600),
+      _ride('b', DateTime(2026, 3, 9), 15, seconds: 900),
+      _ride('c', DateTime(2026, 8, 1), 20), // no duration: counts as zero
+    ], 2026, now: DateTime(2027));
+    expect(r.rideSeconds, 1500);
+    expect(r.monthKm, hasLength(12));
+    expect(r.monthKm[2], closeTo(25, 1e-9));
+    expect(r.monthKm[7], closeTo(20, 1e-9));
+    expect(r.busiestMonth, 3);
+  });
+
+  test('a past year compares against the whole year before', () {
+    final r = computeYearInReview(rides, 2026, now: DateTime(2027, 2));
+    expect(r.previousKm, closeTo(50, 1e-9));
+    expect(r.changeVsPrevious, closeTo(-0.1, 1e-9)); // 45 vs 50
+  });
+
+  test('a year in progress compares against the same date a year earlier', () {
+    final r = computeYearInReview([
+      _ride('old-in', DateTime(2025, 3, 1), 200),
+      _ride('old-out', DateTime(2025, 11, 1), 500),
+      _ride('now', DateTime(2026, 2, 1), 300),
+    ], 2026, now: DateTime(2026, 10, 31));
+    expect(r.previousKm, closeTo(200, 1e-9));
+    expect(r.changeVsPrevious, closeTo(0.5, 1e-9));
+  });
+
+  test('no rides the year before means nothing to compare', () {
+    final r = computeYearInReview(rides, 2025, now: DateTime(2027));
+    expect(r.previousKm, isNull);
+    expect(r.changeVsPrevious, isNull);
+    expect(computeYearInReview(rides, 2024).busiestMonth, isNull);
+  });
+
+  test('the review banner season is December and January', () {
+    expect(reviewSeasonYear(DateTime(2026, 12, 1)), 2026);
+    expect(reviewSeasonYear(DateTime(2027, 1, 31)), 2026);
+    expect(reviewSeasonYear(DateTime(2026, 11, 30)), isNull);
+    expect(reviewSeasonYear(DateTime(2027, 2, 1)), isNull);
+  });
+
+  test('inProgress follows the now given to the calculation', () {
+    expect(
+        computeYearInReview(rides, 2026, now: DateTime(2026, 10, 31))
+            .inProgress,
+        isTrue);
+    expect(
+        computeYearInReview(rides, 2026, now: DateTime(2027, 1, 1)).inProgress,
+        isFalse);
+  });
+
+  test('no percentage against a previous span under 50 km', () {
+    final tiny = computeYearInReview([
+      _ride('a', DateTime(2025, 5, 1), 5),
+      _ride('b', DateTime(2026, 5, 1), 220),
+    ], 2026, now: DateTime(2027));
+    expect(tiny.previousKm, closeTo(5, 1e-9));
+    expect(tiny.changeVsPrevious, isNull);
   });
 }

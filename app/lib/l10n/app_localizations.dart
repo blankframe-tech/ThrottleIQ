@@ -6444,6 +6444,60 @@ abstract class AppLocalizations {
   /// **'Couldn\'t create the image. Try again.'**
   String get yearInReviewShareFailed;
 
+  /// Year-in-review screen: the ride stats failed to load. Shown above a retry button.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your rides.'**
+  String get yearInReviewLoadFailed;
+
+  /// Stat label on the year-in-review card: total time spent on rides that year.
+  ///
+  /// In en, this message translates to:
+  /// **'Time riding'**
+  String get yearInReviewRideTime;
+
+  /// Value on the year-in-review card: total ride time in hours, already number-formatted.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String yearInReviewHours(String hours);
+
+  /// Stat label on the year-in-review card: the month with the most distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Busiest month'**
+  String get yearInReviewBusiestMonth;
+
+  /// Line under the total distance on the year-in-review card comparing it with the year before, e.g. "+23% vs 2025".
+  ///
+  /// In en, this message translates to:
+  /// **'{change} vs {year}'**
+  String yearInReviewVsYear(String change, String year);
+
+  /// Footer next to the QR code on the shared year-in-review image; the QR opens the Play Store listing.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your rides free with ThrottleIQ. Scan to get it on Google Play.'**
+  String get yearInReviewGetApp;
+
+  /// Heading on the year-in-review card for the current year, which isn't over yet.
+  ///
+  /// In en, this message translates to:
+  /// **'My {year} so far on two wheels'**
+  String yearInReviewHeadingSoFar(String year);
+
+  /// Line under the total distance for the current year, compared with the same date a year earlier, e.g. "+23% vs this point in 2025".
+  ///
+  /// In en, this message translates to:
+  /// **'{change} vs this point in {year}'**
+  String yearInReviewVsYearSoFar(String change, String year);
+
+  /// Banner on the Rides tab in December and January inviting the rider to open their year-in-review card.
+  ///
+  /// In en, this message translates to:
+  /// **'Your {year} on two wheels is ready. Tap to see and share it.'**
+  String yearInReviewBanner(String year);
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

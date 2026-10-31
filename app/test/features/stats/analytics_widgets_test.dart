@@ -168,6 +168,8 @@ void main() {
       lessThan(800 - bottomNavHeight - 100),
       reason: 'first chart should start well above the fold',
     );
+    // The year in review is a labelled button, not a bare icon.
+    expect(find.widgetWithText(TextButton, 'Year in review'), findsOneWidget);
     // The old Dist/Speed toggle is gone.
     expect(find.text('Dist'), findsNothing);
     expect(find.text('Speed'), findsNothing);

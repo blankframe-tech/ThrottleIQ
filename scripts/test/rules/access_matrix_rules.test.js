@@ -192,6 +192,16 @@ test('B4 profile: keys outside the profile allow-list are denied on create and u
   await assertSucceeds(updateDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby' }));
 });
 
+test('profile: follower counts are seeded as 0 and never set by the rider', async () => {
+  await assertFails(setDoc(doc(db(CAROL), `users/${CAROL}`), { displayName: 'C', followerCount: 99999 }));
+  await assertSucceeds(setDoc(doc(db(CAROL), `users/${CAROL}`), { displayName: 'C', followerCount: 0, followingCount: 0 }));
+  await seed({ [`users/${BOB}`]: { displayName: 'Bob', followerCount: 3, followingCount: 2 } });
+  await assertFails(updateDoc(doc(db(BOB), `users/${BOB}`), { followerCount: 1000000 }));
+  await assertFails(updateDoc(doc(db(BOB), `users/${BOB}`), { followingCount: increment(1) }));
+  // A merge write carrying unchanged counts still passes.
+  await assertSucceeds(setDoc(doc(db(BOB), `users/${BOB}`), { displayName: 'Bobby', followerCount: 3 }, { merge: true }));
+});
+
 // ── Email harvesting ────────────────────────────────────────────────────────
 
 test('email: the owner-only account doc is closed to everyone else', async () => {

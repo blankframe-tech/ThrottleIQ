@@ -1,0 +1,15 @@
+# Applies to functions/package-lock.json only (osv-scanner reads the config next to the lockfile).
+
+# glob 10.5.0 and minimatch 9.0.9 arrive via firebase-admin > @google-cloud/firestore >
+# @google-cloud/firestore-api > google-gax 5.0.8 > rimraf 5. google-gax declares rimraf but its
+# build never requires it, so neither package is loaded. Fixes exist only in new majors
+# (glob 14, minimatch 11), which rimraf 5 can't take. Drop these once google-gax updates.
+[[IgnoredVulns]]
+id = "GHSA-3g3m-2fjr-6pw4"
+ignoreUntil = 2026-12-31
+reason = "glob via google-gax > rimraf, never loaded; fix only in glob 14"
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2026-12-31
+reason = "minimatch via google-gax > rimraf > glob, never loaded; fix only in minimatch 11"

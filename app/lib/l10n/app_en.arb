@@ -5014,6 +5014,80 @@
   "@yearInReviewShareFailed": {
     "description": "Snackbar when the year-in-review image can't be made or shared."
   },
+  "yearInReviewLoadFailed": "Couldn't load your rides.",
+  "@yearInReviewLoadFailed": {
+    "description": "Year-in-review screen: the ride stats failed to load. Shown above a retry button."
+  },
+  "yearInReviewRideTime": "Time riding",
+  "@yearInReviewRideTime": {
+    "description": "Stat label on the year-in-review card: total time spent on rides that year."
+  },
+  "yearInReviewHours": "{hours} h",
+  "@yearInReviewHours": {
+    "description": "Value on the year-in-review card: total ride time in hours, already number-formatted.",
+    "placeholders": {
+      "hours": {
+        "type": "String",
+        "example": "86.5"
+      }
+    }
+  },
+  "yearInReviewBusiestMonth": "Busiest month",
+  "@yearInReviewBusiestMonth": {
+    "description": "Stat label on the year-in-review card: the month with the most distance."
+  },
+  "yearInReviewVsYear": "{change} vs {year}",
+  "@yearInReviewVsYear": {
+    "description": "Line under the total distance on the year-in-review card comparing it with the year before, e.g. \"+23% vs 2025\".",
+    "placeholders": {
+      "change": {
+        "type": "String",
+        "example": "+23%"
+      },
+      "year": {
+        "type": "String",
+        "example": "2025"
+      }
+    }
+  },
+  "yearInReviewGetApp": "Track your rides free with ThrottleIQ. Scan to get it on Google Play.",
+  "@yearInReviewGetApp": {
+    "description": "Footer next to the QR code on the shared year-in-review image; the QR opens the Play Store listing."
+  },
+  "yearInReviewHeadingSoFar": "My {year} so far on two wheels",
+  "@yearInReviewHeadingSoFar": {
+    "description": "Heading on the year-in-review card for the current year, which isn't over yet.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "yearInReviewVsYearSoFar": "{change} vs this point in {year}",
+  "@yearInReviewVsYearSoFar": {
+    "description": "Line under the total distance for the current year, compared with the same date a year earlier, e.g. \"+23% vs this point in 2025\".",
+    "placeholders": {
+      "change": {
+        "type": "String",
+        "example": "+23%"
+      },
+      "year": {
+        "type": "String",
+        "example": "2025"
+      }
+    }
+  },
+  "yearInReviewBanner": "Your {year} on two wheels is ready. Tap to see and share it.",
+  "@yearInReviewBanner": {
+    "description": "Banner on the Rides tab in December and January inviting the rider to open their year-in-review card.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."
