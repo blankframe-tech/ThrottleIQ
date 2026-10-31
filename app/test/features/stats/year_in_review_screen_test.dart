@@ -5,6 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
@@ -242,5 +243,55 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('মার্চ'), findsOneWidget);
     expect(find.text('March'), findsNothing);
+  });
+
+  testWidgets('Start a ride leaves the screen for Record', (tester) async {
+    // Opened the way the Rides tab does: pushed on the root navigator,
+    // outside the router.
+    // Tabs are branches of a StatefulShellRoute, as in app_router.dart, so
+    // the root navigator's page (the shell) doesn't change on `go`.
+    final router = GoRouter(initialLocation: '/home/stats', routes: [
+      StatefulShellRoute.indexedStack(
+        builder: (_, __, shell) => shell,
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+                path: '/home/record',
+                builder: (_, __) => const Scaffold(body: Text('record'))),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home/stats',
+              builder: (context, _) => Scaffold(
+                body: TextButton(
+                  onPressed: () => Navigator.of(context, rootNavigator: true)
+                      .push(MaterialPageRoute<void>(
+                          builder: (_) => const YearInReviewScreen())),
+                  child: const Text('open'),
+                ),
+              ),
+            ),
+          ]),
+        ],
+      ),
+    ]);
+    addTearDown(router.dispose);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        riderStatsProvider.overrideWith((ref) async => _stats()),
+        allBikesProvider.overrideWith((ref) async => []),
+      ],
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start a Ride'));
+    await tester.pumpAndSettle();
+    expect(find.byType(YearInReviewScreen), findsNothing);
+    expect(find.text('record'), findsOneWidget);
   });
 }

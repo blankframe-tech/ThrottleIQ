@@ -119,7 +119,13 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                           Text(l10n.noRidesYetDot),
                           const SizedBox(height: 12),
                           FilledButton(
-                            onPressed: () => context.go('/home/record'),
+                            onPressed: () {
+                              // Pushed on the root navigator, above the tab
+                              // shell, which `go` leaves in place: pop first.
+                              final router = GoRouter.of(context);
+                              Navigator.of(context).pop();
+                              router.go('/home/record');
+                            },
                             child: Text(l10n.startRide),
                           ),
                         ],
