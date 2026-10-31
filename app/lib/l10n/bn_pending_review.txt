@@ -1445,6 +1445,8 @@ fuelLogTitle
 fuelAddTitle
 fuelEditTitle
 fuelLitersLabel
+fuelKmAgoLabel
+fuelKmAgoHint
 fuelTotalCostLabel
 fuelPricePerLiterLabel
 fuelPriceHint

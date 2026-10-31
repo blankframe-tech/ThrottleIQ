@@ -13,9 +13,10 @@ import '../../domain/entities/fuel_log.dart';
 import '../providers/fuel_provider.dart';
 import '../widgets/forecast_text.dart';
 
-/// Add or edit one fuel fill-up. The odometer is prefilled from the bike;
-/// the rider types either the total paid or the price per litre and the
-/// other is worked out from the litres.
+/// Add or edit one fuel fill-up. The odometer is prefilled from the bike
+/// and can be set back by "km ago" for a fill the rider forgot to log; the
+/// rider types any two of litres, total paid and price per litre (prefilled
+/// from the last fill) and the third is worked out.
 class AddFuelLogScreen extends ConsumerStatefulWidget {
   final String bikeId;
 
@@ -36,8 +37,8 @@ class AddFuelLogScreen extends ConsumerStatefulWidget {
   ConsumerState<AddFuelLogScreen> createState() => _AddFuelLogScreenState();
 }
 
-/// Which money field the rider typed last; the other one is derived.
-enum _MoneySource { total, price }
+/// The three linked number fields; the rider types two, the third is derived.
+enum _Field { liters, total, price }
 
 class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
   final _formKey = GlobalKey<FormState>();
@@ -47,9 +48,16 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
   final _priceCtrl = TextEditingController();
   final _stationCtrl = TextEditingController();
   final _noteCtrl = TextEditingController();
+  final _kmAgoCtrl = TextEditingController();
   late DateTime _filledAt = widget.now ?? DateTime.now();
   bool _fullTank = true;
-  _MoneySource? _source;
+
+  /// The fields the rider typed (or that were prefilled), oldest first, at
+  /// most two. Whatever isn't here is derived.
+  final _typed = <_Field>[];
+
+  /// The prefilled odometer that "km ago" counts back from.
+  double _baseOdo = 0;
   bool _loaded = false;
   bool _saving = false;
 
@@ -63,6 +71,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
     _priceCtrl.dispose();
     _stationCtrl.dispose();
     _noteCtrl.dispose();
+    _kmAgoCtrl.dispose();
     super.dispose();
   }
 
@@ -97,7 +106,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
       _fullTank = log.fullTank;
       _stationCtrl.text = log.station ?? '';
       _noteCtrl.text = log.note ?? '';
-      _source = _MoneySource.total;
+      _typed.addAll([_Field.liters, _Field.total]);
       return;
     }
     if (bike == null) return;
@@ -107,28 +116,55 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
     for (final l in logs) {
       if (l.odometerKm > odo) odo = l.odometerKm;
     }
+    _baseOdo = odo;
     _odometerCtrl.text = odo.toStringAsFixed(0);
     // Most riders use the same pump at the same price.
     final last = logs.firstOrNull;
     if (last != null) {
       _priceCtrl.text = _num(last.pricePerLiter);
-      _source = _MoneySource.price;
+      _typed.add(_Field.price);
       _stationCtrl.text = last.station ?? '';
     }
   }
 
-  /// Recomputes whichever money field the rider didn't type.
-  void _recompute() {
-    final liters = parseLocalizedNumber(_litersCtrl.text);
-    if (_source == _MoneySource.total) {
-      final done = completeFuelPrice(
-          liters: liters, totalCost: parseLocalizedNumber(_totalCtrl.text));
-      _priceCtrl.text = done == null ? '' : _num(done.pricePerLiter);
-    } else if (_source == _MoneySource.price) {
-      final done = completeFuelPrice(
-          liters: liters, pricePerLiter: parseLocalizedNumber(_priceCtrl.text));
-      _totalCtrl.text = done == null ? '' : _num(done.totalCost);
+  TextEditingController _ctrl(_Field f) => switch (f) {
+        _Field.liters => _litersCtrl,
+        _Field.total => _totalCtrl,
+        _Field.price => _priceCtrl,
+      };
+
+  /// The fill-up from the two typed fields, at full precision.
+  ({double liters, double totalCost, double pricePerLiter})? _fill() {
+    double? typed(_Field f) =>
+        _typed.contains(f) ? parseLocalizedNumber(_ctrl(f).text) : null;
+    return completeFuelFill(
+        liters: typed(_Field.liters),
+        totalCost: typed(_Field.total),
+        pricePerLiter: typed(_Field.price));
+  }
+
+  /// Marks [f] as typed (or untyped when cleared) and rewrites the derived
+  /// field from the other two.
+  void _onTyped(_Field f, String v) {
+    _typed.remove(f);
+    if (v.trim().isNotEmpty) _typed.add(f);
+    if (_typed.length > 2) _typed.removeAt(0);
+    final fill = _typed.length == 2 ? _fill() : null;
+    for (final d in _Field.values.where((x) => !_typed.contains(x))) {
+      _ctrl(d).text = fill == null
+          ? ''
+          : _num(switch (d) {
+              _Field.liters => fill.liters,
+              _Field.total => fill.totalCost,
+              _Field.price => fill.pricePerLiter,
+            });
     }
+  }
+
+  /// "Filled N km ago": sets the odometer back from the prefilled reading.
+  void _onKmAgo(String v) {
+    final ago = parseLocalizedNumber(v, min: 0, max: _baseOdo);
+    _odometerCtrl.text = (_baseOdo - (ago ?? 0)).toStringAsFixed(0);
   }
 
   String? _odometerError(String? v, List<FuelLogEntity> logs) {
@@ -175,15 +211,8 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final l10n = context.l10n;
-    final liters = parseLocalizedNumber(_litersCtrl.text)!;
-    final money = completeFuelPrice(
-      liters: liters,
-      totalCost: _source == _MoneySource.price
-          ? null
-          : parseLocalizedNumber(_totalCtrl.text),
-      pricePerLiter: parseLocalizedNumber(_priceCtrl.text),
-    );
-    if (money == null) return;
+    final fill = _fill();
+    if (fill == null) return;
     setState(() => _saving = true);
     final messenger = ScaffoldMessenger.of(context);
     try {
@@ -191,9 +220,9 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
             FuelLogDraft(
               filledAt: _filledAt,
               odometerKm: parseLocalizedNumber(_odometerCtrl.text)!,
-              liters: liters,
-              totalCost: money.totalCost,
-              pricePerLiter: money.pricePerLiter,
+              liters: fill.liters,
+              totalCost: fill.totalCost,
+              pricePerLiter: fill.pricePerLiter,
               fullTank: _fullTank,
               station: _stationCtrl.text,
               note: _noteCtrl.text,
@@ -287,6 +316,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                     keyboardType:
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(labelText: l10n.odometerKm),
+                    onChanged: (_) => _kmAgoCtrl.clear(),
                     validator: (v) => _odometerError(v, logs),
                   ),
                 ),
@@ -303,6 +333,26 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                 ),
               ],
             ),
+            if (!_editing) ...[
+              const SizedBox(height: 12),
+              TextFormField(
+                key: const Key('fuelKmAgo'),
+                controller: _kmAgoCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: InputDecoration(
+                    labelText: l10n.fuelKmAgoLabel,
+                    helperText: l10n.fuelKmAgoHint,
+                    helperMaxLines: 2,
+                    suffixText: 'km'),
+                onChanged: (v) => setState(() => _onKmAgo(v)),
+                validator: (v) => v == null ||
+                        v.trim().isEmpty ||
+                        parseLocalizedNumber(v, min: 0, max: _baseOdo) != null
+                    ? null
+                    : l10n.invalidNumber,
+              ),
+            ],
             const SizedBox(height: 12),
             TextFormField(
               key: const Key('fuelLiters'),
@@ -311,7 +361,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                   const TextInputType.numberWithOptions(decimal: true),
               decoration: InputDecoration(
                   labelText: l10n.fuelLitersLabel, suffixText: l10n.unitLitre),
-              onChanged: (_) => setState(_recompute),
+              onChanged: (v) => setState(() => _onTyped(_Field.liters, v)),
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return l10n.requiredField;
                 final n = parseLocalizedNumber(v, max: 1000);
@@ -330,10 +380,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                         const TextInputType.numberWithOptions(decimal: true),
                     decoration: InputDecoration(
                         labelText: l10n.fuelTotalCostLabel, prefixText: '৳ '),
-                    onChanged: (v) => setState(() {
-                      _source = v.trim().isEmpty ? null : _MoneySource.total;
-                      _recompute();
-                    }),
+                    onChanged: (v) => setState(() => _onTyped(_Field.total, v)),
                     validator: _moneyError,
                   ),
                 ),
@@ -347,10 +394,7 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                     decoration: InputDecoration(
                         labelText: l10n.fuelPricePerLiterLabel,
                         prefixText: '৳ '),
-                    onChanged: (v) => setState(() {
-                      _source = v.trim().isEmpty ? null : _MoneySource.price;
-                      _recompute();
-                    }),
+                    onChanged: (v) => setState(() => _onTyped(_Field.price, v)),
                     validator: _moneyError,
                   ),
                 ),

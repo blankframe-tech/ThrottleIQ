@@ -16,6 +16,8 @@
     <string name="widget_auto_tracking_description">One tap to open ThrottleIQ\'s automatic ride detection setting.</string>
     <string name="widget_apex_hunter_label">ThrottleIQ · Apex Hunter</string>
     <string name="widget_apex_hunter_description">Maximum lean angles, symmetry, and apex rating.</string>
+    <string name="widget_fuel_log_label">ThrottleIQ · Log Fuel</string>
+    <string name="widget_fuel_log_description">One tap to log a fill-up: taka or litres, today or backdated.</string>
 
     <!-- Start ride widget -->
     <string name="widget_start_ride_title">THROTTLEIQ</string>
@@ -23,6 +25,9 @@
 
     <!-- Start auto-tracking widget -->
     <string name="widget_auto_tracking_cta">AUTO-TRACK</string>
+
+    <!-- Log fuel widget -->
+    <string name="widget_fuel_log_cta">LOG FUEL</string>
 
     <!-- Apex hunter widget -->
     <string name="widget_apex_title">APEX HUNTER</string>
@@ -51,4 +56,5 @@
     <!-- Content descriptions -->
     <string name="widget_start_ride_content_description">Start a ride in ThrottleIQ</string>
     <string name="widget_auto_tracking_content_description">Open ThrottleIQ\'s automatic ride detection setting</string>
+    <string name="widget_fuel_log_content_description">Log a fuel fill-up in ThrottleIQ</string>
 </resources>

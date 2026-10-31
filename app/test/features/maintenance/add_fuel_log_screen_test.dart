@@ -148,6 +148,55 @@ void main() {
     expect(d.fullTank, isFalse);
   });
 
+  testWidgets('taka alone works out the litres from the last price',
+      (tester) async {
+    await pump(tester, existing: [_log('a', DateTime(2026, 10, 1), 12000)]);
+    expect(text(tester, 'fuelPrice'), '130');
+    await tester.enterText(find.byKey(const Key('fuelTotal')), '500');
+    await tester.pump();
+    expect(text(tester, 'fuelLiters'), '3.85');
+    await tapSave(tester);
+    final (d, _) = logs.saved.single;
+    // Saved at full precision, not the rounded 3.85 shown.
+    expect(d.liters, closeTo(500 / 130, 1e-9));
+    expect(d.totalCost, 500);
+    expect(d.pricePerLiter, 130);
+  });
+
+  testWidgets('clearing a typed field clears what was derived from it',
+      (tester) async {
+    await pump(tester, existing: [_log('a', DateTime(2026, 10, 1), 12000)]);
+    await tester.enterText(find.byKey(const Key('fuelLiters')), '2');
+    await tester.pump();
+    expect(text(tester, 'fuelTotal'), '260');
+    await tester.enterText(find.byKey(const Key('fuelLiters')), '');
+    await tester.pump();
+    expect(text(tester, 'fuelTotal'), '');
+    expect(text(tester, 'fuelPrice'), '130');
+  });
+
+  testWidgets('km ago sets the odometer back for a forgotten fill-up',
+      (tester) async {
+    await pump(tester);
+    await tester.enterText(find.byKey(const Key('fuelKmAgo')), '20');
+    await tester.pump();
+    expect(text(tester, 'fuelOdometer'), '12325');
+    await tester.enterText(find.byKey(const Key('fuelLiters')), '2');
+    await tester.enterText(find.byKey(const Key('fuelTotal')), '330');
+    await tapSave(tester);
+    expect(logs.saved.single.$1.odometerKm, 12325);
+  });
+
+  testWidgets('km ago past the odometer is rejected', (tester) async {
+    await pump(tester);
+    await tester.enterText(find.byKey(const Key('fuelKmAgo')), '99999');
+    await tester.enterText(find.byKey(const Key('fuelLiters')), '2');
+    await tester.enterText(find.byKey(const Key('fuelTotal')), '330');
+    await tapSave(tester);
+    expect(find.text('Invalid number'), findsOneWidget);
+    expect(logs.saved, isEmpty);
+  });
+
   testWidgets('litres and some money are required', (tester) async {
     await pump(tester);
     await tapSave(tester);

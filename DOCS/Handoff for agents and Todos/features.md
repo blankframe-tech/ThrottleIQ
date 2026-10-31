@@ -93,7 +93,7 @@ While a ride runs, a **ride-in-progress strip** above the bottom nav ("Recording
 - **Your Bikes:** list with photo, **Add/Edit Bike** (`/home/profile/add`, `/:bikeId/edit`): brand/model suggestions from `core/constants/bike_catalog.dart` (Bangladesh market; Yamaha FZ-S generations converge on one `FZS`), a 12-swatch colour picker or Auto, and a photo with an in-app cropper (Free / 1:1 / 4:3 / 16:9, rotate; offered, not forced). Photos fall back to an icon when the file is missing, which is normal for a bike synced from another device.
 - **Bike detail** (`/home/profile/:bikeId`): info, Service & maintenance card, fuel card, **Discuss this bike** and **Ask owners** (forum), and removal.
 - **Removing a bike archives it** (`ArchiveBikeDialog`): four unticked options (shared rides, calculated miles, service logs, photos). After archiving, the rider gets the deletion date (90 days), *Download a local copy* (JSON), *Delete now* (type the name) and *Done*. The garage has a collapsible "Archived bikes" list ("Deleted in N days") with Unarchive. `BikeArchiveService.purgeExpired` runs on app start, so a bike is purged only once the app is opened after its deadline (Spark has no scheduled functions). Deletes are durable (tombstones; `SyncManager` removes the Firestore copy).
-- **Fuel log** (`/home/maintenance/fuel`, `/fuel/add`): fill-ups synced to `users/{uid}/fuelLogs`; km/L between full-tank fills.
+- **Fuel log** (`/home/maintenance/fuel`, `/fuel/add`): fill-ups synced to `users/{uid}/fuelLogs`; km/L between full-tank fills. The add form takes any two of litres, taka paid and price per litre (price prefilled from the last fill, so taka alone gives litres; `completeFuelFill`), and a "km ago" field sets the odometer back for a forgotten fill. Also opened by the Log Fuel widget.
 
 ## 5. Maintenance (`features/maintenance`): reached from Garage / bike detail
 
@@ -167,7 +167,7 @@ Redesigned 2026-10-07 to answer "what does my bike need next, and when?". Not ch
 
 ## 7a. Home-screen widgets (`core/services/home_widget_service.dart`)
 
-Five Android widgets and an iOS WidgetKit extension (`app/ios/ThrottleIQWidget/`), themed to the app (`ti_theme_*` colours; Carbon Mono fallback):
+Six Android widgets and an iOS WidgetKit extension (`app/ios/ThrottleIQWidget/`), themed to the app (`ti_theme_*` colours; Carbon Mono fallback):
 
 | Widget | Shows |
 |---|---|
@@ -176,6 +176,7 @@ Five Android widgets and an iOS WidgetKit extension (`app/ios/ThrottleIQWidget/`
 | Ride stats | Distance this week, total distance, ride count |
 | Next service | Active bike, most urgent due service, km until due; red when overdue |
 | Apex Hunter | Cornering telemetry (max lean, peak g) |
+| Log fuel | Opens the add-fill-up form for the active bike (`throttleiq://fuellog`); Maintenance if there is no bike |
 
 - Data republishes on app start, after a ride is finalised and after a service log. Labels follow the device locale, not the in-app language.
 - iOS: the extension and App Group were confirmed on a physical iPhone on 2026-08-17. The iOS widget code was not re-checked after the theme sync was added.

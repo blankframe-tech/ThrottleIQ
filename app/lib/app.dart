@@ -18,6 +18,7 @@ import 'features/stats/presentation/providers/rider_stats_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_style_provider.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/garage/domain/entities/bike_entity.dart';
 import 'features/garage/presentation/providers/garage_provider.dart';
 import 'features/poi_directory/presentation/providers/places_provider.dart';
 import 'features/ride/presentation/providers/auto_tracking_provider.dart';
@@ -87,6 +88,19 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
     HomeWidgetService.instance.registerAutoTrackingHandler(() {
       if (!mounted) return;
       ref.read(routerProvider).go('/settings');
+    });
+    // "Log fuel" widget: straight to the add-fill-up form for the active
+    // bike (the garage may still be loading on a cold start, hence the await).
+    HomeWidgetService.instance.registerFuelLogHandler(() async {
+      final bikes = await ref
+          .read(garageProvider.future)
+          .catchError((Object _) => <BikeEntity>[]);
+      if (!mounted) return;
+      final bike =
+          bikes.where((b) => b.isActive).firstOrNull ?? bikes.firstOrNull;
+      ref.read(routerProvider).go(bike == null
+          ? '/home/maintenance'
+          : '/home/maintenance/fuel/add?bikeId=${bike.id}');
     });
     // Follow links (QR scanned with the system camera, or the web fallback
     // page's hand-off): follow the rider, then open the People tab — or

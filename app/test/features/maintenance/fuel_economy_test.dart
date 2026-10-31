@@ -156,18 +156,26 @@ void main() {
     });
   });
 
-  group('completeFuelPrice', () {
+  group('completeFuelFill', () {
     test('derives price from total, and total from price', () {
-      final a = completeFuelPrice(liters: 5, totalCost: 650)!;
+      final a = completeFuelFill(liters: 5, totalCost: 650)!;
       expect(a.pricePerLiter, 130);
-      final b = completeFuelPrice(liters: 5, pricePerLiter: 130)!;
+      final b = completeFuelFill(liters: 5, pricePerLiter: 130)!;
       expect(b.totalCost, 650);
     });
 
-    test('no usable litres or money gives null', () {
-      expect(completeFuelPrice(liters: 0, totalCost: 100), isNull);
-      expect(completeFuelPrice(liters: null, totalCost: 100), isNull);
-      expect(completeFuelPrice(liters: 5), isNull);
+    test('derives litres from the taka paid and the price', () {
+      final f = completeFuelFill(totalCost: 165, pricePerLiter: 165)!;
+      expect(f.liters, 1);
+      expect(completeFuelFill(totalCost: 500, pricePerLiter: 125)!.liters, 4);
+    });
+
+    test('no usable two of the three gives null', () {
+      expect(completeFuelFill(liters: 0, totalCost: 100), isNull);
+      expect(completeFuelFill(totalCost: 100), isNull);
+      expect(completeFuelFill(liters: 5), isNull);
+      expect(completeFuelFill(totalCost: 100, pricePerLiter: 0), isNull);
+      expect(completeFuelFill(totalCost: 0, pricePerLiter: 120), isNull);
     });
   });
 
