@@ -165,6 +165,8 @@ class _YearCard extends StatelessWidget {
     // One format for every distance: grouped, at most one decimal. Digits
     // stay Western in Bangla too, per core/i18n/numeric_locale.dart.
     final km = NumberFormat('#,##0.#', kNumericLocale);
+    final change = review.changeVsPrevious;
+    final busiest = review.busiestMonth;
     Widget stat(String label, String value) => Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(
@@ -199,11 +201,78 @@ class _YearCard extends StatelessWidget {
               style: display(context, 28)),
           stat(l10n.totalDistance,
               '${km.format(review.distanceKm)} ${l10n.distanceStatLabel}'),
+          if (change != null)
+            Text(
+                l10n.yearInReviewVsYear(
+                    '${change >= 0 ? '+' : '−'}${(change.abs() * 100).round()}%',
+                    '${review.year - 1}'),
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: change >= 0
+                        ? context.palette.success
+                        : context.palette.textSecondary)),
           stat(l10n.totalRides, '${review.rideCount}'),
+          stat(l10n.yearInReviewRideTime,
+              l10n.yearInReviewHours(km.format(review.rideSeconds / 3600))),
           stat(l10n.yearInReviewLongestRide,
               '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
+          if (busiest != null)
+            stat(
+                l10n.yearInReviewBusiestMonth,
+                DateFormat.MMMM(kNumericLocale)
+                    .format(DateTime(review.year, busiest))),
           if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
+          const SizedBox(height: 16),
+          _MonthBars(review.monthKm,
+              highlight: busiest,
+              color: context.palette.primary,
+              muted: context.palette.border),
         ],
+      ),
+    );
+  }
+}
+
+/// Twelve bars, January to December, scaled to the biggest month. Decorative:
+/// the busiest month is also stated in words, so screen readers skip it.
+class _MonthBars extends StatelessWidget {
+  final List<double> monthKm;
+  final int? highlight;
+  final Color color;
+  final Color muted;
+
+  const _MonthBars(this.monthKm,
+      {required this.highlight, required this.color, required this.muted});
+
+  @override
+  Widget build(BuildContext context) {
+    final top = monthKm.fold<double>(0, (a, b) => b > a ? b : a);
+    return ExcludeSemantics(
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            for (var m = 0; m < 12; m++)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: FractionallySizedBox(
+                    // A month with no riding still shows a sliver.
+                    heightFactor:
+                        top == 0 ? 0.06 : 0.06 + 0.94 * monthKm[m] / top,
+                    alignment: Alignment.bottomCenter,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: m + 1 == highlight ? color : muted,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

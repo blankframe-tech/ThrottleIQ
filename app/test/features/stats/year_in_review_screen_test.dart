@@ -113,4 +113,18 @@ void main() {
     expect(find.text('Favourite bike'), findsNothing);
     expect(find.text('Unknown bike'), findsNothing);
   });
+
+  testWidgets('shows ride time, busiest month and the change on last year',
+      (tester) async {
+    await tester.pumpWidget(_harness(() async => _stats(all: [
+          _ride(DateTime(2024, 4, 1), 100),
+          _ride(DateTime(2025, 3, 1), 50),
+          _ride(DateTime(2025, 3, 8), 50),
+          _ride(DateTime(2025, 9, 1), 25),
+        ])));
+    await tester.pumpAndSettle();
+    expect(find.text('1.5 h'), findsOneWidget); // 3 rides × 30 min
+    expect(find.text('March'), findsOneWidget);
+    expect(find.text('+25% vs 2024'), findsOneWidget);
+  });
 }
