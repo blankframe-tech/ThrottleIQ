@@ -189,6 +189,8 @@ class _YearCard extends StatelessWidget {
     final km = NumberFormat('#,##0.#', kNumericLocale);
     final change = review.changeVsPrevious;
     final busiest = review.busiestMonth;
+    // The current year isn't over: say so, or a shared total reads as final.
+    final soFar = review.year == DateTime.now().year;
     // Fixed colours, not the sharer's theme: every exported image looks the
     // same whether the rider uses the light or the dark skin.
     const p = AppColorPalette.carbonMonoDark;
@@ -223,11 +225,14 @@ class _YearCard extends StatelessWidget {
       if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
     ];
 
-    return Container(
+    // A fixed 360x640 canvas: the system text size would overflow it, and
+    // the preview scales as a whole anyway.
+    return MediaQuery.withNoTextScaling(
+        child: Container(
       key: const Key('year_in_review_card'),
       width: size.width,
       height: size.height,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       // Its own look, not a settings card: an ink panel warming into the
       // brand colour, light display type on top.
       decoration: BoxDecoration(
@@ -253,10 +258,13 @@ class _YearCard extends StatelessWidget {
               Text('ThrottleIQ', style: display(context, 18, color: p.onInk)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           const SizedBox(height: 6),
-          Text(l10n.yearInReviewHeading('${review.year}'),
-              style: display(context, 24, color: p.onInk)),
+          Text(
+              soFar
+                  ? l10n.yearInReviewHeadingSoFar('${review.year}')
+                  : l10n.yearInReviewHeading('${review.year}'),
+              style: display(context, 22, color: p.onInk)),
           const SizedBox(height: 12),
           Text(l10n.totalDistance, style: labelStyle),
           FittedBox(
@@ -265,7 +273,7 @@ class _YearCard extends StatelessWidget {
             child: Text.rich(TextSpan(children: [
               TextSpan(
                   text: km.format(review.distanceKm),
-                  style: display(context, 64, height: 1.1, color: p.primary)),
+                  style: display(context, 56, height: 1.05, color: p.primary)),
               TextSpan(
                   text: ' ${l10n.distanceStatLabel}',
                   style: display(context, 24, color: p.onInk)),
@@ -273,7 +281,9 @@ class _YearCard extends StatelessWidget {
           ),
           if (change != null)
             Text(
-                l10n.yearInReviewVsYear(
+                (soFar
+                        ? l10n.yearInReviewVsYearSoFar
+                        : l10n.yearInReviewVsYear)(
                     '${change >= 0 ? '+' : '−'}${(change.abs() * 100).round()}%',
                     '${review.year - 1}'),
                 style: TextStyle(
@@ -305,7 +315,7 @@ class _YearCard extends StatelessWidget {
                 color: p.onInk,
                 child: QrImageView(
                   data: kPlayStoreUrl,
-                  size: 64,
+                  size: 56,
                   padding: EdgeInsets.zero,
                   backgroundColor: p.onInk,
                 ),
@@ -319,7 +329,7 @@ class _YearCard extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ));
   }
 }
 

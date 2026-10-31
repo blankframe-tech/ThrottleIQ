@@ -3647,6 +3647,16 @@ class AppLocalizationsBn extends AppLocalizations {
       'ThrottleIQ দিয়ে বিনা খরচে রাইড ট্র্যাক করুন। Google Play থেকে নিতে স্ক্যান করুন।';
 
   @override
+  String yearInReviewHeadingSoFar(String year) {
+    return 'দুই চাকায় আমার $year, এখন পর্যন্ত';
+  }
+
+  @override
+  String yearInReviewVsYearSoFar(String change, String year) {
+    return '$year-এর এই সময়ের তুলনায় $change';
+  }
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override
