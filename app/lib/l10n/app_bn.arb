@@ -1062,6 +1062,7 @@
   "yearInReviewHours": "{hours} ঘণ্টা",
   "yearInReviewBusiestMonth": "সবচেয়ে ব্যস্ত মাস",
   "yearInReviewVsYear": "{year}-এর তুলনায় {change}",
+  "yearInReviewGetApp": "ThrottleIQ দিয়ে বিনা খরচে রাইড ট্র্যাক করুন। Google Play থেকে নিতে স্ক্যান করুন।",
   "analyticsTapForDetails": "বিস্তারিত দেখতে চার্টে ট্যাপ করুন",
   "insightNotEnoughData": "এই সময়ে এখনো যথেষ্ট রাইড নেই।",
   "insightTrendUp": "আগের সময়ের চেয়ে {percent}% বেশি।",

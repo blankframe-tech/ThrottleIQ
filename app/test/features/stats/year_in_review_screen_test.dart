@@ -5,8 +5,10 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
+import 'package:throttleiq/features/garage/domain/entities/bike_entity.dart';
 import 'package:throttleiq/features/garage/presentation/providers/garage_provider.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 import 'package:throttleiq/features/stats/presentation/providers/rider_stats_provider.dart';
@@ -40,11 +42,12 @@ RiderStatsSummary _stats({
     );
 
 Widget _harness(Future<RiderStatsSummary> Function() load,
-        {Locale locale = const Locale('en')}) =>
+        {Locale locale = const Locale('en'),
+        List<BikeEntity> bikes = const []}) =>
     ProviderScope(
       overrides: [
         riderStatsProvider.overrideWith((ref) => load()),
-        allBikesProvider.overrideWith((ref) async => []),
+        allBikesProvider.overrideWith((ref) async => bikes),
       ],
       child: MaterialApp(
         locale: locale,
@@ -159,5 +162,29 @@ void main() {
           .first);
       expect(boundary.size, const Size(360, 640), reason: '$screen');
     }
+  });
+
+  testWidgets('a full Bangla card fits, with logo and store QR',
+      (tester) async {
+    await tester.pumpWidget(_harness(
+        () async => _stats(all: [
+              _ride(DateTime(2024, 4, 1), 100),
+              _ride(DateTime(2025, 3, 1), 12345.6),
+              _ride(DateTime(2025, 9, 1), 25),
+            ]),
+        locale: const Locale('bn'),
+        bikes: [
+          BikeEntity(
+              createdAt: DateTime(2024),
+              id: 'b1',
+              userId: 'u1',
+              brand: 'Yamaha',
+              model: 'FZS V3 Fi Deluxe Special Edition')
+        ]));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull); // no overflow in 360x640
+    expect(find.text('প্রিয় বাইক'), findsOneWidget);
+    expect(find.byType(QrImageView), findsOneWidget);
+    expect(find.byType(Image), findsWidgets);
   });
 }

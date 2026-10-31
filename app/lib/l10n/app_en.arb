@@ -5050,6 +5050,10 @@
       }
     }
   },
+  "yearInReviewGetApp": "Track your rides free with ThrottleIQ. Scan to get it on Google Play.",
+  "@yearInReviewGetApp": {
+    "description": "Footer next to the QR code on the shared year-in-review image; the QR opens the Play Store listing."
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."
