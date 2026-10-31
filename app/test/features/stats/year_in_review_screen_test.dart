@@ -212,4 +212,26 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('My 2023 on two wheels'), findsOneWidget);
   });
+
+  testWidgets('no rides: a Start a ride button', (tester) async {
+    await tester.pumpWidget(_harness(() async => _stats()));
+    await tester.pumpAndSettle();
+    expect(find.text('No rides yet.'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'Start a Ride'), findsOneWidget);
+  });
+
+  testWidgets('a screen reader hears each label with its value',
+      (tester) async {
+    final handle = tester.ensureSemantics();
+    await tester.pumpWidget(_harness(() async => _stats(all: [
+          _ride(DateTime(2024, 4, 1), 1000),
+          _ride(DateTime(2025, 3, 1), 4210),
+        ])));
+    await tester.pumpAndSettle();
+    expect(
+        tester.getSemantics(find.text('Total Rides')).label, 'Total Rides\n1');
+    expect(tester.getSemantics(find.text('Total Distance')).label,
+        startsWith('Total Distance\n4,210 km'));
+    handle.dispose();
+  });
 }

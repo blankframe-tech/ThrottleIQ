@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -108,7 +109,19 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
           : stats == null
               ? const Center(child: CircularProgressIndicator())
               : years.isEmpty
-                  ? Center(child: Text(l10n.noRidesYetDot))
+                  ? Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(l10n.noRidesYetDot),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: () => context.go('/home/record'),
+                            child: Text(l10n.startRide),
+                          ),
+                        ],
+                      ),
+                    )
                   : Builder(builder: (context) {
                       final year = years.contains(_year) ? _year! : years.first;
                       final review = computeYearInReview(rides, year);
@@ -175,7 +188,13 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                           FilledButton.icon(
                             key: _shareButtonKey,
                             onPressed: _sharing ? null : () => _share(year),
-                            icon: const Icon(Icons.ios_share),
+                            icon: _sharing
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.ios_share),
                             label: Text(l10n.shareAction),
                           ),
                         ],
@@ -209,7 +228,9 @@ class _YearCard extends StatelessWidget {
     const p = AppColorPalette.carbonMonoDark;
     final labelStyle = TextStyle(
         fontSize: 12, fontWeight: FontWeight.bold, color: p.onInkMuted);
-    Widget stat(String label, String value) => Padding(
+    // MergeSemantics: a screen reader hears "Total rides, 42", not two items.
+    Widget stat(String label, String value) => MergeSemantics(
+            child: Padding(
           padding: const EdgeInsets.only(top: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +243,7 @@ class _YearCard extends StatelessWidget {
                   style: display(context, 20, color: p.onInk)),
             ],
           ),
-        );
+        ));
     // Supporting figures sit two to a row under the hero distance.
     final tiles = [
       stat(l10n.totalRides, '${review.rideCount}'),
@@ -279,29 +300,37 @@ class _YearCard extends StatelessWidget {
                   : l10n.yearInReviewHeading('${review.year}'),
               style: display(context, 22, color: p.onInk)),
           const SizedBox(height: 12),
-          Text(l10n.totalDistance, style: labelStyle),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text.rich(TextSpan(children: [
-              TextSpan(
-                  text: km.format(review.distanceKm),
-                  style: display(context, 56, height: 1.05, color: p.primary)),
-              TextSpan(
-                  text: ' ${l10n.distanceStatLabel}',
-                  style: display(context, 24, color: p.onInk)),
-            ])),
+          MergeSemantics(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.totalDistance, style: labelStyle),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text.rich(TextSpan(children: [
+                    TextSpan(
+                        text: km.format(review.distanceKm),
+                        style: display(context, 56,
+                            height: 1.05, color: p.primary)),
+                    TextSpan(
+                        text: ' ${l10n.distanceStatLabel}',
+                        style: display(context, 24, color: p.onInk)),
+                  ])),
+                ),
+                if (change != null)
+                  Text(
+                      (soFar
+                              ? l10n.yearInReviewVsYearSoFar
+                              : l10n.yearInReviewVsYear)(
+                          '${change >= 0 ? '+' : '−'}${(change.abs() * 100).round()}%',
+                          '${review.year - 1}'),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: change >= 0 ? p.primary : p.onInkMuted)),
+              ],
+            ),
           ),
-          if (change != null)
-            Text(
-                (soFar
-                        ? l10n.yearInReviewVsYearSoFar
-                        : l10n.yearInReviewVsYear)(
-                    '${change >= 0 ? '+' : '−'}${(change.abs() * 100).round()}%',
-                    '${review.year - 1}'),
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: change >= 0 ? p.primary : p.onInkMuted)),
           for (var t = 0; t < tiles.length; t += 2)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
