@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/presentation/providers/garage_provider.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
@@ -126,5 +127,18 @@ void main() {
     expect(find.text('1.5 h'), findsOneWidget); // 3 rides × 30 min
     expect(find.text('March'), findsOneWidget);
     expect(find.text('+25% vs 2024'), findsOneWidget);
+  });
+
+  testWidgets('the exported card is square-cornered with fixed colours',
+      (tester) async {
+    await tester.pumpWidget(
+        _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
+    await tester.pumpAndSettle();
+    final card =
+        tester.widget<Container>(find.byKey(const Key('year_in_review_card')));
+    final deco = card.decoration! as BoxDecoration;
+    expect(deco.borderRadius, isNull);
+    expect((deco.gradient! as LinearGradient).colors.first,
+        AppColorPalette.carbonMonoDark.ink);
   });
 }
