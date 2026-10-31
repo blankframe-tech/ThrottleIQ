@@ -121,23 +121,36 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                         padding: const EdgeInsets.all(16),
                         children: [
                           if (years.length > 1)
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: DropdownButton<int>(
-                                key: const Key('year_in_review_year'),
-                                value: year,
-                                items: [
-                                  for (final y in years)
-                                    DropdownMenuItem(
-                                        value: y, child: Text('$y')),
+                            SingleChildScrollView(
+                              key: const Key('year_in_review_year'),
+                              scrollDirection: Axis.horizontal,
+                              child: Row(
+                                children: [
+                                  for (final y in years) ...[
+                                    ChoiceChip(
+                                      key: Key('year_in_review_year_$y'),
+                                      label: Text('$y'),
+                                      selected: y == year,
+                                      onSelected: (_) =>
+                                          setState(() => _year = y),
+                                      selectedColor: context.palette.primary
+                                          .withValues(alpha: 0.18),
+                                      labelStyle: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: y == year
+                                            ? context.palette.primary
+                                            : context.palette.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                  ],
                                 ],
-                                onChanged: (y) => setState(() => _year = y),
                               ),
                             ),
                           const SizedBox(height: 12),
                           Center(
-                            // Preview scaled to fit; the boundary itself is always 360×640, so the
-                            // PNG is 1080×1920 (Stories 9:16) on every phone and iPad.
+                            // Preview scaled to fit; the boundary is always
+                            // 360×640, so the PNG is 1080×1920 (9:16).
                             child: ConstrainedBox(
                               constraints: BoxConstraints(
                                   maxHeight:
