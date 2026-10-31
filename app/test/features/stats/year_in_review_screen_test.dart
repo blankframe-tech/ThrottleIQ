@@ -104,4 +104,13 @@ void main() {
     expect(find.textContaining(' km'), findsNothing);
     expect(find.text('মোট দূরত্ব'), findsOneWidget);
   });
+
+  testWidgets('a deleted favourite bike leaves its row off the card',
+      (tester) async {
+    await tester.pumpWidget(
+        _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
+    await tester.pumpAndSettle();
+    expect(find.text('Favourite bike'), findsNothing);
+    expect(find.text('Unknown bike'), findsNothing);
+  });
 }

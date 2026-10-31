@@ -109,14 +109,11 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                   : Builder(builder: (context) {
                       final year = years.contains(_year) ? _year! : years.first;
                       final review = computeYearInReview(rides, year);
-                      final bikeId = review.favouriteBikeId;
-                      final bikeName = bikeId == null
-                          ? '-'
-                          : bikes
-                                  .where((b) => b.id == bikeId)
-                                  .map((b) => b.displayName)
-                                  .firstOrNull ??
-                              l10n.analyticsUnknownBike;
+                      // A deleted bike has no name; leave the row off a public image.
+                      final bikeName = bikes
+                          .where((b) => b.id == review.favouriteBikeId)
+                          .map((b) => b.displayName)
+                          .firstOrNull;
                       return ListView(
                         padding: const EdgeInsets.all(16),
                         children: [
@@ -158,9 +155,9 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
 
 class _YearCard extends StatelessWidget {
   final YearInReview review;
-  final String bikeName;
+  final String? bikeName;
 
-  const _YearCard({required this.review, required this.bikeName});
+  const _YearCard({required this.review, this.bikeName});
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +202,7 @@ class _YearCard extends StatelessWidget {
           stat(l10n.totalRides, '${review.rideCount}'),
           stat(l10n.yearInReviewLongestRide,
               '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
-          stat(l10n.yearInReviewFavouriteBike, bikeName),
+          if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
         ],
       ),
     );
