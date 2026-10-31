@@ -6450,6 +6450,30 @@ abstract class AppLocalizations {
   /// **'Couldn\'t load your rides.'**
   String get yearInReviewLoadFailed;
 
+  /// Stat label on the year-in-review card: total time spent on rides that year.
+  ///
+  /// In en, this message translates to:
+  /// **'Time riding'**
+  String get yearInReviewRideTime;
+
+  /// Value on the year-in-review card: total ride time in hours, already number-formatted.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h'**
+  String yearInReviewHours(String hours);
+
+  /// Stat label on the year-in-review card: the month with the most distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Busiest month'**
+  String get yearInReviewBusiestMonth;
+
+  /// Line under the total distance on the year-in-review card comparing it with the year before, e.g. "+23% vs 2025".
+  ///
+  /// In en, this message translates to:
+  /// **'{change} vs {year}'**
+  String yearInReviewVsYear(String change, String year);
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

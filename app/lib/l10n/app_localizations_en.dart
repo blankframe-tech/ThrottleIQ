@@ -3628,6 +3628,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yearInReviewLoadFailed => 'Couldn\'t load your rides.';
 
   @override
+  String get yearInReviewRideTime => 'Time riding';
+
+  @override
+  String yearInReviewHours(String hours) {
+    return '$hours h';
+  }
+
+  @override
+  String get yearInReviewBusiestMonth => 'Busiest month';
+
+  @override
+  String yearInReviewVsYear(String change, String year) {
+    return '$change vs $year';
+  }
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

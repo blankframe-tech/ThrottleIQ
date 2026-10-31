@@ -3627,6 +3627,22 @@ class AppLocalizationsBn extends AppLocalizations {
   String get yearInReviewLoadFailed => 'আপনার রাইড লোড করা যায়নি।';
 
   @override
+  String get yearInReviewRideTime => 'রাইডে কাটানো সময়';
+
+  @override
+  String yearInReviewHours(String hours) {
+    return '$hours ঘণ্টা';
+  }
+
+  @override
+  String get yearInReviewBusiestMonth => 'সবচেয়ে ব্যস্ত মাস';
+
+  @override
+  String yearInReviewVsYear(String change, String year) {
+    return '$year-এর তুলনায় $change';
+  }
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override
