@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,5 +141,23 @@ void main() {
     expect(deco.borderRadius, isNull);
     expect((deco.gradient! as LinearGradient).colors.first,
         AppColorPalette.carbonMonoDark.ink);
+  });
+
+  testWidgets('the exported image is always 9:16, phone or iPad',
+      (tester) async {
+    for (final screen in const [Size(390, 844), Size(1366, 1024)]) {
+      tester.view.physicalSize = screen;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+          _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
+      await tester.pumpAndSettle();
+      final boundary = tester.renderObject<RenderRepaintBoundary>(find
+          .ancestor(
+              of: find.byKey(const Key('year_in_review_card')),
+              matching: find.byType(RepaintBoundary))
+          .first);
+      expect(boundary.size, const Size(360, 640), reason: '$screen');
+    }
   });
 }
