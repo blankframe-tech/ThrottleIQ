@@ -167,10 +167,9 @@ class _YearCard extends StatelessWidget {
     final km = NumberFormat('#,##0.#', kNumericLocale);
     final change = review.changeVsPrevious;
     final busiest = review.busiestMonth;
+    final p = context.palette;
     final labelStyle = TextStyle(
-        fontSize: 12,
-        fontWeight: FontWeight.bold,
-        color: context.palette.textSecondary);
+        fontSize: 12, fontWeight: FontWeight.bold, color: p.onInkMuted);
     Widget stat(String label, String value) => Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(
@@ -181,7 +180,7 @@ class _YearCard extends StatelessWidget {
               Text(value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: display(context, 20)),
+                  style: display(context, 20, color: p.onInk)),
             ],
           ),
         );
@@ -202,20 +201,24 @@ class _YearCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(24),
+      // Its own look, not a settings card: an ink panel warming into the
+      // brand colour, light display type on top.
       decoration: BoxDecoration(
-        color: context.palette.surface,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [p.ink, Color.lerp(p.ink, p.primary, 0.3)!],
+        ),
         borderRadius: BorderRadius.circular(context.shape.radiusXl),
-        border: Border.all(color: context.palette.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('ThrottleIQ',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: context.palette.primary)),
+              style: TextStyle(fontWeight: FontWeight.bold, color: p.primary)),
           const SizedBox(height: 6),
           Text(l10n.yearInReviewHeading('${review.year}'),
-              style: display(context, 24)),
+              style: display(context, 24, color: p.onInk)),
           const SizedBox(height: 20),
           Text(l10n.totalDistance, style: labelStyle),
           FittedBox(
@@ -224,10 +227,10 @@ class _YearCard extends StatelessWidget {
             child: Text.rich(TextSpan(children: [
               TextSpan(
                   text: km.format(review.distanceKm),
-                  style: display(context, 64, height: 1.1)),
+                  style: display(context, 64, height: 1.1, color: p.primary)),
               TextSpan(
                   text: ' ${l10n.distanceStatLabel}',
-                  style: display(context, 24)),
+                  style: display(context, 24, color: p.onInk)),
             ])),
           ),
           if (change != null)
@@ -237,9 +240,7 @@ class _YearCard extends StatelessWidget {
                     '${review.year - 1}'),
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: change >= 0
-                        ? context.palette.success
-                        : context.palette.textSecondary)),
+                    color: change >= 0 ? p.primary : p.onInkMuted)),
           for (var t = 0; t < tiles.length; t += 2)
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,8 +256,8 @@ class _YearCard extends StatelessWidget {
           const SizedBox(height: 20),
           _MonthBars(review.monthKm,
               highlight: busiest,
-              color: context.palette.primary,
-              muted: context.palette.border),
+              color: p.primary,
+              muted: p.onInk.withValues(alpha: 0.18)),
         ],
       ),
     );
