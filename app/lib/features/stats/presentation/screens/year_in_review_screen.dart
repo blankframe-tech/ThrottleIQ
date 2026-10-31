@@ -4,10 +4,12 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -163,6 +165,8 @@ class _YearCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    // One format for every distance: grouped, at most one decimal.
+    final km = NumberFormat('#,##0.#', kNumericLocale);
     Widget stat(String label, String value) => Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(
@@ -196,11 +200,10 @@ class _YearCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(l10n.yearInReviewHeading('${review.year}'),
               style: display(context, 28)),
-          stat(
-              l10n.totalDistance, '${review.distanceKm.toStringAsFixed(0)} km'),
+          stat(l10n.totalDistance, '${km.format(review.distanceKm)} km'),
           stat(l10n.totalRides, '${review.rideCount}'),
           stat(l10n.yearInReviewLongestRide,
-              '${review.longestRideKm.toStringAsFixed(1)} km'),
+              '${km.format(review.longestRideKm)} km'),
           stat(l10n.yearInReviewFavouriteBike, bikeName),
         ],
       ),

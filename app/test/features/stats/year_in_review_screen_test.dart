@@ -84,4 +84,14 @@ void main() {
     expect(find.text('No rides yet.'), findsNothing);
     expect(find.textContaining('2025'), findsWidgets);
   });
+
+  testWidgets('distances are grouped and share one format', (tester) async {
+    await tester.pumpWidget(_harness(() async => _stats(all: [
+          _ride(DateTime(2025, 5, 1), 12000),
+          _ride(DateTime(2025, 6, 1), 345.6),
+        ])));
+    await tester.pumpAndSettle();
+    expect(find.text('12,345.6 km'), findsOneWidget);
+    expect(find.text('12,000 km'), findsOneWidget);
+  });
 }
