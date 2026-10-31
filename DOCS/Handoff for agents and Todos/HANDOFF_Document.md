@@ -1,6 +1,6 @@
 # ThrottleIQ — Handoff Document
 
-_Last updated: 2026-10-30._
+_Last updated: 2026-11-01._
 
 **Branches (2026-10-25):**
 - `main` and `mayabi` are the only long-lived branches (plus `experimental`, which trails `main`). On 2026-10-25 every lane, `worktree-agent-*`, `fix/reads-104`, `integration/agent-rooms-2026-10-22` and `indriyo` branch was merged into `main` (or already in it) and deleted locally and on `origin`.
@@ -186,6 +186,10 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-11-01
+
+- **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. Not yet on a device.
 
 ### 2026-10-31
 
