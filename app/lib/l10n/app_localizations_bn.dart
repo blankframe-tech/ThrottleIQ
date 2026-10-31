@@ -3643,6 +3643,10 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get yearInReviewGetApp =>
+      'ThrottleIQ দিয়ে বিনা খরচে রাইড ট্র্যাক করুন। Google Play থেকে নিতে স্ক্যান করুন।';
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

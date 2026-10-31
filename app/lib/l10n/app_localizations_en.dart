@@ -3644,6 +3644,10 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get yearInReviewGetApp =>
+      'Track your rides free with ThrottleIQ. Scan to get it on Google Play.';
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

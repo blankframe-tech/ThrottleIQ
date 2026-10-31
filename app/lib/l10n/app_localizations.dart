@@ -6474,6 +6474,12 @@ abstract class AppLocalizations {
   /// **'{change} vs {year}'**
   String yearInReviewVsYear(String change, String year);
 
+  /// Footer next to the QR code on the shared year-in-review image; the QR opens the Play Store listing.
+  ///
+  /// In en, this message translates to:
+  /// **'Track your rides free with ThrottleIQ. Scan to get it on Google Play.'**
+  String get yearInReviewGetApp;
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

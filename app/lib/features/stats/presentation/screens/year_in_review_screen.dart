@@ -6,9 +6,11 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/services/app_check_gate.dart' show kPlayStoreUrl;
 import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_theme_style.dart';
@@ -193,7 +195,7 @@ class _YearCard extends StatelessWidget {
     final labelStyle = TextStyle(
         fontSize: 12, fontWeight: FontWeight.bold, color: p.onInkMuted);
     Widget stat(String label, String value) => Padding(
-          padding: const EdgeInsets.only(top: 14),
+          padding: const EdgeInsets.only(top: 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -240,12 +242,22 @@ class _YearCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('ThrottleIQ',
-              style: TextStyle(fontWeight: FontWeight.bold, color: p.primary)),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.asset('assets/images/app_icon.png',
+                    width: 28, height: 28),
+              ),
+              const SizedBox(width: 8),
+              Text('ThrottleIQ', style: display(context, 18, color: p.onInk)),
+            ],
+          ),
+          const SizedBox(height: 12),
           const SizedBox(height: 6),
           Text(l10n.yearInReviewHeading('${review.year}'),
               style: display(context, 24, color: p.onInk)),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Text(l10n.totalDistance, style: labelStyle),
           FittedBox(
             fit: BoxFit.scaleDown,
@@ -284,6 +296,27 @@ class _YearCard extends StatelessWidget {
               highlight: busiest,
               color: p.primary,
               muted: p.onInk.withValues(alpha: 0.18)),
+          const SizedBox(height: 16),
+          // The image travels without the app; this is the way back to it.
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                color: p.onInk,
+                child: QrImageView(
+                  data: kPlayStoreUrl,
+                  size: 64,
+                  padding: EdgeInsets.zero,
+                  backgroundColor: p.onInk,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(l10n.yearInReviewGetApp,
+                    style: TextStyle(fontSize: 12, color: p.onInkMuted)),
+              ),
+            ],
+          ),
         ],
       ),
     );
