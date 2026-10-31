@@ -192,8 +192,8 @@ void main() {
   testWidgets('the current year says "so far"', (tester) async {
     final now = DateTime.now();
     await tester.pumpWidget(_harness(() async => _stats(all: [
-          _ride(DateTime(now.year - 1, 1, 1), 10),
-          _ride(DateTime(now.year, 1, 1), 20),
+          _ride(DateTime(now.year - 1, 1, 1), 100),
+          _ride(DateTime(now.year, 1, 1), 200),
         ])));
     await tester.pumpAndSettle();
     expect(find.text('My ${now.year} so far on two wheels'), findsOneWidget);

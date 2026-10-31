@@ -73,11 +73,11 @@ void main() {
 
   test('a year in progress compares against the same date a year earlier', () {
     final r = computeYearInReview([
-      _ride('old-in', DateTime(2025, 3, 1), 20),
+      _ride('old-in', DateTime(2025, 3, 1), 200),
       _ride('old-out', DateTime(2025, 11, 1), 500),
-      _ride('now', DateTime(2026, 2, 1), 30),
+      _ride('now', DateTime(2026, 2, 1), 300),
     ], 2026, now: DateTime(2026, 10, 31));
-    expect(r.previousKm, closeTo(20, 1e-9));
+    expect(r.previousKm, closeTo(200, 1e-9));
     expect(r.changeVsPrevious, closeTo(0.5, 1e-9));
   });
 
@@ -103,5 +103,14 @@ void main() {
     expect(
         computeYearInReview(rides, 2026, now: DateTime(2027, 1, 1)).inProgress,
         isFalse);
+  });
+
+  test('no percentage against a previous span under 50 km', () {
+    final tiny = computeYearInReview([
+      _ride('a', DateTime(2025, 5, 1), 5),
+      _ride('b', DateTime(2026, 5, 1), 220),
+    ], 2026, now: DateTime(2027));
+    expect(tiny.previousKm, closeTo(5, 1e-9));
+    expect(tiny.changeVsPrevious, isNull);
   });
 }
