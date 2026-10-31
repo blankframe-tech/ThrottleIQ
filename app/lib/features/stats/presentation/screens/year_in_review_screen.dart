@@ -257,7 +257,8 @@ class _YearCard extends StatelessWidget {
       if (busiest != null)
         stat(
             l10n.yearInReviewBusiestMonth,
-            DateFormat.MMMM(kNumericLocale)
+            // Month names follow the UI language; only digits are pinned Western.
+            DateFormat.MMMM(Localizations.localeOf(context).toLanguageTag())
                 .format(DateTime(review.year, busiest))),
       if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
     ];
