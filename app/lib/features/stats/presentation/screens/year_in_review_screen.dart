@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/i18n/numeric_locale.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/theme/app_theme_style.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -132,11 +133,15 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                               ),
                             ),
                           const SizedBox(height: 12),
-                          RepaintBoundary(
-                            key: _cardKey,
-                            child: _YearCard(
-                              review: review,
-                              bikeName: bikeName,
+                          ClipRRect(
+                            borderRadius:
+                                BorderRadius.circular(context.shape.radiusXl),
+                            child: RepaintBoundary(
+                              key: _cardKey,
+                              child: _YearCard(
+                                review: review,
+                                bikeName: bikeName,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 20),
@@ -167,7 +172,9 @@ class _YearCard extends StatelessWidget {
     final km = NumberFormat('#,##0.#', kNumericLocale);
     final change = review.changeVsPrevious;
     final busiest = review.busiestMonth;
-    final p = context.palette;
+    // Fixed colours, not the sharer's theme: every exported image looks the
+    // same whether the rider uses the light or the dark skin.
+    const p = AppColorPalette.carbonMonoDark;
     final labelStyle = TextStyle(
         fontSize: 12, fontWeight: FontWeight.bold, color: p.onInkMuted);
     Widget stat(String label, String value) => Padding(
@@ -200,6 +207,7 @@ class _YearCard extends StatelessWidget {
     ];
 
     return Container(
+      key: const Key('year_in_review_card'),
       padding: const EdgeInsets.all(24),
       // Its own look, not a settings card: an ink panel warming into the
       // brand colour, light display type on top.
@@ -209,7 +217,8 @@ class _YearCard extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [p.ink, Color.lerp(p.ink, p.primary, 0.3)!],
         ),
-        borderRadius: BorderRadius.circular(context.shape.radiusXl),
+        // Square: rounded corners export as transparent pixels that chat
+        // apps fill with black or white. The preview is rounded outside.
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
