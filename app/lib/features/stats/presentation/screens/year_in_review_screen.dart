@@ -167,21 +167,38 @@ class _YearCard extends StatelessWidget {
     final km = NumberFormat('#,##0.#', kNumericLocale);
     final change = review.changeVsPrevious;
     final busiest = review.busiestMonth;
+    final labelStyle = TextStyle(
+        fontSize: 12,
+        fontWeight: FontWeight.bold,
+        color: context.palette.textSecondary);
     Widget stat(String label, String value) => Padding(
           padding: const EdgeInsets.only(top: 14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: context.palette.textSecondary)),
+              Text(label, style: labelStyle),
               const SizedBox(height: 2),
-              Text(value, style: display(context, 22)),
+              Text(value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: display(context, 20)),
             ],
           ),
         );
+    // Supporting figures sit two to a row under the hero distance.
+    final tiles = [
+      stat(l10n.totalRides, '${review.rideCount}'),
+      stat(l10n.yearInReviewRideTime,
+          l10n.yearInReviewHours(km.format(review.rideSeconds / 3600))),
+      stat(l10n.yearInReviewLongestRide,
+          '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
+      if (busiest != null)
+        stat(
+            l10n.yearInReviewBusiestMonth,
+            DateFormat.MMMM(kNumericLocale)
+                .format(DateTime(review.year, busiest))),
+      if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
+    ];
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -198,9 +215,21 @@ class _YearCard extends StatelessWidget {
                   fontWeight: FontWeight.bold, color: context.palette.primary)),
           const SizedBox(height: 6),
           Text(l10n.yearInReviewHeading('${review.year}'),
-              style: display(context, 28)),
-          stat(l10n.totalDistance,
-              '${km.format(review.distanceKm)} ${l10n.distanceStatLabel}'),
+              style: display(context, 24)),
+          const SizedBox(height: 20),
+          Text(l10n.totalDistance, style: labelStyle),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text.rich(TextSpan(children: [
+              TextSpan(
+                  text: km.format(review.distanceKm),
+                  style: display(context, 64, height: 1.1)),
+              TextSpan(
+                  text: ' ${l10n.distanceStatLabel}',
+                  style: display(context, 24)),
+            ])),
+          ),
           if (change != null)
             Text(
                 l10n.yearInReviewVsYear(
@@ -211,18 +240,19 @@ class _YearCard extends StatelessWidget {
                     color: change >= 0
                         ? context.palette.success
                         : context.palette.textSecondary)),
-          stat(l10n.totalRides, '${review.rideCount}'),
-          stat(l10n.yearInReviewRideTime,
-              l10n.yearInReviewHours(km.format(review.rideSeconds / 3600))),
-          stat(l10n.yearInReviewLongestRide,
-              '${km.format(review.longestRideKm)} ${l10n.distanceStatLabel}'),
-          if (busiest != null)
-            stat(
-                l10n.yearInReviewBusiestMonth,
-                DateFormat.MMMM(kNumericLocale)
-                    .format(DateTime(review.year, busiest))),
-          if (bikeName != null) stat(l10n.yearInReviewFavouriteBike, bikeName!),
-          const SizedBox(height: 16),
+          for (var t = 0; t < tiles.length; t += 2)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: tiles[t]),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: t + 1 < tiles.length
+                        ? tiles[t + 1]
+                        : const SizedBox.shrink()),
+              ],
+            ),
+          const SizedBox(height: 20),
           _MonthBars(review.monthKm,
               highlight: busiest,
               color: context.palette.primary,
