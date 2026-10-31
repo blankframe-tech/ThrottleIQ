@@ -12,6 +12,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
+import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/year_in_review.dart';
 import '../providers/rider_stats_provider.dart';
 
@@ -73,60 +74,82 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final rides = ref.watch(riderStatsProvider).valueOrNull?.allRides ?? [];
+    final statsAsync = ref.watch(riderStatsProvider);
+    final stats = statsAsync.valueOrNull;
+    // An older cached summary has no allRides; same fallback as BadgeStats.
+    final rides = stats == null
+        ? const <RideEntity>[]
+        : (stats.allRides.isNotEmpty ? stats.allRides : stats.recentRides);
     final bikes = ref.watch(allBikesProvider).valueOrNull ?? [];
     final years = rideYears(rides);
 
     return Scaffold(
       backgroundColor: context.palette.background,
       appBar: AppBar(title: Text(l10n.yearInReviewTitle)),
-      body: years.isEmpty
-          ? Center(child: Text(l10n.noRidesYetDot))
-          : Builder(builder: (context) {
-              final year = years.contains(_year) ? _year! : years.first;
-              final review = computeYearInReview(rides, year);
-              final bikeId = review.favouriteBikeId;
-              final bikeName = bikeId == null
-                  ? '-'
-                  : bikes
-                          .where((b) => b.id == bikeId)
-                          .map((b) => b.displayName)
-                          .firstOrNull ??
-                      l10n.analyticsUnknownBike;
-              return ListView(
-                padding: const EdgeInsets.all(16),
+      body: stats == null && statsAsync.hasError
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (years.length > 1)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: DropdownButton<int>(
-                        key: const Key('year_in_review_year'),
-                        value: year,
-                        items: [
-                          for (final y in years)
-                            DropdownMenuItem(value: y, child: Text('$y')),
-                        ],
-                        onChanged: (y) => setState(() => _year = y),
-                      ),
-                    ),
+                  Text(l10n.yearInReviewLoadFailed),
                   const SizedBox(height: 12),
-                  RepaintBoundary(
-                    key: _cardKey,
-                    child: _YearCard(
-                      review: review,
-                      bikeName: bikeName,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  FilledButton.icon(
-                    key: _shareButtonKey,
-                    onPressed: _sharing ? null : () => _share(year),
-                    icon: const Icon(Icons.ios_share),
-                    label: Text(l10n.shareAction),
+                  OutlinedButton(
+                    onPressed: () => ref.invalidate(riderStatsProvider),
+                    child: Text(l10n.tryAgain),
                   ),
                 ],
-              );
-            }),
+              ),
+            )
+          : stats == null
+              ? const Center(child: CircularProgressIndicator())
+              : years.isEmpty
+                  ? Center(child: Text(l10n.noRidesYetDot))
+                  : Builder(builder: (context) {
+                      final year = years.contains(_year) ? _year! : years.first;
+                      final review = computeYearInReview(rides, year);
+                      final bikeId = review.favouriteBikeId;
+                      final bikeName = bikeId == null
+                          ? '-'
+                          : bikes
+                                  .where((b) => b.id == bikeId)
+                                  .map((b) => b.displayName)
+                                  .firstOrNull ??
+                              l10n.analyticsUnknownBike;
+                      return ListView(
+                        padding: const EdgeInsets.all(16),
+                        children: [
+                          if (years.length > 1)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: DropdownButton<int>(
+                                key: const Key('year_in_review_year'),
+                                value: year,
+                                items: [
+                                  for (final y in years)
+                                    DropdownMenuItem(
+                                        value: y, child: Text('$y')),
+                                ],
+                                onChanged: (y) => setState(() => _year = y),
+                              ),
+                            ),
+                          const SizedBox(height: 12),
+                          RepaintBoundary(
+                            key: _cardKey,
+                            child: _YearCard(
+                              review: review,
+                              bikeName: bikeName,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            key: _shareButtonKey,
+                            onPressed: _sharing ? null : () => _share(year),
+                            icon: const Icon(Icons.ios_share),
+                            label: Text(l10n.shareAction),
+                          ),
+                        ],
+                      );
+                    }),
     );
   }
 }

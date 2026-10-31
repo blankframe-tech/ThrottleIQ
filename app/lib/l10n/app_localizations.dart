@@ -6444,6 +6444,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t create the image. Try again.'**
   String get yearInReviewShareFailed;
 
+  /// Year-in-review screen: the ride stats failed to load. Shown above a retry button.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your rides.'**
+  String get yearInReviewLoadFailed;
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

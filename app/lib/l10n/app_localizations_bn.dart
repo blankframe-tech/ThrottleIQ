@@ -3624,6 +3624,9 @@ class AppLocalizationsBn extends AppLocalizations {
       'ছবি তৈরি করা যায়নি। আবার চেষ্টা করুন।';
 
   @override
+  String get yearInReviewLoadFailed => 'আপনার রাইড লোড করা যায়নি।';
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

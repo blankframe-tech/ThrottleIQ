@@ -5014,6 +5014,10 @@
   "@yearInReviewShareFailed": {
     "description": "Snackbar when the year-in-review image can't be made or shared."
   },
+  "yearInReviewLoadFailed": "Couldn't load your rides.",
+  "@yearInReviewLoadFailed": {
+    "description": "Year-in-review screen: the ride stats failed to load. Shown above a retry button."
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."
