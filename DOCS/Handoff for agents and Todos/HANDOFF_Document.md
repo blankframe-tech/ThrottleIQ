@@ -189,6 +189,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-11-01
 
+- **Year in review follow-ups:** issues #140–#145, PRs #146–#150 merged; #144 (QR only to Google Play) stays open until the App Store listing exists. See `issues_fixed.md`.
 - **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. Not yet on a device.
 
 ### 2026-10-31
