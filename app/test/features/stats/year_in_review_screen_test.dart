@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -293,5 +294,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(YearInReviewScreen), findsNothing);
     expect(find.text('record'), findsOneWidget);
+  });
+
+  testWidgets('small grey text clears 4.5:1 over the whole gradient',
+      (tester) async {
+    await tester.pumpWidget(_harness(() async => _stats(all: [
+          _ride(DateTime(2024, 4, 1), 500),
+          _ride(DateTime(2025, 3, 1), 100), // a drop: grey change line
+        ])));
+    await tester.pumpAndSettle();
+    final deco = tester
+        .widget<Container>(find.byKey(const Key('year_in_review_card')))
+        .decoration! as BoxDecoration;
+    double contrast(Color a, Color b) {
+      final la = a.computeLuminance(), lb = b.computeLuminance();
+      return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+    }
+
+    for (final text in [
+      'Total Rides',
+      'Track your rides free with ThrottleIQ. Scan to get it on Google Play.',
+      '−80% vs 2024',
+    ]) {
+      final color = tester.widget<Text>(find.text(text)).style!.color!;
+      for (final bg in (deco.gradient! as LinearGradient).colors) {
+        expect(contrast(color, bg), greaterThanOrEqualTo(4.5),
+            reason: '"$text" on $bg');
+      }
+    }
   });
 }
