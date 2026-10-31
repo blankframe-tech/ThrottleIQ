@@ -236,7 +236,7 @@ class _YearCard extends StatelessWidget {
     // same whether the rider uses the light or the dark skin.
     const p = AppColorPalette.carbonMonoDark;
     final labelStyle = TextStyle(
-        fontSize: 12, fontWeight: FontWeight.bold, color: p.onInkMuted);
+        fontSize: 12, fontWeight: FontWeight.bold, color: p.textSecondary);
     // MergeSemantics: a screen reader hears "Total rides, 42", not two items.
     Widget stat(String label, String value) => MergeSemantics(
             child: Padding(
@@ -283,7 +283,9 @@ class _YearCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [p.ink, Color.lerp(p.ink, p.primary, 0.3)!],
+          // A light tint only: at 0.3 the grey text fell to ~2:1 in the
+          // bottom corner. textSecondary keeps >= 4.5:1 across it.
+          colors: [p.ink, Color.lerp(p.ink, p.primary, 0.15)!],
         ),
         // Square: rounded corners export as transparent pixels that chat
         // apps fill with black or white. The preview is rounded outside.
@@ -336,7 +338,7 @@ class _YearCard extends StatelessWidget {
                           '${review.year - 1}'),
                       style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: change >= 0 ? p.primary : p.onInkMuted)),
+                          color: change >= 0 ? p.primary : p.textSecondary)),
               ],
             ),
           ),
@@ -374,7 +376,7 @@ class _YearCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(l10n.yearInReviewGetApp,
-                    style: TextStyle(fontSize: 12, color: p.onInkMuted)),
+                    style: TextStyle(fontSize: 12, color: p.textSecondary)),
               ),
             ],
           ),
