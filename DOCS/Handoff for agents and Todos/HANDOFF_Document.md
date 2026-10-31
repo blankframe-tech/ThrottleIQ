@@ -189,6 +189,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-11-01
 
+- **Log Fuel widget + quicker fuel form** (branch `feat/fuel-widget`, not merged): a home-screen button (Android + iOS) opens the add-fill-up form for the active bike; the form derives litres from taka (price from the last fill) and has a "km ago" backdate for the odometer. `check.sh` green, debug APK builds, Swift typechecks; not yet tried on a phone (the widget has to be added from the picker after install). See `features.md` §7a.
 - **Year in review follow-ups:** issues #140–#145, PRs #146–#150 merged; #144 (QR only to Google Play) stays open until the App Store listing exists. See `issues_fixed.md`.
 - **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. Not yet on a device.
 

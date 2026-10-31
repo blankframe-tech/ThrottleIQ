@@ -6549,7 +6549,14 @@ class AppLocalizationsBn extends AppLocalizations {
   String get fuelEditTitle => 'ফিল-আপ এডিট করুন';
 
   @override
-  String get fuelLitersLabel => 'লিটার *';
+  String get fuelLitersLabel => 'লিটার';
+
+  @override
+  String get fuelKmAgoLabel => 'কত কিমি আগে ভরেছেন? (ঐচ্ছিক)';
+
+  @override
+  String get fuelKmAgoHint =>
+      'লিখতে ভুলে গেছেন? তারপর কত কিমি চালিয়েছেন দিন, ওডোমিটার সেই অনুযায়ী পিছিয়ে যাবে।';
 
   @override
   String get unitLitre => 'লি.';
@@ -6603,7 +6610,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get fuelPriceHint =>
-      'মোট দাম অথবা প্রতি লিটারের দাম দিন; অন্যটি নিজে থেকে হিসাব হবে।';
+      'লিটার, মোট দাম ও প্রতি লিটারের দাম থেকে যেকোনো দুটি দিন; বাকিটা নিজে থেকে হিসাব হবে।';
 
   @override
   String get fuelFullTankLabel => 'ট্যাংক ফুল করা হয়েছে';

@@ -327,6 +327,49 @@ struct ThrottleIQAutoTrackingWidget: Widget {
     }
 }
 
+// MARK: - Log Fuel
+
+struct FuelLogWidgetView: View {
+    var entry: StartRideEntry
+
+    var body: some View {
+        ThemedPanel {
+            VStack(alignment: .leading, spacing: 8) {
+                SectionLabel(text: "THROTTLEIQ")
+
+                Text("LOG FUEL")
+                    .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    .kerning(0.8)
+                    .foregroundColor(WidgetPalette.onPrimary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(WidgetPalette.primary)
+                    .cornerRadius(WidgetPalette.cornerRadius)
+            }
+            .padding(10)
+        }
+        .themedContainerBackground()
+        // Opens the add-fill-up form for the active bike; see
+        // HomeWidgetService.registerFuelLogHandler on the Dart side.
+        .widgetURL(URL(string: "throttleiq://fuellog"))
+    }
+}
+
+struct ThrottleIQFuelLogWidget: Widget {
+    /// `kind` must equal `HomeWidgetService.iosFuelLogWidget` in Dart.
+    let kind = "ThrottleIQFuelLogWidget"
+
+    var body: some WidgetConfiguration {
+        // Stateless button: reuses Start Ride's never-expiring timeline.
+        StaticConfiguration(kind: kind, provider: StartRideProvider()) { entry in
+            FuelLogWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Log Fuel")
+        .description("One tap to log a fill-up: taka or litres, today or backdated.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
 // MARK: - Ride Stats
 
 struct RideStatsEntry: TimelineEntry {
@@ -877,5 +920,6 @@ struct ThrottleIQWidgetBundle: WidgetBundle {
         ThrottleIQRideStatsWidget()
         ThrottleIQMaintenanceWidget()
         ThrottleIQApexHunterWidget()
+        ThrottleIQFuelLogWidget()
     }
 }

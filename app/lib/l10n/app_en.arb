@@ -9098,9 +9098,17 @@
   "@fuelEditTitle": {
     "description": "Title of the fuel form when editing an existing fill-up."
   },
-  "fuelLitersLabel": "Litres *",
+  "fuelLitersLabel": "Litres",
   "@fuelLitersLabel": {
-    "description": "Fuel form: litres field label (required)."
+    "description": "Fuel form: litres field label (typed, or worked out from total and price)."
+  },
+  "fuelKmAgoLabel": "Filled how many km ago? (optional)",
+  "@fuelKmAgoLabel": {
+    "description": "Fuel form: optional field to log a forgotten fill-up by the distance ridden since; sets the odometer back."
+  },
+  "fuelKmAgoHint": "Forgot to log it? Enter the km ridden since and the odometer is set back.",
+  "@fuelKmAgoHint": {
+    "description": "Fuel form: helper text under the km-ago field."
   },
   "unitLitre": "L",
   "@unitLitre": {
@@ -9176,7 +9184,7 @@
   "@fuelPricePerLiterLabel": {
     "description": "Fuel form: price per litre field label."
   },
-  "fuelPriceHint": "Enter the total or the price per litre; the other is worked out.",
+  "fuelPriceHint": "Fill any two of litres, total paid and price per litre; the third is worked out.",
   "@fuelPriceHint": {
     "description": "Fuel form: helper text under the money fields."
   },

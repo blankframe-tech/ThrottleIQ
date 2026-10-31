@@ -11208,11 +11208,23 @@ abstract class AppLocalizations {
   /// **'Edit fill-up'**
   String get fuelEditTitle;
 
-  /// Fuel form: litres field label (required).
+  /// Fuel form: litres field label (typed, or worked out from total and price).
   ///
   /// In en, this message translates to:
-  /// **'Litres *'**
+  /// **'Litres'**
   String get fuelLitersLabel;
+
+  /// Fuel form: optional field to log a forgotten fill-up by the distance ridden since; sets the odometer back.
+  ///
+  /// In en, this message translates to:
+  /// **'Filled how many km ago? (optional)'**
+  String get fuelKmAgoLabel;
+
+  /// Fuel form: helper text under the km-ago field.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot to log it? Enter the km ridden since and the odometer is set back.'**
+  String get fuelKmAgoHint;
 
   /// Short unit for litres of fuel, after a number (12.5 L).
   ///
@@ -11289,7 +11301,7 @@ abstract class AppLocalizations {
   /// Fuel form: helper text under the money fields.
   ///
   /// In en, this message translates to:
-  /// **'Enter the total or the price per litre; the other is worked out.'**
+  /// **'Fill any two of litres, total paid and price per litre; the third is worked out.'**
   String get fuelPriceHint;
 
   /// Fuel form: switch label for a full-tank fill.
