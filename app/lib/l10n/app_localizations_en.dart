@@ -6606,7 +6606,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fuelEditTitle => 'Edit fill-up';
 
   @override
-  String get fuelLitersLabel => 'Litres *';
+  String get fuelLitersLabel => 'Litres';
+
+  @override
+  String get fuelKmAgoLabel => 'Filled how many km ago? (optional)';
+
+  @override
+  String get fuelKmAgoHint =>
+      'Forgot to log it? Enter the km ridden since and the odometer is set back.';
 
   @override
   String get unitLitre => 'L';
@@ -6660,7 +6667,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fuelPriceHint =>
-      'Enter the total or the price per litre; the other is worked out.';
+      'Fill any two of litres, total paid and price per litre; the third is worked out.';
 
   @override
   String get fuelFullTankLabel => 'Filled to full';

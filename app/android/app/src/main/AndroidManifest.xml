@@ -230,6 +230,18 @@
                 android:resource="@xml/apex_hunter_widget_info" />
         </receiver>
 
+        <receiver
+            android:name=".FuelLogWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_fuel_log_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/fuel_log_widget_info" />
+        </receiver>
+
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />

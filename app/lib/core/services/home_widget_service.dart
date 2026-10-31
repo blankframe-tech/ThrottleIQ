@@ -340,11 +340,13 @@ class HomeWidgetService {
   static const String androidMaintenanceWidget = 'MaintenanceWidgetProvider';
   static const String androidAutoTrackingWidget = 'AutoTrackingWidgetProvider';
   static const String androidApexHunterWidget = 'ApexHunterWidgetProvider';
+  static const String androidFuelLogWidget = 'FuelLogWidgetProvider';
   static const String iosStartRideWidget = 'ThrottleIQStartRideWidget';
   static const String iosRideStatsWidget = 'ThrottleIQRideStatsWidget';
   static const String iosMaintenanceWidget = 'ThrottleIQMaintenanceWidget';
   static const String iosAutoTrackingWidget = 'ThrottleIQAutoTrackingWidget';
   static const String iosApexHunterWidget = 'ThrottleIQApexHunterWidget';
+  static const String iosFuelLogWidget = 'ThrottleIQFuelLogWidget';
 
   static const String _androidPackage = 'com.bft.throttleiq';
 
@@ -416,6 +418,9 @@ class HomeWidgetService {
   /// The URI the "Apex Hunter" widget launches the app with.
   static final Uri apexHunterUri = Uri.parse('throttleiq://apexhunter');
 
+  /// The URI the "Log fuel" widget launches the app with.
+  static final Uri fuelLogUri = Uri.parse('throttleiq://fuellog');
+
   /// Whether [uri] is the widget's start-ride request.
   ///
   /// Compares scheme + host rather than the whole string: Android and iOS
@@ -431,6 +436,10 @@ class HomeWidgetService {
   /// Whether [uri] is the widget's apex hunter request.
   static bool isApexHunterUri(Uri? uri) =>
       uri != null && uri.scheme == 'throttleiq' && uri.host == 'apexhunter';
+
+  /// Whether [uri] is the widget's log-a-fill-up request.
+  static bool isFuelLogUri(Uri? uri) =>
+      uri != null && uri.scheme == 'throttleiq' && uri.host == 'fuellog';
 
   /// Fires [onStartRide] when the app is opened from the start-ride widget —
   /// both for a cold launch and for a tap while the app is already alive.
@@ -464,8 +473,22 @@ class HomeWidgetService {
     }
   }
 
+  /// Fires [onFuelLog] when the app is opened from the Log-fuel widget —
+  /// same coverage and no-op-on-failure contract as [registerStartRideHandler].
+  Future<void> registerFuelLogHandler(VoidCallback onFuelLog) async {
+    _onFuelLog = onFuelLog;
+    try {
+      final launched = await HomeWidget.initiallyLaunchedFromHomeWidget();
+      if (isFuelLogUri(launched)) onFuelLog();
+      _listenForClicks();
+    } catch (e, s) {
+      _log('registerFuelLogHandler failed', e, s);
+    }
+  }
+
   VoidCallback? _onStartRide;
   VoidCallback? _onAutoTracking;
+  VoidCallback? _onFuelLog;
 
   /// The one live-tap subscription, shared by every handler (issues
   /// §101.C9). Each `HomeWidget.widgetClicked` call is a fresh
@@ -488,6 +511,8 @@ class HomeWidgetService {
       _onStartRide?.call();
     } else if (isAutoTrackingUri(uri)) {
       _onAutoTracking?.call();
+    } else if (isFuelLogUri(uri)) {
+      _onFuelLog?.call();
     }
   }
 
@@ -496,9 +521,11 @@ class HomeWidgetService {
   void setHandlersForTesting({
     VoidCallback? onStartRide,
     VoidCallback? onAutoTracking,
+    VoidCallback? onFuelLog,
   }) {
     _onStartRide = onStartRide;
     _onAutoTracking = onAutoTracking;
+    _onFuelLog = onFuelLog;
   }
 
   Future<void> publishRideStats({
@@ -658,6 +685,7 @@ class HomeWidgetService {
         androidName: androidAutoTrackingWidget, iOSName: iosAutoTrackingWidget);
     await _update(
         androidName: androidApexHunterWidget, iOSName: iosApexHunterWidget);
+    await _update(androidName: androidFuelLogWidget, iOSName: iosFuelLogWidget);
   }
 
   /// Reads the offline-first local database (the same tables the Stats hub and

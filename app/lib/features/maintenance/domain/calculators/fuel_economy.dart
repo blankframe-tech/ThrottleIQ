@@ -171,19 +171,39 @@ FuelOdometerConflict? fillOdometerConflict({
   return null;
 }
 
-/// The other of total cost and price per litre, from whichever the rider
-/// typed. Returns null when [liters] is unusable or neither is given.
-({double totalCost, double pricePerLiter})? completeFuelPrice({
-  required double? liters,
+/// A whole fill-up from any two of litres, total and price per litre. With
+/// litres, the total wins over the price; without, litres = total / price
+/// (e.g. ৳500 at ৳125/L is 4 L). Null when the inputs can't give all three.
+({double liters, double totalCost, double pricePerLiter})? completeFuelFill({
+  double? liters,
   double? totalCost,
   double? pricePerLiter,
 }) {
-  if (liters == null || !liters.isFinite || liters <= 0) return null;
-  if (totalCost != null && totalCost.isFinite && totalCost >= 0) {
-    return (totalCost: totalCost, pricePerLiter: totalCost / liters);
+  bool ok(double? v) => v != null && v.isFinite && v >= 0;
+  if (ok(liters) && liters! > 0) {
+    if (ok(totalCost)) {
+      return (
+        liters: liters,
+        totalCost: totalCost!,
+        pricePerLiter: totalCost / liters
+      );
+    }
+    if (ok(pricePerLiter)) {
+      return (
+        liters: liters,
+        totalCost: pricePerLiter! * liters,
+        pricePerLiter: pricePerLiter
+      );
+    }
+    return null;
   }
-  if (pricePerLiter != null && pricePerLiter.isFinite && pricePerLiter >= 0) {
-    return (totalCost: pricePerLiter * liters, pricePerLiter: pricePerLiter);
+  if (liters == null && ok(totalCost) && totalCost! > 0 && ok(pricePerLiter)) {
+    if (pricePerLiter! <= 0) return null;
+    return (
+      liters: totalCost / pricePerLiter,
+      totalCost: totalCost,
+      pricePerLiter: pricePerLiter
+    );
   }
   return null;
 }

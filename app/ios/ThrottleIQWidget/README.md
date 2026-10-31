@@ -63,15 +63,16 @@ takes effect.
 1. Run the **Runner** scheme. Launch once so it publishes widget data (the
    app calls `HomeWidgetService.bootstrap()` from `main()`).
 2. Long-press the home screen → **+** → search **ThrottleIQ**. Four widgets
-   should be offered: Start Ride (small), Start Auto-Tracking (small), Ride
-   Stats (medium), Maintenance (medium).
+   should be offered: Start Ride (small), Start Auto-Tracking (small), Log
+   Fuel (small), Ride Stats (medium), Maintenance (medium).
 3. Add each. Before the app has published anything they must show `—` /
    "No data yet" / "No service data yet" — never a blank box. After a ride
    exists, Ride Stats shows real distances.
 4. Tap Start Ride: the app opens on the Record screen. Tap Start
    Auto-Tracking: the app opens on Settings, where the auto-tracking switch
    lives — see `HomeWidgetService.registerAutoTrackingHandler` for why that
-   widget doesn't flip the switch itself.
+   widget doesn't flip the switch itself. Tap Log Fuel: the add-fill-up
+   form opens for the active bike.
 
 ---
 
@@ -127,7 +128,7 @@ placeholder.
 The widget `kind` strings must equal the `iOS*Widget` constants in
 `HomeWidgetService`: `ThrottleIQStartRideWidget`,
 `ThrottleIQAutoTrackingWidget`, `ThrottleIQRideStatsWidget`,
-`ThrottleIQMaintenanceWidget`.
+`ThrottleIQMaintenanceWidget`, `ThrottleIQFuelLogWidget`.
 
 ## Not done
 

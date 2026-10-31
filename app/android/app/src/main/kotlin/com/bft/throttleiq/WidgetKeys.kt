@@ -71,3 +71,6 @@ const val AUTO_TRACKING_URI = "throttleiq://autotracking"
 
 /** Deep link carried by the Apex Hunter widget's launch intent. */
 const val APEX_HUNTER_URI = "throttleiq://apexhunter"
+
+/** Deep link carried by the Log Fuel widget's launch intent. */
+const val FUEL_LOG_URI = "throttleiq://fuellog"

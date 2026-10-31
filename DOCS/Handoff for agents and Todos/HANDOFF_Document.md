@@ -189,7 +189,9 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-11-01
 
-- **Build 1.0.0-beta.4.13.0 (+36):** pubspec bumped (not committed yet) and AAB built from `53f1d1c9` (upload key `8542b8ad…`) for a manual Play upload; bilingual Play release notes in `app/build/app/outputs/bundle/release/release note.md`. Carries the year in review redesign and follow-ups. Release build installed and launched on the iPhone. `check.sh` not run for this build; no GitHub release or tag.
+- **Build 1.0.0-beta.4.14.0 (+37):** AAB for a manual Play upload; release notes (EN + BN) in `app/build/app/outputs/bundle/release/release.md`. Adds the Year in Review story and video, and the Log Fuel widget. Release build installed on the iPhone. +36 was already built, so its versionCode can't be reused.
+- **Build 1.0.0-beta.4.13.0 (+36):** pubspec bumped and AAB built from `53f1d1c9` (upload key `8542b8ad…`) for a manual Play upload; bilingual Play release notes in `app/build/app/outputs/bundle/release/release note.md`. Carries the year in review redesign and follow-ups. Release build installed and launched on the iPhone. `check.sh` not run for this build; no GitHub release or tag.
+- **Log Fuel widget + quicker fuel form** (PR #151, merged into `main`): a home-screen button (Android + iOS) opens the add-fill-up form for the active bike; the form derives litres from taka (price from the last fill) and has a "km ago" backdate for the odometer. `check.sh` green, debug APK builds, Swift typechecks; not yet tried on a phone (the widget has to be added from the picker after install). See `features.md` §7a.
 - **Year in review follow-ups:** issues #140–#145, PRs #146–#150 merged; #144 (QR only to Google Play) stays open until the App Store listing exists. See `issues_fixed.md`.
 - **Year in review redesign:** GitHub issues #112–#125, PRs #126–#139 merged into `main`; see `issues_fixed.md` ("GitHub #112–#125"). `check.sh` green on the tip before merging. On the iPhone and in build +36.
 

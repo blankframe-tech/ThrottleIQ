@@ -17,6 +17,8 @@
     <string name="widget_maintenance_description">আপনার বাইকের পরবর্তী সার্ভিস।</string>
     <string name="widget_auto_tracking_label">ThrottleIQ · অটো-ট্র্যাকিং</string>
     <string name="widget_auto_tracking_description">এক ট্যাপে ThrottleIQ-এর স্বয়ংক্রিয় রাইড শনাক্তকরণ সেটিং খুলুন।</string>
+    <string name="widget_fuel_log_label">ThrottleIQ · তেল লিখুন</string>
+    <string name="widget_fuel_log_description">এক ট্যাপে তেল ভরার হিসাব লিখুন: টাকা বা লিটার, আজ বা আগের তারিখে।</string>
 
     <!-- Start ride widget -->
     <string name="widget_start_ride_title">THROTTLEIQ</string>
@@ -24,6 +26,9 @@
 
     <!-- Start auto-tracking widget -->
     <string name="widget_auto_tracking_cta">অটো-ট্র্যাক</string>
+
+    <!-- Log fuel widget -->
+    <string name="widget_fuel_log_cta">তেল লিখুন</string>
 
     <!-- Ride stats widget -->
     <string name="widget_stats_title">রাইড পরিসংখ্যান</string>
@@ -46,4 +51,5 @@
     <!-- Content descriptions -->
     <string name="widget_start_ride_content_description">ThrottleIQ-এ রাইড শুরু করুন</string>
     <string name="widget_auto_tracking_content_description">ThrottleIQ-এর স্বয়ংক্রিয় রাইড শনাক্তকরণ সেটিং খুলুন</string>
+    <string name="widget_fuel_log_content_description">ThrottleIQ-এ তেল ভরার হিসাব লিখুন</string>
 </resources>

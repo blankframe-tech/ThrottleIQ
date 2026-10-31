@@ -587,21 +587,26 @@ void main() {
     test('each URI reaches only its own handler', () {
       var startRide = 0;
       var autoTracking = 0;
+      var fuelLog = 0;
       final service = HomeWidgetService()
         ..setHandlersForTesting(
           onStartRide: () => startRide++,
           onAutoTracking: () => autoTracking++,
+          onFuelLog: () => fuelLog++,
         );
 
       service.dispatchWidgetUri(Uri.parse('throttleiq://startride'));
-      expect([startRide, autoTracking], [1, 0]);
+      expect([startRide, autoTracking, fuelLog], [1, 0, 0]);
 
       service.dispatchWidgetUri(Uri.parse('throttleiq://autotracking'));
-      expect([startRide, autoTracking], [1, 1]);
+      expect([startRide, autoTracking, fuelLog], [1, 1, 0]);
+
+      service.dispatchWidgetUri(Uri.parse('throttleiq://fuellog/'));
+      expect([startRide, autoTracking, fuelLog], [1, 1, 1]);
 
       service.dispatchWidgetUri(Uri.parse('throttleiq://apexhunter'));
       service.dispatchWidgetUri(null);
-      expect([startRide, autoTracking], [1, 1]);
+      expect([startRide, autoTracking, fuelLog], [1, 1, 1]);
     });
 
     test('no handler registered is a no-op', () {
