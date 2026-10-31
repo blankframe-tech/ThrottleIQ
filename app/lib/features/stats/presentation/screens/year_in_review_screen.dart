@@ -133,14 +133,26 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen> {
                               ),
                             ),
                           const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius:
-                                BorderRadius.circular(context.shape.radiusXl),
-                            child: RepaintBoundary(
-                              key: _cardKey,
-                              child: _YearCard(
-                                review: review,
-                                bikeName: bikeName,
+                          Center(
+                            // Preview scaled to fit; the boundary itself is always 360×640, so the
+                            // PNG is 1080×1920 (Stories 9:16) on every phone and iPad.
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                  maxHeight:
+                                      MediaQuery.sizeOf(context).height * 0.62),
+                              child: AspectRatio(
+                                aspectRatio: _YearCard.size.aspectRatio,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                      context.shape.radiusXl),
+                                  child: FittedBox(
+                                    child: RepaintBoundary(
+                                      key: _cardKey,
+                                      child: _YearCard(
+                                          review: review, bikeName: bikeName),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -163,6 +175,9 @@ class _YearCard extends StatelessWidget {
   final String? bikeName;
 
   const _YearCard({required this.review, this.bikeName});
+
+  /// Logical size of the exported image; ×3 pixel ratio gives 1080×1920.
+  static const size = Size(360, 640);
 
   @override
   Widget build(BuildContext context) {
@@ -208,6 +223,8 @@ class _YearCard extends StatelessWidget {
 
     return Container(
       key: const Key('year_in_review_card'),
+      width: size.width,
+      height: size.height,
       padding: const EdgeInsets.all(24),
       // Its own look, not a settings card: an ink panel warming into the
       // brand colour, light display type on top.
@@ -262,7 +279,7 @@ class _YearCard extends StatelessWidget {
                         : const SizedBox.shrink()),
               ],
             ),
-          const SizedBox(height: 20),
+          const Spacer(),
           _MonthBars(review.monthKm,
               highlight: busiest,
               color: p.primary,
