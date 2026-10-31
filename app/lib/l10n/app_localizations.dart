@@ -6480,6 +6480,18 @@ abstract class AppLocalizations {
   /// **'Track your rides free with ThrottleIQ. Scan to get it on Google Play.'**
   String get yearInReviewGetApp;
 
+  /// Heading on the year-in-review card for the current year, which isn't over yet.
+  ///
+  /// In en, this message translates to:
+  /// **'My {year} so far on two wheels'**
+  String yearInReviewHeadingSoFar(String year);
+
+  /// Line under the total distance for the current year, compared with the same date a year earlier, e.g. "+23% vs this point in 2025".
+  ///
+  /// In en, this message translates to:
+  /// **'{change} vs this point in {year}'**
+  String yearInReviewVsYearSoFar(String change, String year);
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

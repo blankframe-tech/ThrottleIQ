@@ -168,9 +168,10 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_harness(
         () async => _stats(all: [
-              _ride(DateTime(2024, 4, 1), 100),
-              _ride(DateTime(2025, 3, 1), 12345.6),
-              _ride(DateTime(2025, 9, 1), 25),
+              // The current year: the longest ("so far") heading.
+              _ride(DateTime(DateTime.now().year - 1, 1, 1), 100),
+              _ride(DateTime(DateTime.now().year, 1, 1), 12345.6),
+              _ride(DateTime(DateTime.now().year, 1, 2), 25),
             ]),
         locale: const Locale('bn'),
         bikes: [
@@ -186,5 +187,16 @@ void main() {
     expect(find.text('প্রিয় বাইক'), findsOneWidget);
     expect(find.byType(QrImageView), findsOneWidget);
     expect(find.byType(Image), findsWidgets);
+  });
+
+  testWidgets('the current year says "so far"', (tester) async {
+    final now = DateTime.now();
+    await tester.pumpWidget(_harness(() async => _stats(all: [
+          _ride(DateTime(now.year - 1, 1, 1), 10),
+          _ride(DateTime(now.year, 1, 1), 20),
+        ])));
+    await tester.pumpAndSettle();
+    expect(find.text('My ${now.year} so far on two wheels'), findsOneWidget);
+    expect(find.text('+100% vs this point in ${now.year - 1}'), findsOneWidget);
   });
 }

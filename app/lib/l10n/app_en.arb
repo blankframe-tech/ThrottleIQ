@@ -5054,6 +5054,30 @@
   "@yearInReviewGetApp": {
     "description": "Footer next to the QR code on the shared year-in-review image; the QR opens the Play Store listing."
   },
+  "yearInReviewHeadingSoFar": "My {year} so far on two wheels",
+  "@yearInReviewHeadingSoFar": {
+    "description": "Heading on the year-in-review card for the current year, which isn't over yet.",
+    "placeholders": {
+      "year": {
+        "type": "String",
+        "example": "2026"
+      }
+    }
+  },
+  "yearInReviewVsYearSoFar": "{change} vs this point in {year}",
+  "@yearInReviewVsYearSoFar": {
+    "description": "Line under the total distance for the current year, compared with the same date a year earlier, e.g. \"+23% vs this point in 2025\".",
+    "placeholders": {
+      "change": {
+        "type": "String",
+        "example": "+23%"
+      },
+      "year": {
+        "type": "String",
+        "example": "2025"
+      }
+    }
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."

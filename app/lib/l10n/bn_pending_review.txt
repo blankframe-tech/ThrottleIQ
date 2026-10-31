@@ -1686,6 +1686,8 @@ yearInReviewHours
 yearInReviewBusiestMonth
 yearInReviewVsYear
 yearInReviewGetApp
+yearInReviewHeadingSoFar
+yearInReviewVsYearSoFar
 
 # batch: lane g bugs (2026-10-29)
 visitOdometerBelowEarlier
