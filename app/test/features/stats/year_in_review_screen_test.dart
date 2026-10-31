@@ -234,4 +234,13 @@ void main() {
         startsWith('Total Distance\n4,210 km'));
     handle.dispose();
   });
+
+  testWidgets('Bangla card names the busiest month in Bangla', (tester) async {
+    await tester.pumpWidget(_harness(
+        () async => _stats(all: [_ride(DateTime(2025, 3, 1), 40)]),
+        locale: const Locale('bn')));
+    await tester.pumpAndSettle();
+    expect(find.text('মার্চ'), findsOneWidget);
+    expect(find.text('March'), findsNothing);
+  });
 }
