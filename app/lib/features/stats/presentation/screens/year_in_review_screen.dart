@@ -22,6 +22,7 @@ import '../../domain/year_in_review.dart';
 import '../providers/rider_stats_provider.dart';
 import '../widgets/year_review_card.dart';
 import '../widgets/year_story_slides.dart';
+import '../widgets/year_story_video_page.dart';
 
 /// A rider's year as a story: full-screen pages that advance every few
 /// seconds over a music loop, each one shareable as a 1080x1920 image.
@@ -56,6 +57,9 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
   bool _sharing = false;
   bool _muted = false;
   bool _background = false;
+
+  /// The video page is filming: the story stays put until it's done.
+  bool _videoBusy = false;
   AudioPlayer? _player;
 
   /// With a screen reader on, pages wait for the rider instead of moving
@@ -343,6 +347,7 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                           if (years.length > 1)
                             PopupMenuButton<int>(
                               key: const Key('year_in_review_year'),
+                              enabled: !_videoBusy,
                               tooltip: l10n.yearStoryChooseYear,
                               icon: const Icon(Icons.calendar_month_outlined,
                                   color: fg),
@@ -398,16 +403,17 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                     // Back is the page's own left third (plus the margin
                     // beside it), however wide the screen is.
                     onTapUp: (d) {
+                      if (_videoBusy) return;
                       final w = (box.maxWidth - 16).clamp(0.0,
                           (box.maxHeight - 16) * YearCard.size.aspectRatio);
                       d.localPosition.dx < (box.maxWidth - w) / 2 + w / 3
                           ? _previous()
                           : _next();
                     },
-                    onLongPressStart: (_) => _hold(true),
-                    onLongPressEnd: (_) => _hold(false),
+                    onLongPressStart: (_) => _videoBusy ? null : _hold(true),
+                    onLongPressEnd: (_) => _videoBusy ? null : _hold(false),
                     onVerticalDragEnd: (d) {
-                      if ((d.primaryVelocity ?? 0) > 400) {
+                      if (!_videoBusy && (d.primaryVelocity ?? 0) > 400) {
                         Navigator.of(context).maybePop();
                       }
                     },
@@ -427,16 +433,33 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                                 key: _slideKey,
                                 child: AnimatedBuilder(
                                   animation: _clock,
-                                  builder: (context, _) => YearStorySlide(
-                                    key: ValueKey('$year/${slide.name}'),
-                                    slide: slide,
-                                    review: review,
-                                    bikeName: bikeName,
-                                    // The entrance plays in the first 40%.
-                                    t: still
-                                        ? 1
-                                        : (_clock.value / 0.4).clamp(0, 1),
-                                  ),
+                                  builder: (context, _) => slide ==
+                                          StorySlide.video
+                                      ? YearStoryVideoPage(
+                                          key: ValueKey('$year/video'),
+                                          review: review,
+                                          bikeName: bikeName,
+                                          pages: slides
+                                              .where(
+                                                  (s) => s != StorySlide.video)
+                                              .toList(),
+                                          onBusy: (busy) {
+                                            if (mounted) {
+                                              setState(() => _videoBusy = busy);
+                                            }
+                                          },
+                                        )
+                                      : YearStorySlide(
+                                          key: ValueKey('$year/${slide.name}'),
+                                          slide: slide,
+                                          review: review,
+                                          bikeName: bikeName,
+                                          // The entrance plays in the first 40%.
+                                          t: still
+                                              ? 1
+                                              : (_clock.value / 0.4)
+                                                  .clamp(0, 1),
+                                        ),
                                 ),
                               ),
                             ),
@@ -456,7 +479,7 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                     children: [
                       IconButton(
                         tooltip: l10n.yearStoryPrevious,
-                        onPressed: _index == 0 ? null : _previous,
+                        onPressed: _index == 0 || _videoBusy ? null : _previous,
                         icon: const Icon(Icons.chevron_left_rounded),
                         color: fg,
                         disabledColor: fg.withValues(alpha: 0.3),
@@ -465,7 +488,7 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                         Flexible(
                             child: TextButton.icon(
                           key: const Key('year_story_replay'),
-                          onPressed: () => _goTo(0),
+                          onPressed: _videoBusy ? null : () => _goTo(0),
                           icon: const Icon(Icons.replay_rounded),
                           label: Text(l10n.yearStoryReplay),
                           style: TextButton.styleFrom(foregroundColor: fg),
@@ -478,32 +501,34 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
                           color: fg,
                         ),
                       const SizedBox(width: 8),
-                      Expanded(
-                          child: Align(
-                        alignment: Alignment.centerRight,
-                        child: FilledButton.icon(
-                          key: _shareButtonKey,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFC8FF3D),
-                            foregroundColor: Colors.black,
-                            disabledBackgroundColor:
-                                const Color(0xFFC8FF3D).withValues(alpha: 0.5),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 20, vertical: 14),
+                      // The video page has its own buttons.
+                      if (slide != StorySlide.video)
+                        Expanded(
+                            child: Align(
+                          alignment: Alignment.centerRight,
+                          child: FilledButton.icon(
+                            key: _shareButtonKey,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: const Color(0xFFC8FF3D),
+                              foregroundColor: Colors.black,
+                              disabledBackgroundColor: const Color(0xFFC8FF3D)
+                                  .withValues(alpha: 0.5),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 20, vertical: 14),
+                            ),
+                            onPressed:
+                                _sharing ? null : () => _share(year, slide),
+                            icon: _sharing
+                                ? const SizedBox.square(
+                                    dimension: 18,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.black),
+                                  )
+                                : const Icon(Icons.ios_share),
+                            label: Text(l10n.yearStoryShareSlide,
+                                maxLines: 1, overflow: TextOverflow.ellipsis),
                           ),
-                          onPressed:
-                              _sharing ? null : () => _share(year, slide),
-                          icon: _sharing
-                              ? const SizedBox.square(
-                                  dimension: 18,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.black),
-                                )
-                              : const Icon(Icons.ios_share),
-                          label: Text(l10n.yearStoryShareSlide,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                        ),
-                      )),
+                        )),
                     ],
                   ),
                 ),

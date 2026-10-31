@@ -5398,6 +5398,58 @@
   "@yearStoryShareSlide": {
     "description": "Button: share the year-in-review story page on screen as an image."
   },
+  "yearStoryVideoKicker": "One more thing",
+  "@yearStoryVideoKicker": {
+    "description": "Year-in-review story, last page label: the page that makes a video."
+  },
+  "yearStoryVideoTitle": "Your whole year, as one video",
+  "@yearStoryVideoTitle": {
+    "description": "Year-in-review video page heading."
+  },
+  "yearStoryVideoBody": "{seconds} seconds with music, sized for Reels, Shorts and Status.",
+  "@yearStoryVideoBody": {
+    "description": "Year-in-review video page: what the video is. Keep the app names (Reels, Shorts, Status) as they appear in those apps.",
+    "placeholders": {
+      "seconds": {
+        "type": "String",
+        "example": "68"
+      }
+    }
+  },
+  "yearStoryVideoCreate": "Create video",
+  "@yearStoryVideoCreate": {
+    "description": "Button: make the year-in-review video."
+  },
+  "yearStoryVideoMaking": "Making your video… {percent}%",
+  "@yearStoryVideoMaking": {
+    "description": "Progress while the year-in-review video is made.",
+    "placeholders": {
+      "percent": {
+        "type": "String",
+        "example": "42"
+      }
+    }
+  },
+  "yearStoryVideoKeepOpen": "Keep this screen open.",
+  "@yearStoryVideoKeepOpen": {
+    "description": "Under the progress: leaving the app stops the video being made."
+  },
+  "yearStoryVideoShare": "Share video",
+  "@yearStoryVideoShare": {
+    "description": "Button: share the finished year-in-review video."
+  },
+  "yearStoryVideoSave": "Save to Photos",
+  "@yearStoryVideoSave": {
+    "description": "Button: save the finished year-in-review video to the phone's photo library."
+  },
+  "yearStoryVideoSaved": "Video saved to your photos.",
+  "@yearStoryVideoSaved": {
+    "description": "Snackbar after the year-in-review video is saved."
+  },
+  "yearStoryVideoFailed": "Couldn't make the video. Try again.",
+  "@yearStoryVideoFailed": {
+    "description": "Shown when making or saving the year-in-review video fails."
+  },
   "analyticsTapForDetails": "Tap a chart for details",
   "@analyticsTapForDetails": {
     "description": "Hint above the analytics charts list."

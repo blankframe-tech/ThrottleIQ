@@ -1,6 +1,8 @@
 """Original synthwave loop for the Year in Review story (no samples, no third-party audio).
 
-Usage: python3 year_in_review_music.py loop.wav  (see scripts/README.md for the AAC step)
+Usage: python3 year_in_review_music.py loop.wav            the 8-bar loop
+       python3 year_in_review_music.py outro.wav outro      the ending the video closes on
+(see scripts/README.md for the AAC step)
 """
 import math, random, struct, sys, wave
 
@@ -12,6 +14,54 @@ LOOP = BARS * 4 * BEAT
 N = int(round(LOOP * SR))
 TOTAL = 2 * N  # render twice; keep the second pass so tails wrap seamlessly
 random.seed(7)
+
+
+def write(path, out):
+    peak = max(abs(v) for v in out)
+    g = 0.89 / peak
+    with wave.open(path, 'wb') as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
+        w.writeframes(b''.join(struct.pack('<h', int(v * g * 32767)) for v in out))
+
+
+def outro(path):
+    """One downbeat on A minor that rings out: kick, crash, pad, bass."""
+    L = int(3.6 * SR)
+    out = [0.0] * L
+    phase = 0.0
+    for i in range(int(0.5 * SR)):
+        t = i / SR
+        phase += 2 * math.pi * (48 + 110 * math.exp(-t * 28)) / SR
+        out[i] += math.sin(phase) * math.exp(-t * 6) * 0.9
+    lp = 0.0
+    for i in range(L):  # crash: bright noise, long tail
+        x = random.uniform(-1, 1)
+        lp += 0.5 * (x - lp)
+        out[i] += (x - lp) * math.exp(-i / SR * 2.2) * 0.22
+    freqs = []
+    for n in (57, 60, 64, 69):
+        freqs += [440 * 2 ** ((n - 69) / 12) * 2 ** (c / 1200) for c in (7, -7)]
+    phases = [random.random() for _ in freqs]
+    lp = 0.0
+    for i in range(L):
+        v = 0.0
+        for k, f in enumerate(freqs):
+            phases[k] = (phases[k] + f / SR) % 1.0
+            v += 2 * phases[k] - 1
+        lp += 0.07 * (v / len(freqs) - lp)
+        t = i / SR
+        out[i] += lp * min(1, t / 0.01) * math.exp(-t * 1.1) * 0.8
+        out[i] += math.sin(2 * math.pi * 55 * t) * math.exp(-t * 1.6) * 0.5
+    fade = int(0.4 * SR)  # land on silence exactly
+    for i in range(fade):
+        out[L - fade + i] *= 1 - i / fade
+    write(path, [math.tanh(v * 0.9) for v in out])
+
+
+if len(sys.argv) > 2 and sys.argv[2] == 'outro':
+    outro(sys.argv[1])
+    print('ok outro')
+    sys.exit()
 
 def hz(m):
     return 440 * 2 ** ((m - 69) / 12)
@@ -132,9 +182,5 @@ for i in range(N, TOTAL):
     duck = 1 - 0.65 * math.exp(-t / 0.11)
     x = kick[i] * 0.9 + drums[i] * 0.8 + (bass[i] * 0.9 + pad[i] * 0.9) * duck + arp[i]
     out.append(math.tanh(x * 0.9))
-peak = max(abs(v) for v in out)
-g = 0.89 / peak
-with wave.open(sys.argv[1], 'wb') as w:
-    w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
-    w.writeframes(b''.join(struct.pack('<h', int(v * g * 32767)) for v in out))
+write(sys.argv[1], out)
 print('ok', LOOP, 's')

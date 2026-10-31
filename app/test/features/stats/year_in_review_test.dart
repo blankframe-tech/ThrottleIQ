@@ -188,6 +188,7 @@ void main() {
         StorySlide.days,
         StorySlide.bike,
         StorySlide.summary,
+        StorySlide.video,
       ]);
     });
 

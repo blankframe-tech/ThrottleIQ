@@ -153,7 +153,7 @@ void main() {
             .first);
         expect(boundary.size, const Size(360, 640), reason: '$s');
         seen.add(s);
-        if (s != StorySlide.summary) {
+        if (s != StorySlide.video) {
           await tester.tap(find.byTooltip(
               locale.languageCode == 'en' ? 'Next page' : 'পরের পাতা'));
           await tester.pump();
@@ -165,10 +165,10 @@ void main() {
 
   testWidgets('the last page rests and offers a replay', (tester) async {
     await _open(tester);
-    await _wait(tester, const Duration(seconds: 90));
-    expect(_page(StorySlide.summary), findsOneWidget);
+    await _wait(tester, const Duration(seconds: 95));
+    expect(_page(StorySlide.video), findsOneWidget);
     await _wait(tester, const Duration(seconds: 10));
-    expect(_page(StorySlide.summary), findsOneWidget); // rests, no loop
+    expect(_page(StorySlide.video), findsOneWidget); // rests, no loop
     await tester.tap(find.byKey(const Key('year_story_replay')));
     await tester.pump();
     expect(_page(StorySlide.cover), findsOneWidget);

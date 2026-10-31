@@ -12,3 +12,4 @@ The following files are present in this directory:
 - `ride_route_thumbnail.dart`: Dart source code.
 - `year_review_card.dart`: The one-page year summary card (the story's last page) and its month bars.
 - `year_story_slides.dart`: The year-in-review story pages, each a fixed 360x640 canvas exported at 1080x1920.
+- `year_story_video_page.dart`: The story's last page: films the other pages into one MP4 with music, then shares or saves it.

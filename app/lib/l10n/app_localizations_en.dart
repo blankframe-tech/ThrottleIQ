@@ -3846,6 +3846,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yearStoryShareSlide => 'Share this';
 
   @override
+  String get yearStoryVideoKicker => 'One more thing';
+
+  @override
+  String get yearStoryVideoTitle => 'Your whole year, as one video';
+
+  @override
+  String yearStoryVideoBody(String seconds) {
+    return '$seconds seconds with music, sized for Reels, Shorts and Status.';
+  }
+
+  @override
+  String get yearStoryVideoCreate => 'Create video';
+
+  @override
+  String yearStoryVideoMaking(String percent) {
+    return 'Making your video… $percent%';
+  }
+
+  @override
+  String get yearStoryVideoKeepOpen => 'Keep this screen open.';
+
+  @override
+  String get yearStoryVideoShare => 'Share video';
+
+  @override
+  String get yearStoryVideoSave => 'Save to Photos';
+
+  @override
+  String get yearStoryVideoSaved => 'Video saved to your photos.';
+
+  @override
+  String get yearStoryVideoFailed => 'Couldn\'t make the video. Try again.';
+
+  @override
   String get analyticsTapForDetails => 'Tap a chart for details';
 
   @override

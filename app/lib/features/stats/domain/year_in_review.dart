@@ -160,6 +160,9 @@ enum StorySlide {
   bike,
   growth,
   summary,
+
+  /// Not a picture: the page that turns the others into one video.
+  video,
 }
 
 /// The slides worth showing for [r]: a page whose figure would be empty,
@@ -183,6 +186,7 @@ List<StorySlide> storySlides(YearInReview r, {required bool hasBikeName}) {
     if (hasBikeName && r.favouriteBikeRides > 0) StorySlide.bike,
     if (change != null && change >= 0.05) StorySlide.growth,
     StorySlide.summary,
+    StorySlide.video,
   ];
 }
 

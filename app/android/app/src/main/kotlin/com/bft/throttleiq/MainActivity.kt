@@ -24,6 +24,10 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        // The Year in Review video (year_video_encoder.dart).
+        val yearVideo = YearVideoEncoder()
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "throttleiq/year_video")
+            .setMethodCallHandler(yearVideo::handle)
     }
 
     /** Starts [flat] ("package/.Activity"); false when it is missing or refused. */

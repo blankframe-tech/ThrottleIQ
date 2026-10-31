@@ -64,6 +64,15 @@ Widget _harness(Future<RiderStatsSummary> Function() load,
       ),
     );
 
+/// Lets the story play out, then steps back from the video page to the card.
+Future<void> _settleOnCard(WidgetTester tester) async {
+  await tester.pumpAndSettle();
+  if (find.byKey(const Key('year_story_video')).evaluate().isNotEmpty) {
+    await tester.tap(find.byIcon(Icons.chevron_left_rounded));
+    await tester.pump();
+  }
+}
+
 void main() {
   setUpAll(loadKeyScreenFonts);
 
@@ -87,7 +96,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(_harness(
         () async => _stats(recent: [_ride(DateTime(2025, 5, 1), 42)])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('No rides yet.'), findsNothing);
     expect(find.textContaining('2025'), findsWidgets);
   });
@@ -97,7 +106,7 @@ void main() {
           _ride(DateTime(2025, 5, 1), 12000),
           _ride(DateTime(2025, 6, 1), 345.6),
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('12,345.6 km'), findsOneWidget);
     expect(find.text('12,000 km'), findsOneWidget);
   });
@@ -106,7 +115,7 @@ void main() {
     await tester.pumpWidget(_harness(
         () async => _stats(all: [_ride(DateTime(2025, 5, 1), 1234)]),
         locale: const Locale('bn')));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('1,234 কিমি'), findsWidgets);
     expect(find.textContaining(' km'), findsNothing);
     expect(find.text('মোট দূরত্ব'), findsOneWidget);
@@ -116,7 +125,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
         _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('Favourite bike'), findsNothing);
     expect(find.text('Unknown bike'), findsNothing);
   });
@@ -129,7 +138,7 @@ void main() {
           _ride(DateTime(2025, 3, 8), 50),
           _ride(DateTime(2025, 9, 1), 25),
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('1.5 h'), findsOneWidget); // 3 rides × 30 min
     expect(find.text('March'), findsOneWidget);
     expect(find.text('+25% vs 2024'), findsOneWidget);
@@ -139,7 +148,7 @@ void main() {
       (tester) async {
     await tester.pumpWidget(
         _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     final card =
         tester.widget<Container>(find.byKey(const Key('year_in_review_card')));
     final deco = card.decoration! as BoxDecoration;
@@ -156,7 +165,7 @@ void main() {
       addTearDown(tester.view.reset);
       await tester.pumpWidget(
           _harness(() async => _stats(all: [_ride(DateTime(2025, 5, 1), 10)])));
-      await tester.pumpAndSettle();
+      await _settleOnCard(tester);
       final boundary = tester.renderObject<RenderRepaintBoundary>(find
           .ancestor(
               of: find.byKey(const Key('year_in_review_card')),
@@ -184,7 +193,7 @@ void main() {
               brand: 'Yamaha',
               model: 'FZS V3 Fi Deluxe Special Edition')
         ]));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(tester.takeException(), isNull); // no overflow in 360x640
     expect(find.text('প্রিয় বাইক'), findsOneWidget);
     expect(find.byType(QrImageView), findsOneWidget);
@@ -197,7 +206,7 @@ void main() {
           _ride(DateTime(now.year - 1, 1, 1), 100),
           _ride(DateTime(now.year, 1, 1), 200),
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('My ${now.year} so far on two wheels'), findsOneWidget);
     expect(find.text('+100% vs this point in ${now.year - 1}'), findsOneWidget);
   });
@@ -207,12 +216,12 @@ void main() {
           _ride(DateTime(2023, 5, 1), 10),
           _ride(DateTime(2024, 5, 1), 20),
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('My 2024 on two wheels'), findsOneWidget);
     await tester.tap(find.byKey(const Key('year_in_review_year')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('year_in_review_year_2023')));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('My 2023 on two wheels'), findsOneWidget);
   });
 
@@ -230,7 +239,7 @@ void main() {
           _ride(DateTime(2024, 4, 1), 1000),
           _ride(DateTime(2025, 3, 1), 4210),
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(
         tester.getSemantics(find.text('Total Rides')).label, 'Total Rides\n1');
     expect(tester.getSemantics(find.text('Total Distance')).label,
@@ -242,7 +251,7 @@ void main() {
     await tester.pumpWidget(_harness(
         () async => _stats(all: [_ride(DateTime(2025, 3, 1), 40)]),
         locale: const Locale('bn')));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     expect(find.text('মার্চ'), findsOneWidget);
     expect(find.text('March'), findsNothing);
   });
@@ -304,7 +313,7 @@ void main() {
           _ride(DateTime(2024, 4, 1), 500),
           _ride(DateTime(2025, 3, 1), 100), // a drop: grey change line
         ])));
-    await tester.pumpAndSettle();
+    await _settleOnCard(tester);
     final deco = tester
         .widget<Container>(find.byKey(const Key('year_in_review_card')))
         .decoration! as BoxDecoration;

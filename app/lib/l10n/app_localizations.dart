@@ -6768,6 +6768,66 @@ abstract class AppLocalizations {
   /// **'Share this'**
   String get yearStoryShareSlide;
 
+  /// Year-in-review story, last page label: the page that makes a video.
+  ///
+  /// In en, this message translates to:
+  /// **'One more thing'**
+  String get yearStoryVideoKicker;
+
+  /// Year-in-review video page heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Your whole year, as one video'**
+  String get yearStoryVideoTitle;
+
+  /// Year-in-review video page: what the video is. Keep the app names (Reels, Shorts, Status) as they appear in those apps.
+  ///
+  /// In en, this message translates to:
+  /// **'{seconds} seconds with music, sized for Reels, Shorts and Status.'**
+  String yearStoryVideoBody(String seconds);
+
+  /// Button: make the year-in-review video.
+  ///
+  /// In en, this message translates to:
+  /// **'Create video'**
+  String get yearStoryVideoCreate;
+
+  /// Progress while the year-in-review video is made.
+  ///
+  /// In en, this message translates to:
+  /// **'Making your video… {percent}%'**
+  String yearStoryVideoMaking(String percent);
+
+  /// Under the progress: leaving the app stops the video being made.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep this screen open.'**
+  String get yearStoryVideoKeepOpen;
+
+  /// Button: share the finished year-in-review video.
+  ///
+  /// In en, this message translates to:
+  /// **'Share video'**
+  String get yearStoryVideoShare;
+
+  /// Button: save the finished year-in-review video to the phone's photo library.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to Photos'**
+  String get yearStoryVideoSave;
+
+  /// Snackbar after the year-in-review video is saved.
+  ///
+  /// In en, this message translates to:
+  /// **'Video saved to your photos.'**
+  String get yearStoryVideoSaved;
+
+  /// Shown when making or saving the year-in-review video fails.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t make the video. Try again.'**
+  String get yearStoryVideoFailed;
+
   /// Hint above the analytics charts list.
   ///
   /// In en, this message translates to:

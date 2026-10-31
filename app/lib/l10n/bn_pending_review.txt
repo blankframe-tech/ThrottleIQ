@@ -1775,3 +1775,14 @@ yearStoryPrevious
 yearStoryReplay
 yearStoryChooseYear
 yearStoryShareSlide
+# batch: year in review video (2026-11-01)
+yearStoryVideoKicker
+yearStoryVideoTitle
+yearStoryVideoBody
+yearStoryVideoCreate
+yearStoryVideoMaking
+yearStoryVideoKeepOpen
+yearStoryVideoShare
+yearStoryVideoSave
+yearStoryVideoSaved
+yearStoryVideoFailed

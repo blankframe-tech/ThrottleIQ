@@ -3844,6 +3844,40 @@ class AppLocalizationsBn extends AppLocalizations {
   String get yearStoryShareSlide => 'এটি শেয়ার করুন';
 
   @override
+  String get yearStoryVideoKicker => 'আরও একটা জিনিস';
+
+  @override
+  String get yearStoryVideoTitle => 'পুরো বছর, একটি ভিডিওতে';
+
+  @override
+  String yearStoryVideoBody(String seconds) {
+    return 'মিউজিকসহ $seconds সেকেন্ড, Reels, Shorts আর Status-এর মাপে।';
+  }
+
+  @override
+  String get yearStoryVideoCreate => 'ভিডিও তৈরি করুন';
+
+  @override
+  String yearStoryVideoMaking(String percent) {
+    return 'ভিডিও তৈরি হচ্ছে… $percent%';
+  }
+
+  @override
+  String get yearStoryVideoKeepOpen => 'এই স্ক্রিনটি খোলা রাখুন।';
+
+  @override
+  String get yearStoryVideoShare => 'ভিডিও শেয়ার করুন';
+
+  @override
+  String get yearStoryVideoSave => 'ফটোতে সেভ করুন';
+
+  @override
+  String get yearStoryVideoSaved => 'ভিডিও আপনার ফটোতে সেভ হয়েছে।';
+
+  @override
+  String get yearStoryVideoFailed => 'ভিডিও তৈরি করা যায়নি। আবার চেষ্টা করুন।';
+
+  @override
   String get analyticsTapForDetails => 'বিস্তারিত দেখতে চার্টে ট্যাপ করুন';
 
   @override

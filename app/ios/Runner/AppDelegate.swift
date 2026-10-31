@@ -25,5 +25,8 @@ import flutter_foreground_task
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YearVideoEncoder") {
+      YearVideoEncoder.register(messenger: registrar.messenger())
+    }
   }
 }
