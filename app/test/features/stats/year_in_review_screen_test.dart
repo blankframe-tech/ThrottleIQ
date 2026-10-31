@@ -94,4 +94,14 @@ void main() {
     expect(find.text('12,345.6 km'), findsOneWidget);
     expect(find.text('12,000 km'), findsOneWidget);
   });
+
+  testWidgets('Bangla: translated unit, labels not uppercased', (tester) async {
+    await tester.pumpWidget(_harness(
+        () async => _stats(all: [_ride(DateTime(2025, 5, 1), 1234)]),
+        locale: const Locale('bn')));
+    await tester.pumpAndSettle();
+    expect(find.text('1,234 কিমি'), findsWidgets);
+    expect(find.textContaining(' km'), findsNothing);
+    expect(find.text('মোট দূরত্ব'), findsOneWidget);
+  });
 }
