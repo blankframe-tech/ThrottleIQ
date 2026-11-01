@@ -6,11 +6,38 @@ Only the latest beta release receives security fixes.
 
 ## Reporting a vulnerability
 
-Please report privately by email to the.abraar.rar@gmail.com. Do not open a public issue or pull request for a vulnerability.
+Report privately: use **Security → Report a vulnerability** on this repository (GitHub private vulnerability reporting), or email the.abraar.rar@gmail.com. Do not open a public issue, pull request or discussion for a vulnerability.
 
-Include what you found, steps to reproduce, and the affected version. We aim to acknowledge reports within 7 days.
+Include what you found, steps to reproduce, the affected version, and what an attacker could do with it. We aim to acknowledge reports within 7 days.
 
-There is no bug bounty.
+## Swag bounty
+
+ThrottleIQ is built by a small team, so the reward is small but real:
+
+- **Every valid, new vulnerability:** a ThrottleIQ drop-shoulder t-shirt and cha-coffee from the ThrottleIQ team. Free delivery inside Bangladesh; outside Bangladesh you pay the shipping.
+- **Higher-severity findings** (for example reading another rider's location, rides or private data, taking over an account, or sending crash alerts as someone else) may get more. This is at the team's discretion.
+- With your permission, your name or handle goes in the credits below.
+
+### Not eligible
+
+- **Known issues.** Anything already listed in this file (including the owner runbooks below), in `DOCS/Handoff for agents and Todos/` (`issues_open.md`, `security_sweep_*.md`, `needs_attention.md`), or in an open GitHub issue. If two people report the same new issue, the first report wins.
+- Firebase web API keys, the Cloudinary cloud name, and other client config that is public by design.
+- Missing headers or best practices with no working attack, self-XSS, clickjacking on pages with no sensitive action, and reports from automated scanners without a reproduced impact.
+- Denial of service, spam, social engineering, and physical attacks.
+- Builds older than the latest beta release.
+
+### Rules (safe harbor)
+
+- Test only with accounts you created yourself, or against the Firebase emulators (`firebase emulators:start` from the repo root). Never access, change or delete another rider's data. If you reach it by accident, stop, don't keep a copy, and tell us.
+- No denial of service, load testing, brute force, or mass uploads to Cloudinary or Firebase.
+- Don't trigger crash alerts or messages to real people's emergency contacts.
+- Give us a reasonable time to fix the issue before you talk about it publicly.
+
+If you follow these rules in good faith, we consider your testing authorised and will not take legal action against you or ask anyone else to.
+
+### Credits
+
+No reports yet.
 
 ---
 
