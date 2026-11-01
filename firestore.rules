@@ -536,6 +536,12 @@ service cloud.firestore {
          request.auth.uid in get(/databases/$(database)/documents/forums/$(forumId)).data.get('maintainerIds', [])));
     }
 
+    // The owner's notice board (kNoticeBoardForumId in forum_directory.dart):
+    // only the admin posts, replies, or cross-posts into it (issue #153).
+    function forumWritable(forumId) {
+      return forumId != 'throttleiq_notice_board' || isAdmin();
+    }
+
     // User profiles.
     //
     // The root profile DOCUMENT is now readable by any authenticated user —
@@ -1416,6 +1422,7 @@ service cloud.firestore {
         // `attachment` snapshot card (forumAttachmentValid), and up to four
         // own-folder Cloudinary `imageUrls` (forumImagesValid).
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+          forumWritable(forumId) &&
           request.resource.data.replyCount == 0 &&
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0 &&
           request.resource.data.keys().hasOnly([
@@ -1432,6 +1439,7 @@ service cloud.firestore {
            (request.resource.data.alsoIn is list &&
             request.resource.data.alsoIn.size() <= 4 &&
             !(forumId in request.resource.data.alsoIn) &&
+            (isAdmin() || !('throttleiq_notice_board' in request.resource.data.alsoIn)) &&
             // B6: each entry a forum-id-shaped slug (slugify.dart).
             request.resource.data.alsoIn.join(',').matches('^([A-Za-z0-9_-]{1,200}(,[A-Za-z0-9_-]{1,200})*)?$'))) &&
           (request.resource.data.get('imageUrls', null) == null ||
@@ -1549,6 +1557,7 @@ service cloud.firestore {
           allow read: if request.auth != null;
           // §90.D10: same key allow-list / byline / avatar checks as posts.
           allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
+            forumWritable(forumId) &&
             request.resource.data.keys().hasOnly([
               'postId', 'forumId', 'userId', 'userName', 'userPhotoUrl', 'body', 'createdAt'
             ]) &&

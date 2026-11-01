@@ -1788,3 +1788,6 @@ yearStoryVideoShare
 yearStoryVideoSave
 yearStoryVideoSaved
 yearStoryVideoFailed
+noticeBoard
+noticeBoardSubtitle
+pinnedNotice

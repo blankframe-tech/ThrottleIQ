@@ -14,6 +14,7 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/entities/forum_reply_entity.dart';
+import '../../domain/forum_permissions.dart';
 import '../../domain/forum_solution.dart';
 import '../providers/forum_bookmarks_provider.dart';
 import '../providers/forum_providers.dart';
@@ -282,8 +283,11 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
             ],
           ),
         ),
-        Container(height: 1, color: context.palette.border),
-        _buildComposer(),
+        if (canPostIn(widget.forumId,
+            isAdmin: ref.watch(isAdminProvider).valueOrNull ?? false)) ...[
+          Container(height: 1, color: context.palette.border),
+          _buildComposer(),
+        ],
       ],
     );
   }

@@ -498,6 +498,15 @@ final forumsPulseFeedProvider =
   return PulseFirstPage(sources: sources, page: page);
 });
 
+/// The newest notice board post, pinned above Pulse. One read, reused like
+/// Pulse's first page.
+final pinnedNoticeProvider =
+    FutureProvider.autoDispose<ForumPostEntity?>((ref) async {
+  final post = await _forumRepository.getLatestPost(kNoticeBoardForumId);
+  _keepFor(ref, kPulseFirstPageTtl);
+  return post;
+});
+
 /// Pulse's post list, held locally for optimistic votes and paging — the
 /// same [ForumPostsNotifier] a thread uses, at Pulse's page size.
 final pulseFeedNotifierProvider = StateNotifierProvider.autoDispose<

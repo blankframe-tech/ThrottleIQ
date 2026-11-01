@@ -54,9 +54,12 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
   @override
   Widget build(BuildContext context) {
     final firstAsync = ref.watch(forumsPulseFeedProvider);
+    // A failed read just hides the pin; the feed below has its own error.
+    final notice = ref.watch(pinnedNoticeProvider).valueOrNull;
 
     return Column(
       children: [
+        if (notice != null) PinnedNoticeCard(post: notice),
         SizedBox(
           height: 48,
           child: ListView(
@@ -106,14 +109,17 @@ class _ForumsPulseViewState extends ConsumerState<ForumsPulseView> {
   Widget _buildFeed(PulseFirstPage first) {
     final blocked =
         ref.watch(blockedUsersProvider).valueOrNull ?? const <String>{};
+    // Already pinned above when the rider follows the notice board.
+    final pinnedId = ref.watch(pinnedNoticeProvider).valueOrNull?.id;
     final all = ref
         .watch(pulseFeedNotifierProvider)
-        .where((p) => !blocked.contains(p.userId))
+        .where((p) => !blocked.contains(p.userId) && p.id != pinnedId)
         .toList();
     final notifier = ref.read(pulseFeedNotifierProvider.notifier);
 
     Future<void> refresh() async {
       ref.invalidate(pulseSourcesProvider);
+      ref.invalidate(pinnedNoticeProvider);
       await ref.read(forumsPulseFeedProvider.future);
     }
 
@@ -298,6 +304,65 @@ class _SavedList extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The newest notice board post, pinned above the Pulse chips.
+class PinnedNoticeCard extends StatelessWidget {
+  final ForumPostEntity post;
+  const PinnedNoticeCard({super.key, required this.post});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+          AppDimensions.paddingMd, 8, AppDimensions.paddingMd, 0),
+      child: AppCard(
+        key: const Key('pulse_pinned_notice'),
+        onTap: () => context.push('/forums/${post.forumId}/post/${post.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.push_pin, size: 14, color: context.palette.primary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(context.l10n.pinnedNotice,
+                      style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: context.palette.primary)),
+                ),
+                Text(post.createdAt.timeAgo,
+                    style: TextStyle(
+                        fontSize: 11, color: context.palette.textTertiary)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              post.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: context.palette.textPrimary),
+            ),
+            if (post.body.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                post.body,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 13, color: context.palette.textSecondary),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }

@@ -12240,6 +12240,24 @@ abstract class AppLocalizations {
   /// **'Every post from every group'**
   String get allRidersGroupSubtitle;
 
+  /// Name of the forum where only the ThrottleIQ team posts announcements.
+  ///
+  /// In en, this message translates to:
+  /// **'ThrottleIQ Notice Board'**
+  String get noticeBoard;
+
+  /// Subtitle of the notice board on the forums hub.
+  ///
+  /// In en, this message translates to:
+  /// **'Official updates from the ThrottleIQ team'**
+  String get noticeBoardSubtitle;
+
+  /// Label on the newest notice board post, pinned at the top of the Pulse feed.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned notice'**
+  String get pinnedNotice;
+
   /// Group picker section: the rider's garage and followed forums.
   ///
   /// In en, this message translates to:

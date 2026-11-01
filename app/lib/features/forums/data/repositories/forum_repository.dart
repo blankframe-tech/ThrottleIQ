@@ -680,6 +680,13 @@ class ForumRepository {
     }
   }
 
+  /// [forumId]'s newest own post (not cross-posts), or null — one read.
+  Future<ForumPostEntity?> getLatestPost(String forumId) async {
+    final posts =
+        await _postsFrom(_forums.doc(forumId).collection('posts'), limit: 1);
+    return posts.firstOrNull;
+  }
+
   Future<List<ForumPostEntity>> _postsFrom(
     Query<Map<String, dynamic>> source, {
     required int limit,

@@ -7159,6 +7159,15 @@ class AppLocalizationsBn extends AppLocalizations {
   String get allRidersGroupSubtitle => 'সব গ্রুপের সব পোস্ট';
 
   @override
+  String get noticeBoard => 'থ্রটলআইকিউ নোটিশ বোর্ড';
+
+  @override
+  String get noticeBoardSubtitle => 'থ্রটলআইকিউ টিমের অফিশিয়াল আপডেট';
+
+  @override
+  String get pinnedNotice => 'পিন করা নোটিশ';
+
+  @override
   String get forumShareYourGroups => 'আপনার গ্রুপ';
 
   @override

@@ -79,13 +79,16 @@ class _ForumThreadScreenState extends ConsumerState<ForumThreadScreen> {
             ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => openNewForumPost(context, group: forumId),
-        backgroundColor: context.palette.primary,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(context.l10n.newPost,
-            style: const TextStyle(color: Colors.white)),
-      ),
+      floatingActionButton: canPostIn(forumId,
+              isAdmin: ref.watch(isAdminProvider).valueOrNull ?? false)
+          ? FloatingActionButton.extended(
+              onPressed: () => openNewForumPost(context, group: forumId),
+              backgroundColor: context.palette.primary,
+              icon: const Icon(Icons.add, color: Colors.white),
+              label: Text(context.l10n.newPost,
+                  style: const TextStyle(color: Colors.white)),
+            )
+          : null,
       body: postsAsync.when(
         loading: () => Center(
             child: CircularProgressIndicator(color: context.palette.primary)),
