@@ -10032,5 +10032,13 @@
   "indriyoSimulationSubtitle": "Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.",
   "@indriyoSimulationSubtitle": {
     "description": "Subtitle of the Demo mode switch; warns the alerts are fake."
+  },
+  "unitDistanceKm": "km",
+  "@unitDistanceKm": {
+    "description": "Abbreviation for kilometres"
+  },
+  "unitDistanceMi": "mi",
+  "@unitDistanceMi": {
+    "description": "Abbreviation for miles"
   }
 }

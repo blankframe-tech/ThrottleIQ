@@ -2045,5 +2045,7 @@
   "indriyoNotConnected": "ক্যামেরায় পৌঁছানো যায়নি। ক্যামেরার Wi-Fi-তে আছেন কি না এবং ঠিকানা ঠিক আছে কি না দেখুন।",
   "indriyoInvalidUrl": "http:// বা https:// দিয়ে শুরু হওয়া একটি ঠিকানা দিন",
   "indriyoSimulationTitle": "ডেমো মোড",
-  "indriyoSimulationSubtitle": "ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।"
+  "indriyoSimulationSubtitle": "ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।",
+  "unitDistanceKm": "km",
+  "unitDistanceMi": "mi"
 }

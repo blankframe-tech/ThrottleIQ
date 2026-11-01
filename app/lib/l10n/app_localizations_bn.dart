@@ -7236,4 +7236,10 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get indriyoSimulationSubtitle =>
       'ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।';
+
+  @override
+  String get unitDistanceKm => 'km';
+
+  @override
+  String get unitDistanceMi => 'mi';
 }

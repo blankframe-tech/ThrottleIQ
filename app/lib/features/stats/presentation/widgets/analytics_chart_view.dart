@@ -20,6 +20,7 @@ class AnalyticsChartView extends StatelessWidget {
   final List<AnalyticsPoint> points;
   final bool detailed;
   final String Function(String bikeId) bikeName;
+  final String? unitOverride;
 
   const AnalyticsChartView({
     super.key,
@@ -27,6 +28,7 @@ class AnalyticsChartView extends StatelessWidget {
     required this.points,
     required this.bikeName,
     this.detailed = false,
+    this.unitOverride
   });
 
   double get _height => detailed ? 240 : 92;
@@ -118,7 +120,7 @@ class AnalyticsChartView extends StatelessWidget {
 
   String _tooltip(BuildContext context, int i) {
     final p = points[i];
-    final unit = _spec.unit(context.l10n);
+    final unit = unitOverride ?? _spec.unit(context.l10n);
     return '${_spec.pointLabel(p)}\n${formatWithUnit(p.value, unit)}';
   }
 
