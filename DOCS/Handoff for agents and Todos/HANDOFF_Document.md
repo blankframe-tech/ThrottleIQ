@@ -31,7 +31,7 @@ _Last updated: 2026-11-01._
 ### Release
 
 - **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, notes only. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
-- **`config/app.minBuild = 29`** is live (set 2026-10-18). Builds 27 and 28 see the update screen; builds 26 and older have no gate.
+- **`config/app.minBuild = 35`** (set 2026-11-01 with App Check enforcement). Builds 27–34 see the update screen; builds 26 and older have no gate. From build 38 the gate is live (a snapshot listener), so raising `minBuild` reaches riders with the app open, and its button opens Google Play on Android.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. `1.0.0-beta.4.12.0+35` uploaded to the Play Console on 2026-10-31 (before it, the last build on record on the internal track was `1.0.0-beta.1+3` from 2026-08-29, which has no update gate). Owner item 4.
 - **iPhone:** no TestFlight or App Store build. The founder's iPhone gets `flutter run --release` builds signed by personal team `NJ4675FFUX`. Apple enrolment: owner item 21.
@@ -67,7 +67,7 @@ Shipping these is owner item 26.
 | Quota alert | Live since 2026-10-21 (`scripts/monitoring/firestore-quota-alert.yaml`, policy `alertPolicies/13055223357814148266`). Production used 3-14% of daily reads in the week before. |
 | `places` collection | 1,238 docs, including 717 from a Google Maps scrape (2026-10-19). Take-down decision: owner item 1 (`scripts/oneoff/revert_google_places.js`, ready, never run). |
 | Realtime Database | No instance; `database.rules.json` denies everything. The dormant client code in `app/lib/core/realtime/` waits on the quota decision (owner item 3). |
-| App Check | Nothing registered or enforced (owner items 17, 32; runbook `DOCS/For Devs and Contributors/guides/app_check.md`). |
+| App Check | **Firestore enforced since 2026-11-01 09:22 UTC.** Android: Play Integrity (Play app-signing SHA-256; Play Console linked to `throttleiqfb`). Web: live viewer on reCAPTCHA Enterprise (web app `1:603325098273:web:be5218289b72e2d9fcf660`, key `6Lc02wou…`, min score 0.5). iOS: only the owner's iPhone, via a registered debug token (`deploy.sh` passes `APP_CHECK_DEBUG=true`); App Attest waits on the paid team. Sideloaded/self-built Android builds and other iPhones lose Firestore. Rollback: App Check → APIs → Cloud Firestore → Unenforce. Runbook: `DOCS/For Devs and Contributors/guides/app_check.md`. |
 
 ### Built but never run on a real phone
 
@@ -189,6 +189,13 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ### 2026-11-01
 
+- **App Check enforced on Firestore; bounty published** (commits `ef3fab79`..`aabd4c92`, release `1.0.0-beta.4.15.0+38`):
+  - App Check API on; Android Play Integrity, web reCAPTCHA Enterprise (live viewer deployed to Hosting), owner's iPhone on a debug token. Enforced 09:22 UTC; `minBuild` 35.
+  - Sideload screen: "Apply for alpha testing" (WhatsApp, asks for the Play email), "Try demo mode" (feature tour; Show-me hidden; ends back on the screen), Play Store.
+  - Update gate: live `config/app` listener; Android button opens Google Play, iOS keeps the install page (shortcut until an App Store listing).
+  - `SECURITY.md`: swag bounty (tee + cha-nashta-adda; international pays shipping), known issues not eligible, safe harbor. Pinned announcement issue drafted.
+  - E1 #92: Play review password rotated (owner, 2026-11-01); 30 `@qa-seed.invalid` riders still to delete with `cleanup_qa_test_riders.js`. History rewrite on hold (4 forks keep the strings anyway).
+  - Cloudinary `throttleiq_unsigned`: overwrite off, allowed formats `jpg,jpeg,png,webp,heic,heif,m4a` (no max-size field in the preset).
 - **`deploy.sh` follows the new deploy rule:** it builds the AAB again (step 3/5, `--skip-android` to skip) and writes `release-notes-<versionCode>.md` beside it. The file lists the commits since the last AAB (taken from the newest notes file's `built from … at <sha>` line) and has `<en-US>` / `<bn-BD>` TODO blocks that the deploy agent fills in. It stops before committing if the versionCode isn't above the last AAB's (so the next build needs `+38`). The iPhone step prefers Abraar's iPhone. The `deploy` skill and the rule's flag list are updated to match. Not run end to end yet.
 - **Build 1.0.0-beta.4.14.0 (+37):** AAB for a manual Play upload; release notes (EN + BN) in `app/build/app/outputs/bundle/release/release.md`. Adds the Year in Review story and video, and the Log Fuel widget. Release build installed on the iPhone. +36 was already built, so its versionCode can't be reused.
 - **Build 1.0.0-beta.4.13.0 (+36):** pubspec bumped and AAB built from `53f1d1c9` (upload key `8542b8ad…`) for a manual Play upload; bilingual Play release notes in `app/build/app/outputs/bundle/release/release note.md`. Carries the year in review redesign and follow-ups. Release build installed and launched on the iPhone. `check.sh` not run for this build; no GitHub release or tag.
