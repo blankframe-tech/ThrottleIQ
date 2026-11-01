@@ -38,6 +38,7 @@ old path into Play Console.
 
 ## Files
 
+- `play_listing_v1/` — the production listing pack (2026-11-01): `en.md`, `bn.md`, content rating, `checklist.md`. Supersedes the two drafts below; `node scripts/check_listing_lengths.js` checks the limits.
 - `store_listing.md` — app name, short/full description, category, tags.
 - `store_listing_bn_addendum.md` — Bangla listing draft (Translations → Bengali); needs a native-speaker read before it goes live.
 - `data_safety_and_permissions.md` — Data Safety form answers and the
