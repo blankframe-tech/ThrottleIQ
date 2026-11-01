@@ -10452,11 +10452,17 @@ abstract class AppLocalizations {
   /// **'This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app.'**
   String get updateRequiredBody;
 
-  /// Button on the blocking update screen; opens the install page.
+  /// Button on the blocking update screen; opens the install page (iPhone).
   ///
   /// In en, this message translates to:
   /// **'Get the latest version'**
   String get updateRequiredAction;
+
+  /// Button on the blocking update screen on Android; opens ThrottleIQ on Google Play.
+  ///
+  /// In en, this message translates to:
+  /// **'Update on Google Play'**
+  String get updateRequiredPlayAction;
 
   /// Second button on the Update required screen: shares every ride on this phone as GPX files, so the rider keeps their data even without updating.
   ///

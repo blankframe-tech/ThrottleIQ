@@ -6102,6 +6102,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get updateRequiredAction => 'সর্বশেষ সংস্করণ নিন';
 
   @override
+  String get updateRequiredPlayAction => 'Google Play-তে আপডেট করুন';
+
+  @override
   String get updateRequiredExportRides => 'আমার রাইডগুলো এক্সপোর্ট করুন';
 
   @override

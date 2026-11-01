@@ -49,55 +49,63 @@ void main() {
     });
   });
 
-  group('checkUpdateRequired', () {
-    Future<bool> check(Future<Map<String, dynamic>?> Function() read,
+  group('watchUpdateRequired', () {
+    Stream<bool> watch(Stream<Map<String, dynamic>?> config,
             {int build = 26}) =>
-        checkUpdateRequired(
-          currentBuild: build,
-          readConfig: read,
-          timeout: const Duration(milliseconds: 50),
-        );
+        watchUpdateRequired(currentBuild: build, config: config);
 
-    test('blocks when config/app.minBuild is above this build', () async {
-      expect(await check(() async => {'minBuild': 27}), isTrue);
+    test('follows config/app live: raising minBuild blocks a running app',
+        () async {
+      final config = StreamController<Map<String, dynamic>?>();
+      final seen = <bool>[];
+      final sub = watch(config.stream).listen(seen.add);
+      config
+        ..add({'minBuild': 20})
+        ..add({'minBuild': 27})
+        ..add({'minBuild': 26});
+      await Future<void>.delayed(Duration.zero);
+      expect(seen, [false, true, false]);
+      await sub.cancel();
+      await config.close();
     });
 
     test('a missing doc or field does not block', () async {
-      expect(await check(() async => null), isFalse);
-      expect(await check(() async => {'other': 1}), isFalse);
+      expect(await watch(Stream.value(null)).single, isFalse);
+      expect(await watch(Stream.value({'other': 1})).single, isFalse);
     });
 
     test('offline or denied does not block', () async {
-      expect(
-        await check(() async => throw StateError('unavailable')),
-        isFalse,
-      );
+      final seen = await watch(Stream.error(StateError('denied'))).toList();
+      expect(seen, isEmpty);
     });
 
-    test('a read slower than the timeout does not block', () async {
-      final never = Completer<Map<String, dynamic>?>();
-      expect(await check(() => never.future), isFalse);
-    });
-
-    test('an unknown build number never reads the doc', () async {
-      var read = false;
-      final blocked = await check(() async {
-        read = true;
-        return {'minBuild': 999};
-      }, build: 0);
-      expect(blocked, isFalse);
-      expect(read, isFalse);
+    test('an unknown build number never blocks or listens', () async {
+      var listened = false;
+      final config = Stream<Map<String, dynamic>?>.multi((c) {
+        listened = true;
+        c.add({'minBuild': 999});
+      });
+      expect(await watch(config, build: 0).single, isFalse);
+      expect(listened, isFalse);
     });
   });
 
-  testWidgets('the update screen offers the install link', (tester) async {
+  test('the update link is Google Play on Android, the install page on iOS',
+      () {
+    expect(updateUrlFor(TargetPlatform.android),
+        endsWith('id=com.bft.throttleiq'));
+    expect(updateUrlFor(TargetPlatform.iOS), kInstallUrl);
+  });
+
+  testWidgets('the update screen offers Google Play (tests run as Android)',
+      (tester) async {
     await tester.pumpWidget(const MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: UpdateRequiredScreen(),
     ));
     expect(find.text('Update required'), findsOneWidget);
-    expect(find.text('Get the latest version'), findsOneWidget);
+    expect(find.text('Update on Google Play'), findsOneWidget);
     expect(kInstallUrl, startsWith('https://throttleiqfb.web.app/'));
   });
 }

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -12,7 +13,8 @@ import 'editorial.dart';
 
 /// Shown instead of the whole app when this build is older than
 /// `config/app.minBuild` (see app_update_gate.dart). No way past it but the
-/// link to the install page, and a way to take the rider's rides along.
+/// update link (Google Play on Android, the install page on iOS), and a way
+/// to take the rider's rides along.
 class UpdateRequiredScreen extends StatelessWidget {
   const UpdateRequiredScreen({super.key, this.exportRides});
 
@@ -52,11 +54,13 @@ class UpdateRequiredScreen extends StatelessWidget {
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: () => launchUrl(
-                    Uri.parse(kInstallUrl),
+                    Uri.parse(updateUrlFor(defaultTargetPlatform)),
                     mode: LaunchMode.externalApplication,
                   ),
                   icon: const Icon(Icons.download_rounded),
-                  label: Text(context.l10n.updateRequiredAction),
+                  label: Text(defaultTargetPlatform == TargetPlatform.android
+                      ? context.l10n.updateRequiredPlayAction
+                      : context.l10n.updateRequiredAction),
                   style: FilledButton.styleFrom(minimumSize: const Size(0, 48)),
                 ),
                 const SizedBox(height: 12),

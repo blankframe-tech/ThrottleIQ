@@ -1793,3 +1793,5 @@ noticeBoard
 noticeBoardSubtitle
 pinnedNotice
 waitingToUpload
+# batch: update screen opens Google Play (2026-11-01)
+updateRequiredPlayAction

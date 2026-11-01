@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import 'app_check_gate.dart' show kPlayStoreUrl;
+
 /// Forced update: a build older than `config/app.minBuild` shows a blocking
 /// "Update required" screen instead of the app (CrtiQue_Oct14 §10). Raising
 /// `minBuild` in the Firebase console is how a rules change that old builds
@@ -37,33 +39,40 @@ const String kYearInReviewInstallUrl =
 bool isUpdateRequired({required int currentBuild, required Object? minBuild}) =>
     currentBuild > 0 && minBuild is num && currentBuild < minBuild;
 
-/// Reads `config/app` with [readConfig] and applies [isUpdateRequired].
-/// Offline, slow (past [timeout]), denied or missing all mean "no update
-/// required": a rider must never be locked out by a network problem.
-Future<bool> checkUpdateRequired({
+/// Live: re-evaluates every time `config/app` changes, so raising `minBuild`
+/// in the console reaches riders who already have the app open. Errors
+/// (offline, denied, App Check) are dropped and never block: a rider must
+/// never be locked out by a network problem.
+Stream<bool> watchUpdateRequired({
   required int currentBuild,
-  required Future<Map<String, dynamic>?> Function() readConfig,
-  Duration timeout = const Duration(seconds: 5),
-}) async {
-  if (currentBuild <= 0) return false;
-  try {
-    final data = await readConfig().timeout(timeout);
-    return isUpdateRequired(
-      currentBuild: currentBuild,
-      minBuild: data?['minBuild'],
-    );
-  } catch (e) {
-    debugPrint('[update-gate] minBuild check skipped: $e');
-    return false;
-  }
+  required Stream<Map<String, dynamic>?> config,
+}) {
+  if (currentBuild <= 0) return Stream.value(false);
+  return config
+      .map((data) => isUpdateRequired(
+            currentBuild: currentBuild,
+            minBuild: data?['minBuild'],
+          ))
+      .handleError(
+          (Object e) => debugPrint('[update-gate] minBuild check skipped: $e'));
 }
 
-/// Read once per app start. Loading and error both count as "no update
-/// required", so the app is never held back waiting for it.
-final updateRequiredProvider = FutureProvider<bool>(
-  (ref) async => checkUpdateRequired(
-    currentBuild: await currentBuildNumber(),
-    readConfig: () async =>
-        (await FirebaseFirestore.instance.doc('config/app').get()).data(),
-  ),
+/// Where the update screen sends the rider: Google Play on Android.
+/// shortcut: iOS has no App Store listing (personal team), so it gets the
+/// install page; use the App Store URL once the app is listed.
+String updateUrlFor(TargetPlatform platform) =>
+    platform == TargetPlatform.android ? kPlayStoreUrl : kInstallUrl;
+
+/// Loading and error both count as "no update required" (app.dart reads
+/// `valueOrNull ?? false`), so the app is never held back waiting for it.
+final updateRequiredProvider = StreamProvider<bool>(
+  (ref) async* {
+    yield* watchUpdateRequired(
+      currentBuild: await currentBuildNumber(),
+      config: FirebaseFirestore.instance
+          .doc('config/app')
+          .snapshots()
+          .map((snap) => snap.data()),
+    );
+  },
 );

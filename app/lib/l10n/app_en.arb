@@ -8553,7 +8553,11 @@
   },
   "updateRequiredAction": "Get the latest version",
   "@updateRequiredAction": {
-    "description": "Button on the blocking update screen; opens the install page."
+    "description": "Button on the blocking update screen; opens the install page (iPhone)."
+  },
+  "updateRequiredPlayAction": "Update on Google Play",
+  "@updateRequiredPlayAction": {
+    "description": "Button on the blocking update screen on Android; opens ThrottleIQ on Google Play."
   },
   "updateRequiredExportRides": "Export my rides",
   "@updateRequiredExportRides": {

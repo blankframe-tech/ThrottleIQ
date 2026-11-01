@@ -6124,6 +6124,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateRequiredAction => 'Get the latest version';
 
   @override
+  String get updateRequiredPlayAction => 'Update on Google Play';
+
+  @override
   String get updateRequiredExportRides => 'Export my rides';
 
   @override
