@@ -136,6 +136,35 @@ class _ForumsHubsViewState extends ConsumerState<ForumsHubsView> {
                 ),
               ),
             ),
+            const SizedBox(height: 8),
+            Card(
+              key: const Key('hubs_notice_board'),
+              margin: EdgeInsets.zero,
+              color: context.palette.surface,
+              child: ListTile(
+                leading: Icon(Icons.campaign_outlined,
+                    color: context.palette.primary),
+                title: Text(context.l10n.noticeBoard,
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: context.palette.textPrimary)),
+                subtitle: Text(context.l10n.noticeBoardSubtitle,
+                    style: TextStyle(color: context.palette.textSecondary)),
+                trailing: _resolving == kNoticeBoardForumId
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: context.palette.primary))
+                    : Icon(Icons.chevron_right,
+                        color: context.palette.textTertiary),
+                onTap: () => _resolveAndOpen(
+                  kNoticeBoardForumId,
+                  () => ForumRepository()
+                      .getOrCreateGeneralForum(topic: kNoticeBoardTopic),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             _SectionTitle(context.l10n.yourGarageHubs),
             const SizedBox(height: 10),

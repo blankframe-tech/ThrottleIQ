@@ -59,6 +59,12 @@ enum TopicBoard {
 const String kAllRidersTopic = 'All Riders';
 final String kAllRidersForumId = generalForumSlug(kAllRidersTopic);
 
+/// The owner's notice board: only the admin may post or reply there
+/// (firestore.rules hard-codes this id), and its newest post is pinned on
+/// Pulse.
+const String kNoticeBoardTopic = 'ThrottleIQ Notice Board';
+final String kNoticeBoardForumId = generalForumSlug(kNoticeBoardTopic);
+
 /// Most groups one post can be shared to (owner, 2026-10-25). The first is
 /// the post's home (its `posts` subcollection, its count, its moderators);
 /// the rest are listed in the post's `alsoIn`, and their feeds pick it up.

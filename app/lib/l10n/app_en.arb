@@ -9931,6 +9931,18 @@
   "@allRidersGroupSubtitle": {
     "description": "Subtitle of the All Riders group on the forums hub."
   },
+  "noticeBoard": "ThrottleIQ Notice Board",
+  "@noticeBoard": {
+    "description": "Name of the forum where only the ThrottleIQ team posts announcements."
+  },
+  "noticeBoardSubtitle": "Official updates from the ThrottleIQ team",
+  "@noticeBoardSubtitle": {
+    "description": "Subtitle of the notice board on the forums hub."
+  },
+  "pinnedNotice": "Pinned notice",
+  "@pinnedNotice": {
+    "description": "Label on the newest notice board post, pinned at the top of the Pulse feed."
+  },
   "forumShareYourGroups": "Your groups",
   "@forumShareYourGroups": {
     "description": "Group picker section: the rider's garage and followed forums."

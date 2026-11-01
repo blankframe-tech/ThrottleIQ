@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
+import 'package:throttleiq/features/forums/domain/forum_directory.dart';
 import 'package:throttleiq/features/forums/domain/forum_permissions.dart';
 
 ForumEntity _forum({String? createdBy, List<String> maintainers = const []}) {
@@ -103,6 +104,22 @@ void main() {
             forum: _forum(createdBy: 'r'), uid: null, isAdmin: false),
         isFalse,
       );
+    });
+  });
+
+  group('canPostIn', () {
+    test('the notice board id matches the one firestore.rules hard-codes', () {
+      expect(kNoticeBoardForumId, 'throttleiq_notice_board');
+    });
+
+    test('only the admin may post on the notice board', () {
+      expect(canPostIn(kNoticeBoardForumId, isAdmin: true), isTrue);
+      expect(canPostIn(kNoticeBoardForumId, isAdmin: false), isFalse);
+    });
+
+    test('anyone may post in every other forum', () {
+      expect(canPostIn('maintenance', isAdmin: false), isTrue);
+      expect(canPostIn(kAllRidersForumId, isAdmin: false), isTrue);
     });
   });
 }
