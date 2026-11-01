@@ -916,5 +916,5 @@ Found while planning a swag bug bounty (tee + cha-coffee).
 
 ## 126. "Summarize new issues" workflow fails on every new issue (2026-11-01)
 `.github/workflows/summary.yml` (actions/ai-inference) fails in ~6s with `Cannot use 'in' operator to search for 'choices' in OK`. `models.github.ai` (inference and catalog) answers a plain-text `200 OK`, so the GitHub Models API looks retired or changed. Seen on runs #91–#115 (issues #115–#166).
-- **Done (uncommitted):** workflow rewritten to call the Gemini API with `curl` (model `gemini-2.5-flash`, secret `GEMINI_API_KEY`); no third-party action left. Not run yet.
-- **Open:** add the repo secret `GEMINI_API_KEY` (Google AI Studio key), then open a test issue. Confirm the model id is still current if the call returns 404.
+- **Fixed 2026-11-01:** workflow now calls the Gemini API with `curl` (model `gemini-3.5-flash-lite`, repo secret `GEMINI_API_KEY`); `gemini-2.5-flash` returned 404. Verified on test issue #169 (summary comment posted). Move this section to `issues_fixed.md`.
+- **Open:** roll out to the other repos via a shared reusable workflow (not built; waits on the owner choosing repos and the public shared repo).
