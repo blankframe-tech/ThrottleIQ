@@ -25,12 +25,17 @@ class RideShareRepository {
 
   factory RideShareRepository() => _instance;
 
-  RideShareRepository._internal();
+  RideShareRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
-  final FollowRepository _followRepository = FollowRepository();
-  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
+  @visibleForTesting
+  RideShareRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
+  // Late so a test repo on a fake Firestore never builds them (they reach
+  // for FirebaseFirestore.instance).
+  late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
+  late final FollowRepository _followRepository = FollowRepository();
+  late final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
 
   /// Uploads a rider-taken ride/bike photo (via Cloudinary — see
   /// [CloudinaryUploadService]) and returns its public URL.
@@ -504,18 +509,19 @@ class RideShareRepository {
       'updatedAt': null,
     };
 
-    // Both writes go in ONE transaction, and the bump carries the new
+    // Both writes go in ONE atomic batch, and the bump carries the new
     // comment's id, so firestore.rules can require that the `comments` tally
     // only moves when a matching comment doc is actually created in the same
-    // commit (issues §24.7). Two separate calls, as this used to do,
-    // gave the rule nothing to check the bump against.
-    await _firestore.runTransaction((transaction) async {
-      transaction.set(commentRef, comment);
-      transaction.update(rideRef, {
+    // commit (issues §24.7). A batch, not a transaction: it queues offline or
+    // once the daily quota is spent and lands later (issue #152), like
+    // forum replies.
+    final batch = _firestore.batch()
+      ..set(commentRef, comment)
+      ..update(rideRef, {
         'comments': FieldValue.increment(1),
         'lastCommentId': commentRef.id,
       });
-    });
+    await ackOrQueued(batch.commit());
 
     return commentRef.id;
   }
@@ -536,7 +542,11 @@ class RideShareRepository {
         .collection('comments')
         .orderBy('createdAt', descending: true);
     if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
-    final querySnapshot = await q.limit(limit).get();
+    // A comment still queued on this phone has no server time yet (issue
+    // #152): read the local estimate, and fall back to now if even that is
+    // missing.
+    final querySnapshot = await q.limit(limit).get(const GetOptions(
+        serverTimestampBehavior: ServerTimestampBehavior.estimate));
 
     return querySnapshot.docs.map((doc) {
       final data = doc.data();
@@ -547,10 +557,9 @@ class RideShareRepository {
         userName: data['userName'],
         userPhotoUrl: data['userPhotoUrl'],
         text: data['text'],
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-        updatedAt: data['updatedAt'] != null
-            ? (data['updatedAt'] as Timestamp).toDate()
-            : null,
+        createdAt:
+            (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+        updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
       );
     }).toList();
   }

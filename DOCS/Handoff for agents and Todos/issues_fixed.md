@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## GitHub #152 / §104.6: ride comments failed offline and once the quota was spent — FIXED (2026-11-01, branch `fix/152-comment-batch`)
+
+`RideShareRepository.addComment` moved from a transaction to an atomic batch (same two writes: the comment doc, and the ride's `comments` +1 with `lastCommentId`) through `ackOrQueued`, like forum `addReply` (#46), so it queues on the phone and lands later; the feed card and ride detail screen no longer hang or show the overload error. No `firestore.rules` change. `getComments` reads with `ServerTimestampBehavior.estimate` and falls back to now, so a pending comment's null `createdAt` no longer crashes the list (it was the only reader). `RideShareRepository.withFirestore` added for tests. *Test:* `app/test/features/social/ride_comment_batch_test.dart` (fake Firestore). Not checked on a device.
+
+---
+
 ## 123. Security sweep of 2026-10-30: 25 fixed, 1 skipped (PR #98, merged `31bd0b41`)
 
 The plan, every row's commit, and the deploy notes are in `security_sweep_2026-10-30.md`. GitHub issues #65–#97 (one per row; the fix issues closed with the PR). Four agents ran in parallel worktrees, one per group, and were merged one at a time; `scripts/check.sh` passed on the merged branch and CI passed on the PR.
