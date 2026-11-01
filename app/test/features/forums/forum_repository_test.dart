@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/features/forums/data/repositories/forum_repository.dart';
@@ -7,6 +8,16 @@ import 'package:throttleiq/features/forums/domain/entities/forum_entity.dart';
 /// filtering `ForumRepository.postSourceForumIds` runs on candidate forums fetched by
 /// `brand`. See that method's doc comment: a post made in "Honda CB Shine
 /// 125" should also surface when viewing "Honda", but nothing else should.
+/// Fails like the real SDK does offline / past the quota, so a test proves
+/// the code path never needs a transaction.
+class _NoTransactionFirestore extends FakeFirebaseFirestore {
+  @override
+  Future<T> runTransaction<T>(TransactionHandler<T> transactionHandler,
+          {Duration timeout = const Duration(seconds: 30),
+          int maxAttempts = 5}) =>
+      throw StateError('transactions fail offline');
+}
+
 ForumEntity forum(String id,
         {required ForumType type, required String brand, int postCount = 0}) =>
     ForumEntity(
@@ -38,9 +49,32 @@ void main() {
       final reply = await post.collection('replies').doc(id).get();
       expect(reply.data()?['body'], 'hi');
       expect(reply.data()?['userId'], 'u1');
+      expect(reply.data()?['writtenAt'], isA<Timestamp>()); // issue #157
       final bumped = (await post.get()).data()!;
       expect(bumped['replyCount'], 3);
       expect(bumped['lastReplyId'], id);
+    });
+
+    // Issue #157: the phone time rides along for display; createdAt stays
+    // the server time.
+    test('createPost writes writtenAt next to the server createdAt', () async {
+      final fs = FakeFirebaseFirestore();
+      await fs.doc('forums/f1').set({'postCount': 0});
+
+      final created = await ForumRepository.withFirestore(fs).createPost(
+          forumId: 'f1',
+          userId: 'u1',
+          userName: 'Rider',
+          userPhotoUrl: '',
+          title: 't',
+          body: 'b');
+
+      expect(created.queued, isFalse); // acked at once, nothing pending
+      final post =
+          (await fs.doc('forums/f1/posts/${created.id}').get()).data()!;
+      expect(post['createdAt'], isA<Timestamp>());
+      expect(post['writtenAt'], isA<Timestamp>());
+      expect((await fs.doc('forums/f1').get()).data()?['postCount'], 1);
     });
 
     test('getOrCreateGeneralForum returns an existing forum untouched',
@@ -64,6 +98,46 @@ void main() {
       final doc = await fs.doc('forums/${forum.id}').get();
       expect(doc.data()?['type'], ForumType.brand.name);
       expect(doc.data()?['postCount'], 0);
+    });
+
+    // Issue #155: follow/unfollow are a plain read + batch, so they still
+    // work when transactions fail (offline, Spark quota spent).
+    test('followForum writes the follow doc and bumps followerCount once',
+        () async {
+      final fs = _NoTransactionFirestore();
+      await fs.doc('forums/f1').set({'followerCount': 4});
+      final repo = ForumRepository.withFirestore(fs);
+
+      await repo.followForum('f1', 'u1');
+      await repo.followForum('f1', 'u1'); // repeat tap
+
+      final follow = await fs.doc('forum_follows/u1_f1').get();
+      expect(follow.data()?['userId'], 'u1');
+      expect(follow.data()?['forumId'], 'f1');
+      expect((await fs.doc('forums/f1').get()).data()?['followerCount'], 5);
+    });
+
+    test('unfollowForum deletes the follow doc and drops followerCount once',
+        () async {
+      final fs = _NoTransactionFirestore();
+      await fs.doc('forums/f1').set({'followerCount': 5});
+      await fs.doc('forum_follows/u1_f1').set({'userId': 'u1'});
+      final repo = ForumRepository.withFirestore(fs);
+
+      await repo.unfollowForum('f1', 'u1');
+      await repo.unfollowForum('f1', 'u1'); // repeat tap
+
+      expect((await fs.doc('forum_follows/u1_f1').get()).exists, isFalse);
+      expect((await fs.doc('forums/f1').get()).data()?['followerCount'], 4);
+    });
+
+    test('unfollowForum on a forum never followed writes nothing', () async {
+      final fs = _NoTransactionFirestore();
+      await fs.doc('forums/f1').set({'followerCount': 5});
+
+      await ForumRepository.withFirestore(fs).unfollowForum('f1', 'u1');
+
+      expect((await fs.doc('forums/f1').get()).data()?['followerCount'], 5);
     });
   });
 

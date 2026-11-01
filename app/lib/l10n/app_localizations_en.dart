@@ -7185,6 +7185,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allRidersGroupSubtitle => 'Every post from every group';
 
   @override
+  String get noticeBoard => 'ThrottleIQ Notice Board';
+
+  @override
+  String get noticeBoardSubtitle => 'Official updates from the ThrottleIQ team';
+
+  @override
+  String get pinnedNotice => 'Pinned notice';
+
+  @override
+  String get waitingToUpload => 'Waiting to upload';
+
+  @override
   String get forumShareYourGroups => 'Your groups';
 
   @override

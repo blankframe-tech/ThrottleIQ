@@ -14,6 +14,7 @@ import '../../domain/entities/forum_reply_entity.dart';
 import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
+import 'package:throttleiq/core/cloud/vote_batch.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Deterministic doc id for a rider-created forum.
@@ -418,38 +419,40 @@ class ForumRepository {
     return ForumModel.fromFirestore(doc).toEntity();
   }
 
-  /// Follows a forum. Idempotent: checks the follow doc's existence inside a
-  /// transaction so re-following never double-counts `followerCount` (same
-  /// bug class as the old ride-share `toggleLike`, fixed here up front).
+  /// Follows a forum. Idempotent: already following = no write, so
+  /// re-following never double-counts `followerCount`.
+  ///
+  /// A plain read plus a batch, not a transaction (issue #155): transactions
+  /// fail offline and once the Spark quota is spent, a batch queues and lands
+  /// later. A stale cache can't double-count: firestore.rules allow the +1
+  /// only while the follow doc goes from absent to present in the same
+  /// commit, so a batch built on a stale "not following" is refused whole.
   Future<void> followForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
-    final forumRef = _forums.doc(forumId);
+    if ((await followRef.get()).exists) return;
 
-    await _firestore.runTransaction((transaction) async {
-      final followDoc = await transaction.get(followRef);
-      if (followDoc.exists) return; // Already following.
-
-      transaction.set(followRef, {
-        'userId': userId,
-        'forumId': forumId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      transaction.update(forumRef, {'followerCount': FieldValue.increment(1)});
+    final batch = _firestore.batch();
+    batch.set(followRef, {
+      'userId': userId,
+      'forumId': forumId,
+      'createdAt': FieldValue.serverTimestamp(),
     });
+    batch.update(
+        _forums.doc(forumId), {'followerCount': FieldValue.increment(1)});
+    await ackOrQueued(batch.commit());
   }
 
-  /// Unfollows a forum. Idempotent counterpart to [followForum].
+  /// Unfollows a forum. Idempotent counterpart to [followForum]; the rules
+  /// allow the -1 only while the follow doc is deleted in the same commit.
   Future<void> unfollowForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
-    final forumRef = _forums.doc(forumId);
+    if (!(await followRef.get()).exists) return;
 
-    await _firestore.runTransaction((transaction) async {
-      final followDoc = await transaction.get(followRef);
-      if (!followDoc.exists) return; // Already not following.
-
-      transaction.delete(followRef);
-      transaction.update(forumRef, {'followerCount': FieldValue.increment(-1)});
-    });
+    final batch = _firestore.batch();
+    batch.delete(followRef);
+    batch.update(
+        _forums.doc(forumId), {'followerCount': FieldValue.increment(-1)});
+    await ackOrQueued(batch.commit());
   }
 
   Future<bool> isFollowing(String forumId, String userId) async {
@@ -520,7 +523,8 @@ class ForumRepository {
   /// [postType], [authorBike] and [attachment] are the Pit Wall fields
   /// (post tag, byline bike badge, shared ride/maintenance card). A new post
   /// always starts unsolved; only [setPostSolution] moves that.
-  Future<String> createPost({
+  /// `queued` is true when the write is still waiting to upload (issue #158).
+  Future<({String id, bool queued})> createPost({
     required String forumId,
     required String userId,
     required String userName,
@@ -556,14 +560,16 @@ class ForumRepository {
         alsoIn: alsoIn,
       ),
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
     });
     batch.update(_forums.doc(forumId), {
       'postCount': FieldValue.increment(1),
       'lastPostId': postRef.id,
     });
-    await ackOrQueued(batch.commit());
+    final acked = await ackOrQueued(batch.commit());
 
-    return postRef.id;
+    return (id: postRef.id, queued: !acked);
   }
 
   /// Sets a troubleshooting post's solved state (see `forum_solution.dart`
@@ -678,6 +684,13 @@ class ForumRepository {
     }
   }
 
+  /// [forumId]'s newest own post (not cross-posts), or null — one read.
+  Future<ForumPostEntity?> getLatestPost(String forumId) async {
+    final posts =
+        await _postsFrom(_forums.doc(forumId).collection('posts'), limit: 1);
+    return posts.firstOrNull;
+  }
+
   Future<List<ForumPostEntity>> _postsFrom(
     Query<Map<String, dynamic>> source, {
     required int limit,
@@ -740,7 +753,7 @@ class ForumRepository {
   }
 
   /// Puts [getVote]'s answer on each post, skipping posts whose tallies are
-  /// both 0: [votePost] bumps a tally in the same transaction that writes the
+  /// both 0: [votePost] bumps a tally in the same batch that writes the
   /// vote doc, so such a post has no vote from anyone. Mirrors
   /// RideShareRepository.hydrateWith (issues §104.3).
   @visibleForTesting
@@ -771,39 +784,11 @@ class ForumRepository {
     return doc.data()?['value'] as int?;
   }
 
-  /// Casts, changes, or clears a vote on a post. Same bounded ±1-per-field
-  /// transaction shape as RideShareRepository.vote, applied to
-  /// `upvotes`/`downvotes` on the post doc.
-  Future<void> votePost(
-      String forumId, String postId, String uid, int value) async {
-    assert(value == 1 || value == -1);
-    final postRef = _forums.doc(forumId).collection('posts').doc(postId);
-    final voteRef = postRef.collection('votes').doc(uid);
-
-    await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(voteRef);
-      final previous = existing.data()?['value'] as int?;
-      if (previous == value) {
-        transaction.delete(voteRef);
-        transaction.update(postRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
-        });
-        return;
-      }
-
-      transaction.set(voteRef, {'value': value, 'uid': uid});
-      if (previous == null) {
-        transaction.update(postRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
-        });
-      } else {
-        transaction.update(postRef, {
-          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
-          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
-        });
-      }
-    });
-  }
+  /// Casts, changes, or clears a vote on a post, same shapes as
+  /// RideShareRepository.vote. A batch, so it queues offline: see [castVote].
+  Future<void> votePost(String forumId, String postId, String uid, int value) =>
+      castVote(
+          _forums.doc(forumId).collection('posts').doc(postId), uid, value);
 
   /// Adds a reply to a post and bumps its `replyCount`.
   Future<String> addReply({
@@ -831,6 +816,8 @@ class ForumRepository {
       'userPhotoUrl': userPhotoUrl,
       'body': body,
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
     });
     batch.update(postRef, {
       'replyCount': FieldValue.increment(1),

@@ -5,7 +5,8 @@ import '../../domain/entities/forum_post_entity.dart';
 /// Decodes a post doc's fields into an entity. Split from [ForumPostModel]
 /// (which needs a DocumentSnapshot) so the defaults for docs written before
 /// post types, solutions and attachments existed are unit-testable.
-ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
+ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data,
+    {bool hasPendingWrites = false}) {
   final solutionReplyId = data['solutionReplyId'];
   final authorBike = data['authorBike'];
   return ForumPostEntity(
@@ -30,6 +31,8 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
         : null,
     attachment: ForumAttachment.fromMap(data['attachment']),
     imageUrls: forumImageUrlsFromRaw(data['imageUrls']),
+    writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
+    hasPendingWrites: hasPendingWrites,
   );
 }
 
@@ -92,6 +95,7 @@ class ForumPostModel {
 
   factory ForumPostModel.fromFirestore(
       DocumentSnapshot<Map<String, dynamic>> doc) {
-    return ForumPostModel._(forumPostFromMap(doc.id, doc.data()!));
+    return ForumPostModel._(forumPostFromMap(doc.id, doc.data()!,
+        hasPendingWrites: doc.metadata.hasPendingWrites));
   }
 }

@@ -9,7 +9,8 @@ import 'package:throttleiq/features/forums/presentation/providers/forum_provider
 import 'package:throttleiq/features/forums/presentation/screens/forums_home_screen.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
 
-ForumPostEntity post(String id, String forum, ForumPostType type, {int up = 0, bool solved = false}) =>
+ForumPostEntity post(String id, String forum, ForumPostType type,
+        {int up = 0, bool solved = false}) =>
     ForumPostEntity(
       id: id,
       forumId: forum,
@@ -36,7 +37,10 @@ void main() {
     garageForumIds: {'garage'},
   );
 
-  Future<void> pump(WidgetTester tester, {PulseSources s = sources, List<ForumPostEntity>? list}) async {
+  Future<void> pump(WidgetTester tester,
+      {PulseSources s = sources,
+      List<ForumPostEntity>? list,
+      ForumPostEntity? notice}) async {
     SharedPreferences.setMockInitialValues({});
     final shown = list ?? posts;
     await tester.pumpWidget(
@@ -45,9 +49,12 @@ void main() {
           currentUserProvider.overrideWithValue(null),
           forumsPulseFeedProvider.overrideWith((ref) async => PulseFirstPage(
                 sources: s,
-                page: ForumPostsPage(posts: shown, cursor: null, hasMore: false),
+                page:
+                    ForumPostsPage(posts: shown, cursor: null, hasMore: false),
               )),
-          pulseFeedNotifierProvider.overrideWith((ref) => ForumPostsNotifier(ref, shown)),
+          pulseFeedNotifierProvider
+              .overrideWith((ref) => ForumPostsNotifier(ref, shown)),
+          pinnedNoticeProvider.overrideWith((ref) async => notice),
         ],
         child: const MaterialApp(
           localizationsDelegates: AppLocalizations.localizationsDelegates,
@@ -59,7 +66,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('Pulse shows every source post with origin, tag and bike badge', (tester) async {
+  testWidgets('Pulse shows every source post with origin, tag and bike badge',
+      (tester) async {
     await pump(tester);
 
     expect(find.text('Title help'), findsOneWidget);
@@ -71,7 +79,32 @@ void main() {
     expect(find.text('Yamaha MT-15 · 12,400 km'), findsOneWidget);
   });
 
-  testWidgets('filter chips narrow the feed without refetching', (tester) async {
+  testWidgets('only a post still waiting to upload is labelled (#158)',
+      (tester) async {
+    final queued = ForumPostEntity(
+      id: 'queued',
+      forumId: 'garage',
+      userId: 'u',
+      userName: 'Me',
+      title: 'Title queued',
+      body: 'Body queued',
+      createdAt: DateTime(2026, 10, 2),
+      hasPendingWrites: true,
+    );
+    await pump(tester, list: [queued, ...posts]);
+
+    final label = find.text('Waiting to upload');
+    expect(label, findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('pulse_post_queued')), matching: label),
+        findsOneWidget);
+    // Read out with the card (its tap target merges the label in).
+    expect(find.bySemanticsLabel(RegExp('Waiting to upload')), findsOneWidget);
+  });
+
+  testWidgets('filter chips narrow the feed without refetching',
+      (tester) async {
     await pump(tester);
 
     await tester.tap(find.byKey(const Key('pulse_filter_myBikes')));
@@ -112,9 +145,31 @@ void main() {
     expect(find.text('Title help'), findsNothing);
   });
 
-  testWidgets('no sources shows the empty state that leads to Hubs', (tester) async {
+  testWidgets('no sources shows the empty state that leads to Hubs',
+      (tester) async {
     await pump(tester, s: PulseSources.empty, list: const []);
     expect(find.text('Your pit wall is quiet'), findsOneWidget);
     expect(find.text('Explore hubs'), findsOneWidget);
+  });
+
+  final notice = post('n1', 'throttleiq_notice_board', ForumPostType.general);
+
+  testWidgets('the newest notice is pinned above Pulse, once', (tester) async {
+    await pump(tester, list: [...posts, notice], notice: notice);
+    expect(find.byKey(const Key('pulse_pinned_notice')), findsOneWidget);
+    expect(find.text('Pinned notice'), findsOneWidget);
+    expect(find.text('Title n1'), findsOneWidget); // not repeated in the feed
+  });
+
+  testWidgets('the notice stays pinned when Pulse has no sources',
+      (tester) async {
+    await pump(tester, s: PulseSources.empty, list: const [], notice: notice);
+    expect(find.byKey(const Key('pulse_pinned_notice')), findsOneWidget);
+    expect(find.text('Your pit wall is quiet'), findsOneWidget);
+  });
+
+  testWidgets('no notice, no pin', (tester) async {
+    await pump(tester);
+    expect(find.byKey(const Key('pulse_pinned_notice')), findsNothing);
   });
 }

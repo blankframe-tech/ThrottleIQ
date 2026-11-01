@@ -14,12 +14,14 @@ import '../../../profile/presentation/providers/profile_providers.dart';
 import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/entities/forum_reply_entity.dart';
+import '../../domain/forum_permissions.dart';
 import '../../domain/forum_solution.dart';
 import '../providers/forum_bookmarks_provider.dart';
 import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 /// Post body + replies list + reply composer.
 ///
@@ -282,8 +284,11 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
             ],
           ),
         ),
-        Container(height: 1, color: context.palette.border),
-        _buildComposer(),
+        if (canPostIn(widget.forumId,
+            isAdmin: ref.watch(isAdminProvider).valueOrNull ?? false)) ...[
+          Container(height: 1, color: context.palette.border),
+          _buildComposer(),
+        ],
       ],
     );
   }
@@ -336,6 +341,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           style: TextStyle(
               fontSize: 14, color: context.palette.textPrimary, height: 1.4),
         ),
+        if (post.hasPendingWrites) ...[
+          const SizedBox(height: 8),
+          const PendingUploadLabel(),
+        ],
         if (post.imageUrls.isNotEmpty) ...[
           const SizedBox(height: 12),
           ForumPostImages(urls: post.imageUrls),
@@ -418,6 +427,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           Text(reply.body,
               style: TextStyle(
                   fontSize: 13, color: context.palette.textSecondary)),
+          if (reply.hasPendingWrites) ...[
+            const SizedBox(height: 4),
+            const PendingUploadLabel(),
+          ],
           if (canAccept) ...[
             const SizedBox(height: 4),
             Align(

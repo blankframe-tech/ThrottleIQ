@@ -1,4 +1,10 @@
 import 'entities/forum_entity.dart';
+import 'forum_directory.dart';
+
+/// Who may post or reply in [forumId]: anyone, except on the notice board,
+/// which is admin-only. Mirrors firestore.rules' `forumWritable`.
+bool canPostIn(String forumId, {required bool isAdmin}) =>
+    isAdmin || forumId != kNoticeBoardForumId;
 
 /// Who may delete other riders' posts/replies in a forum: the global admin,
 /// anyone on the forum's maintainer list, or the rider who created it.

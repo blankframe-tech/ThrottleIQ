@@ -12,6 +12,7 @@ import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/vote_batch.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Comments fetched per page by [RideShareRepository.getComments].
@@ -25,12 +26,17 @@ class RideShareRepository {
 
   factory RideShareRepository() => _instance;
 
-  RideShareRepository._internal();
+  RideShareRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
-  final FollowRepository _followRepository = FollowRepository();
-  final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
+  @visibleForTesting
+  RideShareRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
+  // Late so a test repo on a fake Firestore never builds them (they reach
+  // for FirebaseFirestore.instance).
+  late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
+  late final FollowRepository _followRepository = FollowRepository();
+  late final PrivacyZoneSalt _privacySalt = PrivacyZoneSalt();
 
   /// Uploads a rider-taken ride/bike photo (via Cloudinary — see
   /// [CloudinaryUploadService]) and returns its public URL.
@@ -358,7 +364,7 @@ class RideShareRepository {
   }
 
   /// Puts [getVotes]'s answer on each ride, without asking about rides whose
-  /// tallies are both 0: `vote()` bumps a tally in the same transaction that
+  /// tallies are both 0: `vote()` bumps a tally in the same batch that
   /// writes the vote doc, so such a ride has no vote from anyone. Most feed
   /// rides have none.
   @visibleForTesting
@@ -444,43 +450,9 @@ class RideShareRepository {
 
   /// Casts, changes, or clears a vote. [value] is 1 (upvote) or -1
   /// (downvote); calling it again with the same value toggles the vote off.
-  ///
-  /// Writes exactly one of three shapes so every possible write stays within
-  /// firestore.rules' bounded ±1-per-field vote clause: a fresh vote bumps
-  /// only its own tally by 1; toggling off drops the vote doc and un-bumps
-  /// that same tally by 1; flipping (e.g. down→up) moves both tallies by 1
-  /// in the same write.
-  Future<void> vote(String rideId, String uid, int value) async {
-    assert(value == 1 || value == -1);
-    final docRef = _firestore.collection('rides').doc(rideId);
-    final voteRef = docRef.collection('votes').doc(uid);
-
-    await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(voteRef);
-      final previous = existing.data()?['value'] as int?;
-      if (previous == value) {
-        // Toggle off.
-        transaction.delete(voteRef);
-        transaction.update(docRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
-        });
-        return;
-      }
-
-      transaction.set(voteRef, {'value': value, 'uid': uid});
-      if (previous == null) {
-        transaction.update(docRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
-        });
-      } else {
-        // Flipping from one vote to the other.
-        transaction.update(docRef, {
-          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
-          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
-        });
-      }
-    });
-  }
+  /// A batch, so it queues offline: see [castVote].
+  Future<void> vote(String rideId, String uid, int value) =>
+      castVote(_firestore.collection('rides').doc(rideId), uid, value);
 
   /// Adds a comment to a ride.
   Future<String> addComment({
@@ -501,21 +473,24 @@ class RideShareRepository {
       'userPhotoUrl': userPhotoUrl,
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
       'updatedAt': null,
     };
 
-    // Both writes go in ONE transaction, and the bump carries the new
+    // Both writes go in ONE atomic batch, and the bump carries the new
     // comment's id, so firestore.rules can require that the `comments` tally
     // only moves when a matching comment doc is actually created in the same
-    // commit (issues §24.7). Two separate calls, as this used to do,
-    // gave the rule nothing to check the bump against.
-    await _firestore.runTransaction((transaction) async {
-      transaction.set(commentRef, comment);
-      transaction.update(rideRef, {
+    // commit (issues §24.7). A batch, not a transaction: it queues offline or
+    // once the daily quota is spent and lands later (issue #152), like
+    // forum replies.
+    final batch = _firestore.batch()
+      ..set(commentRef, comment)
+      ..update(rideRef, {
         'comments': FieldValue.increment(1),
         'lastCommentId': commentRef.id,
       });
-    });
+    await ackOrQueued(batch.commit());
 
     return commentRef.id;
   }
@@ -536,23 +511,36 @@ class RideShareRepository {
         .collection('comments')
         .orderBy('createdAt', descending: true);
     if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
-    final querySnapshot = await q.limit(limit).get();
+    // A comment still queued on this phone has no server time yet (issue
+    // #152): read the local estimate, and fall back to now if even that is
+    // missing.
+    final querySnapshot = await q.limit(limit).get(const GetOptions(
+        serverTimestampBehavior: ServerTimestampBehavior.estimate));
 
-    return querySnapshot.docs.map((doc) {
-      final data = doc.data();
-      return RideCommentEntity(
-        id: doc.id,
-        rideId: rideId,
-        userId: data['userId'],
-        userName: data['userName'],
-        userPhotoUrl: data['userPhotoUrl'],
-        text: data['text'],
-        createdAt: (data['createdAt'] as Timestamp).toDate(),
-        updatedAt: data['updatedAt'] != null
-            ? (data['updatedAt'] as Timestamp).toDate()
-            : null,
-      );
-    }).toList();
+    return querySnapshot.docs
+        .map((doc) => commentFromDoc(rideId, doc))
+        .toList();
+  }
+
+  /// One comment doc as an entity. A `get()` overlays this phone's queued
+  /// writes on the result, so a comment still waiting to upload is in the
+  /// list with [RideCommentEntity.hasPendingWrites] set (issue #158).
+  @visibleForTesting
+  static RideCommentEntity commentFromDoc(
+      String rideId, DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return RideCommentEntity(
+      id: doc.id,
+      rideId: rideId,
+      userId: data['userId'],
+      userName: data['userName'],
+      userPhotoUrl: data['userPhotoUrl'],
+      text: data['text'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
+      hasPendingWrites: doc.metadata.hasPendingWrites,
+    );
   }
 
   /// Deletes every ride [uid] has shared from [bikeId], with their comments

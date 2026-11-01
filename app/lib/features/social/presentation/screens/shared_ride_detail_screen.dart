@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/error_reporter.dart';
+import '../../../../core/utils/extensions/datetime_extensions.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
@@ -29,6 +30,7 @@ import '../widgets/rider_handle.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/i18n/numeric_locale.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 class SharedRideDetailScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -1018,8 +1020,9 @@ class _SharedRideDetailScreenState
                                     fontSize: 13)),
                             const Spacer(),
                             Text(
-                                DateFormat('d MMM', kNumericLocale)
-                                    .format(comment.createdAt),
+                                DateFormat('d MMM', kNumericLocale).format(
+                                    displayTime(
+                                        comment.createdAt, comment.writtenAt)),
                                 style: TextStyle(
                                     color: context.palette.textTertiary,
                                     fontSize: 11)),
@@ -1030,6 +1033,10 @@ class _SharedRideDetailScreenState
                             style: TextStyle(
                                 color: context.palette.textSecondary,
                                 fontSize: 13)),
+                        if (comment.hasPendingWrites) ...[
+                          const SizedBox(height: 4),
+                          const PendingUploadLabel(),
+                        ],
                       ],
                     ),
                   ),

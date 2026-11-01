@@ -10,6 +10,13 @@ class RideCommentEntity extends Equatable {
   final DateTime createdAt;
   final DateTime? updatedAt;
 
+  /// Phone time when written, display only (issue #157, `displayTime`).
+  final DateTime? writtenAt;
+
+  /// Saved on this phone but not uploaded yet (Firestore `hasPendingWrites`,
+  /// issue #158): only this rider can see it so far.
+  final bool hasPendingWrites;
+
   const RideCommentEntity({
     required this.id,
     required this.rideId,
@@ -19,6 +26,8 @@ class RideCommentEntity extends Equatable {
     required this.text,
     required this.createdAt,
     this.updatedAt,
+    this.writtenAt,
+    this.hasPendingWrites = false,
   });
 
   RideCommentEntity copyWith({
@@ -34,6 +43,8 @@ class RideCommentEntity extends Equatable {
       text: text ?? this.text,
       createdAt: createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      writtenAt: writtenAt,
+      hasPendingWrites: hasPendingWrites,
     );
   }
 

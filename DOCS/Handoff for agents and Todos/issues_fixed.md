@@ -11,6 +11,24 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## GitHub #157: queued comments, forum posts and replies showed the upload time — FIXED (2026-11-01, branch `fix/157-written-at`)
+
+`RideShareRepository.addComment`, `ForumRepository.createPost` and `addReply` also write a display-only `writtenAt` (`Timestamp.now()`, phone time); `createdAt` stays the server time and still drives ordering and paging. `displayTime(createdAt, writtenAt)` in `app/lib/core/utils/extensions/datetime_extensions.dart` shows `writtenAt` only when it falls in the 48 h before `createdAt` (or while `createdAt` is still pending), else `createdAt`; used on the ride detail comment list and both post time labels in `forums_pulse_view.dart` (replies show no time today, so they only write the field). `firestore.rules`: `writtenAt` added to the three create `hasOnly` lists, checked by `writtenAtValid` (optional, must be a timestamp, no range check so a wrong phone clock never gets a write refused). **Deploy order:** rules first, then the app release that sends `writtenAt`. *Tests:* `app/test/core/utils/extensions/display_time_test.dart`, `ride_comment_batch_test.dart`, `forum_repository_test.dart`, `forum_post_model_test.dart`, `scripts/test/rules/written_at_rules.test.js` (with/without `writtenAt`, wrong clock passes, non-timestamp and client `createdAt` denied). Not checked on a device.
+
+---
+
+## GitHub #152 / §104.6: ride comments failed offline and once the quota was spent — FIXED (2026-11-01, branch `fix/152-comment-batch`)
+
+`RideShareRepository.addComment` moved from a transaction to an atomic batch (same two writes: the comment doc, and the ride's `comments` +1 with `lastCommentId`) through `ackOrQueued`, like forum `addReply` (#46), so it queues on the phone and lands later; the feed card and ride detail screen no longer hang or show the overload error. No `firestore.rules` change. `getComments` reads with `ServerTimestampBehavior.estimate` and falls back to now, so a pending comment's null `createdAt` no longer crashes the list (it was the only reader). `RideShareRepository.withFirestore` added for tests. *Test:* `app/test/features/social/ride_comment_batch_test.dart` (fake Firestore). Not checked on a device.
+
+---
+
+## GitHub #154. Ride and forum votes failed offline and once the quota was spent — FIXED (2026-11-01, branch `fix/154-vote-batch`)
+
+`RideShareRepository.vote` and `ForumRepository.votePost` used a transaction, which fails offline and on the Spark quota. Both now call `castVote` (`app/lib/core/cloud/vote_batch.dart`): a plain `get()` of the previous vote (cache offline; an uncached vote counts as none), then the vote doc (`{value, uid}`) and the tally in one `WriteBatch`, awaited through `ackOrQueued` so an offline vote queues instead of hanging. The tally shape is `voteTallyDelta`, the same formula as `voteBumpValid`. A stale read is refused by `voteTallied`, never miscounted. No rules change. *Tests:* `app/test/core/cloud/vote_batch_test.dart` (each shape, both repositories, on `fake_cloud_firestore`); `critic_oct27_rules.test.js` now votes through the batch and denies a batch built on a stale previous vote. Not checked on a device offline.
+
+---
+
 ## 123. Security sweep of 2026-10-30: 25 fixed, 1 skipped (PR #98, merged `31bd0b41`)
 
 The plan, every row's commit, and the deploy notes are in `security_sweep_2026-10-30.md`. GitHub issues #65–#97 (one per row; the fix issues closed with the PR). Four agents ran in parallel worktrees, one per group, and were merged one at a time; `scripts/check.sh` passed on the merged branch and CI passed on the PR.
@@ -7780,3 +7798,11 @@ A critique of the #63 card became 14 issues, one PR each (#126–#139, merged in
 ## 110.4 Admin check no longer falls back to an email — FIXED (2026-10-29)
 
 The owner ran `scripts/oneoff/set_admin_claim.js` on 2026-10-29 (`admin: true` on uid `BWDGKFpeOKNtI0BCxc66r2qMMPQ2`). `isAdmin()` in `firestore.rules` now checks only `request.auth.token.admin`; the verified-email branch is gone, and `access_matrix_rules.test.js` asserts the email alone is refused. App side: `kAdminEmail` / `isAdmin(email)` are deleted; `isAdminProvider` (`auth_provider.dart`) reads the claim from the ID token, and `canModerate` / `canManageMaintainers` (`forum_permissions.dart`) and `canLabelJamsProvider` take it. Build 29 still shows admin buttons by email, which is harmless: the rules decide. Rules deployed 2026-10-29 from `941a7e9a`.
+
+## GitHub #155. Forum follow/unfollow work offline and past the quota — FIXED (2026-11-01)
+
+`ForumRepository.followForum` / `unfollowForum` read the follow doc with a plain `get()` (cache offline) and return early if already in the target state; otherwise the follow doc create/delete and `followerCount` ±1 go in one `WriteBatch` behind `ackOrQueued`, so the follow button no longer fails or hangs offline or once the Spark quota is spent. No rules change: the forum update rule already allows +1 only while the rider's follow doc goes from absent to present in the same commit (-1 only while it is deleted), so a batch built on a stale cache is refused whole and can't double-count. *Tests:* `app/test/features/forums/forum_repository_test.dart` (no transaction, repeat taps count once), `scripts/test/rules/critic_oct27_rules.test.js` (#155: the batch shape passes; bare bumps, someone else's follow doc, +2, stale double follow/unfollow denied). Not checked on a device.
+
+## GitHub #158. "Waiting to upload" on queued comments, posts and replies — FIXED (2026-11-01)
+
+`RideCommentEntity`, `ForumPostEntity` and `ForumReplyEntity` carry `hasPendingWrites` (default false) from the doc's `snapshot.metadata`, set in `RideShareRepository.commentFromDoc` (used by `getComments`), `ForumPostModel.fromFirestore` (`forumPostFromMap(..., hasPendingWrites:)`) and `ForumReplyModel.fromFirestore`. No listener: every list reloads with `get()` after posting, and `get()` overlays this phone's queued writes, so the pending item comes back with the flag set. The one list that doesn't reload, a new post added locally by `new_forum_post_screen.dart`, takes the flag from `createPost`, which now returns `(id, queued)` (`queued` = `ackOrQueued` timed out). `shared/widgets/pending_upload_label.dart` (cloud icon + "Waiting to upload", `textTertiary`, AA on every surface) shows on ride comments (detail + feed card), forum thread and Pulse cards, post detail and replies. The label stays until the list next reloads, even after the write lands. BN string in `bn_pending_review.txt`. *Tests:* `app/test/features/social/pending_upload_flag_test.dart` (mappers, copyWith keeps the flag), `app/test/features/forums/forums_pulse_view_test.dart` (label only on the pending post). Not checked on a device.

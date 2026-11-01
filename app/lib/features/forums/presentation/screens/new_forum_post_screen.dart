@@ -16,6 +16,7 @@ import '../../data/repositories/forum_repository.dart';
 import '../../domain/entities/forum_post_entity.dart';
 import '../../domain/forum_author_bike.dart';
 import '../../domain/forum_directory.dart';
+import '../../domain/forum_permissions.dart';
 import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
@@ -133,7 +134,9 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
   Future<String> _ensureHome(ForumRepository repo, String id) async {
     final topic = id == kAllRidersForumId
         ? kAllRidersTopic
-        : TopicBoard.values.where((b) => b.slug == id).firstOrNull?.topic;
+        : id == kNoticeBoardForumId
+            ? kNoticeBoardTopic
+            : TopicBoard.values.where((b) => b.slug == id).firstOrNull?.topic;
     if (topic == null) return id;
     return (await repo.getOrCreateGeneralForum(topic: topic)).id;
   }
@@ -161,7 +164,12 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
             BorderRadius.vertical(top: Radius.circular(context.shape.radiusLg)),
       ),
       builder: (_) => _ShareGroupsSheet(
-        initial: [if (widget.initialGroup case final g?) g],
+        initial: [
+          if (widget.initialGroup case final g?
+              when canPostIn(g,
+                  isAdmin: ref.read(isAdminProvider).valueOrNull ?? false))
+            g
+        ],
         attachment: _attachment,
       ),
     );
@@ -172,7 +180,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
     var (home, alsoIn) = forumPostTargets(picked);
 
     setState(() => _submitting = true);
-    final String postId;
+    final ({String id, bool queued}) created;
     final List<String> imageUrls;
     try {
       final repo = ForumRepository();
@@ -192,7 +200,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
         return;
       }
       home = await _ensureHome(repo, home);
-      postId = await repo.createPost(
+      created = await repo.createPost(
         forumId: home,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
@@ -215,7 +223,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
     }
     if (!mounted) return;
     final post = ForumPostEntity(
-      id: postId,
+      id: created.id,
       forumId: home,
       userId: user.uid,
       userName: user.displayName ?? 'Rider',
@@ -227,6 +235,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
       authorBike: authorBike,
       attachment: _attachment,
       imageUrls: imageUrls,
+      hasPendingWrites: created.queued,
     );
     // Lists already on screen get the post at once (not an invalidate, see
     // issues §54); the rest load it when opened.
@@ -430,11 +439,15 @@ class _ShareGroupsSheetState extends ConsumerState<_ShareGroupsSheet> {
     final sourcesAsync = ref.watch(pulseSourcesProvider);
     final sources = sourcesAsync.valueOrNull ?? PulseSources.empty;
     final topicIds = {for (final b in TopicBoard.values) b.slug};
+    final isAdmin = ref.watch(isAdminProvider).valueOrNull ?? false;
     final yours = [
       for (final id in widget.initial)
         if (!sources.forumIds.contains(id) && !topicIds.contains(id)) id,
       for (final id in sources.forumIds)
-        if (!topicIds.contains(id) && id != kAllRidersForumId) id,
+        if (!topicIds.contains(id) &&
+            id != kAllRidersForumId &&
+            canPostIn(id, isAdmin: isAdmin))
+          id,
     ];
     // A maintenance visit most naturally belongs on the Wrench Bench.
     final boards = [...TopicBoard.values]..sort((a, b) {

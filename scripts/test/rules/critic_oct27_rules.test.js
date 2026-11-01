@@ -10,6 +10,7 @@
  */
 
 const test = require('node:test');
+const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -83,28 +84,27 @@ const RIDE = {
   maxSpeedKmh: 60, comments: 0, upvotes: 0, downvotes: 0,
 };
 
-/** RideShareRepository.vote / ForumRepository.votePost, verbatim shape. */
-async function appVote(f, parentPath, uid, value) {
+/**
+ * castVote (app/lib/core/cloud/vote_batch.dart), verbatim shape: a plain read
+ * of the previous vote, then a batch (issue #154). `stalePrevious` stands in
+ * for an out-of-date cached read.
+ */
+async function appVote(f, parentPath, uid, value, stalePrevious) {
   const parent = doc(f, parentPath);
   const vote = doc(f, `${parentPath}/votes/${uid}`);
-  return runTransaction(f, async (tx) => {
-    const existing = await tx.get(vote);
-    const previous = existing.exists() ? existing.data().value : null;
-    if (previous === value) {
-      tx.delete(vote);
-      tx.update(parent, { [value === 1 ? 'upvotes' : 'downvotes']: increment(-1) });
-      return;
-    }
-    tx.set(vote, { value });
-    if (previous === null) {
-      tx.update(parent, { [value === 1 ? 'upvotes' : 'downvotes']: increment(1) });
-    } else {
-      tx.update(parent, {
-        upvotes: increment(value === 1 ? 1 : -1),
-        downvotes: increment(value === 1 ? -1 : 1),
-      });
-    }
+  const previous = stalePrevious !== undefined ? stalePrevious
+    : ((await getDoc(vote)).data()?.value ?? null);
+  const after = previous === value ? null : value;
+  const up = (after === 1 ? 1 : 0) - (previous === 1 ? 1 : 0);
+  const down = (after === -1 ? 1 : 0) - (previous === -1 ? 1 : 0);
+  const batch = writeBatch(f);
+  if (previous === value) batch.delete(vote);
+  else batch.set(vote, { value, uid });
+  batch.update(parent, {
+    ...(up !== 0 && { upvotes: increment(up) }),
+    ...(down !== 0 && { downvotes: increment(down) }),
   });
+  return batch.commit();
 }
 
 // ── Finding 1: counters can't be pumped by create+bump then bare delete ─────
@@ -113,7 +113,18 @@ for (const [label, parentPath, parentData] of [
   ['ride', 'rides/r1', RIDE],
   ['forum post', 'forums/f1/posts/p1', { userId: ALICE, upvotes: 0, downvotes: 0, replyCount: 0 }],
 ]) {
-  test(`F1 ${label} votes: the app's vote / flip / toggle-off transaction still works`, async () => {
+  test(`F1 ${label} votes: a batch built on a stale previous vote is denied`, async () => {
+    await seed({ 'forums/f1': { followerCount: 0, postCount: 1 }, [parentPath]: parentData });
+    const f = db(BOB);
+    await assertSucceeds(appVote(f, parentPath, BOB, 1));
+    // The cache still says "no vote": a second +1 would double-count.
+    await assertFails(appVote(f, parentPath, BOB, 1, null));
+    // The cache says "upvoted" after it was cleared: a -1 would undercount.
+    await assertSucceeds(appVote(f, parentPath, BOB, 1));
+    await assertFails(appVote(f, parentPath, BOB, 1, 1));
+  });
+
+  test(`F1 ${label} votes: the app's vote / flip / toggle-off batch still works`, async () => {
     await seed({ 'forums/f1': { followerCount: 0, postCount: 1 }, [parentPath]: parentData });
     const f = db(BOB);
     await assertSucceeds(appVote(f, parentPath, BOB, 1));
@@ -272,6 +283,43 @@ test('F1 forum follows: followForum / unfollowForum still work; bare follow and 
     tx.delete(follow);
     tx.update(forum, { followerCount: increment(-1) });
   }));
+});
+
+// Issue #155: followForum / unfollowForum are now a plain (maybe cached) read
+// plus a batch, so a stale cache can build a batch on the wrong state. The
+// rules pair the ±1 with the follow doc's create/delete, so those are refused.
+test('#155 forum follows: the batch shape works; bare bumps and stale-cache double follow/unfollow are denied', async () => {
+  await seed({ 'forums/f1': { followerCount: 3, postCount: 0 } });
+  const f = db(MALLORY);
+  const follow = doc(f, `forum_follows/${MALLORY}_f1`);
+  const forum = doc(f, 'forums/f1');
+  const data = { userId: MALLORY, forumId: 'f1', createdAt: serverTimestamp() };
+  const batch = (...ops) => { const b = writeBatch(f); ops.forEach((op) => op(b)); return b.commit(); };
+  const setFollow = (b) => b.set(follow, data);
+  const delFollow = (b) => b.delete(follow);
+  const bump = (n) => (b) => b.update(forum, { followerCount: increment(n) });
+
+  // Bare counter bumps, with no follow doc moving.
+  await assertFails(updateDoc(forum, { followerCount: increment(1) }));
+  await assertFails(updateDoc(forum, { followerCount: increment(-1) }));
+  // Someone else's follow doc can't carry my bump.
+  await assertFails(batch((b) => b.set(doc(f, `forum_follows/${BOB}_f1`), { ...data, userId: BOB }), bump(1)));
+  // Follow doc created but the count jumps by 2.
+  await assertFails(batch(setFollow, bump(2)));
+
+  await assertSucceeds(batch(setFollow, bump(1)));
+  // Stale cache said "not following": a second follow batch is refused whole.
+  await assertFails(batch(setFollow, bump(1)));
+  await assertFails(updateDoc(forum, { followerCount: increment(1) }));
+
+  await assertSucceeds(batch(delFollow, bump(-1)));
+  // Stale cache said "following": a second unfollow batch is refused whole.
+  await assertFails(batch(delFollow, bump(-1)));
+
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const snap = await getDoc(doc(ctx.firestore(), 'forums/f1'));
+    assert.equal(snap.data().followerCount, 3);
+  });
 });
 
 // ── Finding 2: no moderator rights on a pre-created bike/topic forum ────────
