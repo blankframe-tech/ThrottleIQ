@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:throttleiq/core/services/app_update_gate.dart'
+    show kYearInReviewInstallUrl;
 import 'package:throttleiq/core/theme/app_theme_style.dart';
 import 'package:throttleiq/core/utils/rider_stats.dart';
 import 'package:throttleiq/features/garage/domain/entities/bike_entity.dart';
@@ -333,5 +336,18 @@ void main() {
             reason: '"$text" on $bg');
       }
     }
+  });
+
+  // #144: the Play listing 404s for non-testers, so the shared card's QR goes
+  // to the public install page, tagged ?c=yir. QrImageView keeps its data
+  // private, so the widget is pinned at the source.
+  test('the share card QR encodes the public install page', () {
+    expect(kYearInReviewInstallUrl,
+        'https://www.blankframe.tech/throttle-iq/install/?c=yir');
+    final card =
+        File('lib/features/stats/presentation/widgets/year_review_card.dart')
+            .readAsStringSync();
+    expect(card, contains('data: kYearInReviewInstallUrl'));
+    expect(card, isNot(contains('kPlayStoreUrl')));
   });
 }
