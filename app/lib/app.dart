@@ -285,8 +285,13 @@ class _ThrottleIQAppState extends ConsumerState<ThrottleIQApp>
           ref.watch(updateRequiredProvider).valueOrNull ?? false;
       // Android sideload rejected by App Check: only an explicit attestation
       // failure blocks; loading, errors and network problems never do.
+      // "Try demo mode" on that screen lets the rider through to the tour only.
       final sideloadBlocked =
-          ref.watch(sideloadBlockedProvider).valueOrNull ?? false;
+          (ref.watch(sideloadBlockedProvider).valueOrNull ?? false) &&
+              !ref.watch(sideloadDemoProvider);
+      ref.listen<bool>(sideloadDemoProvider, (_, demo) {
+        if (demo) router.go('/auth/onboarding?demo=1');
+      });
       final appearance = ref.watch(appearanceProvider);
       // null = follow the device language, resolved against supportedLocales.
       final locale = ref.watch(appLocaleProvider);

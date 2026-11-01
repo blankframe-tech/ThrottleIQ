@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:throttleiq/core/services/app_check_gate.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
@@ -112,18 +113,29 @@ void main() {
     });
   });
 
-  testWidgets('the sideload screen offers Play and the WhatsApp request',
-      (tester) async {
-    await tester.pumpWidget(const MaterialApp(
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: SideloadBlockedScreen(),
+  testWidgets(
+      'the sideload screen offers the alpha request, demo mode and Play; '
+      'demo mode lets the rider through', (tester) async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(
+      container: container,
+      child: const MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: SideloadBlockedScreen(),
+      ),
     ));
     expect(find.text('Install ThrottleIQ from Google Play'), findsOneWidget);
+    expect(find.text('Apply for alpha testing'), findsOneWidget);
     expect(find.text('Open the Play Store'), findsOneWidget);
     expect(find.textContaining('01327045005'), findsOneWidget);
     expect(
         kTestingWhatsAppUrl, startsWith('https://wa.me/8801327045005?text='));
     expect(kPlayStoreUrl, endsWith('id=com.bft.throttleiq'));
+
+    expect(container.read(sideloadDemoProvider), isFalse);
+    await tester.tap(find.text('Try demo mode'));
+    expect(container.read(sideloadDemoProvider), isTrue);
   });
 }

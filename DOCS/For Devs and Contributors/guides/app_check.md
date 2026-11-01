@@ -62,7 +62,7 @@ Two ways to test, pick one:
 ## Steps, in order
 
 1. **Finish SECURITY.md step 3 first** (rules, indexes, then the email
-   migration in the same hour). It is still pending. Do it before you enforce
+   migration in the same hour). Done 2026-10-27. Do it before you enforce
    App Check, so that when something breaks you know which switch did it.
    Rules and App Check both reject requests with the same
    `permission-denied`, and the migration runs with the Admin SDK, which App
@@ -113,6 +113,20 @@ Two ways to test, pick one:
    reads Firestore with no App Check token.
 8. **Rollback:** App Check, APIs, Cloud Firestore, Unenforce. It takes effect
    within minutes.
+
+## Status (2026-11-01)
+
+- App Check API enabled. Android: Play Integrity registered (Play app-signing
+  SHA-256 `CF:1E:…:3D` on the Firebase Android app). Web: Firebase web app
+  `ThrottleIQ Live Viewer` (`1:603325098273:web:be5218289b72e2d9fcf660`);
+  `public/live-viewer.html` uses Fraud Defense (reCAPTCHA Enterprise,
+  `ReCaptchaEnterpriseProvider`) with site key `6Lc02wou…YlqB` (no secret key;
+  classic v3 is deprecated in the console). iOS: owner's iPhone on the debug provider (`APP_CHECK_DEBUG=true`)
+  until the paid team switch; other iOS installs fail once Firestore is
+  enforced.
+- Owner decision 2026-11-01: enforce Firestore right after setup, no
+  metrics period. Sideloaded and self-built Android release builds get the
+  sideload screen (apply for alpha on WhatsApp, demo mode, Play).
 
 Cloud Functions need nothing: they are all triggers, with no callable or HTTP
 function to put `enforceAppCheck` on.

@@ -23,7 +23,11 @@ const bool kUsesAppCheckDebugProvider = kDebugMode || kAppCheckDebugDefine;
 const String kPlayStoreUrl =
     'https://play.google.com/store/apps/details?id=com.bft.throttleiq';
 const String kTestingWhatsAppUrl =
-    'https://wa.me/8801327045005?text=ThrottleIQ%20testing%20request';
+    'https://wa.me/8801327045005?text=ThrottleIQ%20alpha%20(internal%20testing)%20request.%20My%20Google%20Play%20email%3A%20';
+
+/// True while a blocked rider looks around the feature tour from the sideload
+/// screen; the tour sets it back to false when it ends.
+final sideloadDemoProvider = StateProvider<bool>((ref) => false);
 
 /// The Play Store's installer package name (PackageInfo.installerStore).
 const String _playInstaller = 'com.android.vending';

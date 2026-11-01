@@ -6113,17 +6113,21 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get sideloadBlockedBody =>
-      'ThrottleIQ-এর এই কপিটি Google Play থেকে ইনস্টল করা হয়নি, তাই এটি সার্ভারের সঙ্গে যুক্ত হতে পারছে না। অ্যাপটি ব্যবহার চালিয়ে যেতে Play Store থেকে ThrottleIQ ইনস্টল করুন।';
+      'ThrottleIQ-এর এই কপিটি Google Play থেকে ইনস্টল করা হয়নি (যেমন, ডাউনলোড করা বা নিজে বানানো APK), তাই এটি সার্ভারের সঙ্গে যুক্ত হতে পারছে না। Google Play থেকে ইনস্টল করুন, অথবা ডেমো মোডে ঘুরে দেখুন।';
 
   @override
   String get sideloadBlockedPlayAction => 'Play Store খুলুন';
 
   @override
   String get sideloadBlockedTesting =>
-      'কোনো বিল্ড পরীক্ষা করতে চান? WhatsApp-এ টেস্টিং অনুরোধ পাঠান: 01327045005';
+      'ThrottleIQ এখন আলফা পর্যায়ে, তাই Google Play শুধু টেস্টারদের জন্য খোলা। আপনার Google Play ইমেইলসহ WhatsApp-এ (01327045005) আবেদন করুন।';
 
   @override
-  String get sideloadBlockedWhatsAppAction => 'টেস্টিং অনুরোধ পাঠান';
+  String get sideloadBlockedWhatsAppAction =>
+      'আলফা টেস্টিংয়ের জন্য আবেদন করুন';
+
+  @override
+  String get sideloadBlockedDemoAction => 'ডেমো মোড চালু করুন';
 
   @override
   String get reauthRequiredTitle => 'নিশ্চিত করুন এটি আপনিই';

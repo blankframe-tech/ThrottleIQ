@@ -10479,7 +10479,7 @@ abstract class AppLocalizations {
   /// Body of the sideload blocking screen.
   ///
   /// In en, this message translates to:
-  /// **'This copy of ThrottleIQ was not installed from Google Play, so it can\'t connect to the server. Install ThrottleIQ from the Play Store to keep using it.'**
+  /// **'This copy of ThrottleIQ wasn\'t installed from Google Play (for example, an APK you downloaded or built yourself), so it can\'t connect to the server. Install it from Google Play, or look around in demo mode.'**
   String get sideloadBlockedBody;
 
   /// Button on the sideload screen; opens ThrottleIQ on Google Play.
@@ -10491,14 +10491,20 @@ abstract class AppLocalizations {
   /// Line on the sideload screen for testers; keep the phone number as is.
   ///
   /// In en, this message translates to:
-  /// **'Want to test a build? Send a testing request on WhatsApp: 01327045005'**
+  /// **'ThrottleIQ is in alpha, so Google Play only opens it for testers. Apply on WhatsApp (01327045005) with your Google Play email.'**
   String get sideloadBlockedTesting;
 
   /// Button on the sideload screen; opens WhatsApp with a prefilled testing request.
   ///
   /// In en, this message translates to:
-  /// **'Send a testing request'**
+  /// **'Apply for alpha testing'**
   String get sideloadBlockedWhatsAppAction;
+
+  /// Button on the sideload screen; opens the feature tour without connecting to the server.
+  ///
+  /// In en, this message translates to:
+  /// **'Try demo mode'**
+  String get sideloadBlockedDemoAction;
 
   /// Title of the re-authentication dialog before deleting an account.
   ///

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/services/app_check_gate.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_context.dart';
@@ -175,6 +176,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     if (!mounted) return;
     ref.read(activeTourGuideProvider.notifier).state = null;
+    if (_endSideloadDemo()) return;
     if (widget.demoMode && Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     } else if (widget.demoMode) {
@@ -182,6 +184,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     } else {
       context.go('/home/record');
     }
+  }
+
+  /// Ends a tour opened from the sideload screen, which then shows again.
+  bool _endSideloadDemo() {
+    if (!ref.read(sideloadDemoProvider)) return false;
+    ref.read(sideloadDemoProvider.notifier).state = false;
+    return true;
   }
 
   void _goToSlide(int index) {
@@ -238,6 +247,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     }
     if (!mounted) return;
     ref.read(activeTourGuideProvider.notifier).state = null;
+    if (_endSideloadDemo()) return;
 
     if (widget.demoMode) {
       if (Navigator.of(context).canPop()) {
@@ -497,7 +507,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 isLast: _tourSlide == _slideCount - 1,
                 onBack: _backTour,
                 onNext: _advanceTour,
-                onShowMe: slide.showMeRoute == null
+                // A sideload-blocked rider can't load the live screens.
+                onShowMe: slide.showMeRoute == null ||
+                        ref.watch(sideloadDemoProvider)
                     ? null
                     : () => _showMeFor(slide, _tourSlide),
               ),

@@ -1615,6 +1615,7 @@ sideloadBlockedBody
 sideloadBlockedPlayAction
 sideloadBlockedTesting
 sideloadBlockedWhatsAppAction
+sideloadBlockedDemoAction
 # batch: quota pause (2026-10-21)
 overQuotaBar
 # batch: offline places cache, forum share-to-groups (2026-10-25)

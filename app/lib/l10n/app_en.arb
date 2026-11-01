@@ -8567,7 +8567,7 @@
   "@sideloadBlockedTitle": {
     "description": "Title of the blocking screen shown when App Check rejects an Android build not installed from Google Play."
   },
-  "sideloadBlockedBody": "This copy of ThrottleIQ was not installed from Google Play, so it can't connect to the server. Install ThrottleIQ from the Play Store to keep using it.",
+  "sideloadBlockedBody": "This copy of ThrottleIQ wasn't installed from Google Play (for example, an APK you downloaded or built yourself), so it can't connect to the server. Install it from Google Play, or look around in demo mode.",
   "@sideloadBlockedBody": {
     "description": "Body of the sideload blocking screen."
   },
@@ -8575,13 +8575,17 @@
   "@sideloadBlockedPlayAction": {
     "description": "Button on the sideload screen; opens ThrottleIQ on Google Play."
   },
-  "sideloadBlockedTesting": "Want to test a build? Send a testing request on WhatsApp: 01327045005",
+  "sideloadBlockedTesting": "ThrottleIQ is in alpha, so Google Play only opens it for testers. Apply on WhatsApp (01327045005) with your Google Play email.",
   "@sideloadBlockedTesting": {
     "description": "Line on the sideload screen for testers; keep the phone number as is."
   },
-  "sideloadBlockedWhatsAppAction": "Send a testing request",
+  "sideloadBlockedWhatsAppAction": "Apply for alpha testing",
   "@sideloadBlockedWhatsAppAction": {
     "description": "Button on the sideload screen; opens WhatsApp with a prefilled testing request."
+  },
+  "sideloadBlockedDemoAction": "Try demo mode",
+  "@sideloadBlockedDemoAction": {
+    "description": "Button on the sideload screen; opens the feature tour without connecting to the server."
   },
   "reauthRequiredTitle": "Confirm it's you",
   "@reauthRequiredTitle": {

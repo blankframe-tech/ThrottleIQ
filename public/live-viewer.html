@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ThrottleIQ Live Viewer</title>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-check-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
   <!-- Realtime Database: the ~1 Hz position channel (live_shares/{token}).
        Optional — if it fails to load, or the project has no databaseURL, the
@@ -486,8 +487,13 @@
       authDomain: "throttleiqfb.firebaseapp.com",
       projectId: "throttleiqfb",
       storageBucket: "throttleiqfb.firebasestorage.app",
-      messagingSenderId: "603325098273"
+      messagingSenderId: "603325098273",
+      appId: "1:603325098273:web:be5218289b72e2d9fcf660"
     };
+
+    // App Check (Firestore is enforced): Fraud Defense (reCAPTCHA Enterprise) site key for this
+    // page's domains. Public by design; Enterprise keys have no secret.
+    const RECAPTCHA_SITE_KEY = "6Lc02wouAAAAAODWyLB-gVj-oZqnmZv4uVHlYlqB";
 
     let db = null;
 
@@ -576,6 +582,11 @@
 
       try {
         firebase.initializeApp(config);
+        // Before the first Firestore call; the emulators don't check tokens.
+        if (!useEmulators && RECAPTCHA_SITE_KEY) {
+          firebase.appCheck().activate(
+            new firebase.appCheck.ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY), true);
+        }
         db = firebase.firestore();
         if (useEmulators) db.useEmulator('127.0.0.1', 8080);
       } catch (e) {
