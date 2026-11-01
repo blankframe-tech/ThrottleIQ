@@ -27,6 +27,7 @@ void main() {
       expect(post.authorBike, isNull);
       expect(post.attachment, isNull);
       expect(post.netScore, 2);
+      expect(post.writtenAt, isNull); // no phone time before #157
     });
 
     test('reads every Pit Wall field', () {
@@ -46,6 +47,7 @@ void main() {
           'subtitle': '3 Oct · 12,400 km',
           'bikeId': 'bike-1',
         },
+        'writtenAt': Timestamp.fromDate(DateTime(2026, 10, 1, 20)),
       });
 
       expect(post.postType, ForumPostType.troubleshoot);
@@ -54,9 +56,11 @@ void main() {
       expect(post.authorBike, 'KTM Duke 390 · 12,400 km');
       expect(post.attachment!.kind, ForumAttachmentKind.maintenance);
       expect(post.attachment!.bikeId, 'bike-1');
+      expect(post.writtenAt, DateTime(2026, 10, 1, 20));
     });
 
-    test('an unknown post type or a malformed attachment degrades, not throws', () {
+    test('an unknown post type or a malformed attachment degrades, not throws',
+        () {
       final post = forumPostFromMap('p3', {
         'postType': 'from-the-future',
         'attachment': {'kind': 'video', 'refId': 'x'},
@@ -97,9 +101,20 @@ void main() {
 
     test('only writes keys the post create rule allows', () {
       const allowed = {
-        'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
-        'createdAt', 'replyCount', 'upvotes', 'downvotes',
-        'postType', 'isSolved', 'authorBike', 'attachment',
+        'forumId',
+        'userId',
+        'userName',
+        'userPhotoUrl',
+        'title',
+        'body',
+        'createdAt',
+        'replyCount',
+        'upvotes',
+        'downvotes',
+        'postType',
+        'isSolved',
+        'authorBike',
+        'attachment',
       };
       final fields = newForumPostFields(
         forumId: 'f',
@@ -110,7 +125,10 @@ void main() {
         body: 'b',
         authorBike: 'Honda',
         attachment: const ForumAttachment(
-            kind: ForumAttachmentKind.ride, refId: 'r', title: 't', subtitle: 's'),
+            kind: ForumAttachmentKind.ride,
+            refId: 'r',
+            title: 't',
+            subtitle: 's'),
       );
       expect(allowed.containsAll(fields.keys), isTrue);
     });
@@ -137,7 +155,8 @@ void main() {
       );
       final map = attachment.toMap();
       expect((map['title'] as String).length, ForumAttachment.maxTitleLength);
-      expect((map['subtitle'] as String).length, ForumAttachment.maxSubtitleLength);
+      expect((map['subtitle'] as String).length,
+          ForumAttachment.maxSubtitleLength);
       expect(map.containsKey('bikeId'), isFalse);
 
       final back = ForumAttachment.fromMap(map)!;
@@ -175,7 +194,8 @@ void main() {
   });
 
   group('post photos', () {
-    const ok = 'https://res.cloudinary.com/vjvcigkt/image/upload/v1/forumPhotos/u/a.jpg';
+    const ok =
+        'https://res.cloudinary.com/vjvcigkt/image/upload/v1/forumPhotos/u/a.jpg';
 
     test('a post without imageUrls reads as no photos', () {
       final post = forumPostFromMap('p', {'title': 't', 'body': 'b'});
@@ -184,7 +204,8 @@ void main() {
 
     test('keeps allow-listed URLs, drops junk, caps at the max', () {
       expect(
-        forumImageUrlsFromRaw([ok, 'https://evil.example.com/x.jpg', 7, '', ok, ok, ok, ok]),
+        forumImageUrlsFromRaw(
+            [ok, 'https://evil.example.com/x.jpg', 7, '', ok, ok, ok, ok]),
         List.filled(kForumPostMaxImages, ok),
       );
       expect(forumImageUrlsFromRaw('nope'), isEmpty);
@@ -202,7 +223,8 @@ void main() {
           );
       expect(fields(const []).containsKey('imageUrls'), isFalse);
       expect(fields([ok])['imageUrls'], [ok]);
-      expect(fields(List.filled(6, ok))['imageUrls'], hasLength(kForumPostMaxImages));
+      expect(fields(List.filled(6, ok))['imageUrls'],
+          hasLength(kForumPostMaxImages));
     });
   });
 }

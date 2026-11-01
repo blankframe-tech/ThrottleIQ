@@ -49,9 +49,30 @@ void main() {
       final reply = await post.collection('replies').doc(id).get();
       expect(reply.data()?['body'], 'hi');
       expect(reply.data()?['userId'], 'u1');
+      expect(reply.data()?['writtenAt'], isA<Timestamp>()); // issue #157
       final bumped = (await post.get()).data()!;
       expect(bumped['replyCount'], 3);
       expect(bumped['lastReplyId'], id);
+    });
+
+    // Issue #157: the phone time rides along for display; createdAt stays
+    // the server time.
+    test('createPost writes writtenAt next to the server createdAt', () async {
+      final fs = FakeFirebaseFirestore();
+      await fs.doc('forums/f1').set({'postCount': 0});
+
+      final id = await ForumRepository.withFirestore(fs).createPost(
+          forumId: 'f1',
+          userId: 'u1',
+          userName: 'Rider',
+          userPhotoUrl: '',
+          title: 't',
+          body: 'b');
+
+      final post = (await fs.doc('forums/f1/posts/$id').get()).data()!;
+      expect(post['createdAt'], isA<Timestamp>());
+      expect(post['writtenAt'], isA<Timestamp>());
+      expect((await fs.doc('forums/f1').get()).data()?['postCount'], 1);
     });
 
     test('getOrCreateGeneralForum returns an existing forum untouched',

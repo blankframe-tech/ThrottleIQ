@@ -26,6 +26,7 @@ void main() {
     expect(comment['userId'], 'u1');
     expect(comment['text'], 'nice ride');
     expect(comment['createdAt'], isA<Timestamp>());
+    expect(comment['writtenAt'], isA<Timestamp>()); // issue #157
     final bumped = (await ride.get()).data()!;
     expect(bumped['comments'], 5);
     expect(bumped['lastCommentId'], id);
@@ -48,6 +49,7 @@ void main() {
       'userPhotoUrl': '',
       'text': 'queued',
       'createdAt': null,
+      'writtenAt': Timestamp.fromDate(DateTime(2026, 10, 3, 20)),
       'updatedAt': null,
     });
     final before = DateTime.now();
@@ -59,7 +61,9 @@ void main() {
     expect(pending.text, 'queued');
     expect(pending.createdAt.isBefore(before), isFalse);
     expect(pending.updatedAt, isNull);
-    expect(
-        list.firstWhere((c) => c.id == 'old').createdAt, DateTime(2026, 10, 1));
+    expect(pending.writtenAt, DateTime(2026, 10, 3, 20));
+    final old = list.firstWhere((c) => c.id == 'old');
+    expect(old.createdAt, DateTime(2026, 10, 1));
+    expect(old.writtenAt, isNull); // written by a build before #157
   });
 }

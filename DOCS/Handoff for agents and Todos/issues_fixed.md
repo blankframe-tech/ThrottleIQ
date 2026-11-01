@@ -11,6 +11,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## GitHub #157: queued comments, forum posts and replies showed the upload time — FIXED (2026-11-01, branch `fix/157-written-at`)
+
+`RideShareRepository.addComment`, `ForumRepository.createPost` and `addReply` also write a display-only `writtenAt` (`Timestamp.now()`, phone time); `createdAt` stays the server time and still drives ordering and paging. `displayTime(createdAt, writtenAt)` in `app/lib/core/utils/extensions/datetime_extensions.dart` shows `writtenAt` only when it falls in the 48 h before `createdAt` (or while `createdAt` is still pending), else `createdAt`; used on the ride detail comment list and both post time labels in `forums_pulse_view.dart` (replies show no time today, so they only write the field). `firestore.rules`: `writtenAt` added to the three create `hasOnly` lists, checked by `writtenAtValid` (optional, must be a timestamp, no range check so a wrong phone clock never gets a write refused). **Deploy order:** rules first, then the app release that sends `writtenAt`. *Tests:* `app/test/core/utils/extensions/display_time_test.dart`, `ride_comment_batch_test.dart`, `forum_repository_test.dart`, `forum_post_model_test.dart`, `scripts/test/rules/written_at_rules.test.js` (with/without `writtenAt`, wrong clock passes, non-timestamp and client `createdAt` denied). Not checked on a device.
+
+---
+
 ## GitHub #152 / §104.6: ride comments failed offline and once the quota was spent — FIXED (2026-11-01, branch `fix/152-comment-batch`)
 
 `RideShareRepository.addComment` moved from a transaction to an atomic batch (same two writes: the comment doc, and the ride's `comments` +1 with `lastCommentId`) through `ackOrQueued`, like forum `addReply` (#46), so it queues on the phone and lands later; the feed card and ride detail screen no longer hang or show the overload error. No `firestore.rules` change. `getComments` reads with `ServerTimestampBehavior.estimate` and falls back to now, so a pending comment's null `createdAt` no longer crashes the list (it was the only reader). `RideShareRepository.withFirestore` added for tests. *Test:* `app/test/features/social/ride_comment_batch_test.dart` (fake Firestore). Not checked on a device.

@@ -88,7 +88,8 @@ class ForumAttachment extends Equatable {
     );
   }
 
-  static String _cap(String s, int max) => s.length <= max ? s : s.substring(0, max);
+  static String _cap(String s, int max) =>
+      s.length <= max ? s : s.substring(0, max);
 
   @override
   List<Object?> get props => [kind, refId, title, subtitle, bikeId];
@@ -132,6 +133,9 @@ class ForumPostEntity extends Equatable {
   /// SharedRideEntity.myVote).
   final int? myVote;
 
+  /// Phone time when written, display only (issue #157, `displayTime`).
+  final DateTime? writtenAt;
+
   const ForumPostEntity({
     required this.id,
     required this.forumId,
@@ -151,6 +155,7 @@ class ForumPostEntity extends Equatable {
     this.attachment,
     this.imageUrls = const [],
     this.myVote,
+    this.writtenAt,
   });
 
   int get netScore => upvotes - downvotes;
@@ -191,6 +196,7 @@ class ForumPostEntity extends Equatable {
       attachment: attachment,
       imageUrls: imageUrls,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
+      writtenAt: writtenAt,
     );
   }
 

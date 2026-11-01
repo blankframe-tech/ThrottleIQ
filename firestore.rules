@@ -186,6 +186,13 @@ service cloud.firestore {
       return !(key in d) || (d[key] is string && d[key].size() <= maxLen);
     }
 
+    // Issue #157: a comment/post/reply's display-only phone time. Type only,
+    // no range check: a wrong phone clock must never get the write refused
+    // (the app caps what it shows to the 48 h before createdAt).
+    function writtenAtValid(d) {
+      return !('writtenAt' in d) || d.writtenAt is timestamp;
+    }
+
     function fuelLogValid(logId, d) {
       return d.keys().hasOnly(['id', 'bike_id', 'filled_at', 'odometer_km',
           'liters', 'total_cost', 'price_per_liter', 'full_tank', 'station',
@@ -1254,8 +1261,9 @@ service cloud.firestore {
           !exists(/databases/$(database)/documents/users/$(get(/databases/$(database)/documents/rides/$(rideId)).data.userId)/blocks/$(request.auth.uid)) &&
           request.resource.data.keys().hasOnly([
             'id', 'rideId', 'userId', 'userName', 'userPhotoUrl', 'text',
-            'createdAt', 'updatedAt'
+            'createdAt', 'updatedAt', 'writtenAt'
           ]) &&
+          writtenAtValid(request.resource.data) &&
           request.resource.data.get('rideId', rideId) == rideId &&
           request.resource.data.text is string &&
           request.resource.data.text.size() > 0 &&
@@ -1429,8 +1437,9 @@ service cloud.firestore {
             'forumId', 'userId', 'userName', 'userPhotoUrl', 'title', 'body',
             'createdAt', 'replyCount', 'upvotes', 'downvotes',
             'postType', 'isSolved', 'authorBike', 'attachment', 'imageUrls',
-            'alsoIn'
+            'alsoIn', 'writtenAt'
           ]) &&
+          writtenAtValid(request.resource.data) &&
           // Share-to-groups (2026-10-25): up to four more groups besides
           // this home forum, never the home itself.
           // shortcut: the ids aren't checked to exist (four get()s per
@@ -1559,8 +1568,10 @@ service cloud.firestore {
           allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
             forumWritable(forumId) &&
             request.resource.data.keys().hasOnly([
-              'postId', 'forumId', 'userId', 'userName', 'userPhotoUrl', 'body', 'createdAt'
+              'postId', 'forumId', 'userId', 'userName', 'userPhotoUrl', 'body', 'createdAt',
+              'writtenAt'
             ]) &&
+            writtenAtValid(request.resource.data) &&
             optionalNameValid(request.resource.data.get('userName', null)) &&
             photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
             // §101.S3: same body cap as posts; the reply box refuses an
