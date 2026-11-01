@@ -418,38 +418,40 @@ class ForumRepository {
     return ForumModel.fromFirestore(doc).toEntity();
   }
 
-  /// Follows a forum. Idempotent: checks the follow doc's existence inside a
-  /// transaction so re-following never double-counts `followerCount` (same
-  /// bug class as the old ride-share `toggleLike`, fixed here up front).
+  /// Follows a forum. Idempotent: already following = no write, so
+  /// re-following never double-counts `followerCount`.
+  ///
+  /// A plain read plus a batch, not a transaction (issue #155): transactions
+  /// fail offline and once the Spark quota is spent, a batch queues and lands
+  /// later. A stale cache can't double-count: firestore.rules allow the +1
+  /// only while the follow doc goes from absent to present in the same
+  /// commit, so a batch built on a stale "not following" is refused whole.
   Future<void> followForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
-    final forumRef = _forums.doc(forumId);
+    if ((await followRef.get()).exists) return;
 
-    await _firestore.runTransaction((transaction) async {
-      final followDoc = await transaction.get(followRef);
-      if (followDoc.exists) return; // Already following.
-
-      transaction.set(followRef, {
-        'userId': userId,
-        'forumId': forumId,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      transaction.update(forumRef, {'followerCount': FieldValue.increment(1)});
+    final batch = _firestore.batch();
+    batch.set(followRef, {
+      'userId': userId,
+      'forumId': forumId,
+      'createdAt': FieldValue.serverTimestamp(),
     });
+    batch.update(
+        _forums.doc(forumId), {'followerCount': FieldValue.increment(1)});
+    await ackOrQueued(batch.commit());
   }
 
-  /// Unfollows a forum. Idempotent counterpart to [followForum].
+  /// Unfollows a forum. Idempotent counterpart to [followForum]; the rules
+  /// allow the -1 only while the follow doc is deleted in the same commit.
   Future<void> unfollowForum(String forumId, String userId) async {
     final followRef = _forumFollows.doc('${userId}_$forumId');
-    final forumRef = _forums.doc(forumId);
+    if (!(await followRef.get()).exists) return;
 
-    await _firestore.runTransaction((transaction) async {
-      final followDoc = await transaction.get(followRef);
-      if (!followDoc.exists) return; // Already not following.
-
-      transaction.delete(followRef);
-      transaction.update(forumRef, {'followerCount': FieldValue.increment(-1)});
-    });
+    final batch = _firestore.batch();
+    batch.delete(followRef);
+    batch.update(
+        _forums.doc(forumId), {'followerCount': FieldValue.increment(-1)});
+    await ackOrQueued(batch.commit());
   }
 
   Future<bool> isFollowing(String forumId, String userId) async {
