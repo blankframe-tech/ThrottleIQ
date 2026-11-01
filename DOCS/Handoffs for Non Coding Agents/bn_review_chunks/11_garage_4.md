@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 11: garage 4/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 11: garage 4/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `svcTypeCustom` — EN: Custom — BN: কাস্টম
+- [ ] `svcDescOilChange` — EN: Drain engine oil & replace with fresh lubricant. — BN: ইঞ্জিন অয়েল ফেলে নতুন লুব্রিক্যান্ট ভরুন।
+- [ ] `svcDescOilFilter` — EN: Replace oil filter element to prevent contaminant buildup. — BN: ময়লা জমা ঠেকাতে অয়েল ফিল্টার এলিমেন্ট বদলান।
+- [ ] `svcDescAirFilter` — EN: Clean or replace intake filter for optimal airflow. — BN: ভালো বাতাস চলাচলের জন্য ইনটেক ফিল্টার পরিষ্কার করুন বা বদলান।
+- [ ] `svcDescChain` — EN: Clean road grime & apply chain lube to drive chain. — BN: রাস্তার ময়লা পরিষ্কার করে ড্রাইভ চেইনে লুব লাগান।
+- [ ] `svcDescChainTension` — EN: Check drive chain slack & align rear axle. — BN: ড্রাইভ চেইনের স্ল্যাক দেখুন ও রিয়ার এক্সেল ঠিকমতো বসান।
+- [ ] `svcDescTire` — EN: Inspect tire pressures, tread wear & dry rot. — BN: টায়ারের প্রেশার, ট্রেড ক্ষয় ও ফাটল পরীক্ষা করুন।
+- [ ] `svcDescRadiatorCoolant` — EN: Flush and refill radiator coolant fluid. — BN: রেডিয়েটরের কুল্যান্ট ফ্লাশ করে নতুন করে ভরুন।
+- [ ] `svcDescFrontDiscPads` — EN: Check front brake pad friction material thickness. — BN: সামনের ব্রেক প্যাডের ফ্রিকশন ম্যাটেরিয়ালের পুরুত্ব দেখুন।
+- [ ] `svcDescRearDrumPads` — EN: Inspect rear brake pads or drum brake shoes. — BN: পেছনের ব্রেক প্যাড বা ড্রাম ব্রেক শু পরীক্ষা করুন।
+- [ ] `svcDescBrakeFluid` — EN: Bleed & replenish hydraulic DOT brake fluid. — BN: হাইড্রোলিক DOT ব্রেক ফ্লুইড ব্লিড করে নতুন ভরুন।
+- [ ] `svcDescSparkPlug` — EN: Inspect electrode gap or replace spark plugs. — BN: ইলেক্ট্রোডের গ্যাপ দেখুন বা স্পার্ক প্লাগ বদলান।
+- [ ] `svcDescBattery` — EN: Test terminal voltage, connections & charge state. — BN: টার্মিনালের ভোল্টেজ, সংযোগ ও চার্জের অবস্থা পরীক্ষা করুন।
+- [ ] `svcDescValveClearance` — EN: Measure & adjust intake / exhaust valve clearances. — BN: ইনটেক / এক্সহস্ট ভালভের ক্লিয়ারেন্স মেপে ঠিক করুন।
+- [ ] `svcDescClutchCable` — EN: Check lever free-play & lube clutch cable. — BN: লিভারের ফ্রি-প্লে দেখুন ও ক্লাচ ক্যাবলে লুব দিন।
+- [ ] `svcDescThrottleCables` — EN: Inspect throttle play, snap-back & lube cables. — BN: থ্রটলের প্লে ও স্ন্যাপ-ব্যাক দেখুন এবং ক্যাবলে লুব দিন।
+- [ ] `svcDescSuspension` — EN: Inspect rear shock damping & linkage pivot bushings. — BN: পেছনের শক ড্যাম্পিং ও লিঙ্কেজ পিভট বুশিং পরীক্ষা করুন।
+- [ ] `svcDescForkSeals` — EN: Inspect front fork seals for oil weeping & change fork oil. — BN: সামনের ফর্ক সিলে তেল চুঁইয়ে পড়ছে কিনা দেখুন ও ফর্ক অয়েল বদলান।
+- [ ] `svcDescBrakeRotors` — EN: Measure brake disc thickness & check for warping. — BN: ব্রেক ডিস্কের পুরুত্ব মাপুন ও বেঁকে গেছে কিনা দেখুন।
+- [ ] `svcDescWheelBearings` — EN: Inspect front & rear wheel bearings for play/roughness. — BN: সামনের ও পেছনের হুইল বিয়ারিংয়ে প্লে বা খসখসে ভাব দেখুন।
+- [ ] `svcDescDriveBelt` — EN: Check belt deflection, teeth condition & tension. — BN: বেল্টের ডিফ্লেকশন, দাঁতের অবস্থা ও টেনশন দেখুন।
+- [ ] `svcDescFuel` — EN: Track fuel refills, tank range, and fuel type. — BN: জ্বালানি ভরা, ট্যাংকের রেঞ্জ ও জ্বালানির ধরন ট্র্যাক করুন।
+- [ ] `svcDescCustom` — EN: Rider-defined maintenance check. — BN: রাইডারের নিজের ঠিক করা মেইনটেন্যান্স চেক।
+- [ ] `maintCatEngine` — EN: Engine & Fluids — BN: ইঞ্জিন ও ফ্লুইড
+- [ ] `maintCatDrivetrain` — EN: Drive & Controls — BN: ড্রাইভ ও কন্ট্রোল
+- [ ] `maintCatBraking` — EN: Braking System — BN: ব্রেকিং সিস্টেম
+- [ ] `maintCatChassisElectrical` — EN: Chassis & Electrical — BN: চ্যাসিস ও ইলেকট্রিক্যাল
+- [ ] `serviceOverdueBy` — EN: {item} · overdue by {km} km — BN: {item} · {km} কিমি ওভারডিউ
+- [ ] `serviceDueIn` — EN: {item} · due in {km} km — BN: {item} · আরও {km} কিমি পরে বাকি
+- [ ] `adaptHardBraking` — EN: Hard braking {rate}/100 km · −{pct}% — BN: জোরে ব্রেক {rate}/100 কিমি · −{pct}%
+- [ ] `adaptSevereRoads` — EN: Dusty or wet roads · −{pct}% — BN: ধুলো বা ভেজা রাস্তা · −{pct}%
+- [ ] `adaptStopAndGo` — EN: Stop-and-go {share}% · −{pct}% — BN: থেমে থেমে চলা {share}% · −{pct}%
+- [ ] `adaptedTo` — EN: Adapted to your riding: every {km} — BN: আপনার চালানো অনুযায়ী: প্রতি {km}
+- [ ] `addCustomCheck` — EN: Add your own check — BN: নিজের একটি চেক যোগ করুন
+- [ ] `advanceWarning` — EN: Advance warning — BN: আগাম সতর্কতা
+- [ ] `advanceWarningHelper` — EN: When "due soon" starts. Leave blank for the default. — BN: কখন থেকে "শীঘ্রই সার্ভিস" দেখাবে। ডিফল্টের জন্য ফাঁকা রাখুন।
+- [ ] `allGoodNothingDue` — EN: All good, nothing due — BN: সব ঠিক আছে, কিছুই বাকি নেই
+- [ ] `allGoodUntil` — EN: All good until ~{date} — BN: ~{date} পর্যন্ত সব ঠিক আছে
+- [ ] `atOdometer` — EN: at {km} — BN: {km}-এ
+- [ ] `bundleBrakeService` — EN: Brake service — BN: ব্রেক সার্ভিস
+- [ ] `bundleChainCare` — EN: Chain care — BN: চেইনের যত্ন
+- [ ] `bundleGeneralService` — EN: General servicing — BN: সাধারণ সার্ভিসিং
+- [ ] `bundleOilChange` — EN: Oil change — BN: মবিল পরিবর্তন
+- [ ] `checkNotTracked` — EN: Not tracked. Turn it on in Customize checks to get reminders. — BN: ট্র্যাক করা হচ্ছে না। রিমাইন্ডার পেতে চেক কাস্টমাইজে এটি চালু করুন।
+- [ ] `comingUpNextDays` — EN: Coming up · next {days} days — BN: আসছে · পরের {days} দিন
+- [ ] `costPerUnitLabel` — EN: per {unit}, all in — BN: প্রতি {unit}, সব মিলিয়ে
+- [ ] `costTrend` — EN: First {first} → latest {latest} · average {avg} — BN: প্রথম {first} → সর্বশেষ {latest} · গড় {avg}
+- [ ] `countingFromBaseline` — EN: Counting from:  — BN: গণনা শুরু: 
+- [ ] `customCheckName` — EN: Check name — BN: চেকের নাম
+- [ ] `customChecksSection` — EN: Your own checks — BN: আপনার নিজের চেক
+- [ ] `daysShort` — EN: {days} d — BN: {days} দিন
+- [ ] `daysUnit` — EN: days — BN: দিন
+- [ ] `deleteVisitBody` — EN: {count, plural, =1{This deletes the logged item here and in the cloud.} other{This deletes all {count} items logged in this visit, here and in the cloud.}} — BN: {count, plural, =1{এটি লগ করা আইটেমটি এখানে ও ক্লাউডে মুছে দেবে।} other{এটি এই ভিজিটে লগ করা {count}টি আইটেম এখানে ও ক্লাউডে মুছে দেবে।}}
+- [ ] `deleteVisitTitle` — EN: Delete visit? — BN: ভিজিট মুছবেন?
+- [ ] `doneIt` — EN: Done it — BN: করা হয়েছে
+- [ ] `dueInDays` — EN: in ~{days} days — BN: ~{days} দিনে
+- [ ] `dueOverdue` — EN: overdue — BN: সময় পেরিয়ে গেছে
+- [ ] `dueToday` — EN: due today — BN: আজ করতে হবে
+- [ ] `dueTomorrow` — EN: tomorrow — BN: আগামীকাল
+- [ ] `editInterval` — EN: Edit interval — BN: ব্যবধান বদলান
+- [ ] `editVisitTitle` — EN: Edit visit — BN: ভিজিট সম্পাদনা
+- [ ] `everyNDays` — EN: every {days} days — BN: প্রতি {days} দিনে
+- [ ] `exportFailed` — EN: Couldn't create the service record. Try again. — BN: সার্ভিস রেকর্ড তৈরি করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `exportNothingYet` — EN: Log a service first. There's nothing to export yet. — BN: আগে একটি সার্ভিস লগ করুন। এখনো এক্সপোর্ট করার কিছু নেই।
+- [ ] `exportServiceRecord` — EN: Export service record — BN: সার্ভিস রেকর্ড এক্সপোর্ট
+- [ ] `exportServiceRecordSubtitle` — EN: A PDF of every visit and receipt, for a buyer or your mechanic — BN: প্রতিটি ভিজিট ও রসিদের PDF, ক্রেতা বা মেকানিকের জন্য
+- [ ] `freeServiceN` — EN: Free service #{n} — BN: ফ্রি সার্ভিস #{n}
+- [ ] `freeServicesSummary` — EN: {count, plural, =1{1 free service under warranty:} other{{count} free services under warranty:}} — BN: {count, plural, =1{ওয়ারেন্টিতে 1টি ফ্রি সার্ভিস:} other{ওয়ারেন্টিতে {count}টি ফ্রি সার্ভিস:}}
+- [ ] `fromGallery` — EN: Gallery — BN: গ্যালারি
+- [ ] `groupAllGood` — EN: All good · {count} — BN: সব ঠিক · {count}
+- [ ] `groupComingUp` — EN: Coming up · {count} — BN: আসছে · {count}
+- [ ] `groupNeedsAttention` — EN: Needs attention · {count} — BN: মনোযোগ দরকার · {count}
+- [ ] `groupUnknown` — EN: Not known yet · {count} — BN: এখনো জানা নেই · {count}
+- [ ] `intervalDaysLabel` — EN: Or every (days) — BN: অথবা প্রতি (দিন)
+- [ ] `intervalNeedKmOrDays` — EN: Enter a distance, a number of days, or both — BN: দূরত্ব, দিনের সংখ্যা, অথবা দুটোই লিখুন
+- [ ] `intervalSection` — EN: Interval — BN: ব্যবধান
+- [ ] `intervalSourceTemplate` — EN: From your bike's schedule — BN: আপনার বাইকের সার্ভিস সূচি থেকে
+- [ ] `intervalSourceUser` — EN: Set by you — BN: আপনার ঠিক করা
+- [ ] `intervalWhicheverFirst` — EN: Due at whichever comes first. — BN: যেটি আগে আসে তখনই সার্ভিস।
+- [ ] `itemHistory` — EN: History — BN: ইতিহাস

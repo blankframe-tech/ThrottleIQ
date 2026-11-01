@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 02: onboarding 1/2 (sign-in, tour, setup), 80 lines -->
+# Bangla review 02: onboarding 1/2 (sign-in, tour, setup), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `authUserNotFound` — EN: No account found with this email. Please sign up first. — BN: এই ইমেইলে কোনো অ্যাকাউন্ট পাওয়া যায়নি। আগে সাইন আপ করুন।
+- [ ] `authWrongPassword` — EN: Incorrect password. Please try again. — BN: পাসওয়ার্ড ভুল। আবার চেষ্টা করুন।
+- [ ] `authInvalidEmail` — EN: Invalid email address. — BN: ইমেইল ঠিকানাটি সঠিক নয়।
+- [ ] `authUserDisabled` — EN: This account has been disabled. — BN: এই অ্যাকাউন্টটি বন্ধ করে দেওয়া হয়েছে।
+- [ ] `authOperationNotAllowed` — EN: Sign in with email is not enabled. — BN: ইমেইল দিয়ে সাইন ইন চালু নেই।
+- [ ] `authTooManyRequests` — EN: Too many login attempts. Please try again later. — BN: অনেকবার লগইনের চেষ্টা হয়েছে। পরে আবার চেষ্টা করুন।
+- [ ] `authInvalidCredential` — EN: Invalid email or password. — BN: ইমেইল বা পাসওয়ার্ড সঠিক নয়।
+- [ ] `authEmailInUse` — EN: An account with this email already exists. — BN: এই ইমেইলে আগে থেকেই একটি অ্যাকাউন্ট আছে।
+- [ ] `authWeakPassword` — EN: Password is too weak. Use at least 6 characters. — BN: পাসওয়ার্ড খুব দুর্বল। কমপক্ষে 6 অক্ষর ব্যবহার করুন।
+- [ ] `authNetworkFailed` — EN: Network error. Check your internet connection. — BN: নেটওয়ার্ক সমস্যা। ইন্টারনেট সংযোগ দেখুন।
+- [ ] `authAccountExistsDifferent` — EN: An account exists with this email but different sign-in method. — BN: এই ইমেইলে অ্যাকাউন্ট আছে, কিন্তু সাইন ইনের পদ্ধতি আলাদা।
+- [ ] `authGeneric` — EN: Authentication error: {error} — BN: সাইন ইন ত্রুটি: {error}
+- [ ] `tourStepCounter` — EN: Step {current} of {total} — BN: ধাপ {current} / {total}
+- [ ] `tourBack` — EN: Back — BN: পেছনে
+- [ ] `tourNext` — EN: Next — BN: পরবর্তী
+- [ ] `tourFinish` — EN: Start riding — BN: রাইড শুরু করুন
+- [ ] `tourShowMeLive` — EN: Show me the screen — BN: স্ক্রিনটি দেখান
+- [ ] `tourRecordTitle` — EN: Ready, set, ride — BN: তৈরি? চলুন রাইডে
+- [ ] `tourRecordSubtitle` — EN: The Record tab is home base: pick a bike, choose how you ride, and go. — BN: রেকর্ড ট্যাবই মূল জায়গা: বাইক বাছুন, কীভাবে চালাবেন ঠিক করুন, আর বেরিয়ে পড়ুন।
+- [ ] `tourRecordBikeTitle` — EN: Your active bike — BN: আপনার সক্রিয় বাইক
+- [ ] `tourRecordBikeBody` — EN: The bike card up top is the one this ride counts toward. Tap it to switch bikes. — BN: ওপরের বাইক কার্ডের বাইকেই এই রাইড যোগ হবে। বাইক বদলাতে কার্ডে ট্যাপ করুন।
+- [ ] `tourRecordModeTitle` — EN: Solo or group — BN: একা বা দলে
+- [ ] `tourRecordModeBody` — EN: Ride solo, or start a group ride and invite friends or share a join code. — BN: একা চালান, অথবা গ্রুপ রাইড শুরু করে বন্ধুদের আমন্ত্রণ জানান বা জয়েন কোড শেয়ার করুন।
+- [ ] `tourRecordStartTitle` — EN: Hold to start — BN: শুরু করতে চেপে ধরুন
+- [ ] `tourRecordStartBody` — EN: Press and hold the start ring, so a stray tap never starts a ride. — BN: স্টার্ট রিং চেপে ধরুন, যাতে ভুল ছোঁয়ায় রাইড শুরু না হয়।
+- [ ] `tourCockpitTitle` — EN: Your live cockpit — BN: আপনার লাইভ ককপিট
+- [ ] `tourCockpitSubtitle` — EN: Once you start, a cockpit you can read at a glance takes over the screen. — BN: শুরু করলেই এক নজরে পড়ার মতো ককপিট পুরো স্ক্রিন জুড়ে দেখায়।
+- [ ] `tourCockpitLocation` — EN: Record › Start ride — BN: রেকর্ড › রাইড শুরু
+- [ ] `tourCockpitGaugesTitle` — EN: Speed at a glance — BN: এক নজরে গতি
+- [ ] `tourCockpitGaugesBody` — EN: Big live speed, distance and average speed, readable from a handlebar mount. Pause, resume or end any time. — BN: বড় করে লাইভ গতি, দূরত্ব ও গড় গতি, হ্যান্ডেলবারে লাগানো ফোন থেকেও পড়া যায়। যেকোনো সময় থামান, আবার চালু করুন বা শেষ করুন।
+- [ ] `tourCockpitShareTitle` — EN: Share your live location — BN: লাইভ লোকেশন শেয়ার করুন
+- [ ] `tourCockpitShareBody` — EN: Send family a live link so they can follow your ride. It stops when the ride ends. — BN: পরিবারকে একটি লাইভ লিংক পাঠান, যাতে তারা আপনার রাইড দেখতে পারে। রাইড শেষ হলে এটি বন্ধ হয়ে যায়।
+- [ ] `tourCockpitSafetyTitle` — EN: Ride alerts and crash check — BN: রাইড সতর্কতা ও দুর্ঘটনা যাচাই
+- [ ] `tourCockpitSafetyBody` — EN: Get warned about overspeed, hard braking and fatigue. After a suspected crash, tap "I'm OK" or your emergency contacts are notified. — BN: অতিরিক্ত গতি, হঠাৎ ব্রেক ও ক্লান্তি নিয়ে সতর্কবার্তা পান। দুর্ঘটনা সন্দেহ হলে "আমি ঠিক আছি" ট্যাপ করুন, নইলে আপনার জরুরি যোগাযোগদের জানানো হবে।
+- [ ] `tourCockpitJamTitle` — EN: Label traffic jams — BN: জ্যাম চিহ্নিত করুন
+- [ ] `tourCockpitJamBody` — EN: Tap "I'm in a jam" when you get stuck and "Jam released" when it clears, to help train jam detection. — BN: আটকে গেলে "আমি জ্যামে আছি" আর ছাড়লে "জ্যাম ছেড়েছে" ট্যাপ করুন; এতে জ্যাম শনাক্তকরণ আরও ভালো হয়।
+- [ ] `tourAutoTitle` — EN: Auto tracking — BN: অটো ট্র্যাকিং
+- [ ] `tourAutoSubtitle` — EN: Forgot to press start? ThrottleIQ can notice your rides and log them for you. — BN: স্টার্ট চাপতে ভুলে গেছেন? ThrottleIQ নিজেই আপনার রাইড বুঝে লগ করতে পারে।
+- [ ] `tourAutoLocation` — EN: Garage › Settings — BN: গ্যারেজ › সেটিংস
+- [ ] `tourAutoDetectTitle` — EN: Turn it on once — BN: একবার চালু করুন
+- [ ] `tourAutoDetectBody` — EN: Enable Auto Tracking in Settings and recording starts by itself when you ride off. — BN: সেটিংসে অটো ট্র্যাকিং চালু করুন, তাহলে রওনা দিলেই নিজে থেকে রেকর্ডিং শুরু হবে।
+- [ ] `tourAutoFilterTitle` — EN: Skips what isn't a ride — BN: রাইড নয় এমন যাত্রা বাদ
+- [ ] `tourAutoFilterBody` — EN: Walks, buses and car trips are filtered out, so only motorcycle rides are kept. — BN: হাঁটা, বাস ও গাড়ির যাত্রা বাদ পড়ে, শুধু মোটরসাইকেল রাইড রাখা হয়।
+- [ ] `tourAutoHistoryTitle` — EN: Review detections — BN: শনাক্তকরণ দেখুন
+- [ ] `tourAutoHistoryBody` — EN: Open the detection history from the Auto Tracking tile to see what was recorded and why. — BN: অটো ট্র্যাকিং টাইল থেকে শনাক্তকরণের ইতিহাস খুলে দেখুন কী রেকর্ড হয়েছে এবং কেন।
+- [ ] `tourRidesTitle` — EN: Your riding, in numbers — BN: সংখ্যায় আপনার রাইডিং
+- [ ] `tourRidesSubtitle` — EN: The Rides tab turns every trip into trends, a score and badges. — BN: রাইড ট্যাব প্রতিটি যাত্রাকে ট্রেন্ড, স্কোর ও ব্যাজে রূপ দেয়।
+- [ ] `tourRidesScoreTitle` — EN: Score and rider rank — BN: স্কোর ও রাইডার র‍্যাংক
+- [ ] `tourRidesScoreBody` — EN: Your journey score and rank grow the more you ride. — BN: যত বেশি চালাবেন, আপনার জার্নি স্কোর ও র‍্যাংক তত বাড়বে।
+- [ ] `tourRidesChartsTitle` — EN: Trend charts — BN: ট্রেন্ড চার্ট
+- [ ] `tourRidesChartsBody` — EN: Distance and speed over time. Open All rides to sort them and see any ride's summary. — BN: সময়ের সাথে দূরত্ব ও গতি। সব রাইড খুলে সাজিয়ে দেখুন, যেকোনো রাইডের সারাংশও পাবেন।
+- [ ] `tourRidesBadgesTitle` — EN: Badges — BN: ব্যাজ
+- [ ] `tourRidesBadgesBody` — EN: Earn badges for milestones. Tap any badge to see what it takes to unlock. — BN: মাইলফলক ছুঁয়ে ব্যাজ অর্জন করুন। কোনো ব্যাজ আনলক করতে কী লাগে দেখতে সেটিতে ট্যাপ করুন।
+- [ ] `tourGarageTitle` — EN: Your garage — BN: আপনার গ্যারেজ
+- [ ] `tourGarageSubtitle` — EN: Every bike you own, each with its own rides, distance and service history. — BN: আপনার প্রতিটি বাইক, প্রত্যেকটির আলাদা রাইড, দূরত্ব ও সার্ভিস ইতিহাসসহ।
+- [ ] `tourGarageActiveTitle` — EN: Set the active bike — BN: সক্রিয় বাইক বেছে নিন
+- [ ] `tourGarageActiveBody` — EN: New rides and kilometres go to the active bike. Switch it any time. — BN: নতুন রাইড ও কিলোমিটার সক্রিয় বাইকে যোগ হয়। যেকোনো সময় বদলাতে পারবেন।
+- [ ] `tourGarageDetailTitle` — EN: Bike details — BN: বাইকের বিস্তারিত
+- [ ] `tourGarageDetailBody` — EN: Tap a bike to add a photo, edit its specs and see its rides. — BN: ছবি যোগ করতে, স্পেসিফিকেশন বদলাতে ও রাইড দেখতে বাইকে ট্যাপ করুন।
+- [ ] `tourGarageArchiveTitle` — EN: Archive old bikes — BN: পুরোনো বাইক আর্কাইভ করুন
+- [ ] `tourGarageArchiveBody` — EN: Sold a bike? Archive it. It stays under Archived bikes for 90 days, and you can unarchive it until then. — BN: বাইক বিক্রি করেছেন? আর্কাইভ করুন। এটি 90 দিন আর্কাইভ করা বাইকের তালিকায় থাকে, এর মধ্যে আবার ফিরিয়ে আনতে পারবেন।
+- [ ] `tourMaintenanceTitle` — EN: Maintenance on schedule — BN: সময়মতো রক্ষণাবেক্ষণ
+- [ ] `tourMaintenanceSubtitle` — EN: Service reminders based on the kilometres you actually ride. — BN: আপনি আসলে যত কিলোমিটার চালান, তার ভিত্তিতে সার্ভিস রিমাইন্ডার।
+- [ ] `tourMaintenanceLocation` — EN: Garage › Maintenance — BN: গ্যারেজ › রক্ষণাবেক্ষণ
+- [ ] `tourMaintenanceDueTitle` — EN: What's due, at a glance — BN: কী বাকি, এক নজরে
+- [ ] `tourMaintenanceDueBody` — EN: Oil, chain, brakes and more, each with a colour-coded countdown to its next service. — BN: ইঞ্জিন অয়েল, চেইন, ব্রেকসহ সবকিছুর পরের সার্ভিস পর্যন্ত রঙে চিহ্নিত কাউন্টডাউন।
+- [ ] `tourMaintenanceOdoTitle` — EN: Sync the odometer — BN: ওডোমিটার মিলিয়ে নিন
+- [ ] `tourMaintenanceOdoBody` — EN: Enter your bike's real odometer reading now and then to keep every countdown accurate. — BN: মাঝে মাঝে বাইকের আসল ওডোমিটার রিডিং দিন, যাতে প্রতিটি কাউন্টডাউন ঠিক থাকে।
+- [ ] `tourMaintenanceLogTitle` — EN: Log a service — BN: সার্ভিস লগ করুন
+- [ ] `tourMaintenanceLogBody` — EN: Record what was done and the countdown starts over. — BN: কী করা হলো লিখে রাখুন, কাউন্টডাউন আবার শুরু হবে।
+- [ ] `tourPlacesTitle` — EN: Rider places — BN: রাইডারদের জায়গা
+- [ ] `tourPlacesSubtitle` — EN: Fuel, workshops, parts and hangouts near you, on a map or in a list. — BN: কাছের পেট্রোল পাম্প, ওয়ার্কশপ, পার্টস ও আড্ডার জায়গা, ম্যাপে বা তালিকায়।
+- [ ] `tourPlacesMapTitle` — EN: Map and filters — BN: ম্যাপ ও ফিল্টার
+- [ ] `tourPlacesMapBody` — EN: Filter by category, switch between map and list, and get directions to any place. — BN: ধরন অনুযায়ী ফিল্টার করুন, ম্যাপ ও তালিকার মধ্যে বদলান, আর যেকোনো জায়গার দিকনির্দেশনা নিন।
+- [ ] `tourPlacesRoutesTitle` — EN: Routes and saved places — BN: রুট ও সংরক্ষিত জায়গা
+- [ ] `tourPlacesRoutesBody` — EN: Save a ride as a route, discover other riders' routes, and keep your favourite places. — BN: রাইডকে রুট হিসেবে সংরক্ষণ করুন, অন্য রাইডারদের রুট খুঁজুন, আর প্রিয় জায়গাগুলো রেখে দিন।
+- [ ] `tourPlacesAddTitle` — EN: Add a place — BN: জায়গা যোগ করুন
+- [ ] `tourPlacesAddBody` — EN: Know a good mechanic? Add it, and rate places to help other riders. — BN: ভালো মেকানিক চেনেন? যোগ করুন, আর জায়গাগুলোকে রেটিং দিয়ে অন্য রাইডারদের সাহায্য করুন।
+- [ ] `tourSocialTitle` — EN: Ride together — BN: একসাথে রাইড
+- [ ] `tourSocialSubtitle` — EN: Share rides, find riders and talk bikes, all in one place. — BN: রাইড শেয়ার করুন, রাইডার খুঁজুন, বাইক নিয়ে আলাপ করুন, সব এক জায়গায়।

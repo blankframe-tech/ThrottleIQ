@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 16: other 2/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 16: other 2/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `noCommentsYet` — EN: No comments yet — BN: এখনো কোনো কমেন্ট নেই
+- [ ] `following` — EN: Following — BN: ফলো করছেন
+- [ ] `follow` — EN: Follow — BN: ফলো করুন
+- [ ] `selectedCount` — EN: {selectedCount}/{maxGroupRideFriends} selected — BN: {selectedCount}/{maxGroupRideFriends} জন নির্বাচিত
+- [ ] `pickRidersRideStarts` — EN: Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications. — BN: {minGroupRideFriends}–{maxGroupRideFriends} জন রাইডার বেছে নিন। আপনার রাইড সাথে সাথেই রেকর্ড শুরু করবে; তারা নোটিফিকেশন থেকে যোগ দেবে।
+- [ ] `usernameEmail` — EN: @username or email — BN: @ইউজারনেম বা ইমেইল
+- [ ] `startGroupRide` — EN: Start group ride — BN: গ্রুপ রাইড শুরু করুন
+- [ ] `startGroupRideWithCount` — EN: Start group ride with {selectedCount} — BN: {selectedCount} জনকে নিয়ে গ্রুপ রাইড শুরু করুন
+- [ ] `searchByUsernameEmail` — EN: Search by @username or email — BN: @ইউজারনেম বা ইমেইল দিয়ে খুঁজুন
+- [ ] `noRidersFound` — EN: No riders found — BN: কোনো রাইডার পাওয়া যায়নি
+- [ ] `inviterGroupRide` — EN: {inviterName}'s group ride — BN: {inviterName}-এর গ্রুপ রাইড
+- [ ] `couldntStartGroupRide` — EN: Couldn't start the group ride: {e} — BN: গ্রুপ রাইড শুরু করা যায়নি: {e}
+- [ ] `signCreateForum` — EN: Sign in to create a forum. — BN: ফোরাম তৈরি করতে সাইন ইন করুন।
+- [ ] `couldNotCreateForum` — EN: Could not create the forum: {e} — BN: ফোরাম তৈরি করা যায়নি: {e}
+- [ ] `createForum` — EN: Create a forum — BN: একটি ফোরাম তৈরি করুন
+- [ ] `eGSundayBreakfast` — EN: e.g. Sunday Breakfast Rides — BN: যেমন: রবিবারের ব্রেকফাস্ট রাইড
+- [ ] `descriptionOptional` — EN: Description (optional) — BN: বিবরণ (ঐচ্ছিক)
+- [ ] `whatsThisForumAbout` — EN: What's this forum about? — BN: এই ফোরাম কী নিয়ে?
+- [ ] `youllBeAbleModerate` — EN: You'll be able to moderate posts here and add other riders as maintainers. — BN: এখানে আপনি পোস্ট মডারেট করতে পারবেন এবং অন্য রাইডারদের মেইনটেইনার হিসেবে যোগ করতে পারবেন।
+- [ ] `create` — EN: Create — BN: তৈরি করুন
+- [ ] `failedPostReply` — EN: Failed to post reply: {e} — BN: রিপ্লাই পোস্ট করা যায়নি: {e}
+- [ ] `post` — EN: Post — BN: পোস্ট
+- [ ] `postNotFound` — EN: Post not found — BN: পোস্ট পাওয়া যায়নি
+- [ ] `noRepliesYetBe` — EN: No replies yet — be the first to help out. — BN: এখনো কোনো রিপ্লাই নেই — প্রথম সাহায্যকারী আপনিই হোন।
+- [ ] `writeReply` — EN: Write a reply... — BN: রিপ্লাই লিখুন...
+- [ ] `forum` — EN: Forum — BN: ফোরাম
+- [ ] `unfollow` — EN: Unfollow — BN: আনফলো করুন
+- [ ] `manageMaintainers` — EN: Manage maintainers — BN: মেইনটেইনার পরিচালনা করুন
+- [ ] `newPost` — EN: New post — BN: নতুন পোস্ট
+- [ ] `noPostsYet` — EN: No posts yet — BN: এখনো কোনো পোস্ট নেই
+- [ ] `beFirstAskQuestion` — EN: Be the first to ask a question or share something. — BN: প্রথম প্রশ্নটি করুন বা কিছু শেয়ার করুন।
+- [ ] `title` — EN: Title — BN: শিরোনাম
+- [ ] `titleRequired` — EN: Title is required — BN: শিরোনাম দিতে হবে
+- [ ] `whatsGoing` — EN: What's going on? — BN: কী হচ্ছে?
+- [ ] `saySomethingBeforePosting` — EN: Say something before posting — BN: পোস্ট করার আগে কিছু লিখুন
+- [ ] `couldntRecordVoteCheck` — EN: Couldn't record your vote — check your connection and try again. — BN: আপনার ভোট রেকর্ড করা যায়নি — সংযোগ দেখে আবার চেষ্টা করুন।
+- [ ] `deletePostQuestion` — EN: Delete post? — BN: পোস্ট মুছবেন?
+- [ ] `thisRemovesPostIts` — EN: This removes the post and its replies from the forum. It cannot be undone. — BN: এতে ফোরাম থেকে পোস্ট ও তার সব রিপ্লাই মুছে যাবে। এটি আর ফিরিয়ে আনা যাবে না।
+- [ ] `couldNotDelete` — EN: Could not delete: {e} — BN: মুছে ফেলা যায়নি: {e}
+- [ ] `deletePost` — EN: Delete post — BN: পোস্ট মুছুন
+- [ ] `reportPost` — EN: Report Post — BN: পোস্ট রিপোর্ট করুন
+- [ ] `fromUser` — EN: from {displayName} — BN: {displayName} এর কাছ থেকে
+- [ ] `couldNotUpdateMaintainers` — EN: Could not update maintainers: {e} — BN: মেইনটেইনার হালনাগাদ করা যায়নি: {e}
+- [ ] `noMaintainersYet` — EN: No maintainers yet. — BN: এখনো কোনো মেইনটেইনার নেই।
+- [ ] `remove` — EN: Remove — BN: সরিয়ে দিন
+- [ ] `addByRiderUid` — EN: Add by rider UID — BN: রাইডার UID দিয়ে যোগ করুন
+- [ ] `couldNotOpenForum` — EN: Could not open forum: {e} — BN: ফোরাম খোলা যায়নি: {e}
+- [ ] `yourBikes` — EN: Your bikes — BN: আপনার বাইক
+- [ ] `addBikeGarageSee` — EN: Add a bike to your garage to see its forum here. — BN: এখানে বাইকের ফোরাম দেখতে আপনার গ্যারেজে একটি বাইক যোগ করুন।
+- [ ] `noRiderMadeForums` — EN: No rider-made forums yet. Create the first one. — BN: এখনো কোনো রাইডার-তৈরি ফোরাম নেই। প্রথমটি আপনিই তৈরি করুন।
+- [ ] `findForum` — EN: Find a forum — BN: ফোরাম খুঁজুন
+- [ ] `searchBrandEG` — EN: Search a brand, e.g. Yamaha — BN: ব্র্যান্ড খুঁজুন, যেমন Yamaha
+- [ ] `searchForums` — EN: Search forums — BN: ফোরাম খুঁজুন
+- [ ] `brands` — EN: Brands — BN: ব্র্যান্ড
+- [ ] `topics` — EN: Topics — BN: বিষয়
+- [ ] `postsFollowers` — EN: {postCount} posts · {followerCount} followers — BN: {postCount}টি পোস্ট · {followerCount} ফলোয়ার
+- [ ] `notificationSettings` — EN: Notification settings — BN: নোটিফিকেশন সেটিংস
+- [ ] `newMessage` — EN: New message — BN: নতুন মেসেজ
+- [ ] `newMessageTitle` — EN: New Message — BN: নতুন মেসেজ
+- [ ] `noMessagesYet` — EN: No messages yet — BN: এখনো কোনো মেসেজ নেই
+- [ ] `startConversation` — EN: Start a Conversation — BN: কথোপকথন শুরু করুন
+- [ ] `loading` — EN: Loading... — BN: লোড হচ্ছে...
+- [ ] `sayHi` — EN: Say hi! — BN: হাই বলুন!
+- [ ] `searchRiderByUsername` — EN: Search rider by @username or email... — BN: @ইউজারনেম বা ইমেইল দিয়ে রাইডার খুঁজুন...
+- [ ] `noRidersFoundFor` — EN: No riders found for "{text}" — BN: "{text}" এর জন্য কোনো রাইডার পাওয়া যায়নি
+- [ ] `retry` — EN: Retry — BN: আবার চেষ্টা
+- [ ] `chat` — EN: Chat — BN: চ্যাট
+- [ ] `cantMessageThisRider` — EN: You can't message this rider — BN: আপনি এই রাইডারকে মেসেজ করতে পারবেন না
+- [ ] `messageHint` — EN: Message... — BN: মেসেজ...
+- [ ] `spamMisleading` — EN: Spam or misleading — BN: স্প্যাম বা বিভ্রান্তিকর
+- [ ] `harassmentBullying` — EN: Harassment or bullying — BN: হয়রানি বা বুলিং
+- [ ] `hateSpeech` — EN: Hate speech — BN: ঘৃণামূলক বক্তব্য
+- [ ] `inappropriateContent` — EN: Inappropriate content — BN: অনুপযুক্ত কনটেন্ট
+- [ ] `reportSubmittedSuccessfullyWe` — EN: Report submitted successfully. We will review it shortly. — BN: রিপোর্ট সফলভাবে জমা হয়েছে। আমরা শীঘ্রই এটি পর্যালোচনা করব।
+- [ ] `failedSubmitReport` — EN: Failed to submit report: {e} — BN: রিপোর্ট জমা দেওয়া যায়নি: {e}
+- [ ] `report` — EN: Report — BN: রিপোর্ট
+- [ ] `whyReportingThis` — EN: Why are you reporting this? — BN: কেন এটি রিপোর্ট করছেন?
+- [ ] `additionalDetailsOptional` — EN: Additional details (optional) — BN: অতিরিক্ত বিবরণ (ঐচ্ছিক)
+- [ ] `submitReport` — EN: Submit Report — BN: রিপোর্ট জমা দিন
+- [ ] `audiencePublic` — EN: Public — BN: পাবলিক

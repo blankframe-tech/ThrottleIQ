@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 10: garage 3/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 10: garage 3/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `shownCardsFeed` — EN: Shown on cards & feed — BN: কার্ড ও ফিডে দেখানো হয়
+- [ ] `usernameField` — EN: Username — BN: ইউজারনেম
+- [ ] `n320LettersNumbers` — EN: 3-20 letters, numbers or underscore — BN: 3-20টি অক্ষর, সংখ্যা বা আন্ডারস্কোর
+- [ ] `bio` — EN: Bio — BN: বায়ো
+- [ ] `whoCanSeeProfile` — EN: Who can see my profile — BN: কে আমার প্রোফাইল দেখতে পারবে
+- [ ] `everyone` — EN: Everyone — BN: সবাই
+- [ ] `mutuals` — EN: Mutuals — BN: পারস্পরিক ফলোয়ার
+- [ ] `whoCanSeeBikes` — EN: Who can see my bikes — BN: কে আমার বাইক দেখতে পারবে
+- [ ] `garageProfileSeparateFrom` — EN: Your garage on your profile. Separate from who can see the profile itself. — BN: আপনার প্রোফাইলে থাকা গ্যারেজ। প্রোফাইল কে দেখতে পাবে তার থেকে আলাদা।
+- [ ] `tellRidersAboutYourself` — EN: Tell riders about yourself — BN: রাইডারদের নিজের সম্পর্কে বলুন
+- [ ] `goodBioGetsMore` — EN: A good bio gets you more followers. — BN: ভালো বায়ো আপনার ফলোয়ার বাড়ায়।
+- [ ] `eGFzS` — EN: e.g. "FZ-S rider from Dhaka. Weekend tourer. Coffee & corners." — BN: যেমন: "ঢাকার FZ-S রাইডার। সাপ্তাহিক ট্যুরার। কফি আর বাঁক।"
+- [ ] `saveBio` — EN: Save bio — BN: বায়ো সেভ করুন
+- [ ] `privacySafety` — EN: Privacy & Safety — BN: গোপনীয়তা ও নিরাপত্তা
+- [ ] `manageAccountsHaveBlocked` — EN: Manage accounts you have blocked — BN: আপনার ব্লক করা অ্যাকাউন্টগুলো পরিচালনা করুন
+- [ ] `seeDemoFeatureTour` — EN: See Demo & Feature Tour — BN: ডেমো ও ফিচার ট্যুর দেখুন
+- [ ] `replayInteractiveFeatureGuides` — EN: Replay interactive feature guides and safety walkthrough — BN: ইন্টারঅ্যাক্টিভ ফিচার গাইড ও নিরাপত্তা ওয়াকথ্রু আবার দেখুন
+- [ ] `sendBugReport` — EN: Send Bug Report — BN: বাগ রিপোর্ট পাঠান
+- [ ] `somethingBrokenLetTeam` — EN: Something broken? Let the team know — BN: কিছু কাজ করছে না? টিমকে জানান
+- [ ] `deleteAccount` — EN: Delete Account — BN: অ্যাকাউন্ট মুছুন
+- [ ] `deleteAccountQuestion` — EN: Delete Account? — BN: অ্যাকাউন্ট মুছবেন?
+- [ ] `thisActionIrreversibleAll` — EN: This can't be undone. Your sign-in and everything stored on this phone are deleted now. Your cloud data (profile, rides and GPS tracks, bikes, emergency contacts, posts and messages) is deleted by hand within 30 days of your request. To request it, email hello@blankframe.tech from the address you signed up with. — BN: এটি আর ফেরানো যাবে না। আপনার সাইন-ইন এবং এই ফোনে রাখা সবকিছু এখনই মুছে যাবে। আপনার ক্লাউড ডেটা (প্রোফাইল, রাইড ও GPS ট্র্যাক, বাইক, জরুরি কন্টাক্ট, পোস্ট ও মেসেজ) আপনার অনুরোধের 30 দিনের মধ্যে হাতে মুছে ফেলা হয়। অনুরোধ করতে, যে ইমেইল দিয়ে সাইন আপ করেছিলেন সেটি থেকে hello@blankframe.tech-এ ইমেইল করুন।
+- [ ] `deletePermanently` — EN: Delete Permanently — BN: চিরতরে মুছুন
+- [ ] `deletingAccount` — EN: Deleting account... — BN: অ্যাকাউন্ট মুছে ফেলা হচ্ছে...
+- [ ] `errorDeletingAccount` — EN: Error deleting account: {e} — BN: অ্যাকাউন্ট মুছতে ত্রুটি: {e}
+- [ ] `syncIssues` — EN: Sync issues — BN: সিঙ্ক সমস্যা
+- [ ] `n1UpdateCouldntBe` — EN: 1 update couldn't be sent — BN: 1টি আপডেট পাঠানো যায়নি
+- [ ] `updatesCouldntBeSent` — EN: {count} updates couldn't be sent — BN: {count}টি আপডেট পাঠানো যায়নি
+- [ ] `rideShare` — EN: Ride share — BN: রাইড শেয়ার
+- [ ] `endingLiveShare` — EN: Ending a live share — BN: লাইভ শেয়ার বন্ধ করা
+- [ ] `maintenanceLog` — EN: Maintenance log — BN: মেইনটেন্যান্স লগ
+- [ ] `cloudUpdate` — EN: Cloud update — BN: ক্লাউড আপডেট
+- [ ] `everythingSynced` — EN: Everything is synced — BN: সবকিছু সিঙ্ক হয়েছে
+- [ ] `synced` — EN: Synced — BN: সিঙ্ক হয়েছে
+- [ ] `couldntSyncYetWell` — EN: Couldn't sync yet. We'll keep trying in the background. — BN: এখনো সিঙ্ক করা যায়নি। আমরা ব্যাকগ্রাউন্ডে চেষ্টা চালিয়ে যাব।
+- [ ] `discardThisUpdate` — EN: Discard this update? — BN: এই আপডেট বাদ দেবেন?
+- [ ] `itWontBeSent` — EN: It won't be sent. This can't be undone. — BN: এটি পাঠানো হবে না। এটি ফেরানো যাবে না।
+- [ ] `signViewProfile` — EN: Sign in to view your profile — BN: প্রোফাইল দেখতে সাইন ইন করুন
+- [ ] `userBlocked` — EN: User blocked — BN: ইউজার ব্লক করা হয়েছে
+- [ ] `reportUser` — EN: Report User — BN: ইউজার রিপোর্ট করুন
+- [ ] `blockUser` — EN: Block User — BN: ইউজার ব্লক করুন
+- [ ] `tapEditFinishSetting` — EN: Tap Edit to finish setting up your profile — BN: প্রোফাইল সেটআপ শেষ করতে সম্পাদনায় ট্যাপ করুন
+- [ ] `riderNotFound` — EN: Rider not found — BN: রাইডার পাওয়া যায়নি
+- [ ] `ridingWithUsSince` — EN: Riding with us since {createdAt} — BN: {createdAt} থেকে আমাদের সাথে রাইড করছেন
+- [ ] `followersLabel` — EN: followers — BN: ফলোয়ার
+- [ ] `followingLabel` — EN: following — BN: ফলো করছেন
+- [ ] `message` — EN: Message — BN: মেসেজ
+- [ ] `totalDistanceLower` — EN: total distance — BN: মোট দূরত্ব
+- [ ] `ridesLogged` — EN: rides logged — BN: রাইড লগ হয়েছে
+- [ ] `badges` — EN: Badges — BN: ব্যাজ
+- [ ] `noBadgesEarnedYet` — EN: No badges earned yet — BN: এখনো কোনো ব্যাজ অর্জন করেননি
+- [ ] `myGarageLower` — EN: My garage — BN: আমার গ্যারেজ
+- [ ] `garage` — EN: Garage — BN: গ্যারেজ
+- [ ] `whoCanSeeBikesChangeUnderEdit` — EN: Who can see my bikes — change this under Edit — BN: কে আমার বাইক দেখতে পারবে — এটি সম্পাদনা থেকে বদলান
+- [ ] `thisProfilePrivate` — EN: This profile is private — BN: এই প্রোফাইলটি ব্যক্তিগত
+- [ ] `youreOffline` — EN: You're offline — BN: আপনি অফলাইনে আছেন
+- [ ] `couldntLoadProfile` — EN: Couldn't load profile — BN: প্রোফাইল লোড করা যায়নি
+- [ ] `resetItemsButton` — EN: {count, plural, =1{Reset 1 Item} other{Reset {count} Items}} — BN: {count, plural, =1{1টি আইটেম রিসেট করুন} other{{count}টি আইটেম রিসেট করুন}}
+- [ ] `deleteBikeConfirmBody` — EN: This permanently deletes {rides, plural, =1{1 ride} other{{rides} rides}}, their routes and this bike's maintenance log, on this phone and in the cloud. Type "{expected}" to confirm. — BN: এটি {rides, plural, =1{1টি রাইড} other{{rides}টি রাইড}}, সেগুলোর রুট এবং এই বাইকের মেইনটেন্যান্স লগ এই ফোন ও ক্লাউড — দুই জায়গা থেকেই চিরতরে মুছে ফেলবে। নিশ্চিত করতে "{expected}" টাইপ করুন।
+- [ ] `svcTypeOilChange` — EN: Oil Change — BN: অয়েল চেঞ্জ
+- [ ] `svcTypeAirFilter` — EN: Air Filter — BN: এয়ার ফিল্টার
+- [ ] `svcTypeChain` — EN: Chain Lube — BN: চেইন লুব
+- [ ] `svcTypeTire` — EN: Tire Check — BN: টায়ার চেক
+- [ ] `svcTypeRadiatorCoolant` — EN: Radiator / Coolant — BN: রেডিয়েটর / কুল্যান্ট
+- [ ] `svcTypeFrontDiscPads` — EN: Front Disc Pads — BN: সামনের ডিস্ক প্যাড
+- [ ] `svcTypeRearDrumPads` — EN: Rear Drum Pads — BN: পেছনের ড্রাম প্যাড
+- [ ] `svcTypeBrakeFluid` — EN: Brake Fluid — BN: ব্রেক ফ্লুইড
+- [ ] `svcTypeSparkPlug` — EN: Spark Plug — BN: স্পার্ক প্লাগ
+- [ ] `svcTypeBattery` — EN: Battery — BN: ব্যাটারি
+- [ ] `svcTypeValveClearance` — EN: Valve Clearance — BN: ভালভ ক্লিয়ারেন্স
+- [ ] `svcTypeClutchCable` — EN: Clutch Cable — BN: ক্লাচ ক্যাবল
+- [ ] `svcTypeSuspension` — EN: Suspension — BN: সাসপেনশন
+- [ ] `svcTypeOilFilter` — EN: Oil Filter — BN: অয়েল ফিল্টার
+- [ ] `svcTypeChainTension` — EN: Chain Slack & Tension — BN: চেইন স্ল্যাক ও টেনশন
+- [ ] `svcTypeBrakeRotors` — EN: Brake Rotors / Discs — BN: ব্রেক রোটর / ডিস্ক
+- [ ] `svcTypeForkSeals` — EN: Fork Oil & Seals — BN: ফর্ক অয়েল ও সিল
+- [ ] `svcTypeWheelBearings` — EN: Wheel Bearings — BN: হুইল বিয়ারিং
+- [ ] `svcTypeDriveBelt` — EN: Drive Belt — BN: ড্রাইভ বেল্ট
+- [ ] `svcTypeThrottleCables` — EN: Throttle & Cables — BN: থ্রটল ও ক্যাবল
+- [ ] `svcTypeFuel` — EN: Fuel — BN: জ্বালানি

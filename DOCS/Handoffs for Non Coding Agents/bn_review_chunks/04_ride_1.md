@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 04: ride 1/4 (recording, ride screens, Year in Review), 80 lines -->
+# Bangla review 04: ride 1/4 (recording, ride screens, Year in Review), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `recordingReleaseSend` — EN: Recording — release to send — BN: রেকর্ড হচ্ছে — পাঠাতে ছেড়ে দিন
+- [ ] `ridersFollowEachOther` — EN: Riders you follow each other — BN: যাদের সাথে আপনারা পরস্পরকে ফলো করেন
+- [ ] `rideShared` — EN: Ride shared — BN: রাইড শেয়ার হয়েছে
+- [ ] `rideDetails` — EN: Ride Details — BN: রাইডের বিবরণ
+- [ ] `rideNotFoundRemoved` — EN: Ride not found or removed — BN: রাইড পাওয়া যায়নি অথবা সরানো হয়েছে
+- [ ] `ridePhotos` — EN: Ride Photos — BN: রাইডের ছবি
+- [ ] `rideWithFriends` — EN: Ride with friends — BN: বন্ধুদের সাথে রাইড
+- [ ] `riderForums` — EN: Rider forums — BN: রাইডার ফোরাম
+- [ ] `recordThisRideThrottleiq` — EN: Record this ride in ThrottleIQ? — BN: এই রাইড কি ThrottleIQ-তে রেকর্ড করবেন?
+- [ ] `recordGo` — EN: Record & go — BN: রেকর্ড করে রওনা দিন
+- [ ] `rides` — EN: Your rides — BN: আপনার রাইড
+- [ ] `ridersLabel` — EN: Riders — BN: রাইডার
+- [ ] `turnStart` — EN: Start — BN: শুরু
+- [ ] `turnSlightLeft` — EN: Slight left — BN: হালকা বাঁয়ে
+- [ ] `turnLeft` — EN: Turn left — BN: বাঁয়ে ঘুরুন
+- [ ] `turnSharpLeft` — EN: Sharp left — BN: তীক্ষ্ণ বাঁয়ে
+- [ ] `turnSlightRight` — EN: Slight right — BN: হালকা ডানে
+- [ ] `turnRight` — EN: Turn right — BN: ডানে ঘুরুন
+- [ ] `turnSharpRight` — EN: Sharp right — BN: তীক্ষ্ণ ডানে
+- [ ] `turnUTurn` — EN: Make a U-turn — BN: ইউ-টার্ন নিন
+- [ ] `turnStraight` — EN: Continue straight — BN: সোজা চলুন
+- [ ] `turnArrive` — EN: You have arrived — BN: আপনি পৌঁছে গেছেন
+- [ ] `compassNorth` — EN: north — BN: উত্তর
+- [ ] `compassNorthEast` — EN: north-east — BN: উত্তর-পূর্ব
+- [ ] `compassEast` — EN: east — BN: পূর্ব
+- [ ] `compassSouthEast` — EN: south-east — BN: দক্ষিণ-পূর্ব
+- [ ] `compassSouth` — EN: south — BN: দক্ষিণ
+- [ ] `compassSouthWest` — EN: south-west — BN: দক্ষিণ-পশ্চিম
+- [ ] `compassWest` — EN: west — BN: পশ্চিম
+- [ ] `compassNorthWest` — EN: north-west — BN: উত্তর-পশ্চিম
+- [ ] `turnHead` — EN: Head {direction} — BN: {direction} দিকে যান
+- [ ] `etaUnderAMinute` — EN: <1 min — BN: <1 মিনিট
+- [ ] `etaMinutes` — EN: {minutes} min — BN: {minutes} মিনিট
+- [ ] `etaHoursMinutes` — EN: {hours}h {minutes}m — BN: {hours}ঘ {minutes}মি
+- [ ] `navInDistance` — EN: in {distance} — BN: {distance} পরে
+- [ ] `navArrivedStillRecording` — EN: You've arrived — still recording — BN: পৌঁছে গেছেন — রেকর্ডিং চলছে
+- [ ] `navGuidanceStoppedStillRecording` — EN: Guidance off. Your ride is still recording. — BN: গাইডেন্স বন্ধ। আপনার রাইড এখনও রেকর্ড হচ্ছে।
+- [ ] `navStopGuidance` — EN: Stop guidance — BN: গাইডেন্স বন্ধ করুন
+- [ ] `navRoutePreflightSummary` — EN: {distance} · {turns} turns — BN: {distance} · {turns}টি টার্ন
+- [ ] `navRecordsRideExplainer` — EN: Following this route records a ride, exactly like the Record button does. — BN: এই রুট অনুসরণ করলে রেকর্ড বোতামের মতোই একটি রাইড রেকর্ড হবে।
+- [ ] `navAttachExplainer` — EN: Guidance will be added to the ride you're already recording. — BN: আপনি যে রাইডটি রেকর্ড করছেন তাতেই গাইডেন্স যোগ হবে।
+- [ ] `navStartRideAndGuide` — EN: Start ride & guide me — BN: রাইড শুরু করে গাইড করুন
+- [ ] `navGuideOnThisRide` — EN: Guide me on this ride — BN: এই রাইডে গাইড করুন
+- [ ] `followedRoutePill` — EN: Followed {name} — BN: {name} অনুসরণ করা হয়েছে
+- [ ] `jamLabelStart` — EN: I'm in a jam — BN: আমি জ্যামে আছি
+- [ ] `jamLabelRelease` — EN: Jam released — BN: জ্যাম ছেড়েছে
+- [ ] `jamLabelBetaTag` — EN: BETA — BN: বেটা
+- [ ] `notifDigestRideTime` — EN:  · {minutes} min riding — BN:  · {minutes} মিনিট রাইড
+- [ ] `notifDigestNotRecorded` — EN:  · {count, plural, =1{1 you didn't record} other{{count} you didn't record}} — BN:  · {count, plural, =1{1টি রেকর্ড করা হয়নি} other{{count}টি রেকর্ড করা হয়নি}}
+- [ ] `autoSummaryTodayTitle` — EN: Today — BN: আজ
+- [ ] `autoSummaryRides` — EN: {count, plural, =0{No rides yet} =1{1 ride} other{{count} rides}} — BN: {count, plural, =0{এখনো কোনো রাইড নেই} =1{1টি রাইড} other{{count}টি রাইড}}
+- [ ] `autoSummaryStats` — EN: {km} km · {minutes} min riding · {jamMinutes} min stopped in traffic — BN: {km} কিমি · {minutes} মিনিট রাইড · {jamMinutes} মিনিট জ্যামে থেমে
+- [ ] `autoSummaryNotRecorded` — EN: {count, plural, =1{Includes 1 ride you didn't record} other{Includes {count} rides you didn't record}} — BN: {count, plural, =1{রেকর্ড না করা 1টি রাইড সহ} other{রেকর্ড না করা {count}টি রাইড সহ}}
+- [ ] `dailySummariesTitle` — EN: Daily ride summaries — BN: দৈনিক রাইডের সারাংশ
+- [ ] `dailySummariesSubtitle` — EN: Riding auto-tracking caught is joined across traffic stops and counted once per journey, together with the rides you recorded. — BN: অটো-ট্র্যাকিংয়ে ধরা রাইড জ্যামের বিরতি পেরিয়ে জোড়া লাগানো হয় এবং প্রতিটি যাত্রা একবারই গোনা হয়, আপনার রেকর্ড করা রাইডসহ।
+- [ ] `dailySummariesEmpty` — EN: No riding in the last two weeks. — BN: গত দুই সপ্তাহে কোনো রাইড নেই।
+- [ ] `rideAttachmentTitle` — EN: Ride on {date} — BN: {date}-এর রাইড
+- [ ] `ridesAnalyticsTab` — EN: Analytics — BN: অ্যানালিটিক্স
+- [ ] `ridesHistoryTab` — EN: History — BN: ইতিহাস
+- [ ] `riderLevel` — EN: Level {level} — BN: লেভেল {level}
+- [ ] `chartDistancePerRide` — EN: Distance per ride — BN: প্রতি রাইডে দূরত্ব
+- [ ] `chartWeeklyDistance` — EN: Distance per week — BN: প্রতি সপ্তাহে দূরত্ব
+- [ ] `chartAvgSpeed` — EN: Average speed — BN: গড় গতি
+- [ ] `chartTopSpeed` — EN: Top speed — BN: সর্বোচ্চ গতি
+- [ ] `chartRideDuration` — EN: Ride duration — BN: রাইডের সময়
+- [ ] `chartMovingVsStopped` — EN: Moving vs stopped — BN: চলমান বনাম থেমে থাকা
+- [ ] `chartJamTime` — EN: Time stuck in traffic — BN: জ্যামে আটকে থাকার সময়
+- [ ] `chartRidingScore` — EN: Riding score — BN: রাইডিং স্কোর
+- [ ] `chartHardBraking` — EN: Hard braking — BN: হার্ড ব্রেকিং
+- [ ] `chartRapidAccel` — EN: Rapid acceleration — BN: দ্রুত অ্যাক্সিলারেশন
+- [ ] `chartOverspeed` — EN: Overspeed alerts per ride — BN: প্রতি রাইডে ওভারস্পিড সতর্কতা
+- [ ] `chartActivityCalendar` — EN: Riding days — BN: রাইডের দিনগুলো
+- [ ] `chartHourOfDay` — EN: Rides by hour of day — BN: দিনের কোন সময়ে রাইড
+- [ ] `chartWeekday` — EN: Rides by day of week — BN: সপ্তাহের কোন দিনে রাইড
+- [ ] `chartDistanceByBike` — EN: Distance per bike — BN: প্রতি বাইকে দূরত্ব
+- [ ] `chartLongestRides` — EN: Longest rides — BN: সবচেয়ে লম্বা রাইড
+- [ ] `analyticsRange7d` — EN: 7D — BN: 7 দিন
+- [ ] `analyticsRange30d` — EN: 30D — BN: 30 দিন
+- [ ] `analyticsRange90d` — EN: 90D — BN: 90 দিন
+- [ ] `analyticsRange1y` — EN: 1Y — BN: 1 বছর

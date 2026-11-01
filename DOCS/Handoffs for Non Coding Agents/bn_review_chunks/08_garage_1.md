@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 08: garage 1/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 08: garage 1/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `maintainers` — EN: Maintainers — BN: মেইনটেইনার
+- [ ] `maintainersCanDeletePosts` — EN: Maintainers can delete posts and replies in this forum. — BN: মেইনটেইনাররা এই ফোরামের পোস্ট ও রিপ্লাই মুছতে পারেন।
+- [ ] `logServiceTitle` — EN: Log Service — BN: সার্ভিস লগ করুন
+- [ ] `serviceType` — EN: Service Type — BN: সার্ভিসের ধরন
+- [ ] `whatDidService` — EN: What did you service? * — BN: কী সার্ভিস করালেন? *
+- [ ] `eGRadiatorFlush` — EN: e.g. Radiator flush — BN: যেমন: রেডিয়েটর ফ্লাশ
+- [ ] `nameService` — EN: Name the service — BN: সার্ভিসের নাম দিন
+- [ ] `odometerKm` — EN: Odometer (km) * — BN: ওডোমিটার (কিমি) *
+- [ ] `requiredField` — EN: Required — BN: আবশ্যক
+- [ ] `invalidNumber` — EN: Invalid number — BN: সংখ্যাটি সঠিক নয়
+- [ ] `costOptional` — EN: Cost (optional) — BN: খরচ (ঐচ্ছিক)
+- [ ] `notesOptional` — EN: Notes (optional) — BN: নোট (ঐচ্ছিক)
+- [ ] `configuredSpec` — EN: Configured spec: {specNote} — BN: নির্ধারিত স্পেক: {specNote}
+- [ ] `eGOctane95` — EN: e.g. Octane 95, 12L fill-up, Jamuna oil... — BN: যেমন: অকটেন 95, 12 লিটার ফিল-আপ, যমুনা অয়েল...
+- [ ] `eGUsedMotul` — EN: e.g. Used Motul 10W40... — BN: যেমন: Motul 10W40 ব্যবহার করেছি...
+- [ ] `insertSpec` — EN: Insert spec: {specNote} — BN: স্পেক যোগ করুন: {specNote}
+- [ ] `saveServiceLog` — EN: Save Service Log — BN: সার্ভিস লগ সেভ করুন
+- [ ] `yourMotorcycle` — EN: Your Motorcycle — BN: আপনার মোটরসাইকেল
+- [ ] `setupMaintenance` — EN: Setup Maintenance — BN: মেইনটেন্যান্স সেটআপ
+- [ ] `editTrackedChecks` — EN: Edit Tracked Checks — BN: ট্র্যাক করা চেক সম্পাদনা
+- [ ] `skip` — EN: Skip — BN: এড়িয়ে যান
+- [ ] `whatWouldLikeTrack` — EN: What would you like to track for {bikeName}? — BN: {bikeName}-এর জন্য কী কী ট্র্যাক করতে চান?
+- [ ] `selectComponentsWantThrottleiq` — EN: Select the components you want ThrottleIQ to monitor. We will calculate wear based on your odometer and notify you before services are due. — BN: যেসব যন্ত্রাংশ ThrottleIQ নজরে রাখবে সেগুলো বেছে নিন। আপনার ওডোমিটার দেখে আমরা ক্ষয় হিসাব করব এবং সার্ভিসের সময় হওয়ার আগে জানিয়ে দেব।
+- [ ] `recommended` — EN: Recommended — BN: প্রস্তাবিত
+- [ ] `selectAll` — EN: Select All — BN: সব বেছে নিন
+- [ ] `clear` — EN: Clear — BN: পরিষ্কার করুন
+- [ ] `trackChecks` — EN: Track {enabledCount} Checks — BN: {enabledCount}টি চেক ট্র্যাক করুন
+- [ ] `savePreferences` — EN: Save Preferences — BN: পছন্দ সেভ করুন
+- [ ] `activeInCategory` — EN: {activeInCategory} of {categoryItemsCount} active — BN: {categoryItemsCount}টির মধ্যে {activeInCategory}টি সক্রিয়
+- [ ] `noActiveBike` — EN: No active bike — BN: কোনো সক্রিয় বাইক নেই
+- [ ] `addMotorcycleGarageTrack` — EN: Add a motorcycle to your garage to track maintenance. — BN: মেইনটেন্যান্স ট্র্যাক করতে আপনার গ্যারেজে একটি মোটরসাইকেল যোগ করুন।
+- [ ] `syncOdo` — EN: Sync Odo — BN: ওডো সিঙ্ক
+- [ ] `customize` — EN: Customize — BN: কাস্টমাইজ
+- [ ] `log` — EN: Log — BN: লগ
+- [ ] `resetServiceLog` — EN: Reset service log — BN: সার্ভিস লগ রিসেট
+- [ ] `trackedChecks` — EN: Tracked checks — BN: ট্র্যাক করা চেক
+- [ ] `monitored` — EN: {remindersCount} monitored — BN: {remindersCount}টি নজরে আছে
+- [ ] `filterAll` — EN: All ({remindersCount}) — BN: সব ({remindersCount})
+- [ ] `filterAttention` — EN: Attention ({attentionCount}) — BN: মনোযোগ দরকার ({attentionCount})
+- [ ] `filterOk` — EN: OK ({okCount}) — BN: ঠিক আছে ({okCount})
+- [ ] `noChecksTrackedYet` — EN: No checks tracked yet. Tap "Customize" above to select checks. — BN: এখনো কোনো চেক ট্র্যাক করা হচ্ছে না। চেক বেছে নিতে উপরের "কাস্টমাইজ" ট্যাপ করুন।
+- [ ] `noChecksMatchingThis` — EN: No checks matching this filter. — BN: এই ফিল্টারের সাথে মেলে এমন কোনো চেক নেই।
+- [ ] `serviceHistory` — EN: Service history — BN: সার্ভিসের ইতিহাস
+- [ ] `total` — EN: Total: ৳{totalCost} — BN: মোট: ৳{totalCost}
+- [ ] `noServiceRecordsLogged` — EN: No service records logged yet. — BN: এখনো কোনো সার্ভিস রেকর্ড নেই।
+- [ ] `whenServiceBikeLog` — EN: When you service your bike, log it here to reset intervals. — BN: বাইক সার্ভিস করালে এখানে লগ করুন, ইন্টারভাল রিসেট হয়ে যাবে।
+- [ ] `switchBike` — EN: Switch bike — BN: বাইক বদলান
+- [ ] `switchAction` — EN: Switch — BN: বদলান
+- [ ] `immediateMaintenanceAttentionRecommended` — EN: Immediate maintenance attention recommended — BN: এখনই মেইনটেন্যান্স দরকার
+- [ ] `upcomingScheduledMaintenance` — EN: Upcoming scheduled maintenance — BN: আসন্ন নির্ধারিত মেইনটেন্যান্স
+- [ ] `allSystemsNominal` — EN: All Systems Nominal — BN: সবকিছু স্বাভাবিক
+- [ ] `allTrackedComponentsGood` — EN: All {total} tracked components in good health — BN: ট্র্যাক করা সব {total}টি যন্ত্রাংশ ভালো অবস্থায় আছে
+- [ ] `dueSoonTitle` — EN: Due Soon — BN: শীঘ্রই বাকি
+- [ ] `whatWouldLikeMaintain` — EN: What would you like to maintain? — BN: কী কী মেইনটেইন করতে চান?
+- [ ] `notEveryoneWantsTrack` — EN: Not everyone wants to track everything. Pick the items you care about for {displayName}, or tap to edit intervals and add specs (oil brand, tyre dates/sizes): — BN: সবাই সবকিছু ট্র্যাক করতে চান না। {displayName}-এর জন্য যেগুলো আপনার দরকার সেগুলো বেছে নিন, অথবা ট্যাপ করে ইন্টারভাল বদলান ও স্পেক (তেলের ব্র্যান্ড, টায়ারের তারিখ/সাইজ) যোগ করুন:
+- [ ] `essentials4` — EN: Essentials (4) — BN: জরুরি (4)
+- [ ] `all8Items` — EN: All 8 items — BN: সব 8টি আইটেম
+- [ ] `savingPreferences` — EN: Saving Preferences... — BN: পছন্দ সেভ হচ্ছে...
+- [ ] `startTrackingItems` — EN: Start Tracking ({enabledCount} Items) — BN: ট্র্যাকিং শুরু করুন ({enabledCount}টি আইটেম)
+- [ ] `seeAll20Checks` — EN: See all 20+ checks & advanced setup — BN: 20+ চেক ও অ্যাডভান্সড সেটআপ দেখুন
+- [ ] `dueSoon` — EN: Due soon — BN: শীঘ্রই বাকি
+- [ ] `intervalEvery` — EN: Every {imperial} — BN: প্রতি {imperial}
+- [ ] `lastDone` — EN: Last done: {lastServiceDate} — BN: সর্বশেষ করা হয়েছে: {lastServiceDate}
+- [ ] `noPreviousServiceRecorded` — EN: No previous service recorded — BN: আগের কোনো সার্ভিস রেকর্ড নেই
+- [ ] `edit` — EN: Edit — BN: সম্পাদনা
+- [ ] `deleteLog` — EN: Delete Log — BN: লগ মুছুন
+- [ ] `sureWantDeleteThis` — EN: Are you sure you want to delete this {displayLabel} record? — BN: আপনি কি নিশ্চিত যে এই {displayLabel} রেকর্ডটি মুছে ফেলতে চান?
+- [ ] `trackDashboard` — EN: Track on Dashboard — BN: ড্যাশবোর্ডে ট্র্যাক করুন
+- [ ] `calculateWearMonitorInterval` — EN: Calculate wear and monitor interval — BN: ক্ষয় হিসাব করুন ও ইন্টারভাল নজরে রাখুন
+- [ ] `serviceInterval` — EN: Service Interval — BN: সার্ভিস ইন্টারভাল
+- [ ] `intervalDistanceKm` — EN: Interval Distance (km) — BN: ইন্টারভালের দূরত্ব (কিমি)
+- [ ] `enterPositiveNumber` — EN: Enter a positive number — BN: ধনাত্মক সংখ্যা দিন
+- [ ] `specificationsExtraInfo` — EN: Specifications & Extra Info — BN: স্পেসিফিকেশন ও অতিরিক্ত তথ্য
+- [ ] `optionalText` — EN: Optional text — BN: ঐচ্ছিক লেখা
+- [ ] `specsOilGradeTyre` — EN: Specs (oil grade, tyre sizes & dates...) — BN: স্পেক (তেলের গ্রেড, টায়ারের সাইজ ও তারিখ...)
+- [ ] `visibleMaintenanceCardQuick` — EN: Visible on your maintenance card for quick reference. — BN: দ্রুত দেখার জন্য আপনার মেইনটেন্যান্স কার্ডে দেখানো হবে।
+- [ ] `odometerSyncedKm` — EN: Odometer synced to {newKm} km! — BN: ওডোমিটার {newKm} কিমিতে সিঙ্ক হয়েছে!
+- [ ] `syncOdometer` — EN: Sync Odometer — BN: ওডোমিটার সিঙ্ক
+- [ ] `alignThrottleiqWith` — EN: Align ThrottleIQ with {displayName} — BN: ThrottleIQ-কে {displayName}-এর সাথে মেলান
+- [ ] `rodeOfflineWithoutPhone` — EN: Rode offline or without phone tracking? Take a photo of your bike's dashboard/speedometer cluster or enter the current reading below. — BN: অফলাইনে বা ফোন ট্র্যাকিং ছাড়া চালিয়েছেন? আপনার বাইকের ড্যাশবোর্ড/স্পিডোমিটারের ছবি তুলুন বা নিচে বর্তমান রিডিং লিখুন।

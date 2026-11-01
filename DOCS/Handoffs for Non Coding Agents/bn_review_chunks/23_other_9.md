@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 23: other 9/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 23: other 9/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `placesAllowLocation` — EN: Allow location — BN: অবস্থানের অনুমতি দিন
+- [ ] `placesGpsOffTitle` — EN: GPS is off — BN: জিপিএস বন্ধ
+- [ ] `placesOfflineTitle` — EN: You're offline — BN: আপনি অফলাইনে আছেন
+- [ ] `placesOfflineBody` — EN: Nearby places need a connection. Your saved places still work offline. — BN: কাছের জায়গা দেখতে ইন্টারনেট লাগে। সংরক্ষিত জায়গাগুলো অফলাইনেও কাজ করে।
+- [ ] `placesOpenSaved` — EN: Open saved places — BN: সংরক্ষিত জায়গা খুলুন
+- [ ] `savedPlacesEmptyTitle` — EN: No saved places yet — BN: এখনো কোনো জায়গা সংরক্ষণ করা হয়নি
+- [ ] `savedPlacesEmptyBody` — EN: Tap the bookmark on any place to keep it here. Saved places work even with no signal. — BN: যেকোনো জায়গার বুকমার্কে ট্যাপ করে এখানে রাখুন। নেটওয়ার্ক না থাকলেও সংরক্ষিত জায়গা কাজ করে।
+- [ ] `savedPlacesContributedBody` — EN: See and manage the spots you've added for other riders. — BN: অন্য রাইডারদের জন্য আপনার যোগ করা জায়গাগুলো দেখুন ও ম্যানেজ করুন।
+- [ ] `addPlaceFeaturesLabel` — EN: Features (optional) — BN: সুবিধা (ঐচ্ছিক)
+- [ ] `addPlaceFeaturesHint` — EN: What will the next rider be glad to know? — BN: পরের রাইডার কী জানলে খুশি হবেন?
+- [ ] `placesResultCount` — EN: {count, plural, =1{1 place} other{{count} places}} — BN: {count}টি জায়গা
+- [ ] `forumAddPhotos` — EN: Add photos ({count}/{max}) — BN: ছবি যোগ করুন ({count}/{max})
+- [ ] `paddockPosts` — EN: {count, plural, =1{1 post} other{{count} posts}} — BN: {count}টি পোস্ট
+- [ ] `chatTyping` — EN: typing… — BN: টাইপ করছে…
+- [ ] `signOutFailed` — EN: Could not sign out. Please try again. — BN: সাইন আউট করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `deleteAccountFailed` — EN: Could not delete your account. Please try again. — BN: আপনার অ্যাকাউন্ট মুছে ফেলা যায়নি। আবার চেষ্টা করুন।
+- [ ] `deleteAccountOffline` — EN: No connection. Check your internet and try again. — BN: ইন্টারনেট সংযোগ নেই। সংযোগ পরীক্ষা করে আবার চেষ্টা করুন।
+- [ ] `reauthRequiredTitle` — EN: Confirm it's you — BN: নিশ্চিত করুন এটি আপনিই
+- [ ] `reauthRequiredBody` — EN: For your security, confirm your password to delete your account. — BN: নিরাপত্তার জন্য অ্যাকাউন্ট মুছতে আপনার পাসওয়ার্ড নিশ্চিত করুন।
+- [ ] `reauthWrongPassword` — EN: That password is incorrect. — BN: পাসওয়ার্ডটি সঠিক নয়।
+- [ ] `reauthFailed` — EN: Could not confirm your identity. Account not deleted. — BN: আপনার পরিচয় নিশ্চিত করা যায়নি। অ্যাকাউন্ট মুছে ফেলা হয়নি।
+- [ ] `badgeHowToEarn` — EN: How to earn it — BN: কীভাবে পাবেন
+- [ ] `badgeEarnedOn` — EN: Earned {date} — BN: অর্জিত {date}
+- [ ] `badgeEarnedStatus` — EN: Earned — BN: অর্জিত
+- [ ] `badgeLockedStatus` — EN: Locked — BN: লক করা
+- [ ] `badgeProgressFraction` — EN: {progress} / {target} {unit} — BN: {target} {unit}-এর মধ্যে {progress}
+- [ ] `badgeProgressToGo` — EN: {remaining} {unit} to go — BN: আরও {remaining} {unit} বাকি
+- [ ] `badgeShareAction` — EN: Share — BN: শেয়ার করুন
+- [ ] `badgeShareText` — EN: I earned the {badge} badge on ThrottleIQ. — BN: আমি ThrottleIQ-তে {badge} ব্যাজ অর্জন করেছি।
+- [ ] `badgeViewDetails` — EN: Tap for details — BN: বিস্তারিত দেখতে ট্যাপ করুন
+- [ ] `myQrTitle` — EN: My QR code — BN: আমার QR কোড
+- [ ] `myQrIntro` — EN: Riders who scan this code follow you. It works with ThrottleIQ's scanner or any phone camera. — BN: যে রাইডাররা এই কোড স্ক্যান করবেন, তাঁরা আপনাকে ফলো করবেন। ThrottleIQ-এর স্ক্যানার বা যেকোনো ফোনের ক্যামেরায় কাজ করে।
+- [ ] `myQrShareAction` — EN: Share — BN: শেয়ার করুন
+- [ ] `myQrSaveAction` — EN: Save image — BN: ছবি সেভ করুন
+- [ ] `myQrShareText` — EN: Follow me on ThrottleIQ: {link} — BN: ThrottleIQ-এ আমাকে ফলো করুন: {link}
+- [ ] `myQrSaved` — EN: QR code saved to your photos. — BN: QR কোড আপনার ফটোতে সেভ হয়েছে।
+- [ ] `myQrSaveNoAccess` — EN: ThrottleIQ can't save to your photos. Allow photo access in Settings. — BN: ThrottleIQ আপনার ফটোতে সেভ করতে পারছে না। সেটিংসে ফটো অ্যাক্সেস চালু করুন।
+- [ ] `myQrImageFailed` — EN: Couldn't create your QR code image. — BN: আপনার QR কোডের ছবি তৈরি করা যায়নি।
+- [ ] `scanQrAction` — EN: Scan QR — BN: QR স্ক্যান করুন
+- [ ] `scanQrTitle` — EN: Scan a rider's QR — BN: রাইডারের QR স্ক্যান করুন
+- [ ] `scanQrHint` — EN: Point the camera at another rider's ThrottleIQ QR code to follow them. — BN: অন্য রাইডারকে ফলো করতে তাঁর ThrottleIQ QR কোডের দিকে ক্যামেরা ধরুন।
+- [ ] `scanQrTorch` — EN: Flashlight — BN: ফ্ল্যাশলাইট
+- [ ] `scanQrCameraDenied` — EN: Camera access is off. Allow it in Settings to scan QR codes. — BN: ক্যামেরা অ্যাক্সেস বন্ধ। QR কোড স্ক্যান করতে সেটিংসে এটি চালু করুন।
+- [ ] `scanQrCameraError` — EN: The camera couldn't start. — BN: ক্যামেরা চালু হয়নি।
+- [ ] `followLinkFollowed` — EN: You're now following {name}. — BN: আপনি এখন {name}-কে ফলো করছেন।
+- [ ] `followLinkAlreadyFollowing` — EN: You already follow {name}. — BN: আপনি আগে থেকেই {name}-কে ফলো করছেন।
+- [ ] `followLinkSelf` — EN: That's your own QR code. — BN: এটি আপনার নিজের QR কোড।
+- [ ] `followLinkInvalid` — EN: That isn't a ThrottleIQ rider code. — BN: এটি ThrottleIQ রাইডারের কোড নয়।
+- [ ] `followLinkSignInFirst` — EN: Sign in to finish following this rider. — BN: এই রাইডারকে ফলো করা শেষ করতে সাইন ইন করুন।
+- [ ] `followLinkFailed` — EN: Couldn't follow this rider. Check your connection and try again. — BN: এই রাইডারকে ফলো করা যায়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।
+- [ ] `deletedRider` — EN: Deleted rider — BN: মুছে ফেলা রাইডার
+- [ ] `chatPeerDeleted` — EN: This rider deleted their account — BN: এই রাইডার তার অ্যাকাউন্ট মুছে ফেলেছেন
+- [ ] `messageDeleted` — EN: Message deleted — BN: মেসেজ মুছে ফেলা হয়েছে
+- [ ] `reportReviewPromise` — EN: A person reads every report within 24 hours. Your name is not shown to the rider you report. — BN: প্রতিটি রিপোর্ট 24 ঘণ্টার মধ্যে একজন মানুষ পড়েন। আপনি যাকে রিপোর্ট করছেন, তিনি আপনার নাম দেখতে পান না।
+- [ ] `communityRules` — EN: Community rules — BN: কমিউনিটি নিয়ম
+- [ ] `placesCacheTitle` — EN: Offline places — BN: অফলাইন জায়গা
+- [ ] `placesCacheSubtitle` — EN: Fuel pumps, garages and other places saved on this phone from your rides, so they load without data. — BN: আপনার রাইড থেকে এই ফোনে রাখা পাম্প, গ্যারেজ ও অন্যান্য জায়গা, যাতে ডেটা ছাড়াই দেখা যায়।
+- [ ] `placesCacheClear` — EN: Clear — BN: মুছুন
+- [ ] `placesCacheCleared` — EN: Saved places cleared — BN: রাখা জায়গাগুলো মুছে ফেলা হয়েছে
+- [ ] `placesCacheClearFailed` — EN: Couldn't clear saved places — BN: রাখা জায়গাগুলো মোছা যায়নি
+- [ ] `forumShare` — EN: Share — BN: শেয়ার
+- [ ] `forumShareToGroupsTitle` — EN: Share to groups — BN: গ্রুপে শেয়ার করুন
+- [ ] `forumShareAllRidersNote` — EN: Every post appears in All Riders. You can also pick up to {max} groups. — BN: প্রতিটি পোস্ট অল রাইডার্সে দেখা যায়। চাইলে সর্বোচ্চ {max}টি গ্রুপও বেছে নিতে পারেন।
+- [ ] `allRidersGroup` — EN: All Riders — BN: অল রাইডার্স
+- [ ] `allRidersGroupSubtitle` — EN: Every post from every group — BN: সব গ্রুপের সব পোস্ট
+- [ ] `forumShareYourGroups` — EN: Your groups — BN: আপনার গ্রুপ
+- [ ] `forumShareCount` — EN: {count} of {max} groups — BN: {max}টির মধ্যে {count}টি গ্রুপ
+- [ ] `publicLiveLinkTitle` — EN: Password link (/r/@handle) — BN: পাসওয়ার্ড লিংক (/r/@handle)
+- [ ] `publicLiveLinkDesc` — EN: Every ride shares to /r/@username, and it keeps the spot where your last ride ended (handy if your phone falls). Only people with your password can open it. Off by default. The Share button during a ride still makes a one-ride link. — BN: প্রতিটি রাইড /r/@username লিংকে শেয়ার হবে, আর শেষ রাইড যেখানে থেমেছে সেই জায়গাটা থেকে যাবে (ফোন পড়ে গেলে কাজে লাগে)। শুধু আপনার পাসওয়ার্ড জানা মানুষই এটা খুলতে পারবে। শুরুতে বন্ধ থাকে। রাইডের সময় শেয়ার বাটন আগের মতোই শুধু ওই রাইডের লিংক দেয়।
+- [ ] `publicLiveLinkPasswordTitle` — EN: Link password — BN: লিংকের পাসওয়ার্ড
+- [ ] `publicLiveLinkPasswordBody` — EN: Anyone opening your link must enter this. Use at least 12 characters and share it only with people you trust. A new password turns the old one off. — BN: আপনার লিংক খুলতে এই পাসওয়ার্ড দিতে হবে। কমপক্ষে 12 অক্ষর দিন, আর শুধু বিশ্বস্ত মানুষদের জানান। নতুন পাসওয়ার্ড দিলে পুরনোটা আর কাজ করবে না।
+- [ ] `publicLiveLinkPasswordTooShort` — EN: Use at least 12 characters. — BN: কমপক্ষে 12 অক্ষর দিন।
+- [ ] `publicLiveLinkChangePassword` — EN: Change password — BN: পাসওয়ার্ড বদলান
+- [ ] `publicLiveLinkSave` — EN: Save — BN: সেভ করুন
+- [ ] `sharedRidesHeading` — EN: Shared rides — BN: শেয়ার করা রাইড
+- [ ] `noSharedRidesYet` — EN: No shared rides yet — BN: এখনো কোনো শেয়ার করা রাইড নেই
+- [ ] `pinToProfile` — EN: Pin to profile — BN: প্রোফাইলে পিন করুন
+- [ ] `unpinFromProfile` — EN: Unpin from profile — BN: প্রোফাইল থেকে আনপিন করুন
+- [ ] `pinnedRidesHeading` — EN: Pinned — BN: পিন করা
+- [ ] `longestRideStat` — EN: longest ride — BN: দীর্ঘতম রাইড

@@ -1,0 +1,70 @@
+<!-- issue title: Bangla review 14: garage 7/7 (garage, maintenance, fuel), 65 lines -->
+# Bangla review 14: garage 7/7 (garage, maintenance, fuel), 65 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `deleteNowAction` — EN: Delete now — BN: এখনই মুছুন
+- [ ] `archivedPurgesIn` — EN: Deleted in {days, plural, =0{less than a day} =1{1 day} other{{days} days}} — BN: {days, plural, =0{এক দিনেরও কম সময়ে} =1{1 দিনে} other{{days} দিনে}} মুছে যাবে
+- [ ] `couldNotExportBike` — EN: Could not export: {error} — BN: এক্সপোর্ট করা যায়নি: {error}
+- [ ] `couldNotArchiveSharedRides` — EN: Could not remove the shared rides, so the bike was not archived. Check your connection and try again. — BN: শেয়ার করা রাইড সরানো যায়নি, তাই বাইকটি আর্কাইভ হয়নি। ইন্টারনেট দেখে আবার চেষ্টা করুন।
+- [ ] `fuelTitle` — EN: Fuel — BN: জ্বালানি
+- [ ] `fuelLogTitle` — EN: Fuel log — BN: জ্বালানির লগ
+- [ ] `fuelAddTitle` — EN: Log fill-up — BN: ফিল-আপ লগ করুন
+- [ ] `fuelEditTitle` — EN: Edit fill-up — BN: ফিল-আপ এডিট করুন
+- [ ] `fuelLitersLabel` — EN: Litres — BN: লিটার
+- [ ] `fuelKmAgoLabel` — EN: Filled how many km ago? (optional) — BN: কত কিমি আগে ভরেছেন? (ঐচ্ছিক)
+- [ ] `fuelKmAgoHint` — EN: Forgot to log it? Enter the km ridden since and the odometer is set back. — BN: লিখতে ভুলে গেছেন? তারপর কত কিমি চালিয়েছেন দিন, ওডোমিটার সেই অনুযায়ী পিছিয়ে যাবে।
+- [ ] `fuelTotalCostLabel` — EN: Total paid — BN: মোট দাম
+- [ ] `fuelPricePerLiterLabel` — EN: Price per litre — BN: প্রতি লিটারের দাম
+- [ ] `fuelPriceHint` — EN: Fill any two of litres, total paid and price per litre; the third is worked out. — BN: লিটার, মোট দাম ও প্রতি লিটারের দাম থেকে যেকোনো দুটি দিন; বাকিটা নিজে থেকে হিসাব হবে।
+- [ ] `fuelFullTankLabel` — EN: Filled to full — BN: ট্যাংক ফুল করা হয়েছে
+- [ ] `fuelFullTankHint` — EN: Needed for km/L. Turn off for a partial top-up. — BN: km/L হিসাবের জন্য দরকার। আংশিক ভরলে বন্ধ রাখুন।
+- [ ] `fuelStationLabel` — EN: Station (optional) — BN: পাম্প (ঐচ্ছিক)
+- [ ] `fuelSave` — EN: Save fill-up — BN: ফিল-আপ সেভ করুন
+- [ ] `fuelSaved` — EN: Fill-up saved — BN: ফিল-আপ সেভ হয়েছে
+- [ ] `fuelUpdated` — EN: Fill-up updated — BN: ফিল-আপ আপডেট হয়েছে
+- [ ] `fuelSaveFailed` — EN: Couldn't save the fill-up. Please try again. — BN: ফিল-আপ সেভ করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `fuelDeleteTitle` — EN: Delete this fill-up? — BN: এই ফিল-আপটি মুছবেন?
+- [ ] `fuelDeleteBody` — EN: It will be removed from this phone and your backup. — BN: এটি এই ফোন ও আপনার ব্যাকআপ থেকে মুছে যাবে।
+- [ ] `fuelDeleted` — EN: Fill-up deleted — BN: ফিল-আপ মুছে ফেলা হয়েছে
+- [ ] `fuelMoneyRequired` — EN: Enter the total or the price per litre — BN: মোট দাম অথবা প্রতি লিটারের দাম দিন
+- [ ] `fuelOdometerBelowEarlier` — EN: Lower than an earlier fill-up's odometer — BN: আগের একটি ফিল-আপের ওডোমিটারের চেয়ে কম
+- [ ] `fuelOdometerAboveLater` — EN: Higher than a later fill-up's odometer — BN: পরের একটি ফিল-আপের ওডোমিটারের চেয়ে বেশি
+- [ ] `fuelEmptyTitle` — EN: No fill-ups logged yet — BN: এখনো কোনো ফিল-আপ লগ করা হয়নি
+- [ ] `fuelEmptyBody` — EN: Log each fill-up to see your real km/L and fuel spend. — BN: প্রতিবার তেল নেওয়ার পর লগ করুন, আসল km/L ও জ্বালানি খরচ দেখতে পাবেন।
+- [ ] `fuelPartial` — EN: Partial — BN: আংশিক
+- [ ] `fuelAvgEfficiency` — EN: Avg km/L — BN: গড় km/L
+- [ ] `fuelLastEfficiency` — EN: Last km/L — BN: শেষ km/L
+- [ ] `fuelTotalSpent` — EN: Fuel spend — BN: জ্বালানি খরচ
+- [ ] `fuelTotalLiters` — EN: Litres — BN: লিটার
+- [ ] `fuelCostPerKm` — EN: Cost per km — BN: প্রতি কিমি খরচ
+- [ ] `fuelAvgPrice` — EN: Avg price/L — BN: গড় দাম/লিটার
+- [ ] `fuelFillCount` — EN: {count, plural, =1{1 fill-up} other{{count} fill-ups}} — BN: {count, plural, =1{1টি ফিল-আপ} other{{count}টি ফিল-আপ}}
+- [ ] `fuelNeedTwoFull` — EN: km/L shows up after two full-tank fill-ups. — BN: দুইবার ফুল ট্যাংক করার পর km/L দেখা যাবে।
+- [ ] `fuelCardNone` — EN: No fill-ups yet. Log one to track km/L. — BN: এখনো কোনো ফিল-আপ নেই। km/L দেখতে একটি লগ করুন।
+- [ ] `fuelCardSummary` — EN: Avg {efficiency} km/L · last fill {date} — BN: গড় {efficiency} km/L · শেষ ফিল {date}
+- [ ] `fuelCardLastOnly` — EN: Last fill {date} — BN: শেষ ফিল {date}
+- [ ] `archiveOptFuelLogs` — EN: Fuel logs — BN: জ্বালানির লগ
+- [ ] `archiveOptFuelLogsHint` — EN: Deletes this bike's fill-up history. — BN: এই বাইকের ফিল-আপের ইতিহাস মুছে দেয়।
+- [ ] `chartFuelSpend` — EN: Fuel spend per month — BN: মাসিক জ্বালানি খরচ
+- [ ] `chartFuelEfficiency` — EN: Fuel efficiency — BN: জ্বালানি দক্ষতা
+- [ ] `chartFuelCostPerKm` — EN: Fuel cost per km — BN: প্রতি কিমি জ্বালানি খরচ
+- [ ] `chartFuelLiters` — EN: Litres per month — BN: মাসিক লিটার
+- [ ] `fuelChartEmptyHint` — EN: Log fuel fill-ups to see this — BN: এটি দেখতে জ্বালানির ফিল-আপ লগ করুন
+- [ ] `analyticsColMonth` — EN: Month — BN: মাস
+- [ ] `analyticsColFillUps` — EN: Fill-ups — BN: ফিল-আপ
+- [ ] `analyticsColDistance` — EN: Distance — BN: দূরত্ব
+- [ ] `insightPeakMonth` — EN: Your highest was {value} in {month}. — BN: সবচেয়ে বেশি ছিল {month}-এ {value}।
+- [ ] `insightFuelAverage` — EN: Average {value} over {count, plural, =1{1 full-tank stretch} other{{count} full-tank stretches}}. — BN: গড় {value}, {count, plural, =1{1টি ফুল-ট্যাংক পর্বে} other{{count}টি ফুল-ট্যাংক পর্বে}}।
+- [ ] `insightFuelNeedFullFills` — EN: Log two full-tank fill-ups to measure this. — BN: এটি মাপতে দুইবার ফুল ট্যাংকের ফিল-আপ লগ করুন।
+- [ ] `visitOdometerBelowEarlier` — EN: Lower than an earlier visit's reading. If the odometer was replaced, you can still save. — BN: আগের একটি ভিজিটের রিডিংয়ের চেয়ে কম। ওডোমিটার বদলানো হলে তবুও সেভ করতে পারবেন।
+- [ ] `unitLitre` — EN: L — BN: লি.
+- [ ] `unitKmPerLitre` — EN: km/L — BN: km/L
+- [ ] `unitMpg` — EN: mpg — BN: mpg
+- [ ] `widgetServiceIn` — EN: {item} in {when} — BN: {when} পরে {item}
+- [ ] `widgetServiceOverdueBy` — EN: {item} overdue by {when} — BN: {item}-এর সময় {when} পেরিয়ে গেছে
+- [ ] `widgetServiceDueNow` — EN: {item} due now — BN: {item} এখনই করতে হবে
+- [ ] `widgetServiceFallback` — EN: Service — BN: সার্ভিস
+- [ ] `widgetDays` — EN: {count, plural, =1{1 day} other{{count} days}} — BN: {count, plural, =1{1 দিন} other{{count} দিন}}
+- [ ] `widgetNoData` — EN: No data yet — BN: এখনও কোনো তথ্য নেই
+- [ ] `widgetNoServiceData` — EN: No service data yet — BN: এখনও সার্ভিসের তথ্য নেই

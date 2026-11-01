@@ -1,0 +1,77 @@
+<!-- issue title: Bangla review 03: onboarding 2/2 (sign-in, tour, setup), 72 lines -->
+# Bangla review 03: onboarding 2/2 (sign-in, tour, setup), 72 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `tourSocialFeedTitle` — EN: Ride feed and people — BN: রাইড ফিড ও মানুষ
+- [ ] `tourSocialFeedBody` — EN: See shared rides, find riders to follow, and message them directly. — BN: শেয়ার করা রাইড দেখুন, ফলো করার মতো রাইডার খুঁজুন, আর সরাসরি মেসেজ পাঠান।
+- [ ] `tourSocialForumsTitle` — EN: Forums — BN: ফোরাম
+- [ ] `tourSocialForumsBody` — EN: Bike-model forums for mods, problems and meetups. — BN: মডিফিকেশন, সমস্যা ও মিটআপ নিয়ে বাইক মডেলভিত্তিক ফোরাম।
+- [ ] `tourSocialGroupTitle` — EN: Group rides — BN: গ্রুপ রাইড
+- [ ] `tourSocialGroupBody` — EN: Ride as a pack on a live map, with push-to-talk to the whole group. — BN: লাইভ ম্যাপে দল বেঁধে চালান, পুরো দলের সাথে পুশ-টু-টক।
+- [ ] `tourProfileTitle` — EN: Your rider profile — BN: আপনার রাইডার প্রোফাইল
+- [ ] `tourProfileSubtitle` — EN: Your public page: stats, garage, followers and who you follow. — BN: আপনার পাবলিক পেজ: পরিসংখ্যান, গ্যারেজ, ফলোয়ার ও আপনি যাদের ফলো করেন।
+- [ ] `tourProfileLocation` — EN: Garage › View profile — BN: গ্যারেজ › প্রোফাইল দেখুন
+- [ ] `tourProfileQrTitle` — EN: Follow by QR — BN: QR দিয়ে ফলো
+- [ ] `tourProfileQrBody` — EN: Show your QR code so a riding buddy can follow you in one scan, or scan theirs. — BN: আপনার QR কোড দেখান, যাতে রাইডিং সঙ্গী এক স্ক্যানেই আপনাকে ফলো করতে পারে, অথবা তাদেরটা স্ক্যান করুন।
+- [ ] `tourProfilePrivacyTitle` — EN: You choose who sees what — BN: কে কী দেখবে, আপনিই ঠিক করুন
+- [ ] `tourProfilePrivacyBody` — EN: Under Edit profile, decide who can see your profile and your bikes. — BN: প্রোফাইল এডিট থেকে ঠিক করুন কে আপনার প্রোফাইল ও বাইক দেখতে পারবে।
+- [ ] `tourProfileSafeQrTitle` — EN: SafeQR medical card — BN: SafeQR মেডিকেল কার্ড
+- [ ] `tourProfileSafeQrBody` — EN: In Settings, set up a scannable card with your blood group and emergency contacts for first responders. — BN: সেটিংসে রক্তের গ্রুপ ও জরুরি যোগাযোগসহ একটি স্ক্যানযোগ্য কার্ড তৈরি করুন, যা উদ্ধারকারীদের কাজে আসবে।
+- [ ] `updateRequiredTitle` — EN: Update required — BN: আপডেট দরকার
+- [ ] `updateRequiredBody` — EN: This version of ThrottleIQ no longer works with the server. Install the latest version to keep using the app. — BN: ThrottleIQ-এর এই সংস্করণটি আর সার্ভারের সঙ্গে কাজ করে না। অ্যাপটি ব্যবহার চালিয়ে যেতে সর্বশেষ সংস্করণ ইনস্টল করুন।
+- [ ] `updateRequiredAction` — EN: Get the latest version — BN: সর্বশেষ সংস্করণ নিন
+- [ ] `yourThrottleIqSection` — EN: Your ThrottleIQ — BN: আপনার ThrottleIQ
+- [ ] `yourThrottleIqDescription` — EN: Keep only what you use. Turning something off hides it and stops what it collects. Nothing is deleted, so you can turn it back on any time. — BN: শুধু যা ব্যবহার করেন তা রাখুন। কিছু বন্ধ করলে সেটি লুকানো হয় এবং তার তথ্য সংগ্রহ থামে। কিছুই মোছা হয় না, তাই যেকোনো সময় আবার চালু করতে পারবেন।
+- [ ] `communityFieldLabel` — EN: Community — BN: কমিউনিটি
+- [ ] `communityFullLabel` — EN: Everything — BN: সবকিছু
+- [ ] `communityFullDescription` — EN: Rides, riders & forums — BN: রাইড, রাইডার ও ফোরাম
+- [ ] `communityForumsLabel` — EN: Forums only — BN: শুধু ফোরাম
+- [ ] `communityForumsDescription` — EN: No feed or people — BN: ফিড বা মানুষ নেই
+- [ ] `communityOffLabel` — EN: Off — BN: বন্ধ
+- [ ] `communityOffDescription` — EN: No community — BN: কমিউনিটি নেই
+- [ ] `placesModuleTitle` — EN: Places & routes — BN: প্লেস ও রুট
+- [ ] `placesModuleSubtitle` — EN: Fuel, mechanics, checkposts and saved routes — BN: পেট্রোল পাম্প, মেকানিক, চেকপোস্ট ও সেভ করা রুট
+- [ ] `rideTrackingModuleTitle` — EN: Ride tracking — BN: রাইড ট্র্যাকিং
+- [ ] `rideTrackingModuleSubtitle` — EN: Recording, ride analytics, automatic odometer and crash detection. Uses your location. — BN: রেকর্ডিং, রাইড অ্যানালিটিক্স, স্বয়ংক্রিয় ওডোমিটার ও ক্র্যাশ শনাক্তকরণ। আপনার লোকেশন ব্যবহার করে।
+- [ ] `moduleKeepOnAction` — EN: Keep it on — BN: চালু রাখুন
+- [ ] `moduleTurnOffAction` — EN: Turn off — BN: বন্ধ করুন
+- [ ] `communityForumsOnlyWarningTitle` — EN: Hide rides and riders? — BN: রাইড ও রাইডার লুকাবেন?
+- [ ] `communityForumsOnlyWarningBody` — EN: You won't see rides others share, and you can't follow, message or group-ride with anyone. Riders on the same roads are often the first to warn about a closed road. — BN: অন্যদের শেয়ার করা রাইড দেখবেন না, আর কাউকে ফলো, মেসেজ বা গ্রুপ রাইড করতে পারবেন না। একই রাস্তার রাইডাররাই প্রায়ই প্রথম বন্ধ রাস্তার খবর দেন।
+- [ ] `communityOffWarningTitle` — EN: Turn off the community? — BN: কমিউনিটি বন্ধ করবেন?
+- [ ] `communityOffWarningBody` — EN: You'll also lose the forums, where owners of your exact bike answer questions and share fixes. Anything you already posted stays up. — BN: ফোরামও হারাবেন, যেখানে আপনার একই বাইকের মালিকরা প্রশ্নের উত্তর দেন ও সমাধান শেয়ার করেন। আগে পোস্ট করা সবকিছু থেকে যাবে।
+- [ ] `placesOffWarningTitle` — EN: Turn off Places? — BN: প্লেস বন্ধ করবেন?
+- [ ] `placesOffWarningBody` — EN: You won't see fuel stations, mechanics, police checkposts, speed cameras or your saved routes, all checked by riders near you. — BN: পেট্রোল পাম্প, মেকানিক, পুলিশ চেকপোস্ট, স্পিড ক্যামেরা বা আপনার সেভ করা রুট দেখবেন না, যা আশেপাশের রাইডাররা যাচাই করেছেন।
+- [ ] `rideTrackingOffWarningTitle` — EN: Turn off ride tracking? — BN: রাইড ট্র্যাকিং বন্ধ করবেন?
+- [ ] `rideTrackingOffWarningBody` — EN: ThrottleIQ will stop using your location. Ride recording, analytics, trip detection and crash detection turn off, and service reminders can only use the odometer readings you enter. Your past rides are kept. — BN: ThrottleIQ আপনার লোকেশন ব্যবহার বন্ধ করবে। রাইড রেকর্ডিং, অ্যানালিটিক্স, ট্রিপ শনাক্তকরণ ও ক্র্যাশ শনাক্তকরণ বন্ধ হবে, আর সার্ভিস রিমাইন্ডার শুধু আপনার দেওয়া ওডোমিটার রিডিং ব্যবহার করবে। আগের রাইডগুলো থেকে যাবে।
+- [ ] `rideTrackingOffDuringRide` — EN: Finish your ride before turning ride tracking off. — BN: রাইড ট্র্যাকিং বন্ধ করার আগে রাইড শেষ করুন।
+- [ ] `modulesUpdatedSnack` — EN: Done. Your tabs now show only what you use. — BN: হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।
+- [ ] `manualOdometerHint` — EN: Rides aren't tracked, so update this now and then to keep service reminders accurate. — BN: রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।
+- [ ] `tourForumsFindTitle` — EN: Find your bike's forum — BN: আপনার বাইকের ফোরাম খুঁজুন
+- [ ] `tourForumsFindBody` — EN: Brand and model hubs, plus forums other riders started. Search by bike or topic. — BN: ব্র্যান্ড ও মডেলের হাব, আর অন্য রাইডারদের খোলা ফোরাম। বাইক বা বিষয় দিয়ে খুঁজুন।
+- [ ] `tourForumsAskTitle` — EN: Ask and answer — BN: প্রশ্ন করুন, উত্তর দিন
+- [ ] `tourForumsAskBody` — EN: Post a problem, a DIY guide or a gear review. The answer that fixed it is marked as the solution. — BN: সমস্যা, DIY গাইড বা গিয়ার রিভিউ পোস্ট করুন। যে উত্তরে সমাধান হয়েছে, সেটি সমাধান হিসেবে চিহ্নিত হয়।
+- [ ] `tourForumsBikeTitle` — EN: Show your bike — BN: আপনার বাইক দেখান
+- [ ] `tourForumsBikeBody` — EN: Attach your bike or a maintenance log to a post, so others know exactly what you ride. — BN: পোস্টে আপনার বাইক বা রক্ষণাবেক্ষণ লগ যুক্ত করুন, যাতে সবাই জানে আপনি ঠিক কোন বাইক চালান।
+- [ ] `tourGarageSubtitleNoTracking` — EN: Every bike you own, each with its own odometer and service history. — BN: আপনার প্রতিটি বাইক, প্রত্যেকটির আলাদা ওডোমিটার ও সার্ভিস ইতিহাসসহ।
+- [ ] `tourGarageActiveBodyNoTracking` — EN: Maintenance opens on the active bike. Switch it any time. — BN: মেইনটেন্যান্স সক্রিয় বাইক দিয়ে খোলে। যেকোনো সময় বদলাতে পারবেন।
+- [ ] `tourGarageDetailBodyNoTracking` — EN: Tap a bike to add a photo and edit its specs. — BN: ছবি যোগ করতে ও স্পেসিফিকেশন বদলাতে বাইকে ট্যাপ করুন।
+- [ ] `tourProfileSubtitleNoSocial` — EN: Your public page: stats and garage. — BN: আপনার পাবলিক পেজ: পরিসংখ্যান ও গ্যারেজ।
+- [ ] `editRide` — EN: Edit ride — BN: রাইড সম্পাদনা
+- [ ] `seeMore` — EN: See more — BN: আরও দেখুন
+- [ ] `deleteRide` — EN: Delete ride — BN: রাইড মুছুন
+- [ ] `deleteSharedPostBody` — EN: This only deletes the shared post. Your ride data stays in your history.\n\nTo delete everything about this ride, go to Rides → History → that ride → Delete. — BN: এতে শুধু শেয়ার করা পোস্টটি মুছবে। আপনার রাইডের তথ্য ইতিহাসে থাকবে।\n\nরাইডটির সবকিছু মুছতে যান রাইড → ইতিহাস → সেই রাইড → মুছুন।
+- [ ] `deleteRideConfirmTitle` — EN: Delete this ride? — BN: এই রাইড মুছবেন?
+- [ ] `deleteRideConfirmBody` — EN: This permanently deletes the ride, its route and stats from your history. Its shared post, if any, is removed too. This can't be undone. — BN: এতে রাইড, তার রুট ও পরিসংখ্যান আপনার ইতিহাস থেকে স্থায়ীভাবে মুছে যাবে। শেয়ার করা পোস্ট থাকলে সেটিও সরে যাবে। এটি ফেরানো যাবে না।
+- [ ] `couldNotSaveChanges` — EN: Could not save changes: {e} — BN: পরিবর্তন সংরক্ষণ করা যায়নি: {e}
+- [ ] `sideloadBlockedTitle` — EN: Install ThrottleIQ from Google Play — BN: Google Play থেকে ThrottleIQ ইনস্টল করুন
+- [ ] `sideloadBlockedBody` — EN: This copy of ThrottleIQ was not installed from Google Play, so it can't connect to the server. Install ThrottleIQ from the Play Store to keep using it. — BN: ThrottleIQ-এর এই কপিটি Google Play থেকে ইনস্টল করা হয়নি, তাই এটি সার্ভারের সঙ্গে যুক্ত হতে পারছে না। অ্যাপটি ব্যবহার চালিয়ে যেতে Play Store থেকে ThrottleIQ ইনস্টল করুন।
+- [ ] `sideloadBlockedPlayAction` — EN: Open the Play Store — BN: Play Store খুলুন
+- [ ] `sideloadBlockedTesting` — EN: Want to test a build? Send a testing request on WhatsApp: 01327045005 — BN: কোনো বিল্ড পরীক্ষা করতে চান? WhatsApp-এ টেস্টিং অনুরোধ পাঠান: 01327045005
+- [ ] `sideloadBlockedWhatsAppAction` — EN: Send a testing request — BN: টেস্টিং অনুরোধ পাঠান
+- [ ] `updateRequiredExportRides` — EN: Export my rides — BN: আমার রাইডগুলো এক্সপোর্ট করুন
+- [ ] `updateRequiredNoRidesToExport` — EN: There are no rides on this phone to export. — BN: এই ফোনে এক্সপোর্ট করার মতো কোনো রাইড নেই।
+- [ ] `oemGuideStepSleepingApps` — EN: In Battery (Device care) → Background usage limits, remove ThrottleIQ from Sleeping apps and Deep sleeping apps. — BN: ব্যাটারি (ডিভাইস কেয়ার) → ব্যাকগ্রাউন্ড ব্যবহারের সীমা থেকে ThrottleIQ-কে স্লিপিং অ্যাপ আর ডিপ স্লিপিং অ্যাপের তালিকা থেকে সরিয়ে দিন।
+- [ ] `oemGuideOpenBatterySettings` — EN: Open battery settings — BN: ব্যাটারি সেটিংস খুলুন
+- [ ] `oemGuideSettingsTitle` — EN: Rides keep stopping? — BN: রাইড বারবার থেমে যায়?
+- [ ] `oemGuideSettingsSubtitle` — EN: Battery settings that keep {brand} phones recording — BN: {brand} ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস

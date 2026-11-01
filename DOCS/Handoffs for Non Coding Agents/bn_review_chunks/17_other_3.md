@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 17: other 3/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 17: other 3/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `audienceFollowers` — EN: Followers — BN: ফলোয়ার
+- [ ] `audienceMutual` — EN: Mutual — BN: পারস্পরিক
+- [ ] `selfHarm` — EN: Self-harm — BN: নিজের ক্ষতি করা
+- [ ] `otherReason` — EN: Other — BN: অন্যান্য
+- [ ] `followMyRideLive` — EN: Follow my ride live: {url} — BN: আমার রাইড লাইভ অনুসরণ করুন: {url}
+- [ ] `noReviewsYet` — EN: No reviews yet — BN: এখনো কোনো রিভিউ নেই
+- [ ] `pickLocationMapFirst` — EN: Pick the location on the map first. — BN: আগে ম্যাপে লোকেশন বেছে নিন।
+- [ ] `takeAPhoto` — EN: Take a photo — BN: ছবি তুলুন
+- [ ] `chooseFromGallery` — EN: Choose from gallery — BN: গ্যালারি থেকে বেছে নিন
+- [ ] `couldNotOpenCamera` — EN: Could not open the camera or gallery. — BN: ক্যামেরা বা গ্যালারি খোলা যায়নি।
+- [ ] `couldntLookThatSpot` — EN: Couldn't look that spot up — just describe it yourself. — BN: জায়গাটি খুঁজে পাওয়া যায়নি — নিজেই বর্ণনা লিখে দিন।
+- [ ] `photoDidntUploadSaving` — EN: Photo didn't upload — saving the place without it. — BN: ছবি আপলোড হয়নি — ছবি ছাড়াই জায়গাটি সেভ করা হচ্ছে।
+- [ ] `couldNotAddPlace` — EN: Could not add place: {e} — BN: জায়গা যোগ করা যায়নি: {e}
+- [ ] `addPhotoOptional` — EN: Add a photo (optional) — BN: ছবি যোগ করুন (ঐচ্ছিক)
+- [ ] `shopfrontPictureMakesThis` — EN: A shopfront picture makes this place easy to spot — BN: দোকানের সামনের ছবি থাকলে জায়গাটি চিনতে সুবিধা হয়
+- [ ] `couldntLoadThatPhoto` — EN: Couldn't load that photo — BN: ছবিটি লোড করা যায়নি
+- [ ] `replacePhoto` — EN: Replace photo — BN: ছবি বদলান
+- [ ] `removePhoto` — EN: Remove photo — BN: ছবি সরান
+- [ ] `addPlace` — EN: Add Place — BN: জায়গা যোগ করুন
+- [ ] `location` — EN: Location — BN: লোকেশন
+- [ ] `category` — EN: Category — BN: ক্যাটাগরি
+- [ ] `nameStar` — EN: Name * — BN: নাম *
+- [ ] `eGRahmanMotors` — EN: e.g. Rahman Motors — BN: যেমন: রহমান মোটরস
+- [ ] `addressOptional` — EN: Address (optional) — BN: ঠিকানা (ঐচ্ছিক)
+- [ ] `eGBesideOmuk` — EN: e.g. Beside Omuk School, Mirpur 10 — BN: যেমন: মিরপুর 10-এ অমুক স্কুলের পাশে
+- [ ] `writeItWayYoud` — EN: Write it the way you'd tell a friend — landmarks, not a formal street address. "Beside Omuk School" or "just after the Mirpur 10 circle" helps far more here. — BN: বন্ধুকে যেভাবে বলতেন সেভাবে লিখুন — আনুষ্ঠানিক ঠিকানা নয়, চেনা জায়গার কথা। "অমুক স্কুলের পাশে" বা "মিরপুর 10 চত্বরের ঠিক পরে" লিখলে অনেক বেশি কাজে লাগে।
+- [ ] `lookingUp` — EN: Looking up… — BN: খোঁজা হচ্ছে…
+- [ ] `usePinsArea` — EN: Use the pin's area — BN: পিনের এলাকা ব্যবহার করুন
+- [ ] `phoneOptional` — EN: Phone (optional) — BN: ফোন (ঐচ্ছিক)
+- [ ] `hoursOptional` — EN: Hours (optional) — BN: সময় (ঐচ্ছিক)
+- [ ] `eG9am9pm` — EN: e.g. 9am - 9pm, or 24/7 — BN: যেমন: সকাল 9টা – রাত 9টা, অথবা 24/7
+- [ ] `haventAddedAnyPlaces` — EN: You haven't added any places yet — BN: আপনি এখনো কোনো জায়গা যোগ করেননি
+- [ ] `verified` — EN: {displayName} · Verified — BN: {displayName} · যাচাইকৃত
+- [ ] `youveAlreadyReviewedThis` — EN: You've already reviewed this place. — BN: আপনি এই জায়গার রিভিউ আগেই দিয়েছেন।
+- [ ] `couldNotSubmitReview` — EN: Could not submit review: {e} — BN: রিভিউ জমা দেওয়া যায়নি: {e}
+- [ ] `place` — EN: Place — BN: জায়গা
+- [ ] `placeNotFound` — EN: Place not found — BN: জায়গা পাওয়া যায়নি
+- [ ] `addReview` — EN: Add your review — BN: আপনার রিভিউ যোগ করুন
+- [ ] `rateThisPlace` — EN: Rate this place — BN: এই জায়গার রেটিং দিন
+- [ ] `shareExperience` — EN: Share your experience... — BN: আপনার অভিজ্ঞতা জানান...
+- [ ] `submitReview` — EN: Submit review — BN: রিভিউ জমা দিন
+- [ ] `reviews` — EN: Reviews — BN: রিভিউ
+- [ ] `noReviewsYetBe` — EN: No reviews yet — be the first! — BN: এখনো কোনো রিভিউ নেই — প্রথমজন আপনিই হোন!
+- [ ] `officialPoint` — EN: Official point — BN: অফিসিয়াল পয়েন্ট
+- [ ] `n00Reviews` — EN: ★ 0 (0 reviews) — BN: ★ 0 (0টি রিভিউ)
+- [ ] `couldntOpenMapsApp` — EN: Couldn't open a maps app for directions — BN: দিকনির্দেশের জন্য ম্যাপ অ্যাপ খোলা যায়নি
+- [ ] `couldntOpenDialler` — EN: Couldn't open the dialler — BN: ডায়ালার খোলা যায়নি
+- [ ] `call` — EN: Call — BN: কল করুন
+- [ ] `youLabel` — EN: You — BN: আপনি
+- [ ] `mapsAppGivesDirections` — EN: Your maps app gives the directions. ThrottleIQ can log the trip in the background at the same time. — BN: দিকনির্দেশ দেবে আপনার ম্যাপ অ্যাপ। একই সময়ে ThrottleIQ ব্যাকগ্রাউন্ডে ট্রিপটি লগ করতে পারে।
+- [ ] `justDirections` — EN: Just directions — BN: শুধু দিকনির্দেশ
+- [ ] `dontAskAgain` — EN: Don't ask again — BN: আর জিজ্ঞেস করবেন না
+- [ ] `noNewPlacesFound` — EN: No new places found nearby — BN: কাছাকাছি নতুন কোনো জায়গা পাওয়া যায়নি
+- [ ] `couldNotImportNearby` — EN: Could not import nearby places: {e} — BN: কাছের জায়গা ইম্পোর্ট করা যায়নি: {e}
+- [ ] `importNearbyPlacesFrom` — EN: Import nearby places from OpenStreetMap — BN: OpenStreetMap থেকে কাছের জায়গা ইম্পোর্ট করুন
+- [ ] `allFilter` — EN: All — BN: সব
+- [ ] `browseRoutes` — EN: Browse routes → — BN: রুট দেখুন →
+- [ ] `openSettings` — EN: Open Settings — BN: সেটিংস খুলুন
+- [ ] `noPlacesNearbyYet` — EN: No places nearby yet — BN: কাছে এখনো কোনো জায়গা নেই
+- [ ] `addGarageFuelPump` — EN: Add a garage, fuel pump, parts shop, or biker cafe to help other riders. — BN: অন্য রাইডারদের সাহায্য করতে গ্যারেজ, ফুয়েল পাম্প, যন্ত্রাংশের দোকান বা বাইকার ক্যাফে যোগ করুন।
+- [ ] `addPlaceLower` — EN: Add place — BN: জায়গা যোগ করুন
+- [ ] `couldNotUpdateVisibility` — EN: Could not update visibility: {e} — BN: দৃশ্যমানতা বদলানো যায়নি: {e}
+- [ ] `deleteRouteQuestion` — EN: Delete route? — BN: রুট মুছবেন?
+- [ ] `thisRemovesSavedRoute` — EN: This removes the saved route. The ride it came from is untouched. — BN: এতে সেভ করা রুটটি মুছে যাবে। যে রাইড থেকে এটি এসেছে সেটি অপরিবর্তিত থাকবে।
+- [ ] `deleteRouteTitle` — EN: Delete route — BN: রুট মুছুন
+- [ ] `routeNotFound` — EN: Route not found — BN: রুট পাওয়া যায়নি
+- [ ] `turns` — EN: Turns — BN: বাঁক
+- [ ] `ridden` — EN: Ridden — BN: চালানো হয়েছে
+- [ ] `privateLabel` — EN: Private — BN: ব্যক্তিগত
+- [ ] `anyRiderCanFind` — EN: Any rider can find and ride this route — BN: যেকোনো রাইডার এই রুট খুঁজে নিয়ে চালাতে পারবে
+- [ ] `onlyCanSeeThis` — EN: Only you can see this route — BN: শুধু আপনি এই রুটটি দেখতে পারবেন
+- [ ] `startNavigation` — EN: Start navigation — BN: নেভিগেশন শুরু করুন
+- [ ] `turnByTurn` — EN: Turn by turn — BN: বাঁকে বাঁকে নির্দেশনা
+- [ ] `derivedFromRecordedTrack` — EN: Derived from the recorded track — distances are along the route. — BN: রেকর্ড করা ট্র্যাক থেকে তৈরি — দূরত্ব রুট ধরে মাপা।
+- [ ] `sharedByAnotherRider` — EN: Shared by another rider — BN: অন্য রাইডারের শেয়ার করা
+- [ ] `sharedBy` — EN: Shared by {value} — BN: {value}-এর শেয়ার করা
+- [ ] `canRideItBut` — EN: You can ride it, but only its owner can change or delete it. — BN: আপনি এটি চালাতে পারবেন, কিন্তু শুধু মালিকই এটি বদলাতে বা মুছতে পারবেন।
+- [ ] `locationPermissionOffSo` — EN: Location permission is off, so turns can't be tracked. Enable it in Settings to navigate. — BN: লোকেশন অনুমতি বন্ধ, তাই বাঁক ট্র্যাক করা যাচ্ছে না। নেভিগেট করতে সেটিংসে গিয়ে চালু করুন।
+- [ ] `locationServicesOffTurn` — EN: Location services are off. Turn them on to navigate. — BN: লোকেশন সার্ভিস বন্ধ আছে। নেভিগেট করতে চালু করুন।
+- [ ] `thisRouteHasNo` — EN: This route has no track to follow. — BN: এই রুটে অনুসরণ করার মতো কোনো ট্র্যাক নেই।

@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 22: other 8/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 22: other 8/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `boardDirtTrails` — EN: Dirt & Trails — BN: ডার্ট ও ট্রেইল
+- [ ] `boardDirtTrailsBlurb` — EN: Off-road bikes and trail riding — BN: অফ-রোড বাইক ও ট্রেইল রাইডিং
+- [ ] `boardMileageLab` — EN: Mileage Lab — BN: মাইলেজ ল্যাব
+- [ ] `boardMileageLabBlurb` — EN: Fuel economy tips and real numbers — BN: জ্বালানি সাশ্রয়ের টিপস ও আসল হিসাব
+- [ ] `openBrandForumNamed` — EN: Open the "{brand}" brand forum — BN: "{brand}" ব্র্যান্ড ফোরাম খুলুন
+- [ ] `forumPostTypeLabel` — EN: Post type — BN: পোস্টের ধরন
+- [ ] `forumPostTypeTroubleshoot` — EN: Troubleshoot — BN: সমস্যা সমাধান
+- [ ] `forumPostTypeDiyGuide` — EN: DIY guide — BN: DIY গাইড
+- [ ] `forumPostTypeGearReview` — EN: Gear review — BN: গিয়ার রিভিউ
+- [ ] `forumPostTypeGeneral` — EN: General — BN: সাধারণ
+- [ ] `forumTagSolved` — EN: Solved — BN: সমাধান হয়েছে
+- [ ] `forumTagHelpNeeded` — EN: Help needed — BN: সাহায্য দরকার
+- [ ] `forumTagGuide` — EN: Guide — BN: গাইড
+- [ ] `forumTagGear` — EN: Gear — BN: গিয়ার
+- [ ] `forumAttachMyBike` — EN: Show my bike on this post — BN: এই পোস্টে আমার বাইক দেখান
+- [ ] `forumNoBikeToAttach` — EN: Add a bike in Garage to show it on your posts. — BN: আপনার পোস্টে দেখাতে গ্যারেজে একটি বাইক যোগ করুন।
+- [ ] `forumAttachmentRide` — EN: Ride summary — BN: রাইডের সারাংশ
+- [ ] `forumAttachmentMaintenance` — EN: Maintenance log — BN: রক্ষণাবেক্ষণ লগ
+- [ ] `forumRemoveAttachment` — EN: Remove attachment — BN: সংযুক্তি সরান
+- [ ] `attachmentSharedFrom` — EN: Shared from {name}'s own log. — BN: {name}-এর নিজের লগ থেকে শেয়ার করা।
+- [ ] `forumAcceptedSolution` — EN: Accepted solution — BN: গৃহীত সমাধান
+- [ ] `forumAcceptSolution` — EN: Accept as solution — BN: সমাধান হিসেবে গ্রহণ করুন
+- [ ] `forumUnacceptSolution` — EN: Remove as solution — BN: সমাধান থেকে সরান
+- [ ] `forumMarkSolved` — EN: Mark solved — BN: সমাধান হয়েছে চিহ্নিত করুন
+- [ ] `forumReopen` — EN: Reopen — BN: আবার খুলুন
+- [ ] `forumCouldNotUpdateSolution` — EN: Couldn't update the solution: {e} — BN: সমাধান আপডেট করা যায়নি: {e}
+- [ ] `shareToForum` — EN: Share to forum — BN: ফোরামে শেয়ার করুন
+- [ ] `placesHubTabPlaces` — EN: Places — BN: জায়গা
+- [ ] `placesHubTabRoutes` — EN: Routes — BN: রুট
+- [ ] `placesHubTabSaved` — EN: Saved — BN: সংরক্ষিত
+- [ ] `placesSearchHint` — EN: Search pumps, garages, biker cafés… — BN: পাম্প, গ্যারেজ, বাইকার ক্যাফে খুঁজুন…
+- [ ] `placesClearSearch` — EN: Clear search — BN: খোঁজা মুছুন
+- [ ] `placesFiltersTooltip` — EN: Filters — BN: ফিল্টার
+- [ ] `placesMapView` — EN: Map — BN: ম্যাপ
+- [ ] `placesListView` — EN: List — BN: তালিকা
+- [ ] `placesLocateMe` — EN: Centre on me — BN: আমার অবস্থানে যান
+- [ ] `placesRadiusLabel` — EN: Search radius — BN: খোঁজার পরিধি
+- [ ] `placesRadiusKm` — EN: {km} km — BN: {km} কিমি
+- [ ] `placesSortLabel` — EN: Sort by — BN: সাজান
+- [ ] `placesSortDistance` — EN: Nearest — BN: সবচেয়ে কাছে
+- [ ] `placesSortRating` — EN: Top rated — BN: সেরা রেটিং
+- [ ] `placesVerifiedOnly` — EN: Verified places only — BN: শুধু যাচাই করা জায়গা
+- [ ] `placesVerifiedOnlyHint` — EN: Checked by the ThrottleIQ team — BN: ThrottleIQ টিম যাচাই করেছে
+- [ ] `placesFeaturesLabel` — EN: Features — BN: সুবিধা
+- [ ] `placesFiltersReset` — EN: Reset — BN: রিসেট
+- [ ] `placesNoMatches` — EN: No places match — BN: মিলে যায় এমন কোনো জায়গা নেই
+- [ ] `placesNoMatchesHint` — EN: Try a wider radius, another category or fewer filters. — BN: আরও বড় পরিধি, অন্য ক্যাটাগরি বা কম ফিল্টার দিয়ে চেষ্টা করুন।
+- [ ] `placesClearFilters` — EN: Clear filters — BN: ফিল্টার মুছুন
+- [ ] `placesWidenRadius` — EN: Search {km} km — BN: {km} কিমি জুড়ে খুঁজুন
+- [ ] `placeTagOpen24h` — EN: Open 24/7 — BN: 24/7 খোলা
+- [ ] `placeTagOctane95` — EN: Octane 95 — BN: অকটেন 95
+- [ ] `placeTagDigitalPayment` — EN: Digital payment — BN: ডিজিটাল পেমেন্ট
+- [ ] `placeTagEfiDiagnostics` — EN: EFI diagnostics — BN: ইএফআই ডায়াগনস্টিক
+- [ ] `placeTagPunctureRepair` — EN: Puncture repair — BN: পাংচার সারাই
+- [ ] `placeTagPaddockStand` — EN: Paddock stand — BN: প্যাডক স্ট্যান্ড
+- [ ] `placeTagGenuineParts` — EN: Genuine parts — BN: আসল পার্টস
+- [ ] `placeTagBikeParking` — EN: Bike parking — BN: বাইক পার্কিং
+- [ ] `placeTagRestrooms` — EN: Restrooms — BN: শৌচাগার
+- [ ] `placeApproxMinutes` — EN: ~{minutes} min — BN: ~{minutes} মিনিট
+- [ ] `placeVerifiedBadge` — EN: Verified — BN: যাচাই করা
+- [ ] `placeRiderApproved` — EN: Rider Approved — BN: রাইডারদের পছন্দ
+- [ ] `placeRiderApprovedHint` — EN: Rated 4.5★ or more by at least 5 ThrottleIQ riders — BN: অন্তত 5 জন ThrottleIQ রাইডার 4.5★ বা বেশি দিয়েছেন
+- [ ] `placeGoogleRatingBadge` — EN: ★ {rating} ({count} Google) — BN: ★ {rating} ({count} গুগল)
+- [ ] `placeRiderRatingBadge` — EN: ★ {rating} ({count, plural, =1{1 rider} other{{count} riders}}) — BN: ★ {rating} ({count} জন রাইডার)
+- [ ] `placeSave` — EN: Save — BN: সংরক্ষণ
+- [ ] `placeSavedLabel` — EN: Saved — BN: সংরক্ষিত
+- [ ] `placeSavedSnack` — EN: Saved — find it in the Saved tab, even offline — BN: সংরক্ষিত — অফলাইনেও সংরক্ষিত ট্যাবে পাবেন
+- [ ] `placeUnsavedSnack` — EN: Removed from saved places — BN: সংরক্ষিত জায়গা থেকে সরানো হয়েছে
+- [ ] `placeSaveFailed` — EN: Couldn't update your saved places — BN: সংরক্ষিত জায়গা আপডেট করা যায়নি
+- [ ] `radarWithin` — EN: within {km} km — BN: {km} কিমির মধ্যে
+- [ ] `placesScanOsmTitle` — EN: Nothing mapped here yet — BN: এখানে এখনো কিছু ম্যাপ করা নেই
+- [ ] `placesScanOsmBody` — EN: ThrottleIQ can pull fuel pumps, garages and parts shops for this area from OpenStreetMap, the free community map. It only runs when you tap, and never adds a place twice. — BN: ThrottleIQ ফ্রি কমিউনিটি ম্যাপ OpenStreetMap থেকে এই এলাকার ফুয়েল পাম্প, গ্যারেজ ও পার্টসের দোকান আনতে পারে। আপনি ট্যাপ করলেই শুধু চলে, আর কোনো জায়গা দুবার যোগ করে না।
+- [ ] `placesScanOsm` — EN: Scan OpenStreetMap — BN: OpenStreetMap স্ক্যান করুন
+- [ ] `placesScanning` — EN: Scanning… — BN: স্ক্যান হচ্ছে…
+- [ ] `placesOsmDialogTitle` — EN: Import from OpenStreetMap? — BN: OpenStreetMap থেকে ইম্পোর্ট করবেন?
+- [ ] `placesOsmDialogBody` — EN: Adds the fuel pumps, garages and parts shops within {km} km that OpenStreetMap knows about and ThrottleIQ doesn't yet. Places already here aren't duplicated. — BN: {km} কিমির মধ্যে যেসব ফুয়েল পাম্প, গ্যারেজ ও পার্টসের দোকান OpenStreetMap-এ আছে কিন্তু ThrottleIQ-তে এখনো নেই, সেগুলো যোগ করে। আগে থেকে থাকা জায়গা আবার যোগ হয় না।
+- [ ] `placesOsmImportAction` — EN: Import — BN: ইম্পোর্ট
+- [ ] `placesMoreActions` — EN: More — BN: আরও
+- [ ] `placesAddedByMe` — EN: Places I added — BN: আমার যোগ করা জায়গা
+- [ ] `placesLocationDeniedTitle` — EN: ThrottleIQ can't see your location — BN: ThrottleIQ আপনার অবস্থান দেখতে পাচ্ছে না
