@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§125**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§126**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -913,3 +913,8 @@ Found while planning a swag bug bounty (tee + cha-coffee).
 - **Bounty shape:** reports go through GitHub private vulnerability reporting (on) or the `SECURITY.md` email, never a public issue. Add scope (own accounts or the emulator only, no other riders' data, no DoS or mass Cloudinary uploads), safe harbor, and "Firebase API keys are public by design" as not eligible.
 - **Signed Cloudinary uploads are not written.** `decision_card_blaze_upgrade.md` says they are "written but switched off"; `functions/src` has no signing callable and the app has no signed path. Blaze alone does not fix §123's preset issue: the callable, an app build and the preset switch are still to do.
 - **`guides/app_check.md` step 1 is stale:** `SECURITY.md` step 3 was done 2026-10-27. Left for App Check: paid Apple team (still `NJ4675FFUX`), every Android tester on a Play track, console registration, and a web provider for `public/live-viewer.html` (Firebase's reCAPTCHA v3 provider may do; Enterprise is not required).
+
+## 126. "Summarize new issues" workflow fails on every new issue (2026-11-01)
+`.github/workflows/summary.yml` (actions/ai-inference) fails in ~6s with `Cannot use 'in' operator to search for 'choices' in OK`. `models.github.ai` (inference and catalog) answers a plain-text `200 OK`, so the GitHub Models API looks retired or changed. Seen on runs #91–#115 (issues #115–#166).
+- **Done (uncommitted):** workflow rewritten to call the Gemini API with `curl` (model `gemini-2.5-flash`, secret `GEMINI_API_KEY`); no third-party action left. Not run yet.
+- **Open:** add the repo secret `GEMINI_API_KEY` (Google AI Studio key), then open a test issue. Confirm the model id is still current if the call returns 404.
