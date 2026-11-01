@@ -27,9 +27,13 @@ firebase deploy --only hosting
   — served at `/.well-known/assetlinks.json` and
   `/.well-known/apple-app-site-association` by rewrites (Hosting's `**/.*`
   ignore would skip a real `.well-known/` folder). assetlinks carries the
-  release keystore's SHA-256; if the app ships through Play App Signing, add
-  Play's app-signing certificate SHA-256 (Play Console → Setup → App signing)
-  to `sha256_cert_fingerprints`. AASA names Team ID `NJ4675FFUX`.
+  upload keystore's SHA-256 (`4A:7B:…`) and Play's app-signing SHA-256
+  (`CF:1E:…`, issues_fixed §113); if Play's signing key ever changes, update
+  both copies (here and the landing-page repo). AASA names Team ID `NJ4675FFUX`.
+  Firebase Hosting does not serve this file: `throttleiqfb.web.app` answers
+  `/.well-known/assetlinks.json` itself with `[]` (`cache-control: private,
+  no-store`, checked 2026-11-01), so the `throttleiqfb.web.app` App Links host
+  can't verify from here.
   The canonical follow link is on `blankframe.tech`, so these two files and
   the `/ThrottleIQ/u/*` page must also be served from **blankframe.tech**
   (same files, or proxy that path to this Hosting site).

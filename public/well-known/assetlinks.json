@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "com.bft.throttleiq",
       "sha256_cert_fingerprints": [
-        "4A:7B:66:38:D0:55:FB:5C:6D:0B:87:06:F4:0B:A8:4A:EE:4A:5B:20:EF:EE:FE:75:C2:91:AB:3D:5F:36:67:76"
+        "4A:7B:66:38:D0:55:FB:5C:6D:0B:87:06:F4:0B:A8:4A:EE:4A:5B:20:EF:EE:FE:75:C2:91:AB:3D:5F:36:67:76",
+        "CF:1E:8B:AB:27:82:65:CC:DD:23:03:03:AE:61:2B:A9:51:90:A6:D0:4C:A8:5C:19:B8:58:5E:45:90:60:54:3D"
       ]
     }
   }
