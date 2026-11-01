@@ -4,7 +4,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/i18n/numeric_locale.dart';
-import '../../../../core/services/app_check_gate.dart' show kPlayStoreUrl;
+import '../../../../core/services/app_update_gate.dart'
+    show kYearInReviewInstallUrl;
 import '../../../../core/theme/app_theme_style.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../domain/year_in_review.dart';
@@ -164,7 +165,7 @@ class YearCard extends StatelessWidget {
                 padding: const EdgeInsets.all(4),
                 color: p.onInk,
                 child: QrImageView(
-                  data: kPlayStoreUrl,
+                  data: kYearInReviewInstallUrl,
                   size: 56,
                   padding: EdgeInsets.zero,
                   backgroundColor: p.onInk,

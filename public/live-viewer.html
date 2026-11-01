@@ -1074,15 +1074,15 @@
     // interest you get. Set a URL below and its button appears automatically
     // — no other edit needed.
     //
-    // Until then the CTA points at the signed beta APK on GitHub, which is a
-    // real, working download today.
+    // Until then the CTA points at the public install page (tagged ?c=live),
+    // which works for anyone, tester or not.
     // ---------------------------------------------------------------------
     const APP_LINKS = {
       // e.g. 'https://play.google.com/store/apps/details?id=com.bft.throttleiq'
       playStore: null,
       // e.g. 'https://apps.apple.com/app/idXXXXXXXXX'
       appStore: null,
-      directApk: 'https://github.com/blankframe-tech/ThrottleIQ/releases/latest',
+      directApk: 'https://www.blankframe.tech/throttle-iq/install/?c=live',
     };
 
     function installCtaHtml() {
@@ -1097,7 +1097,7 @@
       // once a store link exists, sending people to a GitHub release instead
       // would be a downgrade.
       if (buttons.length === 0 && APP_LINKS.directApk) {
-        buttons.push(`<a class="cta-button" href="${APP_LINKS.directApk}" rel="noopener">⬇ Download the Android beta</a>`);
+        buttons.push(`<a class="cta-button" href="${APP_LINKS.directApk}" rel="noopener">Get ThrottleIQ</a>`);
       }
       if (buttons.length === 0) return '';
 

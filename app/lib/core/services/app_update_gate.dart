@@ -26,6 +26,12 @@ Future<int> currentBuildNumber() async {
 /// Where riders get new builds (APK, Play beta and the iOS waitlist).
 const String kInstallUrl = 'https://throttleiqfb.web.app/install';
 
+/// The Year in Review share card's QR: the public install page, tagged so
+/// installs from shared cards can be counted. The Play listing 404s for
+/// non-testers until production access.
+const String kYearInReviewInstallUrl =
+    'https://www.blankframe.tech/throttle-iq/install/?c=yir';
+
 /// Whether [currentBuild] is older than [minBuild]. Fails open: an unknown
 /// build (0) or a `minBuild` that is missing or not a number never blocks.
 bool isUpdateRequired({required int currentBuild, required Object? minBuild}) =>
