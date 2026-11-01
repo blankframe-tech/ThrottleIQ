@@ -5,7 +5,7 @@ trigger: always_on
 # Efficiency Tooling — Always-On Rules
 
 1. **Always use ponytail and caveman** on every task in this repo. Both must be
-   active (`claude-work`/`-hat`/`-biz` or plain `claude`). Do not disable them,
+   active (`claude-work`/`-hat`/`-biz`/`-grr` or plain `claude`). Do not disable them,
    switch them off, or work around them. If either is missing, tell the user
    how to fix it; do not continue silently.
    - ponytail: `claude plugin install ponytail@ponytail`

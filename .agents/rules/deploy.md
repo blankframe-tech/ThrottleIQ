@@ -15,13 +15,13 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
    - Push to remote `origin/main`.
 
 3. **Deploy Release to Connected iPhone**
-   - Detect connected iOS device via `flutter devices` (e.g., Abraar’s iPhone `00008120-001E5D190A85A01E`).
+   - Detect connected iOS device via `flutter devices` (e.g., Abraar’s iPhone `00008120-001E5D190A85A01E`). Look for Abraar's iphone as the first priority.
    - Run the app in release mode on the device:
      ```bash
      cd app && flutter run --release -d <device_id>
      ```
 
-4. **No Android build.** Android installs come only from Google Play; the deploy pipeline builds no APK or AAB. The Play upload is done by hand outside this pipeline.
+4. **No Android build.** Android installs come only from Google Play; the deploy pipeline builds no APK, only and AAB. When you make the AAB, write a release note for it (since the last aab build) in Bangla and English. the release note sits as a markdown file in the same directory as the aab.
    - **versionCode:** the pubspec build number (after `+`). The `config/app.minBuild` gate compares it and Play rejects a reused code, so bump it every release.
 
 5. **Publish GitHub Release Tag (notes only, no binaries)**
@@ -34,4 +34,4 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
      ```bash
      bash scripts/deploy.sh
      ```
-   - Flags available: `--skip-qa`, `--skip-ios`, `--skip-github`, `--device <id>`, `--tag <tag>`.
+   - Flags available: `--skip-qa`, `--skip-android`, `--skip-ios`, `--skip-github`, `--device <id>`, `--tag <tag>`.

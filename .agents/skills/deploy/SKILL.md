@@ -2,8 +2,8 @@
 name: deploy
 description: >
   ThrottleIQ deployment automation runner. Standardizes building, testing,
-  deploying release to connected iPhone (no Android build: Android ships
-  only through Google Play, uploaded by hand), and publishing to GitHub Releases. Use whenever user asks to deploy, ddeploy,
+  deploying release to connected iPhone, building the Android AAB (no APK;
+  Google Play only, uploaded by hand) with EN/BN release notes, and publishing to GitHub Releases. Use whenever user asks to deploy, ddeploy,
   or publish a release.
 ---
 
@@ -48,9 +48,15 @@ bash scripts/deploy.sh
    cd app && flutter run --release -d 00008120-001E5D190A85A01E
    ```
 
-4. **No Android build.** Android installs come only from Google Play; no APK or AAB is built here.
-   The Play upload is manual. Its versionCode is the pubspec build number after `+`; the
-   `config/app.minBuild` gate compares it, and Play rejects a reused one, so bump it every release.
+4. **Android AAB only (no APK).** Android installs come only from Google Play; the upload is manual.
+   ```bash
+   cd app && flutter build appbundle --release
+   ```
+   `deploy.sh` writes `release-notes-<versionCode>.md` beside the AAB (`app/build/app/outputs/bundle/release/`)
+   with the commits since the last AAB build. Replace its two TODOs with user-facing notes in English (`<en-US>`)
+   and Bangla (`<bn-BD>`), each under Play's 500-character limit. versionCode is the pubspec build number after `+`;
+   the `config/app.minBuild` gate compares it, and Play rejects a reused one, so `deploy.sh` stops unless it is
+   above the last AAB's.
 
 5. **GitHub Release** (notes only, no binaries):
    ```bash

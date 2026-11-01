@@ -7,20 +7,24 @@ set -euo pipefail
 # Pipeline:
 #   1. Commit release changes
 #   2. Quality gate (scripts/check.sh) and push the current branch
-#   3. Build and launch release build on connected iPhone
-#   4. Create GitHub Release with tag and notes only (no binaries)
+#   3. Build the Android AAB (no APK) and draft its EN/BN release-notes file
+#   4. Build and launch release build on connected iPhone
+#   5. Create GitHub Release with tag and notes only (no binaries)
 #
-# No Android build: Android installs come only from Google Play, and the
-# Play upload (versionCode = pubspec build number) is done by hand.
+# Android ships only through Google Play; the AAB upload (versionCode =
+# pubspec build number) is done by hand. The notes draft next to the AAB
+# lists the commits since the last AAB build; write the en-US and bn-BD
+# text in it before uploading.
 #
 # Usage:
 #   bash scripts/deploy.sh [OPTIONS]
 #
 # Options:
 #   --skip-qa         Skip static analysis and unit test suite
+#   --skip-android    Skip the AAB build and its release-notes draft
 #   --skip-ios        Skip building and installing on connected iPhone
 #   --skip-github     Skip creating GitHub release tag
-#   --device <id>     Specify iOS device id (defaults to auto-detect connected iPhone)
+#   --device <id>     iOS device id (default: Abraar's iPhone if connected, else first iPhone)
 #   --tag <tag>       Specify release tag (defaults to derived from pubspec.yaml)
 #   --help            Show this help message
 # ─────────────────────────────────────────────────────────────────────────────
@@ -28,7 +32,11 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 APP_DIR="${REPO_ROOT}/app"
 
+AAB_DIR="${APP_DIR}/build/app/outputs/bundle/release"
+ABRAAR_IPHONE_ID="00008120-001E5D190A85A01E"
+
 SKIP_QA=false
+SKIP_ANDROID=false
 SKIP_IOS=false
 SKIP_GITHUB=false
 IOS_DEVICE_ID=""
@@ -39,6 +47,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --skip-qa)
       SKIP_QA=true
+      shift
+      ;;
+    --skip-android)
+      SKIP_ANDROID=true
       shift
       ;;
     --skip-ios)
@@ -62,7 +74,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --help|-h)
-      sed -n '3,25p' "$0" | sed 's/^# \?//'
+      sed -n '3,29p' "$0" | sed 's/^# \?//'
       exit 0
       ;;
     *)
@@ -90,9 +102,28 @@ if [ -z "$RELEASE_TAG" ]; then
 fi
 echo "🏷️ Target Release Tag: ${RELEASE_TAG}"
 
+VERSION_CODE="${PUBSPEC_VERSION##*+}"
+# Last AAB build = the highest versionCode among the notes files next to the
+# AAB; its "built from <branch> at `<sha>`" line marks where its changes ended.
+PREV_AAB_CODE=""
+PREV_AAB_COMMIT=""
+for f in "${AAB_DIR}"/*.md; do
+  [ -f "$f" ] || continue
+  code=$(sed -nE 's/.*versionCode ([0-9]+).*/\1/p' "$f" | head -n 1)
+  if [ -n "$code" ] && { [ -z "$PREV_AAB_CODE" ] || [ "$code" -gt "$PREV_AAB_CODE" ]; }; then
+    PREV_AAB_CODE="$code"
+    PREV_AAB_COMMIT=$(sed -nE 's/.*built from .* at `([0-9a-f]+)`.*/\1/p' "$f" | head -n 1)
+  fi
+done
+# Play rejects a reused versionCode: stop before anything is committed or pushed.
+if [ "$SKIP_ANDROID" = false ] && [ -n "$PREV_AAB_CODE" ] && [ "$VERSION_CODE" -le "$PREV_AAB_CODE" ]; then
+  echo "❌ versionCode +${VERSION_CODE} is not above the last AAB build (+${PREV_AAB_CODE}). Bump the build number in app/pubspec.yaml." >&2
+  exit 1
+fi
+
 # 2. Commit (before the gate, so the gate stamps the exact commit pushed)
 echo ""
-echo "==> [1/4] Committing release changes..."
+echo "==> [1/5] Committing release changes..."
 cd "${REPO_ROOT}"
 # Never auto-stage new files (issues §101.S9): a stray secret dropped in the
 # tree (.env.production, a .p12, a service-account key) would otherwise be
@@ -126,12 +157,12 @@ fi
 # the pre-push hook). It stamps the commit, so the push below doesn't re-run it.
 if [ "$SKIP_QA" = false ]; then
   echo ""
-  echo "==> [2/4] Running quality gate (scripts/check.sh)..."
+  echo "==> [2/5] Running quality gate (scripts/check.sh)..."
   bash "${REPO_ROOT}/scripts/check.sh"
   echo "✅ QA Gate Passed!"
 else
   echo ""
-  echo "==> [2/4] QA Gate skipped (--skip-qa)"
+  echo "==> [2/5] QA Gate skipped (--skip-qa)"
 fi
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
@@ -156,34 +187,86 @@ if [ -z "${TILE_URL_TEMPLATE:-}" ]; then
   echo "NOTE: TILE_URL_TEMPLATE is not set — release builds will use the public OpenStreetMap tile server. Fine for testing, not for a launch (issues §78.16)."
 fi
 
-# 4. iOS Release run
+# 4. Android AAB (Play only, no APK) + release-notes draft beside it
+if [ "$SKIP_ANDROID" = false ]; then
+  echo ""
+  echo "==> [3/5] Building Android App Bundle (AAB)..."
+  cd "${APP_DIR}"
+  flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
+  cd "${REPO_ROOT}"
+
+  if [ -n "$PREV_AAB_COMMIT" ] && git cat-file -e "${PREV_AAB_COMMIT}^{commit}" 2>/dev/null; then
+    SINCE="+${PREV_AAB_CODE} (\`${PREV_AAB_COMMIT}\`)"
+    AAB_LOG=$(git log --no-merges "${PREV_AAB_COMMIT}..HEAD" --pretty=format:"- %s")
+  else
+    # No marked AAB build to diff from: fall back to the last release tag.
+    PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+    SINCE="${PREV_TAG:-the last 20 commits}"
+    if [ -n "$PREV_TAG" ]; then
+      AAB_LOG=$(git log --no-merges "${PREV_TAG}..HEAD" --pretty=format:"- %s")
+    else
+      AAB_LOG=$(git log --no-merges -n 20 --pretty=format:"- %s")
+    fi
+  fi
+
+  NOTES_FILE="${AAB_DIR}/release-notes-${VERSION_CODE}.md"
+  cat > "${NOTES_FILE}" <<EOF
+# ThrottleIQ ${PUBSPEC_VERSION%%+*} (versionCode ${VERSION_CODE})
+
+AAB: \`app-release.aab\` (this folder), signed with the upload key, built from \`$(git rev-parse --abbrev-ref HEAD)\` at \`$(git rev-parse --short=8 HEAD)\`.
+Changes since ${SINCE}. Paste the block below into Play Console → Release notes. Each language stays under the 500-character limit.
+
+\`\`\`
+<en-US>
+TODO: write the user-facing English notes from the commits below
+</en-US>
+<bn-BD>
+TODO: একই নোট বাংলায় লিখুন
+</bn-BD>
+\`\`\`
+
+## Commits since ${SINCE}
+${AAB_LOG}
+EOF
+  echo "✅ AAB built: ${AAB_DIR}/app-release.aab"
+  echo "📝 Release-notes draft: ${NOTES_FILE}"
+  echo "   Write the en-US and bn-BD notes in it before the Play upload."
+else
+  echo ""
+  echo "==> [3/5] Android AAB build skipped (--skip-android)"
+fi
+
+# 5. iOS Release run
 if [ "$SKIP_IOS" = false ]; then
   echo ""
-  echo "==> [3/4] Deploying Release build to connected iPhone..."
+  echo "==> [4/5] Deploying Release build to connected iPhone..."
   cd "${APP_DIR}"
   if [ -z "$IOS_DEVICE_ID" ]; then
-    # Auto-detect connected iOS device ID
-    DETECTED_DEVICE=$(flutter devices 2>/dev/null | grep -i "ios" | grep -v "macOS" | head -n 1 | awk -F '•' '{print $2}' | tr -d ' ' || true)
-    if [ -n "$DETECTED_DEVICE" ]; then
-      IOS_DEVICE_ID="$DETECTED_DEVICE"
+    # Abraar's iPhone first; else the first connected iPhone; else Abraar's id anyway.
+    FLUTTER_DEVICES=$(flutter devices 2>/dev/null || true)
+    if grep -q "${ABRAAR_IPHONE_ID}" <<<"${FLUTTER_DEVICES}"; then
+      IOS_DEVICE_ID="${ABRAAR_IPHONE_ID}"
     else
-      # Default fallback
-      IOS_DEVICE_ID="00008120-001E5D190A85A01E"
+      DETECTED_DEVICE=$(grep -i "ios" <<<"${FLUTTER_DEVICES}" | grep -v "macOS" | head -n 1 | awk -F '•' '{print $2}' | tr -d ' ' || true)
+      IOS_DEVICE_ID="${DETECTED_DEVICE:-${ABRAAR_IPHONE_ID}}"
     fi
   fi
   echo "Targeting iOS Device: ${IOS_DEVICE_ID}"
-  flutter run --release -d "${IOS_DEVICE_ID}" ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
+  # Firestore enforces App Check and team NJ4675FFUX can't use App Attest, so the
+  # owner's iPhone runs the debug provider (its token is registered in the
+  # console). Never pass this to the AAB above. Drop it after the paid-team switch.
+  flutter run --release -d "${IOS_DEVICE_ID}" --dart-define=APP_CHECK_DEBUG=true ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   cd "${REPO_ROOT}"
   echo "✅ iOS Release run complete!"
 else
   echo ""
-  echo "==> [3/4] iOS release run skipped (--skip-ios)"
+  echo "==> [4/5] iOS release run skipped (--skip-ios)"
 fi
 
-# 5. GitHub Release
+# 6. GitHub Release
 if [ "$SKIP_GITHUB" = false ]; then
   echo ""
-  echo "==> [4/4] Creating GitHub Release (${RELEASE_TAG})..."
+  echo "==> [5/5] Creating GitHub Release (${RELEASE_TAG})..."
   cd "${REPO_ROOT}"
   
   if [ -z "$RELEASE_NOTES" ]; then
@@ -217,7 +300,7 @@ EOF
   echo "✅ GitHub Release created: https://github.com/blankframe-tech/ThrottleIQ/releases/tag/${RELEASE_TAG}"
 else
   echo ""
-  echo "==> [4/4] GitHub release skipped (--skip-github)"
+  echo "==> [5/5] GitHub release skipped (--skip-github)"
 fi
 
 echo ""
