@@ -12,6 +12,7 @@ import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/vote_batch.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Comments fetched per page by [RideShareRepository.getComments].
@@ -363,7 +364,7 @@ class RideShareRepository {
   }
 
   /// Puts [getVotes]'s answer on each ride, without asking about rides whose
-  /// tallies are both 0: `vote()` bumps a tally in the same transaction that
+  /// tallies are both 0: `vote()` bumps a tally in the same batch that
   /// writes the vote doc, so such a ride has no vote from anyone. Most feed
   /// rides have none.
   @visibleForTesting
@@ -449,43 +450,9 @@ class RideShareRepository {
 
   /// Casts, changes, or clears a vote. [value] is 1 (upvote) or -1
   /// (downvote); calling it again with the same value toggles the vote off.
-  ///
-  /// Writes exactly one of three shapes so every possible write stays within
-  /// firestore.rules' bounded ±1-per-field vote clause: a fresh vote bumps
-  /// only its own tally by 1; toggling off drops the vote doc and un-bumps
-  /// that same tally by 1; flipping (e.g. down→up) moves both tallies by 1
-  /// in the same write.
-  Future<void> vote(String rideId, String uid, int value) async {
-    assert(value == 1 || value == -1);
-    final docRef = _firestore.collection('rides').doc(rideId);
-    final voteRef = docRef.collection('votes').doc(uid);
-
-    await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(voteRef);
-      final previous = existing.data()?['value'] as int?;
-      if (previous == value) {
-        // Toggle off.
-        transaction.delete(voteRef);
-        transaction.update(docRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
-        });
-        return;
-      }
-
-      transaction.set(voteRef, {'value': value, 'uid': uid});
-      if (previous == null) {
-        transaction.update(docRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
-        });
-      } else {
-        // Flipping from one vote to the other.
-        transaction.update(docRef, {
-          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
-          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
-        });
-      }
-    });
-  }
+  /// A batch, so it queues offline: see [castVote].
+  Future<void> vote(String rideId, String uid, int value) =>
+      castVote(_firestore.collection('rides').doc(rideId), uid, value);
 
   /// Adds a comment to a ride.
   Future<String> addComment({

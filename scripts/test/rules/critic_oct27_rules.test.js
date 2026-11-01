@@ -84,28 +84,27 @@ const RIDE = {
   maxSpeedKmh: 60, comments: 0, upvotes: 0, downvotes: 0,
 };
 
-/** RideShareRepository.vote / ForumRepository.votePost, verbatim shape. */
-async function appVote(f, parentPath, uid, value) {
+/**
+ * castVote (app/lib/core/cloud/vote_batch.dart), verbatim shape: a plain read
+ * of the previous vote, then a batch (issue #154). `stalePrevious` stands in
+ * for an out-of-date cached read.
+ */
+async function appVote(f, parentPath, uid, value, stalePrevious) {
   const parent = doc(f, parentPath);
   const vote = doc(f, `${parentPath}/votes/${uid}`);
-  return runTransaction(f, async (tx) => {
-    const existing = await tx.get(vote);
-    const previous = existing.exists() ? existing.data().value : null;
-    if (previous === value) {
-      tx.delete(vote);
-      tx.update(parent, { [value === 1 ? 'upvotes' : 'downvotes']: increment(-1) });
-      return;
-    }
-    tx.set(vote, { value });
-    if (previous === null) {
-      tx.update(parent, { [value === 1 ? 'upvotes' : 'downvotes']: increment(1) });
-    } else {
-      tx.update(parent, {
-        upvotes: increment(value === 1 ? 1 : -1),
-        downvotes: increment(value === 1 ? -1 : 1),
-      });
-    }
+  const previous = stalePrevious !== undefined ? stalePrevious
+    : ((await getDoc(vote)).data()?.value ?? null);
+  const after = previous === value ? null : value;
+  const up = (after === 1 ? 1 : 0) - (previous === 1 ? 1 : 0);
+  const down = (after === -1 ? 1 : 0) - (previous === -1 ? 1 : 0);
+  const batch = writeBatch(f);
+  if (previous === value) batch.delete(vote);
+  else batch.set(vote, { value, uid });
+  batch.update(parent, {
+    ...(up !== 0 && { upvotes: increment(up) }),
+    ...(down !== 0 && { downvotes: increment(down) }),
   });
+  return batch.commit();
 }
 
 // ── Finding 1: counters can't be pumped by create+bump then bare delete ─────
@@ -114,7 +113,18 @@ for (const [label, parentPath, parentData] of [
   ['ride', 'rides/r1', RIDE],
   ['forum post', 'forums/f1/posts/p1', { userId: ALICE, upvotes: 0, downvotes: 0, replyCount: 0 }],
 ]) {
-  test(`F1 ${label} votes: the app's vote / flip / toggle-off transaction still works`, async () => {
+  test(`F1 ${label} votes: a batch built on a stale previous vote is denied`, async () => {
+    await seed({ 'forums/f1': { followerCount: 0, postCount: 1 }, [parentPath]: parentData });
+    const f = db(BOB);
+    await assertSucceeds(appVote(f, parentPath, BOB, 1));
+    // The cache still says "no vote": a second +1 would double-count.
+    await assertFails(appVote(f, parentPath, BOB, 1, null));
+    // The cache says "upvoted" after it was cleared: a -1 would undercount.
+    await assertSucceeds(appVote(f, parentPath, BOB, 1));
+    await assertFails(appVote(f, parentPath, BOB, 1, 1));
+  });
+
+  test(`F1 ${label} votes: the app's vote / flip / toggle-off batch still works`, async () => {
     await seed({ 'forums/f1': { followerCount: 0, postCount: 1 }, [parentPath]: parentData });
     const f = db(BOB);
     await assertSucceeds(appVote(f, parentPath, BOB, 1));

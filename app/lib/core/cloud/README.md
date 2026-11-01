@@ -14,5 +14,6 @@ The following files are present in this directory:
 - `ride_track_codec.dart`: Chunked flat-array encoding of a ride's GPS trail for Firestore.
 - `ride_track_loader.dart`: Loads a ride's GPS trail from local points or the cloud.
 - `sync_manager.dart`: Dart source code.
+- `vote_batch.dart`: `castVote`, a ride or forum-post vote as a plain read + batch, so it queues offline (GitHub #154).
 - `write_ack.dart`: `ackOrQueued`, a bounded wait for a Firestore write's ack; a timeout means queued, not failed (issues §104.6).
 
