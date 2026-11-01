@@ -14,6 +14,7 @@ import '../../domain/entities/forum_reply_entity.dart';
 import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
+import 'package:throttleiq/core/cloud/vote_batch.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Deterministic doc id for a rider-created forum.
@@ -749,7 +750,7 @@ class ForumRepository {
   }
 
   /// Puts [getVote]'s answer on each post, skipping posts whose tallies are
-  /// both 0: [votePost] bumps a tally in the same transaction that writes the
+  /// both 0: [votePost] bumps a tally in the same batch that writes the
   /// vote doc, so such a post has no vote from anyone. Mirrors
   /// RideShareRepository.hydrateWith (issues §104.3).
   @visibleForTesting
@@ -780,39 +781,11 @@ class ForumRepository {
     return doc.data()?['value'] as int?;
   }
 
-  /// Casts, changes, or clears a vote on a post. Same bounded ±1-per-field
-  /// transaction shape as RideShareRepository.vote, applied to
-  /// `upvotes`/`downvotes` on the post doc.
-  Future<void> votePost(
-      String forumId, String postId, String uid, int value) async {
-    assert(value == 1 || value == -1);
-    final postRef = _forums.doc(forumId).collection('posts').doc(postId);
-    final voteRef = postRef.collection('votes').doc(uid);
-
-    await _firestore.runTransaction((transaction) async {
-      final existing = await transaction.get(voteRef);
-      final previous = existing.data()?['value'] as int?;
-      if (previous == value) {
-        transaction.delete(voteRef);
-        transaction.update(postRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(-1),
-        });
-        return;
-      }
-
-      transaction.set(voteRef, {'value': value, 'uid': uid});
-      if (previous == null) {
-        transaction.update(postRef, {
-          value == 1 ? 'upvotes' : 'downvotes': FieldValue.increment(1),
-        });
-      } else {
-        transaction.update(postRef, {
-          'upvotes': FieldValue.increment(value == 1 ? 1 : -1),
-          'downvotes': FieldValue.increment(value == 1 ? -1 : 1),
-        });
-      }
-    });
-  }
+  /// Casts, changes, or clears a vote on a post, same shapes as
+  /// RideShareRepository.vote. A batch, so it queues offline: see [castVote].
+  Future<void> votePost(String forumId, String postId, String uid, int value) =>
+      castVote(
+          _forums.doc(forumId).collection('posts').doc(postId), uid, value);
 
   /// Adds a reply to a post and bumps its `replyCount`.
   Future<String> addReply({

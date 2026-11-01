@@ -17,6 +17,12 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## GitHub #154. Ride and forum votes failed offline and once the quota was spent — FIXED (2026-11-01, branch `fix/154-vote-batch`)
+
+`RideShareRepository.vote` and `ForumRepository.votePost` used a transaction, which fails offline and on the Spark quota. Both now call `castVote` (`app/lib/core/cloud/vote_batch.dart`): a plain `get()` of the previous vote (cache offline; an uncached vote counts as none), then the vote doc (`{value, uid}`) and the tally in one `WriteBatch`, awaited through `ackOrQueued` so an offline vote queues instead of hanging. The tally shape is `voteTallyDelta`, the same formula as `voteBumpValid`. A stale read is refused by `voteTallied`, never miscounted. No rules change. *Tests:* `app/test/core/cloud/vote_batch_test.dart` (each shape, both repositories, on `fake_cloud_firestore`); `critic_oct27_rules.test.js` now votes through the batch and denies a batch built on a stale previous vote. Not checked on a device offline.
+
+---
+
 ## 123. Security sweep of 2026-10-30: 25 fixed, 1 skipped (PR #98, merged `31bd0b41`)
 
 The plan, every row's commit, and the deploy notes are in `security_sweep_2026-10-30.md`. GitHub issues #65–#97 (one per row; the fix issues closed with the PR). Four agents ran in parallel worktrees, one per group, and were merged one at a time; `scripts/check.sh` passed on the merged branch and CI passed on the PR.
