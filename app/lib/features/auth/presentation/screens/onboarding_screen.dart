@@ -508,10 +508,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 onBack: _backTour,
                 onNext: _advanceTour,
                 // A sideload-blocked rider can't load the live screens.
-                onShowMe: slide.showMeRoute == null ||
-                        ref.watch(sideloadDemoProvider)
-                    ? null
-                    : () => _showMeFor(slide, _tourSlide),
+                onShowMe:
+                    slide.showMeRoute == null || ref.watch(sideloadDemoProvider)
+                        ? null
+                        : () => _showMeFor(slide, _tourSlide),
               ),
             ),
           ],

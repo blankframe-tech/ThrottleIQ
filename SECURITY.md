@@ -14,7 +14,7 @@ Include what you found, steps to reproduce, the affected version, and what an at
 
 ThrottleIQ is built by a small team, so the reward is small but real:
 
-- **Every valid, new vulnerability:** a ThrottleIQ drop-shoulder t-shirt and cha-coffee from the ThrottleIQ team. Free delivery inside Bangladesh; outside Bangladesh you pay the shipping.
+- **Every valid, new vulnerability:** a ThrottleIQ drop-shoulder t-shirt and cha-nashta-adda with the ThrottleIQ team. Free delivery inside Bangladesh; outside Bangladesh you pay the shipping.
 - **Higher-severity findings** (for example reading another rider's location, rides or private data, taking over an account, or sending crash alerts as someone else) may get more. This is at the team's discretion.
 - With your permission, your name or handle goes in the credits below.
 
