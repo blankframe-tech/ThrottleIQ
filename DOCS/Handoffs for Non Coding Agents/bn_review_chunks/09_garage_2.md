@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 09: garage 2/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 09: garage 2/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `scanningInstrumentCluster` — EN: Scanning instrument cluster... — BN: ইন্সট্রুমেন্ট ক্লাস্টার স্ক্যান হচ্ছে...
+- [ ] `takePhoto` — EN: Take Photo — BN: ছবি তুলুন
+- [ ] `fromPhotos` — EN: From Photos — BN: ছবি থেকে নিন
+- [ ] `currentAppOdometer` — EN: Current App Odometer: — BN: অ্যাপের বর্তমান ওডোমিটার:
+- [ ] `physicalInstrumentClusterReading` — EN: Physical Instrument Cluster Reading * — BN: ইন্সট্রুমেন্ট ক্লাস্টারের আসল রিডিং *
+- [ ] `enterValidPositiveNumber` — EN: Enter valid positive number — BN: সঠিক ধনাত্মক সংখ্যা দিন
+- [ ] `kmAddedOfflineRiding` — EN: +{delta} km added (offline riding accounted for) — BN: +{delta} কিমি যোগ হয়েছে (অফলাইন রাইড ধরা হয়েছে)
+- [ ] `kmReductionCalibratingBaseline` — EN: {delta} km reduction (calibrating baseline) — BN: {delta} কিমি কমেছে (বেসলাইন ঠিক করা হচ্ছে)
+- [ ] `confirmSyncOdometer` — EN: Confirm & Sync Odometer — BN: নিশ্চিত করে ওডোমিটার সিঙ্ক করুন
+- [ ] `resetSelectedItems` — EN: Reset selected items? — BN: বেছে নেওয়া আইটেম রিসেট করবেন?
+- [ ] `thisLogsAsServiced` — EN: This logs "{label}" as serviced today at the bike's current odometer, resetting its due date. Past history is kept. — BN: এতে "{label}" আজ বাইকের বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং বাকি হওয়ার তারিখ রিসেট হবে। আগের ইতিহাস থেকে যাবে।
+- [ ] `thisLogsItemsAs` — EN: This logs {selectedCount} items as serviced today at the bike's current odometer, resetting their due dates. Past history is kept. — BN: এতে {selectedCount}টি আইটেম আজ বাইকের বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং তাদের বাকি হওয়ার তারিখ রিসেট হবে। আগের ইতিহাস থেকে যাবে।
+- [ ] `reset` — EN: Reset — BN: রিসেট
+- [ ] `n1ItemResetServiced` — EN: 1 item reset to serviced today. — BN: 1টি আইটেম আজ সার্ভিস করা হিসেবে রিসেট হয়েছে।
+- [ ] `itemsResetServicedToday` — EN: {count} items reset to serviced today. — BN: {count}টি আইটেম আজ সার্ভিস করা হিসেবে রিসেট হয়েছে।
+- [ ] `resetServiceLogTitle` — EN: Reset Service Log — BN: সার্ভিস লগ রিসেট
+- [ ] `tickWhatJustServiced` — EN: Tick what you just serviced on {displayName} — BN: {displayName}-এ যা এইমাত্র সার্ভিস করালেন তা টিক দিন
+- [ ] `selectedItemsLoggedAs` — EN: Selected items are logged as serviced today at the current odometer, resetting their due date. Nothing is deleted. — BN: বেছে নেওয়া আইটেম আজ বর্তমান ওডোমিটারে সার্ভিস করা হিসেবে লগ হবে এবং বাকি হওয়ার তারিখ রিসেট হবে। কিছুই মুছবে না।
+- [ ] `noTrackedChecksYet` — EN: No tracked checks yet. Set some up under "Customize" first. — BN: এখনো কোনো চেক ট্র্যাক করা হচ্ছে না। আগে "কাস্টমাইজ"-এ গিয়ে কিছু সেট করুন।
+- [ ] `selectedOfTotal` — EN: {selectedCount} of {remindersCount} selected — BN: {remindersCount}টির মধ্যে {selectedCount}টি নির্বাচিত
+- [ ] `selectItemsReset` — EN: Select items to reset — BN: রিসেট করতে আইটেম বেছে নিন
+- [ ] `lastDoneKmAgo` — EN: Last done {kmSinceService} km ago — BN: সর্বশেষ {kmSinceService} কিমি আগে করা হয়েছে
+- [ ] `cropBikePhoto` — EN: Crop bike photo — BN: বাইকের ছবি ক্রপ করুন
+- [ ] `bikeAdded` — EN: Bike added. — BN: বাইক যোগ হয়েছে।
+- [ ] `setServiceIntervals` — EN: Set service intervals — BN: সার্ভিস ইন্টারভাল ঠিক করুন
+- [ ] `editBike` — EN: Edit Bike — BN: বাইক সম্পাদনা
+- [ ] `addPhoto` — EN: Add Photo — BN: ছবি যোগ করুন
+- [ ] `crop` — EN: Crop — BN: ক্রপ
+- [ ] `replace` — EN: Replace — BN: বদলান
+- [ ] `odometerReadingKm` — EN: Odometer reading (km) — BN: ওডোমিটার রিডিং (কিমি)
+- [ ] `bikeColor` — EN: Bike color — BN: বাইকের রং
+- [ ] `saveChanges` — EN: Save Changes — BN: পরিবর্তন সেভ করুন
+- [ ] `bikeNotFound` — EN: Bike not found — BN: বাইক পাওয়া যায়নি
+- [ ] `archived` — EN: {displayName} (archived) — BN: {displayName} (আর্কাইভ করা)
+- [ ] `discussThisBike` — EN: Discuss this bike — BN: এই বাইক নিয়ে আলোচনা
+- [ ] `unarchiveBike` — EN: Unarchive bike — BN: বাইক আর্কাইভ থেকে ফিরিয়ে আনুন
+- [ ] `archiveDeleteBike` — EN: Archive or delete bike — BN: বাইক আর্কাইভ বা মুছুন
+- [ ] `totalDistance` — EN: Total Distance — BN: মোট দূরত্ব
+- [ ] `totalRides` — EN: Total Rides — BN: মোট রাইড
+- [ ] `odometer` — EN: Odometer — BN: ওডোমিটার
+- [ ] `engine` — EN: Engine — BN: ইঞ্জিন
+- [ ] `rideHistory` — EN: Ride History — BN: রাইডের ইতিহাস
+- [ ] `noRidesYetThis` — EN: No rides yet for this bike — BN: এই বাইকের এখনো কোনো রাইড নেই
+- [ ] `removeBikeQuestion` — EN: Remove {displayName}? — BN: {displayName} সরাবেন?
+- [ ] `archivingHidesThisBike` — EN: Archiving hides this bike from your garage and bike pickers. Its rides stay in your history and stats, and you can unarchive it any time. — BN: আর্কাইভ করলে বাইকটি আপনার গ্যারেজ ও বাইক বাছাইয়ের তালিকা থেকে লুকিয়ে যাবে। এর রাইডগুলো আপনার ইতিহাস ও পরিসংখ্যানে থাকবে, আর যেকোনো সময় আর্কাইভ থেকে ফিরিয়ে আনতে পারবেন।
+- [ ] `deleteBikeAllIts` — EN: Delete bike and all its rides — BN: বাইক ও এর সব রাইড মুছুন
+- [ ] `archiveBikeKeepRides` — EN: Archive bike (keep rides) — BN: বাইক আর্কাইভ করুন (রাইড থাকবে)
+- [ ] `couldNotArchiveThis` — EN: Could not archive this bike: {e} — BN: বাইকটি আর্কাইভ করা যায়নি: {e}
+- [ ] `couldNotDeleteThis` — EN: Could not delete this bike: {e} — BN: বাইকটি মুছে ফেলা যায়নি: {e}
+- [ ] `bikeBackGarage` — EN: Bike is back in your garage — BN: বাইকটি আপনার গ্যারেজে ফিরে এসেছে
+- [ ] `couldNotUnarchiveThis` — EN: Could not unarchive this bike: {e} — BN: বাইকটি আর্কাইভ থেকে ফেরানো যায়নি: {e}
+- [ ] `deleteBikeQuestion` — EN: Delete bike and all its rides? — BN: বাইক ও এর সব রাইড মুছবেন?
+- [ ] `usingDefaultServiceIntervals` — EN: Using default service intervals — BN: ডিফল্ট সার্ভিস ইন্টারভাল ব্যবহার হচ্ছে
+- [ ] `serviceMaintenance` — EN: Service & maintenance — BN: সার্ভিস ও মেইনটেন্যান্স
+- [ ] `nextSummary` — EN: Next: {summary} — BN: পরবর্তী: {summary}
+- [ ] `intervals` — EN: Intervals — BN: ইন্টারভাল
+- [ ] `viewAll` — EN: View all — BN: সব দেখুন
+- [ ] `yourBikesTitle` — EN: Your Bikes — BN: আপনার বাইকগুলো
+- [ ] `viewProfile` — EN: View profile — BN: প্রোফাইল দেখুন
+- [ ] `myPlaces` — EN: My Places — BN: আমার জায়গা
+- [ ] `noBikesYet` — EN: No bikes yet — BN: এখনো কোনো বাইক নেই
+- [ ] `addFirstBikeGet` — EN: Add your first bike to get started — BN: শুরু করতে আপনার প্রথম বাইকটি যোগ করুন
+- [ ] `setActive` — EN: Set active — BN: সক্রিয় করুন
+- [ ] `totalLower` — EN: total — BN: মোট
+- [ ] `ridesLower` — EN: rides — BN: রাইড
+- [ ] `lastRide` — EN: last ride — BN: সর্বশেষ রাইড
+- [ ] `archivedBikes` — EN: Archived bikes ({bikesCount}) — BN: আর্কাইভ করা বাইক ({bikesCount})
+- [ ] `ridesAndDistance` — EN: {rideCount} rides · {totalDistanceM} — BN: {rideCount}টি রাইড · {totalDistanceM}
+- [ ] `unarchive` — EN: Unarchive — BN: আর্কাইভ থেকে ফেরান
+- [ ] `myFollowers` — EN: My followers — BN: আমার ফলোয়াররা
+- [ ] `onlyMe` — EN: Only me — BN: শুধু আমি
+- [ ] `blockedUsers` — EN: Blocked Users — BN: ব্লক করা ইউজার
+- [ ] `noBlockedUsers` — EN: No blocked users — BN: কোনো ব্লক করা ইউজার নেই
+- [ ] `errorLoadingUser` — EN: Error loading user — BN: ইউজার লোড করতে ত্রুটি
+- [ ] `unknownUser` — EN: Unknown user — BN: অজানা ইউজার
+- [ ] `unblock` — EN: Unblock — BN: আনব্লক
+- [ ] `couldNotSaveProfile` — EN: Could not save profile: {e} — BN: প্রোফাইল সেভ করা যায়নি: {e}
+- [ ] `editProfile` — EN: Edit profile — BN: প্রোফাইল সম্পাদনা
+- [ ] `displayName` — EN: Display name — BN: প্রদর্শিত নাম
+- [ ] `nickname` — EN: Nickname — BN: ডাকনাম

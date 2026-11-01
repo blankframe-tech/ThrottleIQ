@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 12: garage 5/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 12: garage 5/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `lastServiceLine` — EN: Last: {details} — BN: শেষবার: {details}
+- [ ] `lastServicedLabel` — EN: Last done:  — BN: শেষ করা হয়েছে: 
+- [ ] `limitsByDate` — EN: by {date} — BN: {date}-এর মধ্যে
+- [ ] `limitsKmOrDate` — EN: {km} or {date}, whichever first — BN: {km} অথবা {date}, যেটি আগে
+- [ ] `logItNow` — EN: Log it now — BN: এখনই লগ করুন
+- [ ] `logVisitTitle` — EN: Log a visit — BN: ভিজিট লগ করুন
+- [ ] `maintAdaptSubtitle` — EN: Shorten intervals for stop-and-go traffic, hard braking and rough roads — BN: থেমে থেমে চলা, জোরে ব্রেক ও খারাপ রাস্তার জন্য ব্যবধান কমান
+- [ ] `maintAdaptTitle` — EN: Adapt to my riding — BN: আমার চালানো অনুযায়ী মানিয়ে নিন
+- [ ] `maintAlertDueSoon` — EN: {item} due soon — BN: {item} শীঘ্রই করতে হবে
+- [ ] `maintAlertOverdue` — EN: {item} is overdue — BN: {item}-এর সময় পেরিয়ে গেছে
+- [ ] `maintDueToday` — EN: Due today — BN: আজ করতে হবে
+- [ ] `maintLeftDays` — EN: {days, plural, =1{1 day left} other{{days} days left}} — BN: {days, plural, =1{1 দিন বাকি} other{{days} দিন বাকি}}
+- [ ] `maintLeftKm` — EN: {km} left — BN: {km} বাকি
+- [ ] `maintLeftKmOrDays` — EN: {km} or {days} days left, whichever comes first — BN: {km} অথবা {days} দিন বাকি, যেটি আগে আসে
+- [ ] `maintOverDays` — EN: {days, plural, =1{Was due yesterday} other{Was due {days} days ago}} — BN: {days, plural, =1{গতকাল করার কথা ছিল} other{{days} দিন আগে করার কথা ছিল}}
+- [ ] `maintOverKm` — EN: Over by {km} — BN: {km} বেশি হয়ে গেছে
+- [ ] `maintRemindersSubtitle` — EN: Notify me when something is due, and before papers expire — BN: কিছু করার সময় হলে এবং কাগজের মেয়াদ শেষের আগে জানান
+- [ ] `maintRemindersTitle` — EN: Maintenance reminders — BN: মেইনটেন্যান্স রিমাইন্ডার
+- [ ] `maintScheduleNotSet` — EN: Not set up. Tap to choose your bike's schedule — BN: সেট আপ করা হয়নি। বাইকের সার্ভিস সূচি বেছে নিতে ট্যাপ করুন
+- [ ] `maintScheduleTitle` — EN: Schedule & riding conditions — BN: সার্ভিস সূচি ও রাস্তার অবস্থা
+- [ ] `maintUnknownStatus` — EN: Not known yet. Set when it was last done — BN: এখনো জানা নেই। শেষ কবে করা হয়েছে লিখুন
+- [ ] `markFixed` — EN: Fixed — BN: ঠিক করা হয়েছে
+- [ ] `moneyTitle` — EN: Running costs — BN: চালানোর খরচ
+- [ ] `nextDueLine` — EN: Next: {item} · {when} — BN: পরবর্তী: {item} · {when}
+- [ ] `nextUpIs` — EN: Next up: {item} — BN: পরবর্তী: {item}
+- [ ] `notSure` — EN: Not sure — BN: নিশ্চিত নই
+- [ ] `notifChannelMaintenance` — EN: Maintenance — BN: মেইনটেন্যান্স
+- [ ] `notifChannelMaintenanceDesc` — EN: Service reminders and paperwork expiry — BN: সার্ভিস রিমাইন্ডার ও কাগজপত্রের মেয়াদ
+- [ ] `odometerAtThatTime` — EN: Odometer at the time — BN: তখন ওডোমিটারে কত ছিল
+- [ ] `oilBrandLabel` — EN: Oil used — BN: যে মবিল দেওয়া হয়েছে
+- [ ] `oilDetails` — EN: Engine oil — BN: ইঞ্জিন অয়েল
+- [ ] `oilGradeFull` — EN: Full synthetic — BN: ফুল সিনথেটিক
+- [ ] `oilGradeInterval` — EN: Change about every {km} km or {days} days — BN: প্রায় প্রতি {km} কিমি বা {days} দিনে বদলান
+- [ ] `oilGradeMineral` — EN: Mineral — BN: মিনারেল
+- [ ] `oilGradeNextChange` — EN: Next oil change set to {km} km or {days} days — BN: পরের মবিল পরিবর্তন {km} কিমি বা {days} দিনে
+- [ ] `oilGradeSemi` — EN: Semi-synthetic — BN: সেমি-সিনথেটিক
+- [ ] `oneOffJob` — EN: Something else (one-off) — BN: অন্য কিছু (একবারের কাজ)
+- [ ] `orJoiner` — EN:  or  — BN:  অথবা 
+- [ ] `paperworkAlertExpired` — EN: {doc} has expired — BN: {doc}-এর মেয়াদ শেষ
+- [ ] `paperworkAlertExpiring` — EN: {doc} expires in {days} days — BN: {doc}-এর মেয়াদ {days} দিনে শেষ হবে
+- [ ] `paperworkDrivingLicence` — EN: Driving licence — BN: ড্রাইভিং লাইসেন্স
+- [ ] `paperworkEmpty` — EN: Add your tax token, insurance and other papers to be reminded before they expire. — BN: ট্যাক্স টোকেন, ইন্সুরেন্স ও অন্য কাগজ যোগ করুন, মেয়াদ শেষের আগে মনে করিয়ে দেওয়া হবে।
+- [ ] `paperworkExpiredOn` — EN: Expired on {date} — BN: {date}-এ মেয়াদ শেষ হয়েছে
+- [ ] `paperworkExpiresOn` — EN: Expires {date} · {days} days left — BN: মেয়াদ {date} · {days} দিন বাকি
+- [ ] `paperworkExpiryValue` — EN: Expires {date} — BN: মেয়াদ {date}
+- [ ] `paperworkFitness` — EN: Fitness certificate — BN: ফিটনেস সার্টিফিকেট
+- [ ] `paperworkInsurance` — EN: Insurance — BN: ইন্সুরেন্স
+- [ ] `paperworkPickExpiry` — EN: Pick expiry date — BN: মেয়াদ শেষের তারিখ বাছুন
+- [ ] `paperworkRegistration` — EN: Registration — BN: রেজিস্ট্রেশন
+- [ ] `paperworkTaxToken` — EN: Tax token — BN: ট্যাক্স টোকেন
+- [ ] `paperworkTitle` — EN: Papers — BN: কাগজপত্র
+- [ ] `perKmBreakdown` — EN: Servicing {maint} + fuel {fuel} — BN: সার্ভিসিং {maint} + জ্বালানি {fuel}
+- [ ] `pickDateOptional` — EN: Date (optional) — BN: তারিখ (ঐচ্ছিক)
+- [ ] `precheckAllGood` — EN: All good — BN: সব ঠিক আছে
+- [ ] `precheckChain` — EN: Chain — BN: চেইন
+- [ ] `precheckChainHint` — EN: About 2–3 cm slack, lubed, no tight spots — BN: প্রায় 2–3 সেমি ঢিল, লুব দেওয়া, কোথাও টাইট নয়
+- [ ] `precheckControls` — EN: Controls — BN: কন্ট্রোল
+- [ ] `precheckControlsHint` — EN: Brakes, clutch, throttle and cables work smoothly — BN: ব্রেক, ক্লাচ, থ্রটল ও তার মসৃণভাবে কাজ করে
+- [ ] `precheckInstructions` — EN: Walk round the bike and tap anything that isn't right. About 30 seconds. — BN: বাইকের চারপাশ ঘুরে দেখুন, যা ঠিক নেই তাতে ট্যাপ করুন। প্রায় 30 সেকেন্ড।
+- [ ] `precheckIssueFlagged` — EN: Flagged in quick check · {date} — BN: দ্রুত চেকে ধরা পড়েছে · {date}
+- [ ] `precheckLastDone` — EN: {days, plural, =0{Checked today} =1{Last checked yesterday} other{Last checked {days} days ago}} — BN: {days, plural, =0{আজ চেক করা হয়েছে} =1{শেষ চেক গতকাল} other{শেষ চেক {days} দিন আগে}}
+- [ ] `precheckLights` — EN: Lights — BN: লাইট
+- [ ] `precheckLightsHint` — EN: Headlight, tail, brake light, indicators, horn — BN: হেডলাইট, টেইল, ব্রেক লাইট, ইন্ডিকেটর, হর্ন
+- [ ] `precheckNeedsWork` — EN: Needs attention — BN: মনোযোগ দরকার
+- [ ] `precheckNever` — EN: A 30-second walk-round, once a week — BN: সপ্তাহে একবার 30 সেকেন্ডের পরীক্ষা
+- [ ] `precheckOil` — EN: Oil & fluids — BN: মবিল ও তরল
+- [ ] `precheckOilHint` — EN: Oil level in the window, no leaks, brake fluid above MIN — BN: জানালায় মবিলের লেভেল, কোনো লিক নেই, ব্রেক ফ্লুইড MIN-এর উপরে
+- [ ] `precheckSaveIssues` — EN: {count, plural, =1{Save 1 issue} other{Save {count} issues}} — BN: {count, plural, =1{1টি সমস্যা সেভ করুন} other{{count}টি সমস্যা সেভ করুন}}
+- [ ] `precheckStands` — EN: Stands — BN: স্ট্যান্ড
+- [ ] `precheckStandsHint` — EN: Side and centre stands spring back — BN: সাইড ও সেন্টার স্ট্যান্ড ঠিকমতো ফিরে আসে
+- [ ] `precheckTires` — EN: Tyres & wheels — BN: টায়ার ও চাকা
+- [ ] `precheckTiresHint` — EN: Pressure, tread, no cuts or bulges — BN: হাওয়া, গ্রিপ, কাটা বা ফোলা নেই
+- [ ] `precheckTitle` — EN: Quick check — BN: দ্রুত চেক
+- [ ] `projectedDue` — EN: Projected: {date} ({when}) — BN: আনুমানিক: {date} ({when})
+- [ ] `quickPicks` — EN: Quick picks — BN: দ্রুত বাছাই
+- [ ] `receiptLabel` — EN: Receipt — BN: রসিদ
+- [ ] `receiptPickFailed` — EN: Couldn't add that photo. — BN: ছবিটি যোগ করা যায়নি।
+- [ ] `remindMeLater` — EN: Remind me later — BN: পরে মনে করিয়ে দিন
+- [ ] `removeCheck` — EN: Remove check — BN: চেক সরান
+- [ ] `ridingProfileNormal` — EN: Mostly paved roads — BN: বেশিরভাগ পাকা রাস্তা

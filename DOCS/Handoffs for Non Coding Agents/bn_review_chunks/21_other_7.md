@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 21: other 7/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 21: other 7/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `notifChannelCrash` — EN: Crash alerts — BN: দুর্ঘটনার সতর্কতা
+- [ ] `notifChannelCrashDesc` — EN: Shown when ThrottleIQ thinks you may have crashed. Do not disable. — BN: ThrottleIQ মনে করলে আপনি দুর্ঘটনায় পড়েছেন, তখন দেখানো হয়। এটি বন্ধ করবেন না।
+- [ ] `notifChannelRides` — EN: Ride confirmations — BN: রাইড নিশ্চিতকরণ
+- [ ] `notifChannelRidesDesc` — EN: Asks which bike an automatically-detected ride was on. — BN: অটো-শনাক্ত রাইডটি কোন বাইকে ছিল তা জিজ্ঞেস করে।
+- [ ] `notifChannelDigest` — EN: Weekly digest — BN: সাপ্তাহিক ডাইজেস্ট
+- [ ] `notifChannelDigestDesc` — EN: Your weekly riding summary. — BN: আপনার সাপ্তাহিক রাইডিংয়ের সারসংক্ষেপ।
+- [ ] `notifCrashTitle` — EN: Crash detected — BN: দুর্ঘটনা শনাক্ত হয়েছে
+- [ ] `notifCrashBody` — EN: Tap "I'm OK" within {seconds}s if you're fine. ThrottleIQ does not contact anyone for you. — BN: আপনি ঠিক থাকলে {seconds} সেকেন্ডের মধ্যে "আমি ঠিক আছি"-তে ট্যাপ করুন। ThrottleIQ আপনার হয়ে কারও সঙ্গে যোগাযোগ করে না।
+- [ ] `notifImOk` — EN: I'm OK — BN: আমি ঠিক আছি
+- [ ] `notifRideDetectedTitle` — EN: Ride detected — {km} km — BN: রাইড শনাক্ত হয়েছে — {km} কিমি
+- [ ] `notifRideDetectedBody` — EN: We logged this to {bike}. Tap to confirm or change. — BN: {bike}-এ এটি লগ করা হয়েছে। নিশ্চিত করতে বা বদলাতে ট্যাপ করুন।
+- [ ] `notifConfirm` — EN: Confirm — BN: নিশ্চিত করুন
+- [ ] `notifDigestTitle` — EN: Today on the road — BN: আজ রাস্তায়
+- [ ] `notifDigestTap` — EN: Tap to see your day. — BN: আপনার দিনটি দেখতে ট্যাপ করুন।
+- [ ] `notifDigestSummary` — EN: {rides, plural, =1{1 ride} other{{rides} rides}}, {km} km — BN: {rides, plural, =1{1টি রাইড} other{{rides}টি রাইড}}, {km} কিমি
+- [ ] `notifDigestUnconfirmed` — EN:  · {count, plural, =1{1 needs a bike confirmed} other{{count} need a bike confirmed}} — BN:  · {count, plural, =1{1টিতে বাইক নিশ্চিত করা দরকার} other{{count}টিতে বাইক নিশ্চিত করা দরকার}}
+- [ ] `shareUsageStats` — EN: Share anonymous usage statistics — BN: অজ্ঞাতনামা ব্যবহারের পরিসংখ্যান শেয়ার করুন
+- [ ] `shareUsageStatsDesc` — EN: Which screens are used and a few key steps, like starting a ride. Never your location, rides, messages or name — and no advertising. — BN: কোন স্ক্রিন ব্যবহার হয় এবং রাইড শুরুর মতো কয়েকটি ধাপ। আপনার লোকেশন, রাইড, মেসেজ বা নাম কখনোই নয় — কোনো বিজ্ঞাপনও নয়।
+- [ ] `safeQrPrintAction` — EN: Print sticker — BN: স্টিকার প্রিন্ট করুন
+- [ ] `safeQrStickerTitle` — EN: EMERGENCY MEDICAL INFO — BN: জরুরি মেডিকেল তথ্য
+- [ ] `safeQrStickerCaption` — EN: Scan with any phone camera. Works offline. — BN: যেকোনো ফোনের ক্যামেরা দিয়ে স্ক্যান করুন। অফলাইনেও কাজ করে।
+- [ ] `safeQrPrintFailed` — EN: Couldn't open the print dialog. — BN: প্রিন্ট ডায়ালগ খোলা যায়নি।
+- [ ] `feedSortHot` — EN: Hot — BN: জনপ্রিয়
+- [ ] `joinRideBadCode` — EN: That code doesn't match a ride. — BN: এই কোডের সাথে কোনো রাইড মেলেনি।
+- [ ] `joinRideAlreadyEnded` — EN: This ride has already ended. — BN: এই রাইডটি ইতিমধ্যে শেষ হয়ে গেছে।
+- [ ] `joinRideFull` — EN: This ride is full. — BN: এই রাইডে আর জায়গা নেই।
+- [ ] `groupRideTooManyFriends` — EN: You can only ride with {max} friends at once. — BN: আপনি একসাথে সর্বোচ্চ {max} জন বন্ধুর সাথে রাইড করতে পারবেন।
+- [ ] `groupRidePickAtLeastOne` — EN: Pick at least 1 rider to ride with. — BN: রাইড করার জন্য অন্তত 1 জন রাইডার বেছে নিন।
+- [ ] `groupRidePickAtLeastMany` — EN: Pick at least {min} riders — {short} more to go. — BN: অন্তত {min} জন রাইডার বেছে নিন — আরও {short} জন বাকি।
+- [ ] `usernameRuleError` — EN: Usernames must be 3-20 characters: letters, numbers or underscore. — BN: ইউজারনেম 3-20 অক্ষরের হতে হবে: অক্ষর, সংখ্যা বা আন্ডারস্কোর।
+- [ ] `shareRideCodeButtonTooltip` — EN: Share ride code — BN: রাইড কোড শেয়ার করুন
+- [ ] `shareRideCodeTitle` — EN: Share this ride's code — BN: এই রাইডের কোড শেয়ার করুন
+- [ ] `shareRideCodeSubtitle` — EN: Anyone with this code can join while the ride is active. — BN: রাইড সক্রিয় থাকা অবস্থায় এই কোড দিয়ে যে কেউ যোগ দিতে পারবে।
+- [ ] `shareRideCodeCopyAction` — EN: Copy code — BN: কোড কপি করুন
+- [ ] `shareRideCodeShareAction` — EN: Share — BN: শেয়ার করুন
+- [ ] `shareRideCodeCopied` — EN: Code copied to clipboard — BN: কোড ক্লিপবোর্ডে কপি হয়েছে
+- [ ] `shareRideCodeMessage` — EN: Join my ThrottleIQ ride "{rideName}" — use code {code} to hop in! — BN: আমার ThrottleIQ রাইড "{rideName}"-এ যোগ দিন — যোগ দিতে কোড {code} ব্যবহার করুন!
+- [ ] `tapView` — EN: {relativeTime} · tap to view — BN: {relativeTime} · দেখতে ট্যাপ করুন
+- [ ] `forumPulse` — EN: Pulse — BN: পালস
+- [ ] `forumHubs` — EN: Hubs — BN: হাব
+- [ ] `pulseFilterAll` — EN: All — BN: সব
+- [ ] `pulseFilterMyBikes` — EN: My bikes — BN: আমার বাইক
+- [ ] `pulseFilterHelp` — EN: Help & fixes — BN: সাহায্য ও সমাধান
+- [ ] `pulseFilterDiy` — EN: DIY guides — BN: DIY গাইড
+- [ ] `pulseFilterMostVoted` — EN: Most voted — BN: সবচেয়ে বেশি ভোট
+- [ ] `pulseFilterSaved` — EN: Saved — BN: সংরক্ষিত
+- [ ] `pulseEmptyTitle` — EN: Your pit wall is quiet — BN: আপনার পিট ওয়াল এখন শান্ত
+- [ ] `pulseEmptyBody` — EN: Follow a few hubs or add your bike in Garage, and their latest discussions land here. — BN: কয়েকটি হাব ফলো করুন বা গ্যারেজে আপনার বাইক যোগ করুন, তাদের সর্বশেষ আলোচনা এখানে আসবে।
+- [ ] `pulseExploreHubs` — EN: Explore hubs — BN: হাব ঘুরে দেখুন
+- [ ] `pulseNoPostsYet` — EN: No discussions in your hubs yet. Start one! — BN: আপনার হাবগুলোতে এখনও কোনো আলোচনা নেই। একটি শুরু করুন!
+- [ ] `pulseNoMatches` — EN: No posts match this filter yet. — BN: এই ফিল্টারে এখনও কোনো পোস্ট নেই।
+- [ ] `pulseNoSaved` — EN: Tap the bookmark on any post to save it here. — BN: যেকোনো পোস্টের বুকমার্কে ট্যাপ করে এখানে সংরক্ষণ করুন।
+- [ ] `savePost` — EN: Save post — BN: পোস্ট সংরক্ষণ করুন
+- [ ] `unsavePost` — EN: Remove from saved — BN: সংরক্ষিত থেকে সরান
+- [ ] `searchForumsHint` — EN: Search forums, brands, riders — BN: ফোরাম, ব্র্যান্ড, রাইডার খুঁজুন
+- [ ] `startDiscussion` — EN: Start a discussion — BN: আলোচনা শুরু করুন
+- [ ] `createRiderClub` — EN: Create club — BN: ক্লাব তৈরি করুন
+- [ ] `yourGarageHubs` — EN: Your garage — BN: আপনার গ্যারেজ
+- [ ] `openGarage` — EN: Open Garage — BN: গ্যারেজ খুলুন
+- [ ] `askOwners` — EN: Ask owners — BN: মালিকদের জিজ্ঞেস করুন
+- [ ] `browseModelBoard` — EN: Browse board — BN: বোর্ড দেখুন
+- [ ] `forumThreadsCount` — EN: {count, plural, =1{1 thread} other{{count} threads}} — BN: {count}টি থ্রেড
+- [ ] `brandPaddocks` — EN: Brand paddocks — BN: ব্র্যান্ড প্যাডক
+- [ ] `openPaddock` — EN: Open paddock — BN: প্যাডক খুলুন
+- [ ] `forumMembers` — EN: {count, plural, =1{1 rider} other{{count} riders}} — BN: {count} জন রাইডার
+- [ ] `topicBoards` — EN: Topic boards — BN: টপিক বোর্ড
+- [ ] `communityClubs` — EN: Rider clubs — BN: রাইডার ক্লাব
+- [ ] `clubMaintainerBadge` — EN: Maintainer — BN: রক্ষণাবেক্ষণকারী
+- [ ] `boardWrenchBench` — EN: The Wrench Bench — BN: রেঞ্চ বেঞ্চ
+- [ ] `boardWrenchBenchBlurb` — EN: Maintenance, servicing, DIY fixes — BN: রক্ষণাবেক্ষণ, সার্ভিসিং, নিজে মেরামত
+- [ ] `boardSparkPlug` — EN: Spark Plug Corner — BN: স্পার্ক প্লাগ কর্নার
+- [ ] `boardSparkPlugBlurb` — EN: Electrical, battery, ECU tuning — BN: ইলেকট্রিক্যাল, ব্যাটারি, ECU টিউনিং
+- [ ] `boardApexLab` — EN: Apex Lab — BN: এপেক্স ল্যাব
+- [ ] `boardApexLabBlurb` — EN: Riding skills, track days, cornering — BN: রাইডিং দক্ষতা, ট্র্যাক ডে, কর্নারিং
+- [ ] `boardTwoStroke` — EN: Two-Stroke Smoke — BN: টু-স্ট্রোক স্মোক
+- [ ] `boardTwoStrokeBlurb` — EN: Classic 2Ts, carbs, premix — BN: ক্লাসিক টু-স্ট্রোক, কার্বুরেটর, প্রিমিক্স
+- [ ] `boardEngineRebuild` — EN: Engine Rebuild — BN: ইঞ্জিন রিবিল্ড
+- [ ] `boardEngineRebuildBlurb` — EN: Top ends, bottom ends, machining — BN: টপ এন্ড, বটম এন্ড, মেশিনিং
+- [ ] `boardOilReviews` — EN: Oil Reviews — BN: অয়েল রিভিউ
+- [ ] `boardOilReviewsBlurb` — EN: Engine oil, grades, change intervals — BN: ইঞ্জিন অয়েল, গ্রেড, পরিবর্তনের ব্যবধান

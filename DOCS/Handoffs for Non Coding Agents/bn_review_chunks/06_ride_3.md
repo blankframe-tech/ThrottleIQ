@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 06: ride 3/4 (recording, ride screens, Year in Review), 80 lines -->
+# Bangla review 06: ride 3/4 (recording, ride screens, Year in Review), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `surfaceDirt` — EN: Dirt — BN: কাঁচা রাস্তা
+- [ ] `surfaceGravel` — EN: Gravel — BN: নুড়ি-পাথর
+- [ ] `surfaceWet` — EN: Wet — BN: ভেজা রাস্তা
+- [ ] `surfaceRailCrossing` — EN: Rail crossing — BN: রেলক্রসিং
+- [ ] `surfaceSpeedBump` — EN: Speed bump — BN: স্পিড ব্রেকার
+- [ ] `impactSaveAnswer` — EN: Save — BN: সেভ করুন
+- [ ] `impactThanks` — EN: Thanks — that helps. — BN: ধন্যবাদ — এটা কাজে লাগবে।
+- [ ] `reportCrashAction` — EN: Report a crash or fall — BN: দুর্ঘটনা বা পতন জানান
+- [ ] `reportCrashTitle` — EN: When did it happen? — BN: কখন ঘটেছিল?
+- [ ] `reportCrashBody` — EN: Slide to the moment you fell. It helps the app learn the falls it missed. — BN: যে মুহূর্তে পড়েছিলেন সেখানে টেনে আনুন। অ্যাপ যেসব পতন ধরতে পারেনি, সেগুলো শিখতে এটা সাহায্য করে।
+- [ ] `reportCrashSaved` — EN: Reported. Thank you. — BN: জানানো হয়েছে। ধন্যবাদ।
+- [ ] `crashResearchTitle` — EN: Help improve crash detection — BN: দুর্ঘটনা শনাক্তকরণ উন্নত করতে সাহায্য করুন
+- [ ] `crashResearchDesc` — EN: Shares your answers about falls and the sensor readings around them, without your name or exact location (only a ~1 km area). Off by default. — BN: পতন নিয়ে আপনার উত্তর আর তার আশপাশের সেন্সর রিডিং শেয়ার করে — আপনার নাম বা সঠিক অবস্থান ছাড়া (শুধু প্রায় 1 কিমি এলাকা)। শুরুতে বন্ধ থাকে।
+- [ ] `rideActionsTooltip` — EN: Ride actions — BN: রাইড অ্যাকশন
+- [ ] `copCheckpointHere` — EN: Cop checkpoint here — BN: এখানে পুলিশ চেকপয়েন্ট
+- [ ] `parkingPinHere` — EN: Parking pin — BN: পার্কিং পিন
+- [ ] `minimizeRide` — EN: Minimize — BN: মিনিমাইজ
+- [ ] `checkpointExpiresInDay` — EN: Expires in 24 h — BN: 24 ঘণ্টায় মেয়াদ শেষ
+- [ ] `checkpointPermanent` — EN: Permanent — BN: স্থায়ী
+- [ ] `checkpointSaved` — EN: Checkpoint saved — BN: চেকপয়েন্ট সংরক্ষিত হয়েছে
+- [ ] `checkpointSaveFailed` — EN: Could not save checkpoint — BN: চেকপয়েন্ট সংরক্ষণ করা যায়নি
+- [ ] `noGpsFixYet` — EN: No GPS fix yet — BN: এখনও জিপিএস সংযোগ পাওয়া যায়নি
+- [ ] `rideRecordingBar` — EN: Recording ride · {distance} · {duration} — BN: রাইড রেকর্ড হচ্ছে · {distance} · {duration}
+- [ ] `ridePausedBar` — EN: Ride paused · {distance} · {duration} — BN: রাইড থামানো হয়েছে · {distance} · {duration}
+- [ ] `directionsToBike` — EN: Directions to bike — BN: বাইকে যাওয়ার দিকনির্দেশনা
+- [ ] `placeReportedAt` — EN: Reported {time} — BN: রিপোর্ট {time}
+- [ ] `placeExpiresInHours` — EN: expires in {hours} h — BN: {hours} ঘণ্টা পর মেয়াদ শেষ
+- [ ] `placeReportExpired` — EN: expired — BN: মেয়াদ শেষ
+- [ ] `overQuotaBar` — EN: ThrottleIQ's database is overloaded because too many riders are using it right now. Your data is safe on this phone and will upload automatically, usually within a day. — BN: অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। আপনার ডেটা এই ফোনে নিরাপদ, এবং সাধারণত এক দিনের মধ্যে নিজে থেকেই আপলোড হয়ে যাবে।
+- [ ] `rideCostFuelAdjusted` — EN: Fuel {change} vs your usual riding (this ride's traffic & speed) — BN: জ্বালানি সাধারণ রাইডের চেয়ে {change} (এই রাইডের ট্রাফিক ও গতি)
+- [ ] `rideReplayPlay` — EN: Play ride replay — BN: রাইড রিপ্লে চালান
+- [ ] `rideReplayPause` — EN: Pause ride replay — BN: রাইড রিপ্লে থামান
+- [ ] `yearInReviewTitle` — EN: Year in review — BN: বছরের সারসংক্ষেপ
+- [ ] `yearInReviewHeading` — EN: My {year} on two wheels — BN: দুই চাকায় আমার {year}
+- [ ] `yearInReviewLongestRide` — EN: Longest ride — BN: সবচেয়ে লম্বা রাইড
+- [ ] `yearInReviewFavouriteBike` — EN: Favourite bike — BN: প্রিয় বাইক
+- [ ] `yearInReviewShareFailed` — EN: Couldn't create the image. Try again. — BN: ছবি তৈরি করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `yearInReviewLoadFailed` — EN: Couldn't load your rides. — BN: আপনার রাইড লোড করা যায়নি।
+- [ ] `yearInReviewRideTime` — EN: Time riding — BN: রাইডে কাটানো সময়
+- [ ] `yearInReviewHours` — EN: {hours} h — BN: {hours} ঘণ্টা
+- [ ] `yearInReviewBusiestMonth` — EN: Busiest month — BN: সবচেয়ে ব্যস্ত মাস
+- [ ] `yearInReviewVsYear` — EN: {change} vs {year} — BN: {year}-এর তুলনায় {change}
+- [ ] `yearInReviewGetApp` — EN: Track your rides free with ThrottleIQ. Scan to get it on Google Play. — BN: ThrottleIQ দিয়ে বিনা খরচে রাইড ট্র্যাক করুন। Google Play থেকে নিতে স্ক্যান করুন।
+- [ ] `yearInReviewHeadingSoFar` — EN: My {year} so far on two wheels — BN: দুই চাকায় আমার {year}, এখন পর্যন্ত
+- [ ] `yearInReviewVsYearSoFar` — EN: {change} vs this point in {year} — BN: {year}-এর এই সময়ের তুলনায় {change}
+- [ ] `yearInReviewBanner` — EN: Your {year} on two wheels is ready. Tap to see and share it. — BN: দুই চাকায় আপনার {year} তৈরি। দেখতে ও শেয়ার করতে ট্যাপ করুন।
+- [ ] `notAMotorcycleRideAction` — EN: Not a motorcycle ride — BN: এটি মোটরসাইকেল রাইড নয়
+- [ ] `notAMotorcycleRideConfirmTitle` — EN: Not a motorcycle ride? — BN: এটি মোটরসাইকেল রাইড নয়?
+- [ ] `notAMotorcycleRideConfirmBody` — EN: This deletes the ride and takes its distance back off the bike, so service reminders stay accurate. Its shared post, if any, is removed too. This can't be undone. — BN: এতে রাইডটি মুছে যাবে এবং এর দূরত্ব বাইক থেকে বাদ যাবে, যাতে সার্ভিসের রিমাইন্ডার ঠিক থাকে। শেয়ার করা পোস্ট থাকলে সেটিও সরানো হবে। এটি আর ফেরানো যাবে না।
+- [ ] `importGpxAction` — EN: Import GPX — BN: GPX ইমপোর্ট
+- [ ] `gpxImportedMessage` — EN: Ride imported: {distance}. It now counts toward this bike's distance. — BN: রাইড ইমপোর্ট হয়েছে: {distance}। এটি এখন এই বাইকের মোট দূরত্বে যোগ হয়েছে।
+- [ ] `gpxImportTooLarge` — EN: This file is too big to import (10 MB or 100,000 points at most). — BN: ফাইলটি ইমপোর্ট করার জন্য অনেক বড় (সর্বোচ্চ 10 MB বা 100,000 পয়েন্ট)।
+- [ ] `gpxImportNotGpx` — EN: This isn't a GPX file. — BN: এটি GPX ফাইল নয়।
+- [ ] `gpxImportNoTrack` — EN: This GPX file has no timed track to import. — BN: এই GPX ফাইলে ইমপোর্ট করার মতো সময়সহ কোনো ট্র্যাক নেই।
+- [ ] `gpxImportOverlapsRide` — EN: You already have a ride at this time, so this one wasn't imported. — BN: এই সময়ে আপনার আরেকটি রাইড আছে, তাই এটি ইমপোর্ট করা হয়নি।
+- [ ] `alertFlashSettingTitle` — EN: Flash the map on alerts — BN: সতর্কতায় ম্যাপে ঝলক
+- [ ] `alertFlashSettingSubtitle` — EN: Tints the ride screen on hard braking, overspeed and fatigue — BN: জোরে ব্রেক, অতিরিক্ত গতি আর ক্লান্তিতে রাইড স্ক্রিনে রঙের ঝলক দেখায়
+- [ ] `yearStoryCoverSub` — EN: A ride recap by ThrottleIQ — BN: ThrottleIQ-এর রাইড রিক্যাপ
+- [ ] `yearStoryFooter` — EN: Free on Google Play — BN: Google Play-তে ফ্রি
+- [ ] `yearStoryDistanceKicker` — EN: Distance ridden — BN: মোট পাড়ি দেওয়া পথ
+- [ ] `yearStoryEarthLaps` — EN: {laps}× around the Earth — BN: পৃথিবীকে {laps} বার চক্কর
+- [ ] `yearStoryEarthShare` — EN: {percent}% of the way around the Earth — BN: পৃথিবী ঘোরার {percent}% পথ
+- [ ] `yearStoryCoxTrips` — EN: Dhaka to Cox's Bazar, {times}× over — BN: ঢাকা থেকে কক্সবাজার, {times} বার
+- [ ] `yearStoryRidesKicker` — EN: Rides this year — BN: এ বছরের রাইড
+- [ ] `yearStoryActiveDays` — EN: {days, plural, =1{On 1 day} other{On {days} different days}} — BN: {days, plural, other{{days}টি আলাদা দিনে}}
+- [ ] `yearStoryStreak` — EN: Longest streak: {days} days in a row — BN: টানা সবচেয়ে বেশি: {days} দিন
+- [ ] `yearStoryTimeKicker` — EN: Hours in the saddle — BN: বাইকে কাটানো ঘণ্টা
+- [ ] `yearStoryHoursUnit` — EN: h — BN: ঘণ্টা
+- [ ] `yearStoryTimeDays` — EN: That's {days} days, around the clock — BN: মানে টানা {days} দিন, দিনরাত
+- [ ] `yearStoryAvgRide` — EN: Average ride: {minutes} min — BN: গড় রাইড: {minutes} মিনিট
+- [ ] `yearStoryMonthKm` — EN: {distance} ridden that month — BN: সেই মাসে {distance} রাইড
+- [ ] `yearStoryWeekdayKicker` — EN: Favourite day to ride — BN: রাইডের প্রিয় দিন
+- [ ] `yearStoryWeekdayShare` — EN: {percent}% of my rides — BN: আমার রাইডের {percent}%
+- [ ] `yearStoryClockKicker` — EN: My riding clock — BN: আমার রাইডের ঘড়ি
+- [ ] `yearStoryEarlyBird` — EN: Early Bird — BN: ভোরের পাখি
+- [ ] `yearStoryDaylight` — EN: Daylight Cruiser — BN: দিনের আলোর রাইডার
+- [ ] `yearStorySunset` — EN: Sunset Chaser — BN: গোধূলির রাইডার
+- [ ] `yearStoryNightOwl` — EN: Night Owl — BN: রাতজাগা পেঁচা
+- [ ] `yearStoryEarlyBirdLine` — EN: {percent}% of my rides started at dawn — BN: আমার {percent}% রাইড শুরু ভোরে
+- [ ] `yearStoryDaylightLine` — EN: {percent}% of my rides were in broad daylight — BN: আমার {percent}% রাইড দিনের আলোয়

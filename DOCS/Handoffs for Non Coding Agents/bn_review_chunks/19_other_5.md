@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 19: other 5/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 19: other 5/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `errLocationOff` — EN: Location is turned off. Enable GPS in your device settings to use this feature. — BN: লোকেশন বন্ধ আছে। এই ফিচার ব্যবহার করতে ডিভাইস সেটিংসে GPS চালু করুন।
+- [ ] `errLocationPermission` — EN: Location permission is needed for this feature. Grant it in Settings → ThrottleIQ. — BN: এই ফিচারের জন্য লোকেশন অনুমতি দরকার। সেটিংস → ThrottleIQ-তে গিয়ে অনুমতি দিন।
+- [ ] `errLocationGeneric` — EN: Could not get your location. Check that GPS is on and try again. — BN: আপনার লোকেশন পাওয়া যায়নি। GPS চালু আছে কিনা দেখে আবার চেষ্টা করুন।
+- [ ] `placeCatFuel` — EN: Fuel — BN: জ্বালানি
+- [ ] `placeCatGarage` — EN: Garage — BN: গ্যারেজ
+- [ ] `placeCatParts` — EN: Parts — BN: যন্ত্রাংশ
+- [ ] `placeCatAiCamera` — EN: AI Camera — BN: AI ক্যামেরা
+- [ ] `placeCatPolice` — EN: Police / Cop — BN: পুলিশ / চেকপোস্ট
+- [ ] `placeCatRecreation` — EN: Recreation — BN: বিনোদন
+- [ ] `greetLateNight1` — EN: Late night runs, huh? — BN: গভীর রাতের রাইড, তাই না?
+- [ ] `greetLateNight2` — EN: The roads are yours at this hour. — BN: এই সময়ে রাস্তা শুধু আপনার।
+- [ ] `greetLateNight3` — EN: Can't sleep? Ride it off. — BN: ঘুম আসছে না? রাইডে বেরিয়ে পড়ুন।
+- [ ] `greetLateNight4` — EN: Empty streets, {name}. — BN: ফাঁকা রাস্তা, {name}।
+- [ ] `greetLateNight5` — EN: Nobody out there but you. — BN: বাইরে আপনি ছাড়া কেউ নেই।
+- [ ] `greetEarlyMorning1` — EN: Beat the traffic. — BN: জ্যামের আগেই বেরিয়ে পড়ুন।
+- [ ] `greetEarlyMorning2` — EN: Cold start, clear roads. — BN: ঠান্ডা ইঞ্জিন, পরিষ্কার রাস্তা।
+- [ ] `greetEarlyMorning3` — EN: Sunrise miles hit different. — BN: ভোরের রাইডের মজাই আলাদা।
+- [ ] `greetEarlyMorning4` — EN: Up early, {name}? — BN: এত ভোরে উঠেছেন, {name}?
+- [ ] `greetEarlyMorning5` — EN: First one out. — BN: সবার আগে বেরোলেন।
+- [ ] `greetMorning1` — EN: Morning, {name}. — BN: সুপ্রভাত, {name}।
+- [ ] `greetMorning2` — EN: Ready when you are. — BN: আপনি তৈরি হলেই আমরা তৈরি।
+- [ ] `greetMorning3` — EN: Coffee first, then corners. — BN: আগে কফি, তারপর বাঁক।
+- [ ] `greetMorning4` — EN: Fresh tank, fresh day. — BN: নতুন ট্যাংক, নতুন দিন।
+- [ ] `greetMorning5` — EN: Where to, {name}? — BN: কোথায় যাচ্ছেন, {name}?
+- [ ] `greetAfternoon1` — EN: Afternoon, {name}. — BN: শুভ অপরাহ্ন, {name}।
+- [ ] `greetAfternoon2` — EN: Good day for it. — BN: রাইডের জন্য দারুণ দিন।
+- [ ] `greetAfternoon3` — EN: Sun's out. So are the roads. — BN: রোদ উঠেছে, রাস্তাও খোলা।
+- [ ] `greetAfternoon4` — EN: Long way home, {name}? — BN: ঘরে ফিরতে লম্বা পথে, {name}?
+- [ ] `greetAfternoon5` — EN: Perfect time to slip away. — BN: একটু সরে পড়ার ঠিক সময়।
+- [ ] `greetEvening1` — EN: Evening, {name}. — BN: শুভ সন্ধ্যা, {name}।
+- [ ] `greetEvening2` — EN: Golden hour. Go. — BN: সোনালি আলো। চলুন।
+- [ ] `greetEvening3` — EN: Sunset run, {name}? — BN: সূর্যাস্তের রাইড, {name}?
+- [ ] `greetEvening4` — EN: Clock out. Gear up. — BN: অফিস শেষ। গিয়ার পরে নিন।
+- [ ] `greetEvening5` — EN: Best light of the day. — BN: দিনের সেরা আলো।
+- [ ] `greetNight1` — EN: Night rider. — BN: নাইট রাইডার।
+- [ ] `greetNight2` — EN: One more before bed? — BN: ঘুমের আগে আরেকটা?
+- [ ] `greetNight3` — EN: Quiet roads, {name}. — BN: শান্ত রাস্তা, {name}।
+- [ ] `greetNight4` — EN: Cool air, empty lanes. — BN: ঠান্ডা বাতাস, ফাঁকা লেন।
+- [ ] `greetNight5` — EN: Headlights on, {name}. — BN: হেডলাইট জ্বালুন, {name}।
+- [ ] `greetingNameFallback` — EN: rider — BN: রাইডার
+- [ ] `quote0Setup` — EN: Your ride, — BN: আপনার রাইড,
+- [ ] `quote0Payoff` — EN: smarter. — BN: আরও স্মার্ট।
+- [ ] `quote1Setup` — EN: Two wheels, — BN: দুই চাকা,
+- [ ] `quote1Payoff` — EN: one heartbeat. — BN: এক হৃদস্পন্দন।
+- [ ] `quote2Setup` — EN: Every ride, — BN: প্রতিটি রাইড,
+- [ ] `quote2Payoff` — EN: a story worth logging. — BN: লিখে রাখার মতো একটি গল্প।
+- [ ] `quote3Setup` — EN: Trust the throttle, — BN: থ্রটলে ভরসা রাখুন,
+- [ ] `quote3Payoff` — EN: respect the road. — BN: রাস্তাকে সম্মান করুন।
+- [ ] `quote4Setup` — EN: The road ahead — BN: সামনের রাস্তাই
+- [ ] `quote4Payoff` — EN: is the only plan you need. — BN: আপনার একমাত্র পরিকল্পনা।
+- [ ] `quote5Setup` — EN: Ride the wind, — BN: বাতাসে ভেসে চলুন,
+- [ ] `quote5Payoff` — EN: own the road. — BN: রাস্তা আপনার।
+- [ ] `quote6Setup` — EN: Smooth is fast. — BN: মসৃণই দ্রুত।
+- [ ] `quote6Payoff` — EN: Fast is smooth. — BN: দ্রুতই মসৃণ।
+- [ ] `quote7Setup` — EN: Some roads — BN: কিছু রাস্তা
+- [ ] `quote7Payoff` — EN: you don't forget. — BN: ভোলা যায় না।
+- [ ] `quote8Setup` — EN: Chase the horizon, — BN: দিগন্তের পেছনে ছুটুন,
+- [ ] `quote8Payoff` — EN: not the redline. — BN: রেডলাইনের নয়।
+- [ ] `quote9Setup` — EN: Miles make — BN: মাইল পেরোলেই
+- [ ] `quote9Payoff` — EN: the machine yours. — BN: মেশিন আপনার হয়।
+- [ ] `quote10Setup` — EN: Every gear change — BN: প্রতিটি গিয়ার বদল
+- [ ] `quote10Payoff` — EN: is a decision. — BN: একটি সিদ্ধান্ত।
+- [ ] `quote11Setup` — EN: Ride far. — BN: দূরে চলুন।
+- [ ] `quote11Payoff` — EN: Ride smart. — BN: স্মার্টভাবে চলুন।
+- [ ] `quote12Setup` — EN: The best rides — BN: সেরা রাইডগুলো
+- [ ] `quote12Payoff` — EN: start with no plan. — BN: শুরু হয় কোনো পরিকল্পনা ছাড়াই।
+- [ ] `quote13Setup` — EN: Two wheels, — BN: দুই চাকা,
+- [ ] `quote13Payoff` — EN: infinite roads. — BN: অসীম রাস্তা।
+- [ ] `quote14Setup` — EN: Momentum is — BN: গতিই
+- [ ] `quote14Payoff` — EN: a kind of freedom. — BN: এক ধরনের স্বাধীনতা।
+- [ ] `quote15Setup` — EN: Read the road — BN: রাস্তাকে পড়ুন,
+- [ ] `quote15Payoff` — EN: before it reads you. — BN: সে আপনাকে পড়ার আগেই।
+- [ ] `noRatingsYet` — EN: No ratings yet — BN: এখনো কোনো রেটিং নেই
+- [ ] `statusOverdue` — EN: Overdue — BN: ওভারডিউ
+- [ ] `statusOk` — EN: OK — BN: ঠিক আছে
+- [ ] `crashSuspectedBadge` — EN: Suspected crash — BN: সম্ভাব্য দুর্ঘটনা
+- [ ] `scoreValue` — EN: Score {score} — BN: স্কোর {score}
+- [ ] `activePill` — EN: Active — BN: সক্রিয়
+- [ ] `captionLabel` — EN: Caption — BN: ক্যাপশন
+- [ ] `commentsLabel` — EN: Comments — BN: কমেন্ট

@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 05: ride 2/4 (recording, ride screens, Year in Review), 80 lines -->
+# Bangla review 05: ride 2/4 (recording, ride screens, Year in Review), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `analyticsRangeAll` — EN: All — BN: সব
+- [ ] `analyticsMin` — EN: Min — BN: সর্বনিম্ন
+- [ ] `analyticsMax` — EN: Max — BN: সর্বোচ্চ
+- [ ] `analyticsAvg` — EN: Average — BN: গড়
+- [ ] `analyticsTotal` — EN: Total — BN: মোট
+- [ ] `analyticsTrend` — EN: vs previous — BN: আগের তুলনায়
+- [ ] `analyticsNoTrend` — EN: No earlier data — BN: আগের তথ্য নেই
+- [ ] `analyticsInsight` — EN: Insight — BN: পর্যবেক্ষণ
+- [ ] `analyticsData` — EN: Data — BN: তথ্য
+- [ ] `analyticsDownloadData` — EN: Download data — BN: তথ্য ডাউনলোড করুন
+- [ ] `analyticsExportFailed` — EN: Could not export the data — BN: তথ্য এক্সপোর্ট করা যায়নি
+- [ ] `analyticsShareSubject` — EN: ThrottleIQ: {chart} — BN: ThrottleIQ তথ্য: {chart}
+- [ ] `analyticsColDate` — EN: Date — BN: তারিখ
+- [ ] `analyticsColWeekOf` — EN: Week of — BN: সপ্তাহ শুরু
+- [ ] `analyticsColHour` — EN: Hour — BN: ঘণ্টা
+- [ ] `analyticsColDay` — EN: Day — BN: দিন
+- [ ] `analyticsColBike` — EN: Bike — BN: বাইক
+- [ ] `analyticsColRides` — EN: Rides — BN: রাইড
+- [ ] `analyticsColMoving` — EN: Moving — BN: চলমান
+- [ ] `analyticsColStopped` — EN: Stopped — BN: থেমে থাকা
+- [ ] `analyticsUnitMin` — EN: min — BN: মিনিট
+- [ ] `analyticsUnitRides` — EN: rides — BN: রাইড
+- [ ] `analyticsUnitEvents` — EN: events — BN: বার
+- [ ] `analyticsUnknownBike` — EN: Unknown bike — BN: অজানা বাইক
+- [ ] `analyticsTapForDetails` — EN: Tap a chart for details — BN: বিস্তারিত দেখতে চার্টে ট্যাপ করুন
+- [ ] `insightNotEnoughData` — EN: Not enough rides in this period yet. — BN: এই সময়ে এখনো যথেষ্ট রাইড নেই।
+- [ ] `insightTrendUp` — EN: Up {percent}% on the previous period. — BN: আগের সময়ের চেয়ে {percent}% বেশি।
+- [ ] `insightTrendDown` — EN: Down {percent}% on the previous period. — BN: আগের সময়ের চেয়ে {percent}% কম।
+- [ ] `insightTrendFlat` — EN: About the same as the previous period. — BN: আগের সময়ের প্রায় সমান।
+- [ ] `insightPeakValue` — EN: Your highest was {value} on {date}. — BN: সর্বোচ্চ ছিল {value}, {date} তারিখে।
+- [ ] `insightPeakHour` — EN: You ride most often around {hour}. — BN: আপনি সবচেয়ে বেশি রাইড করেন {hour} এর দিকে।
+- [ ] `insightPeakWeekday` — EN: {day} is your busiest riding day. — BN: {day} আপনার সবচেয়ে বেশি রাইডের দিন।
+- [ ] `insightTopBike` — EN: {bike} covers {percent}% of your distance. — BN: আপনার দূরত্বের {percent}% {bike} দিয়ে।
+- [ ] `insightStreak` — EN: You have ridden {current} days in a row. Your record is {longest}. — BN: আপনি টানা {current} দিন রাইড করেছেন। আপনার রেকর্ড {longest} দিন।
+- [ ] `insightStreakRecordOnly` — EN: Your longest run of riding days is {longest}. — BN: টানা রাইডের দিনে আপনার রেকর্ড {longest} দিন।
+- [ ] `insightLongestRide` — EN: Your longest ride was {value} on {date}. — BN: আপনার সবচেয়ে লম্বা রাইড ছিল {value}, {date} তারিখে।
+- [ ] `insightCleanRides` — EN: {clean} of {total} rides had none. — BN: {total}টি রাইডের মধ্যে {clean}টিতে একবারও হয়নি।
+- [ ] `insightStoppedShare` — EN: You spent {percent}% of your riding time stopped. — BN: রাইডের সময়ের {percent}% আপনি থেমে ছিলেন।
+- [ ] `chartMaxLean` — EN: Max lean angle per ride — BN: প্রতি রাইডে সর্বোচ্চ লিন অ্যাঙ্গেল
+- [ ] `chartPeakG` — EN: Peak cornering g per ride — BN: প্রতি রাইডে বাঁকে সর্বোচ্চ g
+- [ ] `chartElevationGain` — EN: Elevation gain per ride — BN: প্রতি রাইডে উচ্চতা বৃদ্ধি
+- [ ] `analyticsColLateral` — EN: Cornering — BN: বাঁক
+- [ ] `analyticsColAccel` — EN: Acceleration — BN: অ্যাক্সিলারেশন
+- [ ] `analyticsColBrake` — EN: Braking — BN: ব্রেকিং
+- [ ] `analyticsColClimb` — EN: Climb — BN: চড়াই
+- [ ] `analyticsColDescent` — EN: Descent — BN: উতরাই
+- [ ] `insightPeakLean` — EN: Your deepest lean was about {value} on {date}. Estimated from GPS, so treat it as a guide. — BN: আপনার সবচেয়ে বেশি লিন ছিল প্রায় {value}, {date} তারিখে। এটি GPS থেকে আনুমানিক হিসাব, তাই নির্দেশিকা হিসেবে দেখুন।
+- [ ] `insightTotalClimb` — EN: You climbed {value} in total across {count, plural, =1{1 ride} other{{count} rides}}. — BN: {count, plural, =1{1টি রাইডে} other{{count}টি রাইডে}} আপনি মোট {value} উপরে উঠেছেন।
+- [ ] `notifRecordingStoppedTitle` — EN: Recording stopped — BN: রেকর্ডিং বন্ধ হয়ে গেছে
+- [ ] `notifRecordingStoppedBody` — EN: Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride. — BN: রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।
+- [ ] `oemGuideTitle` — EN: Keep rides recording — BN: রাইড রেকর্ডিং চালু রাখুন
+- [ ] `oemGuideIntro` — EN: {brand} phones close apps in the background to save battery, which can cut a ride short. Change these three settings once. — BN: {brand} ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। এই তিনটি সেটিং একবার বদলে নিন।
+- [ ] `oemGuideStepAutostart` — EN: Turn on Autostart (also called Auto-launch or Background start) for ThrottleIQ. — BN: ThrottleIQ-এর জন্য অটোস্টার্ট (অটো-লঞ্চ বা ব্যাকগ্রাউন্ড স্টার্ট নামেও থাকে) চালু করুন।
+- [ ] `oemGuideOpenAutostart` — EN: Open Autostart settings — BN: অটোস্টার্ট সেটিংস খুলুন
+- [ ] `oemGuideStepBattery` — EN: In ThrottleIQ's app info, set Battery to "No restrictions" or "Allow background activity". — BN: ThrottleIQ-এর অ্যাপ ইনফোতে ব্যাটারি "কোনো সীমা নেই" বা "ব্যাকগ্রাউন্ডে চলতে দিন" করে দিন।
+- [ ] `oemGuideStepLock` — EN: In recent apps, lock ThrottleIQ (long-press or pull down its card) so clearing them doesn't close it. — BN: সাম্প্রতিক অ্যাপে ThrottleIQ লক করুন (কার্ডটি চেপে ধরুন বা নিচে টানুন), যাতে সব মুছে দিলেও এটি বন্ধ না হয়।
+- [ ] `oemGuideMoreHelp` — EN: Step-by-step guide for {brand} phones — BN: {brand} ফোনের জন্য ধাপে ধাপে গাইড
+- [ ] `oemGuideOfferTitle` — EN: Rides cut short on {brand}? — BN: {brand}-এ রাইড মাঝপথে কেটে যায়?
+- [ ] `oemGuideOfferBody` — EN: {brand} phones can close ThrottleIQ mid-ride to save battery. Three settings stop that, and it takes a minute. — BN: ব্যাটারি বাঁচাতে {brand} ফোন রাইডের মাঝপথে ThrottleIQ বন্ধ করে দিতে পারে। তিনটি সেটিং বদলালে আর হবে না, এক মিনিট লাগে।
+- [ ] `oemGuideShowMe` — EN: Show me — BN: দেখান
+- [ ] `phonePlacementLabel` — EN: Phone — BN: ফোন
+- [ ] `phonePlacementMount` — EN: On a mount — BN: মাউন্টে
+- [ ] `phonePlacementPocket` — EN: In a pocket — BN: পকেটে
+- [ ] `phonePlacementBag` — EN: In a bag — BN: ব্যাগে
+- [ ] `phonePlacementHint` — EN: Helps the app tell a fall from a bump. — BN: পড়ে যাওয়া আর ঝাঁকুনির পার্থক্য বুঝতে অ্যাপকে সাহায্য করে।
+- [ ] `impactQuestionTitle` — EN: Possible fall at {time} — BN: {time}-এ সম্ভাব্য পতন
+- [ ] `impactQuestionBody` — EN: Your phone felt a hard knock and then stopped moving. Did you fall? — BN: আপনার ফোনে জোরে ধাক্কা লেগেছে, তারপর ফোনটি থেমে গেছে। আপনি কি পড়ে গিয়েছিলেন?
+- [ ] `impactAnswerYes` — EN: Yes, I fell — BN: হ্যাঁ, পড়ে গিয়েছিলাম
+- [ ] `impactAnswerPhoneFell` — EN: No, my phone fell — BN: না, ফোন পড়ে গিয়েছিল
+- [ ] `impactAnswerBump` — EN: No, just a bump — BN: না, শুধু ঝাঁকুনি
+- [ ] `impactAnswerHardStop` — EN: No, I braked hard — BN: না, জোরে ব্রেক করেছিলাম
+- [ ] `impactAnswerUnsure` — EN: Not sure — BN: নিশ্চিত নই
+- [ ] `impactFollowUpTitle` — EN: Glad you're OK. Two quick questions help the app learn: — BN: আপনি ঠিক আছেন জেনে ভালো লাগল। দুটি ছোট প্রশ্ন অ্যাপকে শিখতে সাহায্য করবে:
+- [ ] `impactSeverityLabel` — EN: How bad was it? — BN: কতটা গুরুতর ছিল?
+- [ ] `impactSeverityNone` — EN: No injury — BN: কোনো আঘাত নেই
+- [ ] `impactSeverityMinor` — EN: Minor injury — BN: সামান্য আঘাত
+- [ ] `impactSeverityMedical` — EN: Needed medical help — BN: চিকিৎসা লেগেছে
+- [ ] `impactSurfaceLabel` — EN: Road surface — BN: রাস্তার অবস্থা
+- [ ] `surfacePaved` — EN: Paved — BN: পাকা রাস্তা
+- [ ] `surfaceBroken` — EN: Broken road — BN: ভাঙা রাস্তা

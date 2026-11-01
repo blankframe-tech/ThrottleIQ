@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 18: other 4/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 18: other 4/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `offRouteFromLine` — EN: Off route — {distanceM} from the line — BN: রুটের বাইরে — লাইন থেকে {distanceM} দূরে
+- [ ] `remaining` — EN: Remaining — BN: বাকি
+- [ ] `eta` — EN: ETA — BN: পৌঁছাবে (ETA)
+- [ ] `end` — EN: End — BN: শেষ
+- [ ] `routes` — EN: Routes — BN: রুট
+- [ ] `myRoutes` — EN: My routes — BN: আমার রুট
+- [ ] `discover` — EN: Discover — BN: আবিষ্কার করুন
+- [ ] `noSavedRoutesYet` — EN: No saved routes yet — BN: এখনো কোনো সেভ করা রুট নেই
+- [ ] `noPublicRoutesYet` — EN: No public routes yet — BN: এখনো কোনো পাবলিক রুট নেই
+- [ ] `finishRideThenTap` — EN: Finish a ride, then tap "Save as route" on the share screen. — BN: একটি রাইড শেষ করুন, তারপর শেয়ার স্ক্রিনে "রুট হিসেবে সেভ করুন" ট্যাপ করুন।
+- [ ] `publicRoutesOtherRiders` — EN: Public routes other riders save will show up here. — BN: অন্য রাইডারদের সেভ করা পাবলিক রুট এখানে দেখা যাবে।
+- [ ] `routeRiddenSummary` — EN: {distanceKm} km · ridden {timesRidden}× — BN: {distanceKm} কিমি · {timesRidden} বার চালানো
+- [ ] `thisRideHasNo` — EN: This ride has no track to save as a route. — BN: এই রাইডে রুট হিসেবে সেভ করার মতো কোনো ট্র্যাক নেই।
+- [ ] `routeSaved` — EN: Route saved — BN: রুট সেভ হয়েছে
+- [ ] `loadingTrack` — EN: Loading track… — BN: ট্র্যাক লোড হচ্ছে…
+- [ ] `kmPoints` — EN: {distanceKm} km · {polylineCount} points — BN: {distanceKm} কিমি · {polylineCount}টি পয়েন্ট
+- [ ] `routeName` — EN: Route name — BN: রুটের নাম
+- [ ] `eGDhakaMawa` — EN: e.g. Dhaka – Mawa morning run — BN: যেমন: ঢাকা – মাওয়া সকালের রাইড
+- [ ] `giveRouteName` — EN: Give the route a name — BN: রুটটির একটি নাম দিন
+- [ ] `roadSurfaceBestTime` — EN: Road surface, best time to ride, where to stop… — BN: রাস্তার অবস্থা, রাইডের সেরা সময়, কোথায় থামবেন…
+- [ ] `saveRoute` — EN: Save route — BN: রুট সেভ করুন
+- [ ] `topSpeed` — EN: Top speed — BN: সর্বোচ্চ গতি
+- [ ] `bestScore` — EN: Best score — BN: সেরা স্কোর
+- [ ] `allRides` — EN: All rides — BN: সব রাইড
+- [ ] `noRidesYetDot` — EN: No rides yet. — BN: এখনো কোনো রাইড নেই।
+- [ ] `showing` — EN: Showing {shownCount} of {sortedCount} — BN: {sortedCount}টির মধ্যে {shownCount}টি দেখানো হচ্ছে
+- [ ] `distanceLower` — EN: distance — BN: দূরত্ব
+- [ ] `topLower` — EN: top — BN: সর্বোচ্চ
+- [ ] `hardBrakesRapidAccel` — EN: {hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks — BN: {hardBrakeCount}টি হার্ড ব্রেক · {rapidAccelCount}টি র‍্যাপিড এক্সেল · {highJerkCount}টি ঝাঁকুনি
+- [ ] `journey` — EN: Your Journey — BN: আপনার যাত্রা
+- [ ] `goRideStartJourney` — EN: Go for a ride to start your journey. — BN: যাত্রা শুরু করতে একটি রাইডে বের হোন।
+- [ ] `totalKm` — EN: total km — BN: মোট কিমি
+- [ ] `level` — EN: Level {level} · {rank} — BN: লেভেল {level} · {rank}
+- [ ] `distanceOverTime` — EN: Distance over time — BN: সময়ের সাথে দূরত্ব
+- [ ] `avgSpeedOverTime` — EN: Avg speed over time — BN: সময়ের সাথে গড় গতি
+- [ ] `badgesEarnedCount` — EN: {earnedCount} of {badgesCount} earned — BN: {badgesCount}টির মধ্যে {earnedCount}টি অর্জিত
+- [ ] `avgSpeedLower` — EN: avg speed — BN: গড় গতি
+- [ ] `topSpeedLower` — EN: top speed — BN: সর্বোচ্চ গতি
+- [ ] `score` — EN: score — BN: স্কোর
+- [ ] `recentRides` — EN: Recent rides — BN: সাম্প্রতিক রাইড
+- [ ] `shown` — EN: {showing} of {total} shown — BN: {total}টির মধ্যে {showing}টি দেখানো হয়েছে
+- [ ] `badgeFamilyEarned` — EN: {family}, {earnedCount} of {badgesCount} earned — BN: {family}, {badgesCount}টির মধ্যে {earnedCount}টি অর্জিত
+- [ ] `youProgress` — EN: You: {progress} {unit} — BN: আপনি: {progress} {unit}
+- [ ] `nextGo` — EN: Next: {def} — {progress} {unit} to go — BN: পরবর্তী: {def} — আরও {progress} {unit} বাকি
+- [ ] `everyTierEarnedNothing` — EN: Every tier earned. Nothing left to chase here. — BN: সব স্তর অর্জিত। এখানে আর কিছু বাকি নেই।
+- [ ] `earnedThreshold` — EN: Earned. {threshold} — BN: অর্জিত। {threshold}
+- [ ] `youreAt` — EN: {threshold} You're at {progress} of {threshold2} {unit}. — BN: {threshold} আপনি {threshold2} {unit}-এর মধ্যে {progress}-এ আছেন।
+- [ ] `notEnoughRidesYet` — EN: Not enough rides yet — BN: এখনো যথেষ্ট রাইড নেই
+- [ ] `cropPhoto` — EN: Crop photo — BN: ছবি ক্রপ করুন
+- [ ] `free` — EN: Free — BN: ফ্রি
+- [ ] `couldNotOpenThat` — EN: Could not open that photo. — BN: ছবিটি খোলা যায়নি।
+- [ ] `couldNotSaveCropped` — EN: Could not save the cropped photo. — BN: ক্রপ করা ছবি সেভ করা যায়নি।
+- [ ] `done` — EN: Done — BN: সম্পন্ন
+- [ ] `rotate` — EN: Rotate — BN: ঘোরান
+- [ ] `pleaseDescribeProblemBefore` — EN: Please describe the problem before sending. — BN: পাঠানোর আগে সমস্যাটি বর্ণনা করুন।
+- [ ] `couldNotSendReport` — EN: Could not send the report. Please try again. — BN: রিপোর্ট পাঠানো যায়নি। আবার চেষ্টা করুন।
+- [ ] `describeWhatHappenedUid` — EN: Describe what happened. Your UID and app version are included automatically. — BN: কী হয়েছে বর্ণনা করুন। আপনার UID ও অ্যাপ ভার্সন নিজে থেকেই যুক্ত হবে।
+- [ ] `eGMessagesWouldnt` — EN: e.g. "Messages wouldn't send — I got an error about permissions." — BN: যেমন: "মেসেজ যাচ্ছিল না — পারমিশন নিয়ে একটি এরর পেয়েছি।"
+- [ ] `sending` — EN: Sending… — BN: পাঠানো হচ্ছে…
+- [ ] `sendReport` — EN: Send Report — BN: রিপোর্ট পাঠান
+- [ ] `startCaps` — EN: START — BN: শুরু
+- [ ] `finishCaps` — EN: FINISH — BN: শেষ
+- [ ] `waypoint` — EN: Waypoint #{selectedPointIndex} of {polylineCount} — BN: {polylineCount}টির মধ্যে ওয়েপয়েন্ট #{selectedPointIndex}
+- [ ] `gpsPointsTapRoute` — EN: {polylineCount} GPS points • Tap route to inspect waypoints — BN: {polylineCount}টি GPS পয়েন্ট • ওয়েপয়েন্ট দেখতে রুটে ট্যাপ করুন
+- [ ] `saveRouteTitle` — EN: Save Route — BN: রুট সেভ করুন
+- [ ] `dragMapMovePin` — EN: Drag map to move pin — BN: পিন সরাতে ম্যাপ টেনে আনুন
+- [ ] `noRouteRecorded` — EN: No route recorded — BN: কোনো রুট রেকর্ড হয়নি
+- [ ] `sortRecent` — EN: Recent — BN: সাম্প্রতিক
+- [ ] `importedPlaces` — EN: {count, plural, =1{Imported 1 place from OpenStreetMap} other{Imported {count} places from OpenStreetMap}} — BN: OpenStreetMap থেকে {count, plural, =1{1টি জায়গা} other{{count}টি জায়গা}} ইম্পোর্ট হয়েছে
+- [ ] `errOffline` — EN: You're offline. Check your internet connection and try again. — BN: আপনি অফলাইনে আছেন। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।
+- [ ] `errTimeout` — EN: That's taking too long. Check your connection and try again. — BN: এতে অনেক সময় লাগছে। সংযোগ দেখে আবার চেষ্টা করুন।
+- [ ] `errNoPermission` — EN: You don't have permission to view this. — BN: এটি দেখার অনুমতি আপনার নেই।
+- [ ] `errNotFound` — EN: That could not be found — it may have been removed. — BN: এটি পাওয়া যায়নি — হয়তো সরিয়ে ফেলা হয়েছে।
+- [ ] `errTooManyRequests` — EN: ThrottleIQ's database is overloaded because too many riders are using it right now. Please try again later. — BN: অনেক রাইডার একসাথে ব্যবহার করায় ThrottleIQ-এর ডেটাবেস এখন অতিরিক্ত চাপে আছে। পরে আবার চেষ্টা করুন।
+- [ ] `errNotReady` — EN: This isn't ready yet. Please try again in a few minutes. — BN: এটি এখনো প্রস্তুত নয়। কয়েক মিনিট পর আবার চেষ্টা করুন।
+- [ ] `errLoadGeneric` — EN: Something went wrong loading this. Please try again. — BN: এটি লোড করতে সমস্যা হয়েছে। আবার চেষ্টা করুন।
+- [ ] `errUnknown` — EN: An unknown error occurred — BN: একটি অজানা ত্রুটি ঘটেছে
+- [ ] `errNetworkFailed` — EN: Network connection failed. Please check your internet. — BN: নেটওয়ার্ক সংযোগ ব্যর্থ হয়েছে। ইন্টারনেট দেখুন।
+- [ ] `errPermissionDenied` — EN: Permission denied. Please check your account settings. — BN: অনুমতি দেওয়া হয়নি। আপনার অ্যাকাউন্ট সেটিংস দেখুন।
+- [ ] `errGeneric` — EN: Something went wrong. Please try again. — BN: কিছু একটা সমস্যা হয়েছে। আবার চেষ্টা করুন।

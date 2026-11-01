@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 20: other 6/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 20: other 6/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `rankNewRider` — EN: New Rider — BN: নতুন রাইডার
+- [ ] `rankWeekendRider` — EN: Weekend Rider — BN: সাপ্তাহিক রাইডার
+- [ ] `rankSteadyCruiser` — EN: Steady Cruiser — BN: স্থির ক্রুজার
+- [ ] `rankRoadRegular` — EN: Road Regular — BN: নিয়মিত রাইডার
+- [ ] `rankSeasonedRider` — EN: Seasoned Rider — BN: অভিজ্ঞ রাইডার
+- [ ] `rankRoadMaster` — EN: Road Master — BN: রোড মাস্টার
+- [ ] `tiersLabel` — EN: Tiers — BN: স্তর
+- [ ] `rankVeteran` — EN: Veteran — BN: ভেটেরান
+- [ ] `badgeFamFirstName` — EN: First ride — BN: প্রথম রাইড
+- [ ] `badgeFamFirstAbout` — EN: Where every rider starts — your first recorded ride. — BN: প্রতিটি রাইডারের শুরু — আপনার প্রথম রেকর্ড করা রাইড।
+- [ ] `badgeFamFirstReq` — EN: Record your first ride. — BN: আপনার প্রথম রাইডটি রেকর্ড করুন।
+- [ ] `badgeRungFirstRide` — EN: First ride — BN: প্রথম রাইড
+- [ ] `badgeFamRidesName` — EN: Rides — BN: রাইড
+- [ ] `badgeFamRidesAbout` — EN: How many rides you have recorded, all time. — BN: এ পর্যন্ত আপনি মোট কতগুলো রাইড রেকর্ড করেছেন।
+- [ ] `badgeFamRidesReq` — EN: Record {n} rides. — BN: {n}টি রাইড রেকর্ড করুন।
+- [ ] `badgeRungRides10` — EN: 10 rides — BN: 10টি রাইড
+- [ ] `badgeRungRides25` — EN: 25 rides — BN: 25টি রাইড
+- [ ] `badgeRungRides50` — EN: 50 rides — BN: 50টি রাইড
+- [ ] `badgeRungRides100` — EN: 100 rides — BN: 100টি রাইড
+- [ ] `badgeRungRides250` — EN: 250 rides — BN: 250টি রাইড
+- [ ] `badgeFamDistanceName` — EN: Distance — BN: দূরত্ব
+- [ ] `badgeFamDistanceAbout` — EN: Total distance covered across every ride you have recorded. — BN: আপনার রেকর্ড করা সব রাইড মিলিয়ে মোট অতিক্রান্ত দূরত্ব।
+- [ ] `badgeFamDistanceReq` — EN: Ride {n} km in total. — BN: মোট {n} কিমি রাইড করুন।
+- [ ] `badgeRungKm100` — EN: 100 km — BN: 100 কিমি
+- [ ] `badgeRungKm500` — EN: 500 km — BN: 500 কিমি
+- [ ] `badgeRungKm1000` — EN: 1,000 km — BN: 1,000 কিমি
+- [ ] `badgeRungKm2500` — EN: 2,500 km — BN: 2,500 কিমি
+- [ ] `badgeRungKm5000` — EN: 5,000 km — BN: 5,000 কিমি
+- [ ] `badgeFamLongRideName` — EN: Longest ride — BN: সবচেয়ে লম্বা রাইড
+- [ ] `badgeFamLongRideAbout` — EN: The distance of your single longest recorded ride. — BN: আপনার রেকর্ড করা একক সবচেয়ে লম্বা রাইডের দূরত্ব।
+- [ ] `badgeFamLongRideReq` — EN: Cover {n} km in one ride. — BN: এক রাইডে {n} কিমি পাড়ি দিন।
+- [ ] `badgeRungLongRide50` — EN: Day tripper — BN: ডে ট্রিপার
+- [ ] `badgeRungLongRide100` — EN: Century — BN: সেঞ্চুরি
+- [ ] `badgeRungLongRide200` — EN: Long hauler — BN: লং হলার
+- [ ] `badgeRungLongRide400` — EN: Tourer — BN: ট্যুরার
+- [ ] `badgeRungLongRide800` — EN: Iron rider — BN: আয়রন রাইডার
+- [ ] `badgeFamSaddleTimeName` — EN: Saddle time — BN: স্যাডল টাইম
+- [ ] `badgeFamSaddleTimeAbout` — EN: The duration of your single longest recorded ride. — BN: আপনার রেকর্ড করা একক সবচেয়ে দীর্ঘ রাইডের সময়কাল।
+- [ ] `badgeFamSaddleTimeReq` — EN: Ride for {n} hours without ending the recording. — BN: রেকর্ডিং বন্ধ না করে {n} ঘণ্টা রাইড করুন।
+- [ ] `badgeRungSaddle1h` — EN: One hour — BN: এক ঘণ্টা
+- [ ] `badgeRungSaddle2h` — EN: Two hours — BN: দুই ঘণ্টা
+- [ ] `badgeRungSaddle4h` — EN: Four hours — BN: চার ঘণ্টা
+- [ ] `badgeRungSaddle8h` — EN: Eight hours — BN: আট ঘণ্টা
+- [ ] `badgeFamNightName` — EN: Night rider — BN: নাইট রাইডার
+- [ ] `badgeFamNightAbout` — EN: Rides that set off after 9 pm or before 4 am. — BN: রাত 9টার পর বা ভোর 4টার আগে শুরু হওয়া রাইড।
+- [ ] `badgeFamNightReq` — EN: Start {n} rides between 9 pm and 4 am. — BN: রাত 9টা থেকে ভোর 4টার মধ্যে {n}টি রাইড শুরু করুন।
+- [ ] `badgeRungNight1` — EN: After dark — BN: রাতের আঁধারে
+- [ ] `badgeRungNight5` — EN: Night owl — BN: নাইট আউল
+- [ ] `badgeRungNight25` — EN: Moonlighter — BN: মুনলাইটার
+- [ ] `badgeRungNight50` — EN: Nocturnal — BN: নিশাচর
+- [ ] `badgeFamEarlyName` — EN: Early bird — BN: ভোরের পাখি
+- [ ] `badgeFamEarlyAbout` — EN: Rides that set off between 4 am and 7 am. — BN: ভোর 4টা থেকে সকাল 7টার মধ্যে শুরু হওয়া রাইড।
+- [ ] `badgeFamEarlyReq` — EN: Start {n} rides between 4 am and 7 am. — BN: ভোর 4টা থেকে সকাল 7টার মধ্যে {n}টি রাইড শুরু করুন।
+- [ ] `badgeRungEarly1` — EN: Sunrise run — BN: সূর্যোদয়ের রাইড
+- [ ] `badgeRungEarly5` — EN: Early bird — BN: ভোরের পাখি
+- [ ] `badgeRungEarly25` — EN: Dawn patrol — BN: ডন প্যাট্রোল
+- [ ] `badgeFamStreakName` — EN: Streak — BN: ধারাবাহিকতা
+- [ ] `badgeFamStreakAbout` — EN: Your longest run of consecutive days with a recorded ride. — BN: আপনার রেকর্ড করা রাইডসহ টানা কয়েক দিনের দীর্ঘতম ধারা।
+- [ ] `badgeFamStreakReq` — EN: Ride on {n} days in a row. — BN: টানা {n} দিন রাইড করুন।
+- [ ] `badgeRungStreak3` — EN: 3-day streak — BN: 3 দিনের ধারা
+- [ ] `badgeRungStreak7` — EN: 7-day streak — BN: 7 দিনের ধারা
+- [ ] `badgeRungStreak14` — EN: 14-day streak — BN: 14 দিনের ধারা
+- [ ] `badgeRungStreak30` — EN: 30-day streak — BN: 30 দিনের ধারা
+- [ ] `badgeFamSmoothName` — EN: Smoothness — BN: মসৃণতা
+- [ ] `badgeFamSmoothAbout` — EN: Your average riding score — fewer hard brakes, rapid accelerations and jerky inputs score higher. — BN: আপনার গড় রাইডিং স্কোর — কম হার্ড ব্রেক, র‍্যাপিড এক্সেলারেশন ও ঝাঁকুনিতে স্কোর বেশি হয়।
+- [ ] `badgeFamSmoothReq` — EN: Average {n} points across at least 5 rides. — BN: কমপক্ষে 5টি রাইডে গড়ে {n} পয়েন্ট পান।
+- [ ] `badgeRungSmooth80` — EN: Steady hands — BN: স্থির হাত
+- [ ] `badgeRungSmoothOperator` — EN: Smooth operator — BN: স্মুথ অপারেটর
+- [ ] `badgeRungSmooth95` — EN: Silk — BN: সিল্ক
+- [ ] `badgeRungSmooth98` — EN: Effortless — BN: অনায়াস
+- [ ] `badgeUnitRides` — EN: rides — BN: রাইড
+- [ ] `badgeUnitKm` — EN: km — BN: কিমি
+- [ ] `badgeUnitHours` — EN: h — BN: ঘণ্টা
+- [ ] `badgeUnitDays` — EN: days — BN: দিন
+- [ ] `badgeUnitPts` — EN: pts — BN: পয়েন্ট
+- [ ] `badgeTierBronze` — EN: Bronze — BN: ব্রোঞ্জ
+- [ ] `badgeTierSilver` — EN: Silver — BN: সিলভার
+- [ ] `badgeTierGold` — EN: Gold — BN: গোল্ড
+- [ ] `badgeTierPlatinum` — EN: Platinum — BN: প্ল্যাটিনাম
+- [ ] `badgeTierDiamond` — EN: Diamond — BN: ডায়মন্ড

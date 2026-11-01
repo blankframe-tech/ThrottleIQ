@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 15: other 1/10 (social, places, forums, badges, settings), 80 lines -->
+# Bangla review 15: other 1/10 (social, places, forums, badges, settings), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `aRider` — EN: A rider — BN: একজন রাইডার
+- [ ] `livePositionsUnavailable` — EN: Live positions unavailable: {e} — BN: লাইভ পজিশন পাওয়া যাচ্ছে না: {e}
+- [ ] `locationPermissionOffGroup` — EN: Location permission is off — the group can't see you. You can still see them. — BN: লোকেশন অনুমতি বন্ধ — গ্রুপ আপনাকে দেখতে পাচ্ছে না। আপনি তাদের দেখতে পাচ্ছেন।
+- [ ] `locationUnavailable` — EN: Location unavailable: {e} — BN: লোকেশন পাওয়া যাচ্ছে না: {e}
+- [ ] `leaveGroupRide` — EN: Leave group ride? — BN: গ্রুপ রাইড ছেড়ে যাবেন?
+- [ ] `othersStopSeeingPosition` — EN: The others stop seeing your position. Your own ride recording keeps running — end it from the ride screen. — BN: অন্যরা আর আপনার অবস্থান দেখতে পাবে না। আপনার নিজের রাইড রেকর্ডিং চলতেই থাকবে — রাইড স্ক্রিন থেকে সেটি শেষ করুন।
+- [ ] `stay` — EN: Stay — BN: থাকুন
+- [ ] `leave` — EN: Leave — BN: ছেড়ে যান
+- [ ] `couldntLeave` — EN: Couldn't leave: {e} — BN: ছেড়ে যাওয়া যায়নি: {e}
+- [ ] `microphoneAccessOffCan` — EN: Microphone access is off — you can still hear the group. — BN: মাইক্রোফোন বন্ধ আছে — আপনি এখনও গ্রুপের কথা শুনতে পাবেন।
+- [ ] `couldntStartRecording` — EN: Couldn't start recording: {e} — BN: রেকর্ডিং শুরু করা যায়নি: {e}
+- [ ] `couldntSendVoiceNote` — EN: Couldn't send voice note: {e} — BN: ভয়েস নোট পাঠানো যায়নি: {e}
+- [ ] `groupRide` — EN: Group ride — BN: গ্রুপ রাইড
+- [ ] `thisGroupRideNo` — EN: This group ride no longer exists. — BN: এই গ্রুপ রাইডটি আর নেই।
+- [ ] `playing` — EN: Playing {note}… — BN: {note} চলছে…
+- [ ] `holdTalk` — EN: Hold to talk — BN: কথা বলতে ধরে রাখুন
+- [ ] `unmuteVoiceNotes` — EN: Unmute voice notes — BN: ভয়েস নোট আনমিউট করুন
+- [ ] `muteVoiceNotes` — EN: Mute voice notes — BN: ভয়েস নোট মিউট করুন
+- [ ] `nobodyThisRideYet` — EN: Nobody is on this ride yet. — BN: এই রাইডে এখনো কেউ নেই।
+- [ ] `ridingJoined` — EN: Riding — {joinedCount} — BN: রাইডে আছেন — {joinedCount}
+- [ ] `invitedWaiting` — EN: Invited — {pendingCount} waiting — BN: আমন্ত্রিত — {pendingCount} জন অপেক্ষায়
+- [ ] `hasntJoinedYet` — EN: Hasn't joined yet — BN: এখনো যোগ দেননি
+- [ ] `you` — EN: {userName} (you) — BN: {userName} (আপনি)
+- [ ] `waitingFirstPosition` — EN: Waiting for the first position… — BN: প্রথম অবস্থানের অপেক্ষায়…
+- [ ] `deleteSharedRide` — EN: Delete shared ride? — BN: শেয়ার করা রাইড মুছবেন?
+- [ ] `thisRemovesItFrom` — EN: This removes it from the feed for everyone. Your local ride history is unaffected. — BN: এতে সবার ফিড থেকে এটি সরে যাবে। আপনার ফোনের রাইড ইতিহাস অপরিবর্তিত থাকবে।
+- [ ] `delete` — EN: Delete — BN: মুছুন
+- [ ] `mySharedRides` — EN: My Shared Rides — BN: আমার শেয়ার করা রাইড
+- [ ] `haventSharedAnyRides` — EN: You haven't shared any rides yet — BN: আপনি এখনো কোনো রাইড শেয়ার করেননি
+- [ ] `notifications` — EN: Notifications — BN: নোটিফিকেশন
+- [ ] `noNotificationsYet` — EN: No notifications yet — BN: এখনো কোনো নোটিফিকেশন নেই
+- [ ] `couldntJoinRide` — EN: Couldn't join the ride: {e} — BN: রাইডে যোগ দেওয়া যায়নি: {e}
+- [ ] `tapJoin` — EN: {relativeTime} · tap to join — BN: {relativeTime} · যোগ দিতে ট্যাপ করুন
+- [ ] `anyoneThrottleiq` — EN: Anyone on ThrottleIQ — BN: ThrottleIQ-র যে কেউ
+- [ ] `peopleWhoFollow` — EN: Includes people who follow you later. Following doesn't need your approval. — BN: পরে যারা ফলো করবে তারাও দেখতে পাবে। ফলো করতে আপনার অনুমতি লাগে না।
+- [ ] `canAddUpPhotos` — EN: You can add up to {maxRidePhotos} photos. Remove one to add another. — BN: আপনি সর্বোচ্চ {maxRidePhotos}টি ছবি যোগ করতে পারবেন। আরেকটি যোগ করতে একটি সরিয়ে দিন।
+- [ ] `onlyPhotosPerRide` — EN: Only {maxRidePhotos} photos per ride — kept the first {remaining}. — BN: প্রতি রাইডে শুধু {maxRidePhotos}টি ছবি — প্রথম {remaining}টি রাখা হয়েছে।
+- [ ] `savedWellPostIt` — EN: Saved — we'll post it when you're back online — BN: সেভ হয়েছে — অনলাইনে ফিরলে আমরা পোস্ট করে দেব
+- [ ] `failedShareRide` — EN: Failed to share ride: {e} — BN: রাইড শেয়ার করা যায়নি: {e}
+- [ ] `addUpRideBike` — EN: Add up to {maxRidePhotos} ride or bike photos — BN: রাইড বা বাইকের সর্বোচ্চ {maxRidePhotos}টি ছবি যোগ করুন
+- [ ] `shareRide` — EN: Share ride — BN: রাইড শেয়ার করুন
+- [ ] `saySomethingAboutThis` — EN: Say something about this ride — BN: এই রাইড নিয়ে কিছু লিখুন
+- [ ] `photosOptional` — EN: Photos (optional) — BN: ছবি (ঐচ্ছিক)
+- [ ] `whoCanSeeThis` — EN: Who can see this — BN: কে এটি দেখতে পাবে
+- [ ] `saveAsRoute` — EN: Save as route — BN: রুট হিসেবে সেভ করুন
+- [ ] `routeSavedMyRoutes` — EN: Route saved to My Routes! — BN: রুটটি আমার রুটে সেভ হয়েছে!
+- [ ] `failedPostComment` — EN: Failed to post comment: {e} — BN: কমেন্ট পোস্ট করা যায়নি: {e}
+- [ ] `voteFailed` — EN: Vote failed: {e} — BN: ভোট দেওয়া যায়নি: {e}
+- [ ] `couldNotSaveRoute` — EN: Could not save route: {e} — BN: রুট সেভ করা যায়নি: {e}
+- [ ] `reportRide` — EN: Report Ride — BN: রাইড রিপোর্ট করুন
+- [ ] `noGpsTrackAvailable` — EN: No GPS track available for this ride — BN: এই রাইডের কোনো GPS ট্র্যাক নেই
+- [ ] `speedPerformanceDetails` — EN: Speed & Performance Details — BN: গতি ও পারফরম্যান্সের বিবরণ
+- [ ] `maxSpeed` — EN: Max Speed — BN: সর্বোচ্চ গতি
+- [ ] `duration` — EN: Duration — BN: সময়কাল
+- [ ] `trackPoints` — EN: {polylineCount} track points — BN: {polylineCount}টি ট্র্যাক পয়েন্ট
+- [ ] `startColon` — EN: Start:  — BN: শুরু: 
+- [ ] `finishColon` — EN: Finish:  — BN: শেষ: 
+- [ ] `upvote` — EN: Upvote — BN: আপভোট
+- [ ] `downvote` — EN: Downvote — BN: ডাউনভোট
+- [ ] `commentsCount` — EN: {comments} comments — BN: {comments}টি কমেন্ট
+- [ ] `noCommentsYetBe` — EN: No comments yet. Be the first to comment! — BN: এখনো কোনো কমেন্ট নেই। প্রথম কমেন্টটি আপনিই করুন!
+- [ ] `addComment` — EN: Add a comment... — BN: কমেন্ট লিখুন...
+- [ ] `send` — EN: Send — BN: পাঠান
+- [ ] `searchRidersForums` — EN: Search riders and forums — BN: রাইডার ও ফোরাম খুঁজুন
+- [ ] `messages` — EN: Messages — BN: মেসেজ
+- [ ] `feed` — EN: Feed — BN: ফিড
+- [ ] `forums` — EN: Forums — BN: ফোরাম
+- [ ] `nothingFoundTryUsername` — EN: Nothing found for "{query}".\nTry a @username, an email, or a forum name. — BN: "{query}" এর জন্য কিছু পাওয়া যায়নি।\n@ইউজারনেম, ইমেইল বা ফোরামের নাম দিয়ে চেষ্টা করুন।
+- [ ] `couldntSearchRiders` — EN: Couldn't search riders: {error} — BN: রাইডার খোঁজা যায়নি: {error}
+- [ ] `noRidersMatchThat` — EN: No riders match that. — BN: এমন কোনো রাইডার নেই।
+- [ ] `couldntSearchForums` — EN: Couldn't search forums: {error} — BN: ফোরাম খোঁজা যায়নি: {error}
+- [ ] `noForumsMatchThat` — EN: No forums match that. — BN: এমন কোনো ফোরাম নেই।
+- [ ] `followersPosts` — EN: {followerCount} followers · {postCount} posts — BN: {followerCount} ফলোয়ার · {postCount}টি পোস্ট
+- [ ] `nothingFromRidersYet` — EN: Nothing from your riders yet — BN: আপনার রাইডারদের কাছ থেকে এখনো কিছু নেই
+- [ ] `noRidesYet` — EN: No rides yet — BN: এখনো কোনো রাইড নেই
+- [ ] `searchRidersAboveFollow` — EN: Search for riders above and follow them to fill this in. — BN: এটি ভরাতে উপরে রাইডার খুঁজে তাদের ফলো করুন।
+- [ ] `shareRideFromIts` — EN: Share a ride from its summary screen to get things started. — BN: শুরু করতে রাইডের সারসংক্ষেপ স্ক্রিন থেকে একটি রাইড শেয়ার করুন।
+- [ ] `tryAgain` — EN: Try again — BN: আবার চেষ্টা করুন
+- [ ] `youreAllCaughtUp` — EN: You're all caught up — BN: সবকিছু দেখা হয়ে গেছে
+- [ ] `details` — EN: Details — BN: বিবরণ

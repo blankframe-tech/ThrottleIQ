@@ -1,0 +1,85 @@
+<!-- issue title: Bangla review 13: garage 6/7 (garage, maintenance, fuel), 80 lines -->
+# Bangla review 13: garage 6/7 (garage, maintenance, fuel), 80 lines
+
+**How to review (15 minutes):** read each line as a rider would. If the Bangla is wrong, stiff or not how you'd say it, comment with `key: your Bangla`. Keep anything in `{curly braces}` exactly as it is (the app fills it in) and keep `plural`/`select` structure. Tick the box when a line is fine. Part of #23.
+
+- [ ] `ridingProfileNormalHelper` — EN: City and highway riding on decent roads. — BN: মোটামুটি ভালো রাস্তায় শহর ও হাইওয়েতে চালানো।
+- [ ] `ridingProfileSevere` — EN: Dusty, wet or broken roads — BN: ধুলো, পানি বা ভাঙা রাস্তা
+- [ ] `ridingProfileSevereHelper` — EN: Construction dust, waterlogged streets, rough village roads. Air filter and chain come due sooner. — BN: নির্মাণের ধুলো, জলাবদ্ধ রাস্তা, খারাপ গ্রামের রাস্তা। এয়ার ফিল্টার ও চেইনের সার্ভিস আগে লাগবে।
+- [ ] `rowLeftDays` — EN: {days, plural, =1{1 day left} other{{days} days left}} — BN: {days, plural, =1{1 দিন বাকি} other{{days} দিন বাকি}}
+- [ ] `rowLeftKm` — EN: {km} left — BN: {km} বাকি
+- [ ] `rowLeftKmOrDays` — EN: {km} or {days} days left — BN: {km} অথবা {days} দিন বাকি
+- [ ] `rowOverBy` — EN: {km} over — BN: {km} বেশি
+- [ ] `rowOverDays` — EN: {days, plural, =0{Due today} =1{1 day over} other{{days} days over}} — BN: {days, plural, =0{আজ করতে হবে} =1{1 দিন পেরিয়ে গেছে} other{{days} দিন পেরিয়ে গেছে}}
+- [ ] `saveVisitN` — EN: Save visit · {count} items — BN: ভিজিট সেভ করুন · {count}টি আইটেম
+- [ ] `scheduleApproximate` — EN: Approximate — BN: আনুমানিক
+- [ ] `scheduleVerified` — EN: From the manual — BN: ম্যানুয়াল থেকে
+- [ ] `serviceRecordColCost` — EN: Cost — BN: খরচ
+- [ ] `serviceRecordColDate` — EN: Date — BN: তারিখ
+- [ ] `serviceRecordColOdometer` — EN: Odometer — BN: ওডোমিটার
+- [ ] `serviceRecordColShop` — EN: Workshop — BN: ওয়ার্কশপ
+- [ ] `serviceRecordColWork` — EN: Work done — BN: যে কাজ হয়েছে
+- [ ] `serviceRecordFooter` — EN: Made with ThrottleIQ from the owner's own records — BN: মালিকের নিজের রেকর্ড থেকে ThrottleIQ দিয়ে তৈরি
+- [ ] `serviceRecordGenerated` — EN: Made on {date} — BN: তৈরির তারিখ {date}
+- [ ] `serviceRecordTitle` — EN: Service record — BN: সার্ভিস রেকর্ড
+- [ ] `serviceRecordTotal` — EN: {count} visits · ৳{total} in total — BN: {count}টি ভিজিট · মোট ৳{total}
+- [ ] `serviceVisit` — EN: Service visit — BN: সার্ভিস ভিজিট
+- [ ] `setLastDone` — EN: Set last done — BN: শেষ কবে করা হয়েছে
+- [ ] `setLastDoneHelper` — EN: Roughly is fine. It's only where the countdown starts. — BN: আনুমানিক হলেই চলবে। এখান থেকেই গণনা শুরু হবে।
+- [ ] `setLastDoneTitle` — EN: When was {item} last done? — BN: {item} শেষ কবে করা হয়েছিল?
+- [ ] `setupCardBody` — EN: Pick your bike's schedule and say when the oil was last changed, and every due date becomes real. — BN: বাইকের সার্ভিস সূচি বাছুন এবং শেষ কবে মবিল বদলানো হয়েছে জানান, তাহলে প্রতিটি তারিখ সঠিক হবে।
+- [ ] `setupCardTitle` — EN: Set up maintenance — BN: মেইনটেন্যান্স সেট আপ করুন
+- [ ] `setupLastOilQuestion` — EN: When was the oil last changed? — BN: শেষ কবে মবিল বদলানো হয়েছে?
+- [ ] `setupOilLabel` — EN: Engine oil — BN: ইঞ্জিন অয়েল
+- [ ] `setupOilUnknown` — EN: I don't know — BN: আমি জানি না
+- [ ] `setupOthersSame` — EN: Everything else was done at that service too — BN: ওই সার্ভিসে বাকি সবকিছুও করা হয়েছিল
+- [ ] `setupResetIntervals` — EN: Use this schedule's intervals for every check — BN: প্রতিটি চেকে এই সূচির ব্যবধান ব্যবহার করুন
+- [ ] `setupResetIntervalsHelper` — EN: Replaces intervals you've edited. Off keeps your edits. — BN: আপনার বদলানো ব্যবধান মুছে যাবে। বন্ধ রাখলে আপনার পরিবর্তন থাকবে।
+- [ ] `setupRoadsLabel` — EN: Your roads — BN: আপনার রাস্তা
+- [ ] `setupSave` — EN: Save and show my maintenance — BN: সেভ করে মেইনটেন্যান্স দেখান
+- [ ] `setupScheduleLabel` — EN: Service schedule — BN: সার্ভিস সূচি
+- [ ] `setupTelemetryNote` — EN: Traffic and braking are measured from your rides. You can turn that off in settings. — BN: যানজট ও ব্রেকিং আপনার রাইড থেকে মাপা হয়। সেটিংসে এটি বন্ধ করতে পারেন।
+- [ ] `setupTitle` — EN: Maintenance setup — BN: মেইনটেন্যান্স সেটআপ
+- [ ] `shopKindAuthorized` — EN: Service centre — BN: সার্ভিস সেন্টার
+- [ ] `shopKindLocal` — EN: Local mechanic — BN: লোকাল মেকানিক
+- [ ] `shopKindSelf` — EN: Did it myself — BN: নিজে করেছি
+- [ ] `shopNameHint` — EN: e.g. Rahim Motors, ACI 3S Mirpur — BN: যেমন রহিম মোটরস, ACI 3S মিরপুর
+- [ ] `shopNameLabel` — EN: Where — BN: কোথায়
+- [ ] `showAllItems` — EN: Show all items — BN: সব আইটেম দেখান
+- [ ] `showMoreVisits` — EN: Show {count} more — BN: আরও {count}টি দেখান
+- [ ] `showTrackedOnly` — EN: Show tracked only — BN: শুধু ট্র্যাক করা দেখান
+- [ ] `snoozedFor` — EN: OK, it'll be back in {days} days. — BN: ঠিক আছে, {days} দিন পর আবার দেখানো হবে।
+- [ ] `spendOil` — EN: Engine oil & filter — BN: মবিল ও ফিল্টার
+- [ ] `spendParts` — EN: Other parts & work — BN: অন্য পার্টস ও কাজ
+- [ ] `spendVisits` — EN: Servicing (not itemised) — BN: সার্ভিসিং (আলাদা করা নয়)
+- [ ] `spentLast12Months` — EN: spent in the last 12 months — BN: গত 12 মাসে খরচ
+- [ ] `statusUnknown` — EN: Unknown — BN: অজানা
+- [ ] `today` — EN: Today — BN: আজ
+- [ ] `undo` — EN: Undo — BN: ফিরিয়ে নিন
+- [ ] `upNext` — EN: Up next — BN: পরবর্তী কাজ
+- [ ] `visitDetails` — EN: Visit details — BN: ভিজিটের বিবরণ
+- [ ] `visitPickSomething` — EN: Tick at least one thing that was done. — BN: অন্তত একটি করা কাজে টিক দিন।
+- [ ] `visitSaved` — EN: {count, plural, =1{Logged 1 item} other{Logged {count} items}} — BN: {count, plural, =1{1টি আইটেম লগ হয়েছে} other{{count}টি আইটেম লগ হয়েছে}}
+- [ ] `visitTotalCost` — EN: Total bill (optional) — BN: মোট বিল (ঐচ্ছিক)
+- [ ] `visitUpdated` — EN: Visit updated — BN: ভিজিট আপডেট হয়েছে
+- [ ] `warnDaysBefore` — EN: Days before — BN: কত দিন আগে
+- [ ] `warnKmBefore` — EN: Km before — BN: কত কিমি আগে
+- [ ] `whatWasDone` — EN: What was done — BN: কী করা হয়েছে
+- [ ] `odometerPhotoHelper` — EN: Type the reading shown in your photo. — BN: ছবিতে যে রিডিং দেখা যাচ্ছে সেটি লিখুন।
+- [ ] `garageHubEmpty` — EN: Add your bike in Garage to unlock owner-only troubleshooting and tuning discussions. — BN: মালিকদের সমস্যা সমাধান ও টিউনিং আলোচনায় যোগ দিতে গ্যারেজে আপনার বাইক যোগ করুন।
+- [ ] `odometerSyncFailed` — EN: Couldn't sync the odometer. Please try again. — BN: ওডোমিটার সিঙ্ক করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `visitSaveFailed` — EN: Couldn't save the visit. Please try again. — BN: ভিজিট সংরক্ষণ করা যায়নি। আবার চেষ্টা করুন।
+- [ ] `navGarageLabel` — EN: Garage — BN: গ্যারেজ
+- [ ] `archiveAlsoDelete` — EN: Also delete (optional): — BN: এগুলোও মুছুন (ঐচ্ছিক):
+- [ ] `archiveOptSharedRides` — EN: Shared rides — BN: শেয়ার করা রাইড
+- [ ] `archiveOptSharedRidesHint` — EN: Removes this bike's rides from the community feed. — BN: কমিউনিটি ফিড থেকে এই বাইকের রাইড সরিয়ে দেয়।
+- [ ] `archiveOptMiles` — EN: Calculated miles — BN: হিসাব করা দূরত্ব
+- [ ] `archiveOptMilesHint` — EN: Resets this bike's distance and ride counters. The rides stay in your history. — BN: এই বাইকের দূরত্ব ও রাইড গণনা শূন্য করে। রাইডগুলো আপনার ইতিহাসে থাকবে।
+- [ ] `archiveOptServiceLogs` — EN: Service logs — BN: সার্ভিস লগ
+- [ ] `archiveOptServiceLogsHint` — EN: Deletes this bike's maintenance history. — BN: এই বাইকের রক্ষণাবেক্ষণের ইতিহাস মুছে দেয়।
+- [ ] `archiveOptPhotos` — EN: Photos — BN: ছবি
+- [ ] `archiveOptPhotosHint` — EN: Removes the bike picture and service receipts. — BN: বাইকের ছবি ও সার্ভিসের রসিদ সরিয়ে দেয়।
+- [ ] `archiveBikeConfirm` — EN: Archive bike — BN: বাইক আর্কাইভ করুন
+- [ ] `bikeArchivedTitle` — EN: Bike archived — BN: বাইক আর্কাইভ হয়েছে
+- [ ] `bikeArchivedBody` — EN: {bike} is archived. It will be permanently deleted on {date}, three months from now. Until then you can unarchive it, download a copy of its data, or delete it now. — BN: {bike} আর্কাইভ হয়েছে। তিন মাস পরে, {date} তারিখে এটি স্থায়ীভাবে মুছে যাবে। তার আগে আপনি এটি ফিরিয়ে আনতে, এর তথ্যের একটি কপি ডাউনলোড করতে, বা এখনই মুছে ফেলতে পারবেন।
+- [ ] `downloadLocalCopy` — EN: Download a local copy — BN: একটি লোকাল কপি ডাউনলোড করুন
