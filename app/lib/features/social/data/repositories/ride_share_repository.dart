@@ -473,6 +473,8 @@ class RideShareRepository {
       'userPhotoUrl': userPhotoUrl,
       'text': text,
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
       'updatedAt': null,
     };
 
@@ -527,6 +529,7 @@ class RideShareRepository {
         createdAt:
             (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
         updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+        writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
       );
     }).toList();
   }

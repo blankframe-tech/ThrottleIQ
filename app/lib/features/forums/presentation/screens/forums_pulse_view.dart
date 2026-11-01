@@ -335,7 +335,7 @@ class PinnedNoticeCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: context.palette.primary)),
                 ),
-                Text(post.createdAt.timeAgo,
+                Text(displayTime(post.createdAt, post.writtenAt).timeAgo,
                     style: TextStyle(
                         fontSize: 11, color: context.palette.textTertiary)),
               ],
@@ -427,7 +427,7 @@ class PulsePostCard extends ConsumerWidget {
               const SizedBox(width: 6),
               ForumPostTypeTag(post: post),
               const Spacer(),
-              Text(post.createdAt.timeAgo,
+              Text(displayTime(post.createdAt, post.writtenAt).timeAgo,
                   style: TextStyle(
                       fontSize: 11, color: context.palette.textTertiary)),
             ],

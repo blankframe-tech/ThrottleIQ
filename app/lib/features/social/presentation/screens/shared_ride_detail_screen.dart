@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/utils/error_reporter.dart';
+import '../../../../core/utils/extensions/datetime_extensions.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../core/utils/firebase_error_mapper.dart';
@@ -1018,8 +1019,9 @@ class _SharedRideDetailScreenState
                                     fontSize: 13)),
                             const Spacer(),
                             Text(
-                                DateFormat('d MMM', kNumericLocale)
-                                    .format(comment.createdAt),
+                                DateFormat('d MMM', kNumericLocale).format(
+                                    displayTime(
+                                        comment.createdAt, comment.writtenAt)),
                                 style: TextStyle(
                                     color: context.palette.textTertiary,
                                     fontSize: 11)),

@@ -559,6 +559,8 @@ class ForumRepository {
         alsoIn: alsoIn,
       ),
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
     });
     batch.update(_forums.doc(forumId), {
       'postCount': FieldValue.increment(1),
@@ -813,6 +815,8 @@ class ForumRepository {
       'userPhotoUrl': userPhotoUrl,
       'body': body,
       'createdAt': FieldValue.serverTimestamp(),
+      // Display only (issue #157): createdAt is when it reached the server.
+      'writtenAt': Timestamp.now(),
     });
     batch.update(postRef, {
       'replyCount': FieldValue.increment(1),

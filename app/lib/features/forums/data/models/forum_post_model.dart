@@ -30,6 +30,7 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data) {
         : null,
     attachment: ForumAttachment.fromMap(data['attachment']),
     imageUrls: forumImageUrlsFromRaw(data['imageUrls']),
+    writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
   );
 }
 
