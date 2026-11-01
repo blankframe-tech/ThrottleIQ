@@ -21,6 +21,7 @@ import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 /// Post body + replies list + reply composer.
 ///
@@ -340,6 +341,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           style: TextStyle(
               fontSize: 14, color: context.palette.textPrimary, height: 1.4),
         ),
+        if (post.hasPendingWrites) ...[
+          const SizedBox(height: 8),
+          const PendingUploadLabel(),
+        ],
         if (post.imageUrls.isNotEmpty) ...[
           const SizedBox(height: 12),
           ForumPostImages(urls: post.imageUrls),
@@ -422,6 +427,10 @@ class _ForumPostDetailScreenState extends ConsumerState<ForumPostDetailScreen> {
           Text(reply.body,
               style: TextStyle(
                   fontSize: 13, color: context.palette.textSecondary)),
+          if (reply.hasPendingWrites) ...[
+            const SizedBox(height: 4),
+            const PendingUploadLabel(),
+          ],
           if (canAccept) ...[
             const SizedBox(height: 4),
             Align(

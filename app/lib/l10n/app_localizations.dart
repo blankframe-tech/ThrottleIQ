@@ -12258,6 +12258,12 @@ abstract class AppLocalizations {
   /// **'Pinned notice'**
   String get pinnedNotice;
 
+  /// Small label on the rider's own ride comment, forum post or reply that is saved on the phone but not uploaded yet (offline or database over quota), so others can't see it yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting to upload'**
+  String get waitingToUpload;
+
   /// Group picker section: the rider's garage and followed forums.
   ///
   /// In en, this message translates to:

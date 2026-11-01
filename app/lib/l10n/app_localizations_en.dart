@@ -7191,6 +7191,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pinnedNotice => 'Pinned notice';
 
   @override
+  String get waitingToUpload => 'Waiting to upload';
+
+  @override
   String get forumShareYourGroups => 'Your groups';
 
   @override

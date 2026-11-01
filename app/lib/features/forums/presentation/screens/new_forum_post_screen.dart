@@ -180,7 +180,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
     var (home, alsoIn) = forumPostTargets(picked);
 
     setState(() => _submitting = true);
-    final String postId;
+    final ({String id, bool queued}) created;
     final List<String> imageUrls;
     try {
       final repo = ForumRepository();
@@ -200,7 +200,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
         return;
       }
       home = await _ensureHome(repo, home);
-      postId = await repo.createPost(
+      created = await repo.createPost(
         forumId: home,
         userId: user.uid,
         userName: user.displayName ?? 'Rider',
@@ -223,7 +223,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
     }
     if (!mounted) return;
     final post = ForumPostEntity(
-      id: postId,
+      id: created.id,
       forumId: home,
       userId: user.uid,
       userName: user.displayName ?? 'Rider',
@@ -235,6 +235,7 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
       authorBike: authorBike,
       attachment: _attachment,
       imageUrls: imageUrls,
+      hasPendingWrites: created.queued,
     );
     // Lists already on screen get the post at once (not an invalidate, see
     // issues §54); the rest load it when opened.

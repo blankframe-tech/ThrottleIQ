@@ -10,6 +10,9 @@ class ForumReplyEntity extends Equatable {
   final String body;
   final DateTime createdAt;
 
+  /// Saved on this phone but not uploaded yet (issue #158).
+  final bool hasPendingWrites;
+
   const ForumReplyEntity({
     required this.id,
     required this.postId,
@@ -19,6 +22,7 @@ class ForumReplyEntity extends Equatable {
     this.userPhotoUrl = '',
     required this.body,
     required this.createdAt,
+    this.hasPendingWrites = false,
   });
 
   @override
@@ -31,5 +35,6 @@ class ForumReplyEntity extends Equatable {
         userPhotoUrl,
         body,
         createdAt,
+        hasPendingWrites,
       ];
 }

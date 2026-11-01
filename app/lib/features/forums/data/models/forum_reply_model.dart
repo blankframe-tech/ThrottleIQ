@@ -10,6 +10,7 @@ class ForumReplyModel {
   final String userPhotoUrl;
   final String body;
   final DateTime createdAt;
+  final bool hasPendingWrites;
 
   const ForumReplyModel({
     required this.id,
@@ -20,6 +21,7 @@ class ForumReplyModel {
     this.userPhotoUrl = '',
     required this.body,
     required this.createdAt,
+    this.hasPendingWrites = false,
   });
 
   ForumReplyEntity toEntity() {
@@ -32,10 +34,12 @@ class ForumReplyModel {
       userPhotoUrl: userPhotoUrl,
       body: body,
       createdAt: createdAt,
+      hasPendingWrites: hasPendingWrites,
     );
   }
 
-  factory ForumReplyModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ForumReplyModel.fromFirestore(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data()!;
     return ForumReplyModel(
       id: doc.id,
@@ -46,6 +50,7 @@ class ForumReplyModel {
       userPhotoUrl: data['userPhotoUrl'] ?? '',
       body: data['body'] ?? '',
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      hasPendingWrites: doc.metadata.hasPendingWrites,
     );
   }
 

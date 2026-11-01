@@ -30,6 +30,7 @@ import '../widgets/rider_handle.dart';
 import '../../../../shared/widgets/app_tile_layer.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/i18n/numeric_locale.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 class SharedRideDetailScreen extends ConsumerStatefulWidget {
   final String rideId;
@@ -1032,6 +1033,10 @@ class _SharedRideDetailScreenState
                             style: TextStyle(
                                 color: context.palette.textSecondary,
                                 fontSize: 13)),
+                        if (comment.hasPendingWrites) ...[
+                          const SizedBox(height: 4),
+                          const PendingUploadLabel(),
+                        ],
                       ],
                     ),
                   ),
