@@ -61,7 +61,7 @@ void main() {
       final fs = FakeFirebaseFirestore();
       await fs.doc('forums/f1').set({'postCount': 0});
 
-      final id = await ForumRepository.withFirestore(fs).createPost(
+      final created = await ForumRepository.withFirestore(fs).createPost(
           forumId: 'f1',
           userId: 'u1',
           userName: 'Rider',
@@ -69,7 +69,9 @@ void main() {
           title: 't',
           body: 'b');
 
-      final post = (await fs.doc('forums/f1/posts/$id').get()).data()!;
+      expect(created.queued, isFalse); // acked at once, nothing pending
+      final post =
+          (await fs.doc('forums/f1/posts/${created.id}').get()).data()!;
       expect(post['createdAt'], isA<Timestamp>());
       expect(post['writtenAt'], isA<Timestamp>());
       expect((await fs.doc('forums/f1').get()).data()?['postCount'], 1);

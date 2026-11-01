@@ -79,6 +79,30 @@ void main() {
     expect(find.text('Yamaha MT-15 · 12,400 km'), findsOneWidget);
   });
 
+  testWidgets('only a post still waiting to upload is labelled (#158)',
+      (tester) async {
+    final queued = ForumPostEntity(
+      id: 'queued',
+      forumId: 'garage',
+      userId: 'u',
+      userName: 'Me',
+      title: 'Title queued',
+      body: 'Body queued',
+      createdAt: DateTime(2026, 10, 2),
+      hasPendingWrites: true,
+    );
+    await pump(tester, list: [queued, ...posts]);
+
+    final label = find.text('Waiting to upload');
+    expect(label, findsOneWidget);
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('pulse_post_queued')), matching: label),
+        findsOneWidget);
+    // Read out with the card (its tap target merges the label in).
+    expect(find.bySemanticsLabel(RegExp('Waiting to upload')), findsOneWidget);
+  });
+
   testWidgets('filter chips narrow the feed without refetching',
       (tester) async {
     await pump(tester);

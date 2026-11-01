@@ -523,7 +523,8 @@ class ForumRepository {
   /// [postType], [authorBike] and [attachment] are the Pit Wall fields
   /// (post tag, byline bike badge, shared ride/maintenance card). A new post
   /// always starts unsolved; only [setPostSolution] moves that.
-  Future<String> createPost({
+  /// `queued` is true when the write is still waiting to upload (issue #158).
+  Future<({String id, bool queued})> createPost({
     required String forumId,
     required String userId,
     required String userName,
@@ -566,9 +567,9 @@ class ForumRepository {
       'postCount': FieldValue.increment(1),
       'lastPostId': postRef.id,
     });
-    await ackOrQueued(batch.commit());
+    final acked = await ackOrQueued(batch.commit());
 
-    return postRef.id;
+    return (id: postRef.id, queued: !acked);
   }
 
   /// Sets a troubleshooting post's solved state (see `forum_solution.dart`

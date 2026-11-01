@@ -17,6 +17,7 @@ import '../../domain/entities/ride_comment_entity.dart';
 import '../../domain/entities/shared_ride_entity.dart';
 import 'ride_media_collage.dart';
 import 'rider_handle.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 /// A shared ride as the social feed shows it: rider, caption, map + photo
 /// collage, stats, votes and inline comments. Used by the feed and by a
@@ -402,23 +403,30 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
         else
           ...comments.map((c) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                child: RichText(
-                  text: TextSpan(
-                    children: [
-                      TextSpan(
-                        text: '${c.userName}  ',
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: context.palette.textPrimary),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${c.userName}  ',
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: context.palette.textPrimary),
+                          ),
+                          TextSpan(
+                            text: c.text,
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: context.palette.textSecondary),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: c.text,
-                        style: TextStyle(
-                            fontSize: 13, color: context.palette.textSecondary),
-                      ),
-                    ],
-                  ),
+                    ),
+                    if (c.hasPendingWrites) const PendingUploadLabel(),
+                  ],
                 ),
               )),
         const SizedBox(height: 8),

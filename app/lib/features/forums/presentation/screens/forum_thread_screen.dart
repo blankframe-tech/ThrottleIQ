@@ -21,6 +21,7 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
 import 'new_forum_post_screen.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 /// Post list for a single forum, with a "New post" FAB that opens the
 /// new-post page with this forum ticked.
@@ -378,6 +379,10 @@ class _PostCard extends ConsumerWidget {
             style:
                 TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.hasPendingWrites) ...[
+            const SizedBox(height: 6),
+            const PendingUploadLabel(),
+          ],
           if (post.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 8),
             ForumPostImages(urls: post.imageUrls, compact: true),

@@ -517,21 +517,30 @@ class RideShareRepository {
     final querySnapshot = await q.limit(limit).get(const GetOptions(
         serverTimestampBehavior: ServerTimestampBehavior.estimate));
 
-    return querySnapshot.docs.map((doc) {
-      final data = doc.data();
-      return RideCommentEntity(
-        id: doc.id,
-        rideId: rideId,
-        userId: data['userId'],
-        userName: data['userName'],
-        userPhotoUrl: data['userPhotoUrl'],
-        text: data['text'],
-        createdAt:
-            (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
-        writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
-      );
-    }).toList();
+    return querySnapshot.docs
+        .map((doc) => commentFromDoc(rideId, doc))
+        .toList();
+  }
+
+  /// One comment doc as an entity. A `get()` overlays this phone's queued
+  /// writes on the result, so a comment still waiting to upload is in the
+  /// list with [RideCommentEntity.hasPendingWrites] set (issue #158).
+  @visibleForTesting
+  static RideCommentEntity commentFromDoc(
+      String rideId, DocumentSnapshot<Map<String, dynamic>> doc) {
+    final data = doc.data()!;
+    return RideCommentEntity(
+      id: doc.id,
+      rideId: rideId,
+      userId: data['userId'],
+      userName: data['userName'],
+      userPhotoUrl: data['userPhotoUrl'],
+      text: data['text'],
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
+      hasPendingWrites: doc.metadata.hasPendingWrites,
+    );
   }
 
   /// Deletes every ride [uid] has shared from [bikeId], with their comments

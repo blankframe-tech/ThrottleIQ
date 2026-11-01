@@ -20,6 +20,7 @@ The following files are present in this directory:
 - `metric_card.dart`: Dart source code.
 - `notification_bell_button.dart`: Dart source code.
 - `over_quota_bar.dart`: Strip above the bottom nav while Firestore is over its daily quota (issues §104).
+- `pending_upload_label.dart`: "Waiting to upload" tag on a comment, post or reply still queued on the phone (issue #158).
 - `ride_route_map.dart`: Dart source code.
 - `riding_score_badge.dart`: Dart source code.
 - `stat_card.dart`: Dart source code.

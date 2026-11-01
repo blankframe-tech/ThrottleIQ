@@ -7168,6 +7168,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get pinnedNotice => 'পিন করা নোটিশ';
 
   @override
+  String get waitingToUpload => 'আপলোডের অপেক্ষায়';
+
+  @override
   String get forumShareYourGroups => 'আপনার গ্রুপ';
 
   @override

@@ -18,6 +18,7 @@ import '../../domain/forum_pulse.dart';
 import '../providers/forum_bookmarks_provider.dart';
 import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
+import '../../../../shared/widgets/pending_upload_label.dart';
 
 String pulseFilterLabel(AppLocalizations l10n, PulseFilter filter) {
   switch (filter) {
@@ -450,6 +451,10 @@ class PulsePostCard extends ConsumerWidget {
             style:
                 TextStyle(fontSize: 13, color: context.palette.textSecondary),
           ),
+          if (post.hasPendingWrites) ...[
+            const SizedBox(height: 6),
+            const PendingUploadLabel(),
+          ],
           if (post.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 8),
             ForumPostImages(urls: post.imageUrls, compact: true),

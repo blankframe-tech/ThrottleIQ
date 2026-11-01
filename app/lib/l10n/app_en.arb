@@ -9943,6 +9943,10 @@
   "@pinnedNotice": {
     "description": "Label on the newest notice board post, pinned at the top of the Pulse feed."
   },
+  "waitingToUpload": "Waiting to upload",
+  "@waitingToUpload": {
+    "description": "Small label on the rider's own ride comment, forum post or reply that is saved on the phone but not uploaded yet (offline or database over quota), so others can't see it yet."
+  },
   "forumShareYourGroups": "Your groups",
   "@forumShareYourGroups": {
     "description": "Group picker section: the rider's garage and followed forums."

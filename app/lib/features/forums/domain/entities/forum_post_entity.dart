@@ -136,6 +136,9 @@ class ForumPostEntity extends Equatable {
   /// Phone time when written, display only (issue #157, `displayTime`).
   final DateTime? writtenAt;
 
+  /// Saved on this phone but not uploaded yet (issue #158).
+  final bool hasPendingWrites;
+
   const ForumPostEntity({
     required this.id,
     required this.forumId,
@@ -156,6 +159,7 @@ class ForumPostEntity extends Equatable {
     this.imageUrls = const [],
     this.myVote,
     this.writtenAt,
+    this.hasPendingWrites = false,
   });
 
   int get netScore => upvotes - downvotes;
@@ -197,6 +201,7 @@ class ForumPostEntity extends Equatable {
       imageUrls: imageUrls,
       myVote: identical(myVote, _unset) ? this.myVote : myVote as int?,
       writtenAt: writtenAt,
+      hasPendingWrites: hasPendingWrites,
     );
   }
 
@@ -220,5 +225,6 @@ class ForumPostEntity extends Equatable {
         attachment,
         imageUrls,
         myVote,
+        hasPendingWrites,
       ];
 }
