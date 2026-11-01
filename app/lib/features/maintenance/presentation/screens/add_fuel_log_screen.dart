@@ -341,10 +341,11 @@ class _AddFuelLogScreenState extends ConsumerState<AddFuelLogScreen> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                    labelText: l10n.fuelKmAgoLabel,
-                    helperText: l10n.fuelKmAgoHint,
-                    helperMaxLines: 2,
-                    suffixText: 'km'),
+                  labelText: l10n.fuelKmAgoLabel,
+                  helperText: l10n.fuelKmAgoHint,
+                  helperMaxLines: 2,
+                  suffixText: l10n.unitDistanceKm,
+                ),
                 onChanged: (v) => setState(() => _onKmAgo(v)),
                 validator: (v) => v == null ||
                         v.trim().isEmpty ||

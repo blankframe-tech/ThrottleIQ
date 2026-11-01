@@ -7263,4 +7263,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get unitDistanceMi => 'mi';
+
+  @override
+  String get chartFuelCostPerMile => 'Fuel cost per mile';
 }

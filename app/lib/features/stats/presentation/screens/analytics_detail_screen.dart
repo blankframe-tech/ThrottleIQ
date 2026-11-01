@@ -44,7 +44,8 @@ class AnalyticsDetailScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<AnalyticsDetailScreen> createState() => _AnalyticsDetailScreenState();
+  ConsumerState<AnalyticsDetailScreen> createState() =>
+      _AnalyticsDetailScreenState();
 }
 
 class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
@@ -74,16 +75,30 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
     final chart = widget.chart;
     final spec = chartPresentationOf(chart);
     final detail = chart.detail(_input, _range, now: _now);
-    final series = convertFuelChartPoints(
-        chart,
-        detail.series,
-        imperial);
+    final insights = [
+      for (final insight in detail.insights)
+        convertFuelChartInsight(chart, insight, imperial),
+    ];
+    final series = convertFuelChartPoints(chart, detail.series, imperial);
     final trend = detail.trend;
     final summary = MetricSummary.of(series.map((p) => p.value));
-    final table = spec.buildTable(l10n, series, bikeName: _bikeName);
-    final unit = fuelChartUnitOverride(chart, l10n, imperial) ?? spec.unit(l10n);
-    final title = spec.title(l10n);
+    final unitOverride = fuelChartUnitOverride(chart, l10n, imperial);
+    final unit = unitOverride ?? spec.unit(l10n);
+
+    final distanceUnitOverride = unitOverride == null
+        ? null
+        : (imperial ? l10n.unitDistanceMi : l10n.unitDistanceKm);
+
+    final titleOverride = fuelChartTitleOverride(chart, l10n, imperial);
+
+    final title = titleOverride ?? spec.title(l10n);
     final stackLabels = spec.stackLabels?.call(l10n);
+
+    final table = spec.buildTable(l10n, series,
+        bikeName: _bikeName,
+        unitOverride: unitOverride,
+        distanceUnitOverride: distanceUnitOverride,
+        titleOverride: title);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -181,12 +196,13 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          detail.insights
+                          insights
                               .map(
                                 (i) => spec.insightText(
                                   l10n,
                                   i,
                                   bikeName: _bikeName,
+                                  unitOverride: unit,
                                 ),
                               )
                               .join(' '),
@@ -278,6 +294,7 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
 class _RangeSelector extends StatelessWidget {
   final AnalyticsRange value;
   final ValueChanged<AnalyticsRange> onChanged;
+
   const _RangeSelector({required this.value, required this.onChanged});
 
   @override
@@ -426,6 +443,7 @@ class _SummaryGrid extends StatelessWidget {
 
 class _Legend extends StatelessWidget {
   final List<(Color, String)> items;
+
   const _Legend({required this.items});
 
   @override
@@ -463,6 +481,7 @@ class _Legend extends StatelessWidget {
 class _TableRow extends StatelessWidget {
   final List<String> cells;
   final bool header;
+
   const _TableRow({required this.cells, this.header = false});
 
   @override

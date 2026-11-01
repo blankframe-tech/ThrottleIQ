@@ -22,14 +22,13 @@ class AnalyticsChartView extends StatelessWidget {
   final String Function(String bikeId) bikeName;
   final String? unitOverride;
 
-  const AnalyticsChartView({
-    super.key,
-    required this.chart,
-    required this.points,
-    required this.bikeName,
-    this.detailed = false,
-    this.unitOverride
-  });
+  const AnalyticsChartView(
+      {super.key,
+      required this.chart,
+      required this.points,
+      required this.bikeName,
+      this.detailed = false,
+      this.unitOverride});
 
   double get _height => detailed ? 240 : 92;
 

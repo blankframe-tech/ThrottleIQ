@@ -2046,6 +2046,7 @@
   "indriyoInvalidUrl": "http:// বা https:// দিয়ে শুরু হওয়া একটি ঠিকানা দিন",
   "indriyoSimulationTitle": "ডেমো মোড",
   "indriyoSimulationSubtitle": "ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।",
-  "unitDistanceKm": "km",
-  "unitDistanceMi": "mi"
+  "unitDistanceKm": "কিমি",
+  "unitDistanceMi": "মাইল",
+  "chartFuelCostPerMile": "প্রতি মাইল জ্বালানি খরচ"
 }

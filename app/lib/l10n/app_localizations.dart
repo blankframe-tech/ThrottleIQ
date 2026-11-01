@@ -12389,6 +12389,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'mi'**
   String get unitDistanceMi;
+
+  /// Analytics chart title: fuel cost per mile in imperial mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost per mile'**
+  String get chartFuelCostPerMile;
 }
 
 class _AppLocalizationsDelegate

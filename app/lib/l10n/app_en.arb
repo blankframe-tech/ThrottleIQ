@@ -10040,5 +10040,9 @@
   "unitDistanceMi": "mi",
   "@unitDistanceMi": {
     "description": "Abbreviation for miles"
+  },
+  "chartFuelCostPerMile": "Fuel cost per mile",
+  "@chartFuelCostPerMile": {
+    "description": "Analytics chart title: fuel cost per mile in imperial mode."
   }
 }
