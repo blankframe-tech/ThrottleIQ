@@ -43,11 +43,17 @@ List<RideEntity> _rides() => [
         ),
     ];
 
-Widget _app(Widget home, {Locale locale = const Locale('en')}) => MaterialApp(
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: home,
+Widget _app(
+  Widget home, {
+  Locale locale = const Locale('en'),
+}) =>
+    ProviderScope(
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: home,
+      ),
     );
 
 void main() {

@@ -7257,4 +7257,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get indriyoSimulationSubtitle =>
       'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.';
+
+  @override
+  String get unitDistanceKm => 'km';
+
+  @override
+  String get unitDistanceMi => 'mi';
+
+  @override
+  String get chartFuelCostPerMile => 'Fuel cost per mile';
 }

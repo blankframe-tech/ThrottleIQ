@@ -26,6 +26,12 @@ analyzer:
     # Nothing generated-and-committed lives here: the l10n output is in
     # `lib/l10n/`, which is still analyzed.
     - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
 
 linter:
   # The lint rules applied to this project can be customized in the

@@ -156,7 +156,7 @@ ChartTable _stretchTable(
       headers: [
         t.l10n.analyticsColDate,
         t.valueHeader,
-        ChartTableContext.withUnit(t.l10n.analyticsColDistance, 'km'),
+        ChartTableContext.withUnit(t.l10n.analyticsColDistance, t.distanceUnit),
       ],
       displayRows: [
         for (final p in points.reversed)

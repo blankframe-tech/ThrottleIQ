@@ -100,7 +100,11 @@ class _YearInReviewScreenState extends ConsumerState<YearInReviewScreen>
             AndroidAudioFocusGainType.gainTransientMayDuck,
       ));
       final player = AudioPlayer();
-      if (!mounted) return player.dispose();
+      if (!mounted) {
+        await player.dispose();
+        return;
+      }
+
       _player = player;
       await player.setAsset('assets/audio/year_in_review_loop.m4a');
       await player.setLoopMode(LoopMode.one);
