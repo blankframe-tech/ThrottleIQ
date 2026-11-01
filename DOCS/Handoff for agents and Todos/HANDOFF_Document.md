@@ -30,7 +30,7 @@ _Last updated: 2026-11-01._
 
 ### Release
 
-- **Latest release:** `beta-v4.8.0` (`1.0.0-beta.4.8.0+30`, 2026-10-24) on GitHub, notes only. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
+- **Latest release:** `beta-v4.15.0` (`1.0.0-beta.4.15.0+38`, 2026-11-01) on GitHub, notes only. AAB +38 built for a manual Play upload, notes (EN + BN) in `app/build/app/outputs/bundle/release/release-notes-38.md`; installed on the iPhone (debug provider). Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
 - **`config/app.minBuild = 35`** (set 2026-11-01 with App Check enforcement). Builds 27–34 see the update screen; builds 26 and older have no gate. From build 38 the gate is live (a snapshot listener), so raising `minBuild` reaches riders with the app open, and its button opens Google Play on Android.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. `1.0.0-beta.4.12.0+35` uploaded to the Play Console on 2026-10-31 (before it, the last build on record on the internal track was `1.0.0-beta.1+3` from 2026-08-29, which has no update gate). Owner item 4.
