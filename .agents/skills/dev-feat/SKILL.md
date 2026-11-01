@@ -59,6 +59,7 @@ gh pr create --base main --assignee the-abraar \
 Run these from the main checkout, not the worktree:
 
 ```bash
+gh pr checks <pr> --watch --fail-fast     # main requires CI (flutter, rules, CodeQL) to pass
 gh pr merge <pr> --merge                   # merge commit, like the rest of main's history
 gh issue view N --json state               # must be CLOSED; else: gh issue close N
 git push origin --delete feat/N-<slug>
