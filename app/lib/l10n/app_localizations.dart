@@ -63,7 +63,7 @@ import 'app_localizations_en.dart';
 /// property.
 abstract class AppLocalizations {
   AppLocalizations(String locale)
-      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -86,16 +86,16 @@ abstract class AppLocalizations {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('bn'),
-    Locale('en')
+    Locale('en'),
   ];
 
   /// Label for the suggested users section.
@@ -2617,7 +2617,9 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Pick {minGroupRideFriends}–{maxGroupRideFriends} riders. Your ride starts recording right away; they join from their notifications.'**
   String pickRidersRideStarts(
-      Object minGroupRideFriends, Object maxGroupRideFriends);
+    Object minGroupRideFriends,
+    Object maxGroupRideFriends,
+  );
 
   /// HintText in group_ride_friend_picker.
   ///
@@ -5960,7 +5962,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{hardBrakeCount} hard brakes · {rapidAccelCount} rapid accel · {highJerkCount} jerks'**
   String hardBrakesRapidAccel(
-      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount);
+    Object hardBrakeCount,
+    Object rapidAccelCount,
+    Object highJerkCount,
+  );
 
   /// Text in stats_screen.
   ///
@@ -6045,7 +6050,10 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{family}, {earnedCount} of {badgesCount} earned'**
   String badgeFamilyEarned(
-      Object family, Object earnedCount, Object badgesCount);
+    Object family,
+    Object earnedCount,
+    Object badgesCount,
+  );
 
   /// Text in badge_grid.
   ///
@@ -6076,7 +6084,11 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{threshold} You\'re at {progress} of {threshold2} {unit}.'**
   String youreAt(
-      Object threshold, Object progress, Object threshold2, Object unit);
+    Object threshold,
+    Object progress,
+    Object threshold2,
+    Object unit,
+  );
 
   /// Text in ride_line_chart.
   ///
@@ -12406,8 +12418,9 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
   }
 
   throw FlutterError(
-      'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
-      'an issue with the localizations generation tool. Please file an issue '
-      'on GitHub with a reproducible sample app and the gen-l10n configuration '
-      'that was used.');
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
 }

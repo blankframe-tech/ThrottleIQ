@@ -1419,7 +1419,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String pickRidersRideStarts(
-      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    Object minGroupRideFriends,
+    Object maxGroupRideFriends,
+  ) {
     return 'Pick $minGroupRideFriends–$maxGroupRideFriends riders. Your ride starts recording right away; they join from their notifications.';
   }
 
@@ -3354,7 +3356,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String hardBrakesRapidAccel(
-      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    Object hardBrakeCount,
+    Object rapidAccelCount,
+    Object highJerkCount,
+  ) {
     return '$hardBrakeCount hard brakes · $rapidAccelCount rapid accel · $highJerkCount jerks';
   }
 
@@ -3405,7 +3410,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String badgeFamilyEarned(
-      Object family, Object earnedCount, Object badgesCount) {
+    Object family,
+    Object earnedCount,
+    Object badgesCount,
+  ) {
     return '$family, $earnedCount of $badgesCount earned';
   }
 
@@ -3430,7 +3438,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String youreAt(
-      Object threshold, Object progress, Object threshold2, Object unit) {
+    Object threshold,
+    Object progress,
+    Object threshold2,
+    Object unit,
+  ) {
     return '$threshold You\'re at $progress of $threshold2 $unit.';
   }
 

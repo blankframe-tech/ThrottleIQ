@@ -1420,7 +1420,9 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String pickRidersRideStarts(
-      Object minGroupRideFriends, Object maxGroupRideFriends) {
+    Object minGroupRideFriends,
+    Object maxGroupRideFriends,
+  ) {
     return '$minGroupRideFriends–$maxGroupRideFriends জন রাইডার বেছে নিন। আপনার রাইড সাথে সাথেই রেকর্ড শুরু করবে; তারা নোটিফিকেশন থেকে যোগ দেবে।';
   }
 
@@ -3353,7 +3355,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String hardBrakesRapidAccel(
-      Object hardBrakeCount, Object rapidAccelCount, Object highJerkCount) {
+    Object hardBrakeCount,
+    Object rapidAccelCount,
+    Object highJerkCount,
+  ) {
     return '$hardBrakeCountটি হার্ড ব্রেক · $rapidAccelCountটি র‍্যাপিড এক্সেল · $highJerkCountটি ঝাঁকুনি';
   }
 
@@ -3404,7 +3409,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String badgeFamilyEarned(
-      Object family, Object earnedCount, Object badgesCount) {
+    Object family,
+    Object earnedCount,
+    Object badgesCount,
+  ) {
     return '$family, $badgesCountটির মধ্যে $earnedCountটি অর্জিত';
   }
 
@@ -3429,7 +3437,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String youreAt(
-      Object threshold, Object progress, Object threshold2, Object unit) {
+    Object threshold,
+    Object progress,
+    Object threshold2,
+    Object unit,
+  ) {
     return '$threshold আপনি $threshold2 $unit-এর মধ্যে $progress-এ আছেন।';
   }
 
