@@ -54,7 +54,7 @@ dependencies:
   # tel: and geo: links (e.g. Directions and Call on a place's detail
   # screen). ThrottleIQ deliberately does NOT route to a destination itself —
   # see place_directions.dart.
-  url_launcher: ^6.2.5
+  url_launcher: ^6.3.3
 
   # Image
   image_picker: ^1.0.7
