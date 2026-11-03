@@ -12377,6 +12377,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.'**
   String get indriyoSimulationSubtitle;
+
+  /// Abbreviation for kilometres
+  ///
+  /// In en, this message translates to:
+  /// **'km'**
+  String get unitDistanceKm;
+
+  /// Abbreviation for miles
+  ///
+  /// In en, this message translates to:
+  /// **'mi'**
+  String get unitDistanceMi;
+
+  /// Analytics chart title: fuel cost per mile in imperial mode.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost per mile'**
+  String get chartFuelCostPerMile;
 }
 
 class _AppLocalizationsDelegate

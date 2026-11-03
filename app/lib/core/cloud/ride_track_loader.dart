@@ -41,7 +41,7 @@ class RideTrackLoader {
       if (owner == null) return local;
       final fetch = download ?? CloudRepository().downloadRideTrack;
       if (!await fetch(owner, rideId)) return local;
-      return dao.getForRide(rideId);
+      return await dao.getForRide(rideId);
     } catch (e) {
       debugPrint('[RideTrackLoader] track download failed for $rideId: $e');
       return local;
