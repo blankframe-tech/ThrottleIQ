@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§126**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§128**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -919,3 +919,10 @@ Found while planning a swag bug bounty (tee + cha-coffee).
 - **Fixed 2026-11-01:** workflow now calls the Gemini API with `curl` (model `gemini-3.5-flash-lite`, repo secret `GEMINI_API_KEY`); `gemini-2.5-flash` returned 404. Verified on test issue #169 (summary comment posted). Move this section to `issues_fixed.md`.
 - **Guard added 2026-11-02:** outsiders (not owner/member/collaborator) get at most 20 summaries per rolling 24h (`MAX_OUTSIDE_PER_DAY` in `summary.yml`); the over-limit skip path is untested on the runner.
 - **Open:** roll out to the other repos via a shared reusable workflow (not built; waits on the owner choosing repos and the public shared repo).
+
+## 127. Glovebox: bike documents and licence wallet, with optional encrypted sync (2026-11-03, GitHub #171)
+Idea only, nothing built. Riders keep photos of registration, tax token, insurance, fitness and their driving licence per bike, with expiry reminders. Public `help wanted` + `advanced` issue: https://github.com/blankframe-tech/ThrottleIQ/issues/171
+- **Phase 1 (local only):** `image_picker` copy into the app documents dir, metadata in `sqflite`, excluded from OS backups, reminders through the maintenance scheduler.
+- **Phase 2 (opt-in cloud sync):** client-side encryption so the server holds ciphertext only, owner-only storage rules with rules tests, cleanup in `onUserAccountDeleted`. No `firebase_storage` or `local_auth` dependency exists yet.
+- **Open design questions:** crypto scheme, key recovery (loss means unrecoverable data), whether expiry metadata stays unencrypted, whether to add `local_auth`. Phase 2 waits for a design posted on #171.
+- **Not started:** no schema, strings or code. Move to `features.md` when Phase 1 ships.
