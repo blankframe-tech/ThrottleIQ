@@ -5,7 +5,7 @@
   "description": "Operational scripts for the ThrottleIQ Firebase project (throttleiqfb). Not part of the Flutter app or the Cloud Functions deploy.",
   "license": "UNLICENSED",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "scripts": {
     "cleanup:qa-engagement:dry-run": "node oneoff/cleanup_qa_engagement.js",
