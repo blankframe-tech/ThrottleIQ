@@ -61,7 +61,9 @@
  *   --help
  */
 
-let admin;
+let adminApp;
+let adminFirestore;
+let adminAuth;
 const crypto = require('node:crypto');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
@@ -249,15 +251,17 @@ async function main() {
 
   const projectId = assertProjectEnv();
   try {
-    admin = require('firebase-admin');
+    adminApp = require('firebase-admin/app');
+    adminFirestore = require('firebase-admin/firestore');
+    adminAuth = require('firebase-admin/auth');
   } catch (err) {
     fail("Cannot load 'firebase-admin'.\n         Run `npm install` in the scripts/ directory first.");
   }
-  const app = admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+  const app = adminApp.initializeApp({ credential: adminApp.applicationDefault(), projectId });
   assertResolvedProject(app);
-  const db = admin.firestore();
-  const auth = admin.auth();
-  const Timestamp = admin.firestore.Timestamp;
+  const db = adminFirestore.getFirestore();
+  const auth = adminAuth.getAuth();
+  const Timestamp = adminFirestore.Timestamp;
 
   await confirmRealWrite({ nonInteractive: opts.nonInteractive });
 

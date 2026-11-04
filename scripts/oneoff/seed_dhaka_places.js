@@ -48,7 +48,8 @@
 
 // Required lazily inside main(), after --help and the project guard, so those
 // still give a useful message on a machine where `npm install` has not run.
-let admin;
+let adminApp;
+let adminFirestore;
 
 const fs = require('fs');
 
@@ -623,7 +624,7 @@ function toPlaceDocument(candidate, { verified, createdAt }) {
 }
 
 async function writePlaces(db, candidates, { verified }) {
-  const createdAt = admin.firestore.Timestamp.now();
+  const createdAt = adminFirestore.Timestamp.now();
   let written = 0;
   let commits = 0;
 
@@ -721,19 +722,20 @@ async function main() {
   let db = null;
   if (needsFirestore) {
     try {
-      admin = require('firebase-admin');
+      adminApp = require('firebase-admin/app');
+      adminFirestore = require('firebase-admin/firestore');
     } catch (err) {
       fail(
         "Cannot load 'firebase-admin'.\n" +
           '         Run `npm install` in the scripts/ directory first. See scripts/README.md.'
       );
     }
-    const app = admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
+    const app = adminApp.initializeApp({
+      credential: adminApp.applicationDefault(),
       projectId: EXPECTED_PROJECT_ID,
     });
     assertResolvedProject(app);
-    db = admin.firestore();
+    db = adminFirestore.getFirestore();
   }
 
   rule('=');
