@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * revert_google_places.js — takes the 2026-10-19 Google Maps import
@@ -168,10 +170,9 @@ async function main() {
     if (key.project_id !== EXPECTED_PROJECT_ID) fail(`The key is for '${key.project_id}', not '${EXPECTED_PROJECT_ID}'.`);
   }
 
-  const admin = require('firebase-admin');
-  admin.initializeApp({ projectId: EXPECTED_PROJECT_ID });
-  const db = admin.firestore();
-  const { Timestamp, FieldValue } = admin.firestore;
+    initializeApp({ projectId: EXPECTED_PROJECT_ID });
+  const db = getFirestore();
+  const { Timestamp, FieldValue } = require('firebase-admin/firestore');
   const ref = (id) => db.collection(COLLECTION).doc(id);
   const target = emulator ? `emulator ${emulator}` : 'PRODUCTION';
 

@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * backfill_users_visibility.js — one-off: set `visibility: 'public'` on every
@@ -59,7 +61,7 @@ function parseArgs(argv) {
  * need it. Returns { scanned, missing, written, skipped, sample }.
  */
 async function backfill(db, { write = false, log = () => {} } = {}) {
-  const { FieldPath } = require('firebase-admin').firestore;
+  const { FieldPath } = require('firebase-admin/firestore');
   const todo = [];
   let scanned = 0;
   let last = null;
@@ -115,9 +117,8 @@ async function main() {
     }
   }
 
-  const admin = require('firebase-admin');
-  const app = admin.initializeApp({ projectId: opts.project });
-  const db = admin.firestore(app);
+    const app = initializeApp({ projectId: opts.project });
+  const db = getFirestore(app);
   console.log(`  Project: ${opts.project}${emulator ? ` (emulator ${emulator})` : ''}`);
 
   const dry = await backfill(db);

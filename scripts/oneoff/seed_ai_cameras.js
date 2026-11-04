@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { getApps, initializeApp } = require('firebase-admin/app');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
 /**
  * seed_ai_cameras.js — populates the `places` directory with Dhaka's
@@ -370,13 +372,12 @@ async function main() {
     process.exit(1);
   }
 
-  const admin = require('firebase-admin');
-  if (!admin.apps.length) {
-    admin.initializeApp({
+    if (!getApps().length) {
+    initializeApp({
       projectId: EXPECTED_PROJECT_ID,
     });
   }
-  const db = admin.firestore();
+  const db = getFirestore();
 
   // Query existing AI cameras to ensure idempotency
   console.log('\nChecking for existing camera records in Firestore...');
@@ -399,7 +400,7 @@ async function main() {
   const toCreate = [];
   const toSkip = [];
 
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   for (const cam of AI_CAMERAS) {
     const expectedOsmId = `dmp:ai-camera:${cam.slug}`;

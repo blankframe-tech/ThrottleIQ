@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { applicationDefault, initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * cleanup_qa_engagement.js — removes QA-seed engagement left on the live feed,
@@ -110,11 +112,10 @@ async function main() {
   try { opts = parseArgs(process.argv.slice(2)); } catch (e) { fail(e.message); }
   if (opts.help) { log(USAGE); return; }
   const projectId = assertProjectEnv();
-  const admin = require('firebase-admin');
-  const app = admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+    const app = initializeApp({ credential: applicationDefault(), projectId });
   assertResolvedProject(app);
-  const db = admin.firestore();
-  const { FieldValue } = admin.firestore;
+  const db = getFirestore();
+  const { FieldValue } = require('firebase-admin/firestore');
   const live = opts.confirmed;
 
   log(`\ncleanup_qa_engagement — project ${projectId} — ${live ? 'LIVE (will change data)' : 'DRY RUN (reads only)'}\n`);
