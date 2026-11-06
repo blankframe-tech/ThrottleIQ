@@ -113,9 +113,14 @@ class ProfileRepository {
       try {
         // A queued (unacked) batch still gets the plain set below: if the
         // batch is refused later, the profile must exist anyway.
-        written = await ackOrQueued(BadgeStatsCounter(firestore: _firestore)
-            .commit(BadgeStatsBatches.riderRegistration(user.uid,
-                profileFields: fields)));
+        written = await ackOrQueued(
+          BadgeStatsCounter(firestore: _firestore).commit(
+            BadgeStatsBatches.riderRegistration(
+              user.uid,
+              profileFields: fields,
+            ),
+          ),
+        );
       } on FirebaseException catch (e) {
         if (e.code != 'permission-denied') rethrow;
       }
@@ -137,13 +142,15 @@ class ProfileRepository {
     if (email == null || email.isEmpty) return;
     try {
       await ackOrQueued(
-          _users.doc(user.uid).collection('private').doc('account').set(
-        {'email': email, 'emailLower': email.toLowerCase()},
-        SetOptions(merge: true),
-      ));
+        _users.doc(user.uid).collection('private').doc('account').set({
+          'email': email,
+          'emailLower': email.toLowerCase(),
+        }, SetOptions(merge: true)),
+      );
       if (!user.emailVerified) return;
       await ackOrQueued(
-          _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid}));
+        _emailLookup.doc(emailLookupId(email)).set({'uid': user.uid}),
+      );
     } on FirebaseException catch (e) {
       if (e.code != 'permission-denied') rethrow;
     }
@@ -157,15 +164,17 @@ class ProfileRepository {
     String? bio,
     String? photoUrl,
   }) async {
-    await ackOrQueued(_users.doc(uid).set(
-          UserProfileModel.editableFields(
-            displayName: displayName,
-            nickname: nickname,
-            bio: bio,
-            photoUrl: photoUrl,
+    await ackOrQueued(
+      _users.doc(uid).set(
+            UserProfileModel.editableFields(
+              displayName: displayName,
+              nickname: nickname,
+              bio: bio,
+              photoUrl: photoUrl,
+            ),
+            SetOptions(merge: true),
           ),
-          SetOptions(merge: true),
-        ));
+    );
   }
 
   /// Claims a unique @username for [uid]. Throws [UsernameTakenException] if
@@ -272,11 +281,12 @@ class ProfileRepository {
 
   /// Replaces the rider's pinned shared rides (at most `kMaxPinnedRides`,
   /// also enforced by firestore.rules).
-  Future<void> setPinnedRides(String uid, List<String> rideIds) =>
-      ackOrQueued(_users.doc(uid).set({
-        'pinnedRideIds': rideIds,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true)));
+  Future<void> setPinnedRides(String uid, List<String> rideIds) => ackOrQueued(
+        _users.doc(uid).set({
+          'pinnedRideIds': rideIds,
+          'updatedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true)),
+      );
 
   /// Sets who can view this rider's profile doc (and hence [publicStats]):
   /// 'public' (default — any signed-in rider), 'mutual' (only riders who
@@ -287,10 +297,12 @@ class ProfileRepository {
     required String visibility,
   }) async {
     assert(['public', 'mutual', 'private'].contains(visibility));
-    await ackOrQueued(_users.doc(uid).set({
-      'visibility': visibility,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true)));
+    await ackOrQueued(
+      _users.doc(uid).set({
+        'visibility': visibility,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)),
+    );
   }
 
   /// Sets who can see this rider's garage: 'public' (any signed-in rider —
@@ -304,10 +316,12 @@ class ProfileRepository {
     required String bikesVisibility,
   }) async {
     assert(kBikesVisibilityLevels.contains(bikesVisibility));
-    await ackOrQueued(_users.doc(uid).set({
-      'bikesVisibility': bikesVisibility,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true)));
+    await ackOrQueued(
+      _users.doc(uid).set({
+        'bikesVisibility': bikesVisibility,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true)),
+    );
   }
 
   /// The bikes in [uid]'s garage, read from the synced Firestore mirror of
@@ -340,7 +354,7 @@ class ProfileRepository {
         // be on show in it to anyone else either.
         if (!bike.isArchived) bikes.add(bike);
       } catch (e, st) {
-        reportSilently(e, st, where: 'profile.parseBike');
+        reportSilently(e, st, where: 'profile.parseBike', onceKey: doc.id);
         continue;
       }
     }
@@ -457,11 +471,13 @@ class ProfileRepository {
 
   /// Unblocks a user by removing their uid from the current user's blocks subcollection.
   Future<void> unblockUser(String currentUserId, String blockedUserId) async {
-    await ackOrQueued(_users
-        .doc(currentUserId)
-        .collection('blocks')
-        .doc(blockedUserId)
-        .delete());
+    await ackOrQueued(
+      _users
+          .doc(currentUserId)
+          .collection('blocks')
+          .doc(blockedUserId)
+          .delete(),
+    );
   }
 
   /// Whether [otherUserId] has blocked [currentUserId]. Reads the single

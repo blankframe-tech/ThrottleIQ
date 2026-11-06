@@ -9,19 +9,30 @@ import 'package:sqflite/sqflite.dart';
 /// - A copy without `updated_at` (written by a build before schema v28)
 ///   counts as the oldest: it never replaces a stamped copy.
 /// - Deletions are not decided here; tombstones (`deleted_*`) do that.
-/// - The order is the phones' wall clocks: a phone whose clock is far
-///   ahead wins every conflict it is part of.
+/// - The order is the phones' wall clocks, except that a remote `updated_at`
+///   more than [maxClockSkew] ahead of the doc's server `syncedAt` is clamped
+///   to it (§109.7): a phone whose clock is far ahead no longer wins every
+///   conflict forever.
 class LastWriterWins {
   LastWriterWins._();
 
   static DateTime? stamp(Object? v) =>
       v is String ? DateTime.tryParse(v) : null;
 
+  static const maxClockSkew = Duration(minutes: 5);
+
   /// Whether [remote] holds a newer edit than [local].
   static bool remoteIsNewer(
-      Map<String, dynamic>? remote, Map<String, dynamic> local) {
-    final r = stamp(remote?['updated_at']);
+    Map<String, dynamic>? remote,
+    Map<String, dynamic> local,
+  ) {
+    var r = stamp(remote?['updated_at']);
     if (r == null) return false;
+    final server = remote?['syncedAt'];
+    if (server is Timestamp) {
+      final s = server.toDate();
+      if (r.isAfter(s.add(maxClockSkew))) r = s;
+    }
     final l = stamp(local['updated_at']);
     return l == null || r.isAfter(l);
   }
