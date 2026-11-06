@@ -136,6 +136,26 @@ calls for you (or the lawyer, needs_attention): whether the fall answer and seve
 Health info, and whether to tick Personal info → User IDs (the account ID rides on every
 cloud record, not just this one; the CSV leaves it unticked).
 
+**Research-sharing facts, checked against code (2026-11-06, issues §78.1 store forms).**
+Use these for the Play form, the App Store label and the review notes; all match `public/privacy.html` §7 and §8.
+- **What:** per-rider copy `users/{uid}/impactEvents` (time, exact lat/lng, speed before/after, peak force, free fall, rotation, 12 s sensor clip, app on screen, charging, phone placement, the rider's answer). Research copy `crashEvents` (answer, surface, severity, measured figures, speed before, placement, engine size and bike class, platform, hour-floored UTC time, local hour and weekday, ~1.2 × 0.6 km geohash cell, `ownerUid`, rules and consent version). No name, exact position, sensor clip or typed text. (`impact_event_payload.dart`, `cloud_repository.dart` `uploadImpactEvents`)
+- **When:** the private copy is saved during any recording ride and synced with the ride (not opt-in; the live alarm stays off). The research copy is written only after the rider answered "Did you fall?" or reported a miss AND turned on Settings → Privacy & Safety → Help improve crash detection (off by default; a read failure counts as off). Answers given before opting in are included.
+- **Not shared:** no third party reads either copy. `crashEvents` has `allow read: if false` for clients; owner-only rules on `impactEvents`. Declare Shared = No.
+- **Withdraw:** turning the setting off re-queues the rider's rows and the next sync deletes their `crashEvents` copies.
+- **Account deletion:** `functions/src/account-erasure.ts` deletes `crashEvents` where `ownerUid` = uid and recursively deletes the user's subcollections (including `impactEvents`).
+- **Retention:** no automatic expiry. Private copies and research copies stay until the rider deletes the account or (research only) turns the setting off (privacy §8). No retention job exists for sensor windows (issues §78.1).
+- **Owner to confirm:** (1) whether the fall answer and severity count as Play "Health info" / Apple "Health & Fitness" (also noted above). (2) Privacy §7 says the research copy has "date and time"; code floors `createdAt` to the UTC hour and adds local hour and weekday. Wording is safe (less precise than stated), but confirm you want it left. (3) The research copy is not "anonymous": whether the lawyer wants Data Safety to tick Personal info → User IDs. (4) Deleting a single ride removes the local impact records only; the cloud `impactEvents` copy goes with the account (privacy §7). Confirm that is the behaviour you want to state, since Play asks whether users can request deletion of that data (answer today: via account deletion).
+- **CSV:** `throttleiq_data_safety.csv` already carries this (Other actions: collected, not shared, required, App functionality + Analytics; Approximate location: collected, not shared, optional, Analytics). No change needed; the CSV cannot hold the notes above. Re-import it after (1) or (3) change.
+
+### Apple App Store privacy label (draft; no iOS draft existed in this folder before)
+Apple counts data linked to the account ID as "Data Linked to You"; nothing here is used for tracking. Status of the iOS release is not covered here; **owner to confirm** the whole table before the first iOS submission.
+| Apple data type | Linked to you | Tracking | Purpose | Note |
+|---|---|---|---|---|
+| Sensitive Info / Other Data Types: impact record (fall answer, motion-sensor figures, 12 s sensor clip, placement) | Yes | No | App Functionality | Private copy, always synced with the ride. Owner to confirm: Apple has no sensor type; Other Data Types is the closest. |
+| Location → Precise Location (impact position in the private copy) | Yes | No | App Functionality | Already declared for ride trails. |
+| Location → Coarse Location (research copy's ~1.2 × 0.6 km cell) | Yes (carries account ID) | No | Analytics | Opt-in only (Help improve crash detection). |
+| Other Data Types: research record (answer, surface, severity, figures, bike class, platform, hour) | Yes (carries account ID) | No | Analytics | Opt-in only. |
+
 **Firebase App Check** (issues §83.19) is not user data: it sends a Play Integrity /
 App Attest attestation. It is disclosed in `public/privacy.html`; nothing to declare on
 the form beyond what is already there.
