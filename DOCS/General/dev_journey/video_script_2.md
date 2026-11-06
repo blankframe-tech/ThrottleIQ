@@ -124,7 +124,7 @@ Same footage, about 220 words in all. Use sections 1 and 7 word for word, and re
 - **Check the one claim the repo can't prove:** "nothing merges or deploys without my go-ahead" in section 6. Say it only if it's literally true for you; otherwise change it to what is.
 - Crash alerts are **off**. Never say the app detects crashes or alerts anyone. It records, asks and learns.
 - No public store listing yet: say "beta". Android testers get it through the Google Play test track; there's no iPhone build for testers.
-- Say "public repo" or "source-available", **not "open source"**: the licence is TSAL v1.1, not an open-source licence.
+- Say "public repo" or "source-available", **not "open source"**: the licence is BSL 1.1 (each version becomes Apache 2.0 after two years), not an open-source licence yet.
 - Don't say the group-ride fix or the sweep is "in production". Say "measured" and "merged". Cloud Functions are written but not deployed (free plan).
 - Don't name the B2B pilot partner or mention pricing: that report is kept out of the public repo on purpose.
 - Don't quote "~78 riders" for the quota after the fixes. That number assumes no places refetch at all; it was never re-run.

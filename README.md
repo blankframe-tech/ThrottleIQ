@@ -9,7 +9,7 @@
 Every ride recorded. Every service remembered. Every rider connected.<br/>
 Offline-first. Built in Bangladesh, in English and বাংলা.
 
-[![License](https://img.shields.io/badge/license-TSAL-blue?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSL%201.1-blue?style=for-the-badge)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Tests](https://img.shields.io/badge/tests-2100%2B-C6F432?style=for-the-badge)
@@ -118,16 +118,24 @@ Everything is under [`DOCS/`](DOCS/README.md). Start with [`HANDOFF_Document.md`
 - 🛠️ **Send pull requests.** Code, tests, performance work, refactors, docs, and Bangla translation review. Start with [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) or [`help wanted`](https://github.com/blankframe-tech/ThrottleIQ/labels/help%20wanted), then read [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - 🐛 **Report bugs**, even small ones.
 
-The license explicitly allows all of this: fork, change, build and run on your own devices, and open a pull request. You sign the [CLA](CLA.md) once, on your first pull request.
+The license explicitly allows all of this: fork, change, build, run and share your fork, and open a pull request. You sign the [CLA](CLA.md) once, on your first pull request.
 
-## 📄 License, and why it isn't MIT
+## 📄 License: Business Source License 1.1
 
-**ThrottleIQ Source-Available License (TSAL) v1.1**, see [LICENSE](LICENSE).
+**[BSL 1.1](LICENSE)**, which turns into **Apache 2.0 two years after each version is published.** Code from today is fully open source in two years.
 
-ThrottleIQ is a real product and a business, so the license only stops one thing: **taking this work and shipping it as someone else's app.** It doesn't stop you from reading, auditing, or contributing to the code.
+ThrottleIQ is a real product and a business, so the license only stops one thing: **using this code to run a competing ride, motorcycle or car app.** It doesn't stop you from reading, changing, sharing or contributing to the code.
 
-| ✅ You can | ❌ You can't |
+| ✅ You can | ❌ You can't (until the code turns Apache 2.0) |
 |---|---|
+| Read, audit, copy and change all of the code | Ship it, or a fork of it, as a ride, motorcycle or car app (tracking, garage, maintenance, crash alerts) |
+| Fork it and share your fork, for learning, testing or research | Publish it in an app store or run it as a service for others in those areas |
+| Use it in production for something that isn't a competing app | Use the ThrottleIQ name, logo or look: see [`TRADEMARKS.md`](TRADEMARKS.md) |
+| Hunt for security bugs, open issues, send pull requests | |
+
+The exact wording is the "Additional Use Grant" at the top of [LICENSE](LICENSE). Want to do something it doesn't cover? Ask: the contact is in the LICENSE.
+
+---|---|
 | Read and audit all of the code | Publish or release your fork or a build of it |
 | Fork it, run it and change it on your own devices | Host it for other people or sell it |
 | Hunt for security bugs and report them privately | Build a competing app from this code, name, design or idea |

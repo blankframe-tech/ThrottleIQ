@@ -1,7 +1,7 @@
 # ThrottleIQ Contributor License Agreement (CLA) v1.0
 
-Thank you for contributing to ThrottleIQ. ThrottleIQ is proprietary,
-source-available software (see [LICENSE](LICENSE)). This agreement lets
+Thank you for contributing to ThrottleIQ. ThrottleIQ is licensed
+under the Business Source License 1.1 (see [LICENSE](LICENSE)). This agreement lets
 the owner of ThrottleIQ ("the Licensor", contact
 blankframe.technologies@gmail.com) use what you send in the app it
 ships, under any terms, while you keep the copyright in your work.
