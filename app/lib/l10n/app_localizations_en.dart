@@ -4766,6 +4766,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.';
 
   @override
+  String get notifRecordingIdleBody =>
+      'Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.';
+
+  @override
   String get notifConfirm => 'Confirm';
 
   @override
