@@ -109,14 +109,32 @@ Everything is under [`DOCS/`](DOCS/README.md). Start with [`HANDOFF_Document.md`
 - **Next**: crash detection field calibration, then real alert delivery (needs an SMS/email provider and Blaze).
 - **Later**: lean-angle tracking, clubs and events, weekly reports, curvy-route planner, Indriyo hardware integration in the main app.
 
-## 🤝 Contributing
+## 🤝 Contributing: please break it, fix it, and make it better
 
-Contributions are welcome: code, tests, bug reports and Bangla translation review. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) list. You sign the [CLA](CLA.md) once, on your first pull request.
+**I want people in this code.** Clone it, run it with your own Firebase project, poke at it and try to break it. All of these are welcome:
 
-## 📄 License
+- 🔓 **Find vulnerabilities.** ThrottleIQ holds riders' locations, rides and emergency contacts, so we want people trying to break in. Report privately through **Security → Report a vulnerability** (see [`SECURITY.md`](SECURITY.md)). Every valid, new finding gets a ThrottleIQ t-shirt and cha-nashta-adda with the team ([#166](https://github.com/blankframe-tech/ThrottleIQ/issues/166)).
+- 💡 **Suggest features.** Open a [Discussion](https://github.com/blankframe-tech/ThrottleIQ/discussions) or an issue. Wild ideas are fine.
+- 🛠️ **Send pull requests.** Code, tests, performance work, refactors, docs, and Bangla translation review. Start with [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) or [`help wanted`](https://github.com/blankframe-tech/ThrottleIQ/labels/help%20wanted), then read [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- 🐛 **Report bugs**, even small ones.
 
-**ThrottleIQ Source-Available License (TSAL) v1.1** — see [LICENSE](LICENSE). You can view and audit the source, and fork it only to send a pull request. You can't release your fork or build a competing app.
+The license explicitly allows all of this: fork, change, build and run on your own devices, and open a pull request. You sign the [CLA](CLA.md) once, on your first pull request.
+
+## 📄 License, and why it isn't MIT
+
+**ThrottleIQ Source-Available License (TSAL) v1.1**, see [LICENSE](LICENSE).
+
+ThrottleIQ is a real product and a business, so the license only stops one thing: **taking this work and shipping it as someone else's app.** It doesn't stop you from reading, auditing, or contributing to the code.
+
+| ✅ You can | ❌ You can't |
+|---|---|
+| Read and audit all of the code | Publish or release your fork or a build of it |
+| Fork it, run it and change it on your own devices | Host it for other people or sell it |
+| Hunt for security bugs and report them privately | Build a competing app from this code, name, design or idea |
+| Open issues, start discussions, send pull requests | Use the ThrottleIQ name or branding |
+
+Want to do something that isn't listed? Ask: the contact is in the [LICENSE](LICENSE).
 
 ---
 
-*Built for riders. Ride safe. 🏍️ · Last updated: 2026-10-22*
+*Built for riders. Ride safe. 🏍️ · Last updated: 2026-11-07*
