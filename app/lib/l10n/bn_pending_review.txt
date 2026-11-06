@@ -1802,3 +1802,6 @@ updateRequiredPlayAction
 # batch: uimisc
 emergencyContactsLimitReached
 liveGroupRideCardSemantics
+
+# batch: swiped-away ride idle stop (2026-11-06)
+notifRecordingIdleBody

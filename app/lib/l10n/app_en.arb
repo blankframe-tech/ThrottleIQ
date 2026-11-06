@@ -6690,6 +6690,10 @@
   "@notifRecordingStoppedBody": {
     "description": "Body of the recording-stopped notification; tapping opens the app on the paused ride."
   },
+  "notifRecordingIdleBody": "Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.",
+  "@notifRecordingIdleBody": {
+    "description": "Body of the recording-stopped notification when the background takeover gave up after the bike sat still; the ride waits for restore."
+  },
   "notifConfirm": "Confirm",
   "@notifConfirm": {
     "description": "Action button on the ride-detected notification."

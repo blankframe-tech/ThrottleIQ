@@ -17,6 +17,20 @@ class RidePointDao {
     await db.insert('ride_points', point);
   }
 
+  /// Timestamp of the ride's newest stored point, or null when it has none.
+  Future<DateTime?> latestTimestamp(String rideId) async {
+    final db = await DatabaseHelper.instance.database;
+    final rows = await db.query('ride_points',
+        columns: ['timestamp'],
+        where: 'ride_id = ?',
+        whereArgs: [rideId],
+        orderBy: 'timestamp DESC',
+        limit: 1);
+    return rows.isEmpty
+        ? null
+        : DateTime.tryParse(rows.first['timestamp'] as String? ?? '');
+  }
+
   Future<List<Map<String, dynamic>>> getForRide(String rideId) async {
     final db = await DatabaseHelper.instance.database;
     return db.query('ride_points',

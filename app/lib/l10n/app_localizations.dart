@@ -8352,6 +8352,12 @@ abstract class AppLocalizations {
   /// **'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.'**
   String get notifRecordingStoppedBody;
 
+  /// Body of the recording-stopped notification when the background takeover gave up after the bike sat still; the ride waits for restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.'**
+  String get notifRecordingIdleBody;
+
   /// Action button on the ride-detected notification.
   ///
   /// In en, this message translates to:
