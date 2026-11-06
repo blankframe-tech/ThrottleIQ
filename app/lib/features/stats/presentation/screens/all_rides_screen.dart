@@ -178,7 +178,15 @@ class RideSortChips extends StatelessWidget {
   final RideSort sort;
   final ValueChanged<RideSort> onChanged;
 
-  const RideSortChips({super.key, required this.sort, required this.onChanged});
+  /// Sorts offered; a public profile drops [RideSort.topSpeed] (§109.4).
+  final List<RideSort> options;
+
+  const RideSortChips({
+    super.key,
+    required this.sort,
+    required this.onChanged,
+    this.options = RideSort.values,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -186,10 +194,10 @@ class RideSortChips extends StatelessWidget {
       height: 34,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: RideSort.values.length,
+        itemCount: options.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
-          final option = RideSort.values[i];
+          final option = options[i];
           // issues §101.R9: announce the chip as a button and which sort
           // is active.
           return Semantics(

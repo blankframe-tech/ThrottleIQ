@@ -250,9 +250,11 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
                         _divider(),
                         _stat('${ride.durationMinutes} min',
                             context.l10n.duration),
-                        _divider(),
-                        _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
-                            context.l10n.maxSpeed),
+                        if (isMine) ...[
+                          _divider(),
+                          _stat('${ride.maxSpeedKmh.toStringAsFixed(0)} km/h',
+                              context.l10n.maxSpeed),
+                        ],
                         if (ride.ridingScore != null) ...[
                           _divider(),
                           _scoreStat(ride.ridingScore!),

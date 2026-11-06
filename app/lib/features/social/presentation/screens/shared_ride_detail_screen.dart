@@ -726,16 +726,19 @@ class _SharedRideDetailScreenState
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(
-              child: MetricCard(
-                title: context.l10n.maxSpeed,
-                value: ride.maxSpeedKmh.toStringAsFixed(1),
-                unit: 'km/h',
-                icon: Icons.speed,
-                accentColor: context.palette.primary,
+            if (ride
+                .maxSpeedVisibleTo(ref.watch(currentUserProvider)?.uid)) ...[
+              Expanded(
+                child: MetricCard(
+                  title: context.l10n.maxSpeed,
+                  value: ride.maxSpeedKmh.toStringAsFixed(1),
+                  unit: 'km/h',
+                  icon: Icons.speed,
+                  accentColor: context.palette.primary,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: MetricCard(
                 title: context.l10n.avgSpeed,
