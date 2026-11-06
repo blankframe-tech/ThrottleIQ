@@ -160,13 +160,6 @@ class SharedRideEntity extends Equatable {
         rawMaxSpeedKmh: _maxSpeedKmh,
       );
 
-  /// Only the sharer sees a shared ride's top speed. A published speed is
-  /// self-incriminating under BD's Motor Vehicle Act 2018 (issues §109.4).
-  /// shortcut: viewer-side only, since the share contract has no per-ride
-  /// flag; a sharer-chosen opt-in needs a rules change, so not before build 30.
-  bool maxSpeedVisibleTo(String? viewerUid) =>
-      viewerUid != null && viewerUid == userId;
-
   int get netScore => upvotes - downvotes;
 
   /// This ride after the signed-in rider taps [value] (1 up / -1 down): the
