@@ -11706,6 +11706,24 @@ abstract class AppLocalizations {
   /// **'Battery settings that keep {brand} phones recording'**
   String oemGuideSettingsSubtitle(String brand);
 
+  /// Intro on the battery guide when the phone maker is not one we have a dedicated guide for.
+  ///
+  /// In en, this message translates to:
+  /// **'Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.'**
+  String get oemGuideIntroGeneric;
+
+  /// Link to dontkillmyapp.com when the phone maker is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Step-by-step guides for other phones'**
+  String get oemGuideMoreHelpGeneric;
+
+  /// Subtitle of the Settings row that reopens the battery guide on phones without a dedicated guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery settings that keep your phone recording'**
+  String get oemGuideSettingsSubtitleGeneric;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:

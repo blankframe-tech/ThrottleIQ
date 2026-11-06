@@ -46,6 +46,9 @@ enum OemBrand {
   Uri get guideUrl => Uri.https('dontkillmyapp.com', '/$slug');
 }
 
+/// Fallback when the maker has no [OemBrand]: the site's index page.
+final kGenericGuideUrl = Uri.https('dontkillmyapp.com');
+
 // OPPO and realme share ColorOS's security app.
 const _colorOsAutostart = [
   'com.coloros.safecenter/.permission.startup.StartupAppListActivity',
@@ -131,18 +134,19 @@ Future<void> maybeOfferOemGuide(
 }
 
 /// The three settings that keep a ride recording on [brand]'s phones, each
-/// with a shortcut where the phone has one.
+/// with a shortcut where the phone has one. A null [brand] (a phone we have no
+/// dedicated guide for) shows the generic steps.
 class OemGuideScreen extends StatelessWidget {
-  const OemGuideScreen({super.key, required this.brand});
+  const OemGuideScreen({super.key, this.brand});
 
-  final OemBrand brand;
+  final OemBrand? brand;
 
   Future<void> _openAutostart() async {
     var opened = false;
     try {
-      opened =
-          await _channel.invokeMethod<bool>('openFirst', brand.autostart) ??
-              false;
+      opened = await _channel.invokeMethod<bool>(
+              'openFirst', brand?.autostart ?? const <String>[]) ??
+          false;
     } catch (e) {
       debugPrint('[OemGuide] autostart screen failed: $e');
     }
@@ -179,7 +183,10 @@ class OemGuideScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppDimensions.paddingMd),
         children: [
-          Text(l10n.oemGuideIntro(brand.label),
+          Text(
+              brand == null
+                  ? l10n.oemGuideIntroGeneric
+                  : l10n.oemGuideIntro(brand!.label),
               style: TextStyle(
                   fontSize: 15, color: context.palette.textSecondary)),
           const SizedBox(height: AppDimensions.paddingLg),
@@ -202,10 +209,12 @@ class OemGuideScreen extends StatelessWidget {
               )),
           step(3, l10n.oemGuideStepLock),
           TextButton.icon(
-            onPressed: () =>
-                launchUrl(brand.guideUrl, mode: LaunchMode.externalApplication),
+            onPressed: () => launchUrl(brand?.guideUrl ?? kGenericGuideUrl,
+                mode: LaunchMode.externalApplication),
             icon: const Icon(Icons.open_in_new, size: 18),
-            label: Text(l10n.oemGuideMoreHelp(brand.label)),
+            label: Text(brand == null
+                ? l10n.oemGuideMoreHelpGeneric
+                : l10n.oemGuideMoreHelp(brand!.label)),
           ),
         ],
       ),

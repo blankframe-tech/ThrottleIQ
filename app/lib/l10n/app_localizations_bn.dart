@@ -6861,6 +6861,17 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get oemGuideIntroGeneric =>
+      'কিছু ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। বারবার এমন হলে এই তিনটি সেটিং একবার বদলে নিন।';
+
+  @override
+  String get oemGuideMoreHelpGeneric => 'অন্য ফোনের জন্য ধাপে ধাপে গাইড';
+
+  @override
+  String get oemGuideSettingsSubtitleGeneric =>
+      'আপনার ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস';
+
+  @override
   String get yourThrottleIqSection => 'আপনার ThrottleIQ';
 
   @override
