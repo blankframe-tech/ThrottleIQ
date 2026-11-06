@@ -7111,6 +7111,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parkingPinHere => 'Parking pin';
 
   @override
+  String get batterySaver => 'Battery saver';
+
+  @override
   String get minimizeRide => 'Minimize';
 
   @override

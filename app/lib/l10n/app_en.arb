@@ -9813,6 +9813,10 @@
   "@parkingPinHere": {
     "description": "Menu option to mark bike parking location and pause the ride."
   },
+  "batterySaver": "Battery saver",
+  "@batterySaver": {
+    "description": "Ride menu toggle: lets the screen sleep and lowers GPS accuracy to save battery."
+  },
   "minimizeRide": "Minimize",
   "@minimizeRide": {
     "description": "Menu option to minimize the active ride screen to allow browsing other tabs."

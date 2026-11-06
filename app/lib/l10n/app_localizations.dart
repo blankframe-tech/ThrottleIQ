@@ -12120,6 +12120,12 @@ abstract class AppLocalizations {
   /// **'Parking pin'**
   String get parkingPinHere;
 
+  /// Ride menu toggle: lets the screen sleep and lowers GPS accuracy to save battery.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery saver'**
+  String get batterySaver;
+
   /// Menu option to minimize the active ride screen to allow browsing other tabs.
   ///
   /// In en, this message translates to:

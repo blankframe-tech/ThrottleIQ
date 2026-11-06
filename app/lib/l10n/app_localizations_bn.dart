@@ -7089,6 +7089,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get parkingPinHere => 'পার্কিং পিন';
 
   @override
+  String get batterySaver => 'ব্যাটারি সেভার';
+
+  @override
   String get minimizeRide => 'মিনিমাইজ';
 
   @override

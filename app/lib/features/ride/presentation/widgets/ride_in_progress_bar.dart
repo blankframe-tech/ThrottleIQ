@@ -43,6 +43,7 @@ class RideInProgressBar extends ConsumerWidget {
     final parkingPin =
         status == RecordingStatus.paused ? ref.watch(parkingPinProvider) : null;
 
+    final batterySaver = ref.watch(batterySaverProvider);
     final distanceStr = SpeedFormatter.distanceKm(distanceM);
     final durationStr =
         SpeedFormatter.durationFromDuration(Duration(seconds: elapsedSeconds));
@@ -90,6 +91,15 @@ class RideInProgressBar extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (batterySaver) ...[
+                  Icon(
+                    Icons.battery_saver,
+                    size: 18,
+                    color: context.palette.textSecondary,
+                    semanticLabel: context.l10n.batterySaver,
+                  ),
+                  const SizedBox(width: 4),
+                ],
                 if (parkingPin != null) ...[
                   TextButton(
                     onPressed: () => PlaceLaunchActions.openDirectionsTo(
