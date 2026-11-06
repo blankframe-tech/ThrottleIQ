@@ -7260,4 +7260,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get indriyoSimulationSubtitle =>
       'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.';
+
+  @override
+  String emergencyContactsLimitReached(int max) {
+    return 'You can add up to $max emergency contacts. Remove one to add another.';
+  }
+
+  @override
+  String liveGroupRideCardSemantics(String name, int count) {
+    return '$name, live group ride, $count riding. Open';
+  }
 }

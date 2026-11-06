@@ -10036,5 +10036,15 @@
   "indriyoSimulationSubtitle": "Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.",
   "@indriyoSimulationSubtitle": {
     "description": "Subtitle of the Demo mode switch; warns the alerts are fake."
+  },
+  "emergencyContactsLimitReached": "You can add up to {max} emergency contacts. Remove one to add another.",
+  "@emergencyContactsLimitReached": {
+    "description": "SnackBar when the rider tries to add a contact past the cap.",
+    "placeholders": {"max": {"type": "int"}}
+  },
+  "liveGroupRideCardSemantics": "{name}, live group ride, {count} riding. Open",
+  "@liveGroupRideCardSemantics": {
+    "description": "Screen-reader label of a card in the Riding Now strip.",
+    "placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}
   }
 }

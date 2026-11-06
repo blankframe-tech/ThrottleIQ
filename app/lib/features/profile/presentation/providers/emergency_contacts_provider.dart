@@ -5,6 +5,10 @@ import '../../domain/entities/emergency_contact_entity.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 import 'package:throttleiq/core/cloud/firebase_providers.dart';
 
+/// The crash-alert function texts only the first 5 contacts by doc id
+/// (issues §123 C5), so the app refuses a sixth instead of silently ignoring it.
+const maxEmergencyContacts = 5;
+
 final emergencyContactsProvider =
     StreamProvider.family<List<EmergencyContactEntity>, String>(
   (ref, uid) {
@@ -81,12 +85,14 @@ class EmergencyContactsNotifier
     }
   }
 
-  Future<void> addContact({
+  /// Returns false when the cap is hit and nothing was added.
+  Future<bool> addContact({
     required String name,
     required String phone,
     String? email,
   }) async {
-    if (_uid == null) return;
+    if (_uid == null) return false;
+    if ((state.valueOrNull?.length ?? 0) >= maxEmergencyContacts) return false;
 
     try {
       await ackOrQueued(_firestore
@@ -101,8 +107,10 @@ class EmergencyContactsNotifier
       }));
 
       await _loadContacts();
+      return true;
     } catch (e) {
       state = AsyncValue.error(e, StackTrace.current);
+      return false;
     }
   }
 
