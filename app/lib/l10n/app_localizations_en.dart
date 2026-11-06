@@ -6884,6 +6884,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get oemGuideIntroGeneric =>
+      'Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.';
+
+  @override
+  String get oemGuideMoreHelpGeneric => 'Step-by-step guides for other phones';
+
+  @override
+  String get oemGuideSettingsSubtitleGeneric =>
+      'Battery settings that keep your phone recording';
+
+  @override
   String get yourThrottleIqSection => 'Your ThrottleIQ';
 
   @override

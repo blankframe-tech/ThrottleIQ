@@ -17,10 +17,23 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('hidden on phones the guide does not cover', (tester) async {
+  testWidgets('unknown makers get the generic guide', (tester) async {
+    await pump(tester, null);
+    final l10n =
+        AppLocalizations.of(tester.element(find.byType(SettingsOemGuideTile)));
+    expect(find.text(l10n.oemGuideSettingsSubtitleGeneric), findsOneWidget);
+    await tester.tap(find.text(l10n.oemGuideSettingsTitle));
+    await tester.pumpAndSettle();
+    expect(tester.widget<OemGuideScreen>(find.byType(OemGuideScreen)).brand,
+        isNull);
+    expect(find.text(l10n.oemGuideIntroGeneric), findsOneWidget);
+    expect(find.text(l10n.oemGuideStepLock), findsOneWidget);
+  });
+
+  testWidgets('hidden off Android', (tester) async {
     await pump(tester, null);
     expect(find.byType(InkWell), findsNothing);
-  });
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
   testWidgets('on a covered brand it opens that brand\'s guide',
       (tester) async {

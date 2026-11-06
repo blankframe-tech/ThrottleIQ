@@ -9527,6 +9527,18 @@
       }
     }
   },
+  "oemGuideIntroGeneric": "Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.",
+  "@oemGuideIntroGeneric": {
+    "description": "Intro on the battery guide when the phone maker is not one we have a dedicated guide for."
+  },
+  "oemGuideMoreHelpGeneric": "Step-by-step guides for other phones",
+  "@oemGuideMoreHelpGeneric": {
+    "description": "Link to dontkillmyapp.com when the phone maker is unknown."
+  },
+  "oemGuideSettingsSubtitleGeneric": "Battery settings that keep your phone recording",
+  "@oemGuideSettingsSubtitleGeneric": {
+    "description": "Subtitle of the Settings row that reopens the battery guide on phones without a dedicated guide."
+  },
   "yourThrottleIqSection": "Your ThrottleIQ",
   "@yourThrottleIqSection": {
     "description": "Settings → Your ThrottleIQ (app modules)."

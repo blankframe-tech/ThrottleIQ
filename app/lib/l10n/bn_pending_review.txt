@@ -1717,6 +1717,10 @@ oemGuideOpenBatterySettings
 # batch: Settings reopens battery guide (2026-10-29)
 oemGuideSettingsTitle
 oemGuideSettingsSubtitle
+# batch: battery guide for any phone (2026-11-06)
+oemGuideIntroGeneric
+oemGuideMoreHelpGeneric
+oemGuideSettingsSubtitleGeneric
 # batch: cockpit alert flash toggle (2026-10-29)
 alertFlashSettingTitle
 alertFlashSettingSubtitle
