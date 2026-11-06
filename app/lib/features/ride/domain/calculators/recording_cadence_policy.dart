@@ -46,8 +46,8 @@ class RecordingCadencePolicy {
       return true;
     }
 
-    final isEvent =
-        vehicleState.confidence < SensorConstants.minConfidenceToThinRecording ||
+    final isEvent = vehicleState.confidence <
+            SensorConstants.minConfidenceToThinRecording ||
         vehicleState.isCornering ||
         vehicleState.isBraking ||
         vehicleState.isAccelerating;
