@@ -2,7 +2,7 @@
 
 The code is under the [Business Source License](LICENSE). The name and brand are not: that license grants no rights in them.
 
-"ThrottleIQ", "Indriyo", the ThrottleIQ logo and app icon, and the app's look (colours, typography and design system) are the marks of the ThrottleIQ team.
+"ThrottleIQ", "Indriyo", the ThrottleIQ logo and app icon, and the app's look (colours, typography and design system) are trademarks of Abrar Masud Nafiz, the owner of ThrottleIQ.
 
 ## You can
 

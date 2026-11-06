@@ -2,7 +2,7 @@
 
 Thank you for contributing to ThrottleIQ. ThrottleIQ is licensed
 under the Business Source License 1.1 (see [LICENSE](LICENSE)). This agreement lets
-the owner of ThrottleIQ ("the Licensor", contact
+Abrar Masud Nafiz, the owner of ThrottleIQ ("the Licensor", contact
 blankframe.technologies@gmail.com) use what you send in the app it
 ships, under any terms, while you keep the copyright in your work.
 
