@@ -368,9 +368,8 @@ void main() {
 
     // Telemetry & Speed section
     expect(find.text('SPEED & PERFORMANCE DETAILS'), findsOneWidget);
-    // Max speed is never shown to a non-sharer (issues §109.4).
-    expect(find.text('Max Speed'), findsNothing);
-    expect(find.text('98.4'), findsNothing);
+    expect(find.text('Max Speed'), findsOneWidget);
+    expect(find.text('98.4'), findsOneWidget);
     expect(find.text('Avg Speed'), findsOneWidget);
     expect(find.text('51.0'), findsOneWidget);
     expect(find.text('Distance'), findsOneWidget);

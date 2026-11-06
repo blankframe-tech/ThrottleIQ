@@ -135,14 +135,6 @@ ThrottleIQ is a real product and a business, so the license only stops one thing
 
 The exact wording is the "Additional Use Grant" at the top of [LICENSE](LICENSE). Want to do something it doesn't cover? Ask: the contact is in the LICENSE.
 
----|---|
-| Read and audit all of the code | Publish or release your fork or a build of it |
-| Fork it, run it and change it on your own devices | Host it for other people or sell it |
-| Hunt for security bugs and report them privately | Build a competing app from this code, name, design or idea |
-| Open issues, start discussions, send pull requests | Use the ThrottleIQ name or branding |
-
-Want to do something that isn't listed? Ask: the contact is in the [LICENSE](LICENSE).
-
 ---
 
 *Built for riders. Ride safe. 🏍️ · Last updated: 2026-11-07*
