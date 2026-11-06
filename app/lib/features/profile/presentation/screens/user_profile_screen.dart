@@ -614,10 +614,6 @@ class _SharedRidesSectionState extends ConsumerState<_SharedRidesSection> {
                 if (rest.length > 1) ...[
                   RideSortChips(
                       sort: _sort,
-                      options: [
-                        for (final s in RideSort.values)
-                          if (widget.isMe || s != RideSort.topSpeed) s,
-                      ],
                       onChanged: (sort) => setState(() => _sort = sort)),
                   const SizedBox(height: 12),
                 ],
