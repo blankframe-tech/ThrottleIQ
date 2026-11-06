@@ -28,8 +28,9 @@ Bangla still awaits a native review, issue #23).
 > Start here: https://github.com/blankframe-tech/ThrottleIQ/blob/main/CONTRIBUTING.md
 > Starter issues: https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue
 >
-> The code is source-available (not open source); you sign a short CLA
-> on your first PR and keep the copyright in your work.
+> The code is under the Business Source License (it becomes Apache 2.0
+> two years after each release); you sign a short CLA on your first PR
+> and keep the copyright in your work.
 
 ## Post 2 — riders who read Bangla
 
