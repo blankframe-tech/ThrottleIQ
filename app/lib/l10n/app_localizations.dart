@@ -12383,6 +12383,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.'**
   String get indriyoSimulationSubtitle;
+
+  /// SnackBar when the rider tries to add a contact past the cap.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {max} emergency contacts. Remove one to add another.'**
+  String emergencyContactsLimitReached(int max);
+
+  /// Screen-reader label of a card in the Riding Now strip.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, live group ride, {count} riding. Open'**
+  String liveGroupRideCardSemantics(String name, int count);
 }
 
 class _AppLocalizationsDelegate

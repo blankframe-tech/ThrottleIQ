@@ -154,6 +154,14 @@ class SettingsEmergencyContactsSection extends ConsumerWidget {
   }
 
   Future<void> _showContactDialog(BuildContext context, WidgetRef ref) async {
+    if ((ref.read(emergencyContactsNotifierProvider).valueOrNull?.length ??
+            0) >=
+        maxEmergencyContacts) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLocalizations.of(context)
+              .emergencyContactsLimitReached(maxEmergencyContacts))));
+      return;
+    }
     final wasEmpty =
         ref.read(emergencyContactsNotifierProvider).valueOrNull?.isEmpty ??
             true;

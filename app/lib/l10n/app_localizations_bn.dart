@@ -7239,4 +7239,14 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get indriyoSimulationSubtitle =>
       'ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।';
+
+  @override
+  String emergencyContactsLimitReached(int max) {
+    return 'সর্বোচ্চ $maxটি জরুরি যোগাযোগ যোগ করা যায়। নতুন যোগ করতে একটি সরান।';
+  }
+
+  @override
+  String liveGroupRideCardSemantics(String name, int count) {
+    return '$name, লাইভ গ্রুপ রাইড, $count জন চালাচ্ছেন। খুলুন';
+  }
 }

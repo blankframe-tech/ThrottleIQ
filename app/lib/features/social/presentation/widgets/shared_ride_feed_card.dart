@@ -158,6 +158,7 @@ class _SharedRideFeedCardState extends ConsumerState<SharedRideFeedCard> {
                           flex: 3,
                           child: Semantics(
                             button: true,
+                            hint: context.l10n.viewProfile,
                             child: GestureDetector(
                               behavior: HitTestBehavior.opaque,
                               onTap: () =>

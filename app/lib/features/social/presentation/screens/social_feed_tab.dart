@@ -291,6 +291,8 @@ class _LiveGroupRideCard extends ConsumerWidget {
 
     return Semantics(
       button: true,
+      label: context.l10n.liveGroupRideCardSemantics(ride.name, ridingCount),
+      excludeSemantics: true,
       child: GestureDetector(
         onTap: () => context.push('/group-ride/${ride.id}'),
         child: Container(
