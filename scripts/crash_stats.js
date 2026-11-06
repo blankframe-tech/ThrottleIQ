@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * crash_stats.js — honest numbers from shadow-mode crash detection.
@@ -152,9 +154,8 @@ async function main() {
     console.error(`FIREBASE_PROJECT_ID must be '${EXPECTED_PROJECT_ID}'.`);
     process.exit(1);
   }
-  const admin = require('firebase-admin');
-  admin.initializeApp({ projectId: EXPECTED_PROJECT_ID });
-  const snap = await admin.firestore().collection('crashEvents').get();
+    initializeApp({ projectId: EXPECTED_PROJECT_ID });
+  const snap = await getFirestore().collection('crashEvents').get();
   // ownerUid stays behind: these figures never need to know who.
   const events = snap.docs.map((d) => {
     const { ownerUid, ...rest } = d.data();

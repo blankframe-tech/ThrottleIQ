@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { getApps, initializeApp } = require('firebase-admin/app');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
 /**
  * seed_police_checkposts_v3.js — populates the `places` collection in ThrottleIQ
@@ -417,11 +419,10 @@ async function main() {
     process.exit(1);
   }
 
-  const admin = require('firebase-admin');
-  if (!admin.apps.length) {
-    admin.initializeApp({ projectId: EXPECTED_PROJECT_ID });
+    if (!getApps().length) {
+    initializeApp({ projectId: EXPECTED_PROJECT_ID });
   }
-  const db = admin.firestore();
+  const db = getFirestore();
 
   console.log('\nChecking for existing police records in Firestore...');
   const existingSnapshot = await db.collection(COLLECTION).where('category', '==', 'police').get();
@@ -437,7 +438,7 @@ async function main() {
 
   const toCreate = [];
   const toSkip = [];
-  const now = admin.firestore.Timestamp.now();
+  const now = Timestamp.now();
 
   for (const post of POLICE_CHECKPOSTS_V3) {
     const expectedOsmId = `dmp:checkpost:${post.slug}`;

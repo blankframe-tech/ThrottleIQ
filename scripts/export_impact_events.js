@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * export_impact_events.js — pull shadow-mode impacts for calibration.
@@ -72,9 +74,8 @@ async function main() {
   const salt = arg('--salt') || crypto.randomBytes(8).toString('hex');
   const withWindows = process.argv.includes('--windows');
 
-  const admin = require('firebase-admin');
-  admin.initializeApp({ projectId: EXPECTED_PROJECT_ID });
-  const snap = await admin.firestore().collectionGroup('impactEvents').get();
+    initializeApp({ projectId: EXPECTED_PROJECT_ID });
+  const snap = await getFirestore().collectionGroup('impactEvents').get();
 
   fs.mkdirSync(path.join(out, 'windows'), { recursive: true });
   const rows = [FIELDS.join(',')];

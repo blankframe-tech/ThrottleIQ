@@ -53,7 +53,8 @@
  * --yes-i-really-mean-it before relying on the new claim.
  */
 
-let admin;
+let adminApp;
+let adminAuth;
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 
@@ -120,7 +121,8 @@ async function main() {
   }
 
   try {
-    admin = require('firebase-admin');
+    adminApp = require('firebase-admin/app');
+    adminAuth = require('firebase-admin/auth');
   } catch (err) {
     console.error(
       "Could not load 'firebase-admin'. Run `npm install` in this directory first.\n" +
@@ -130,9 +132,9 @@ async function main() {
     return;
   }
 
-  admin.initializeApp({ projectId: EXPECTED_PROJECT_ID });
+  adminApp.initializeApp({ projectId: EXPECTED_PROJECT_ID });
 
-  const resolvedProjectId = admin.app().options.projectId;
+  const resolvedProjectId = adminApp.getApp().options.projectId;
   if (resolvedProjectId !== EXPECTED_PROJECT_ID) {
     console.error(
       `Refusing to run: Admin SDK credentials resolved to project ` +
@@ -145,7 +147,7 @@ async function main() {
 
   let user;
   try {
-    user = await admin.auth().getUserByEmail(opts.email);
+    user = await adminAuth.getAuth().getUserByEmail(opts.email);
   } catch (err) {
     console.error(`Could not find a Firebase Auth user for '${opts.email}': ${err.message}`);
     process.exitCode = 1;
@@ -170,7 +172,7 @@ async function main() {
     nextClaims.admin = true;
   }
 
-  await admin.auth().setCustomUserClaims(user.uid, nextClaims);
+  await adminAuth.getAuth().setCustomUserClaims(user.uid, nextClaims);
   console.log(`Done. New custom claims: ${JSON.stringify(nextClaims)}`);
   console.log(
     'The signed-in client will not see this until its ID token refreshes — ' +
