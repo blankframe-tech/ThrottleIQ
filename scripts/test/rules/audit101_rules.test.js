@@ -728,3 +728,45 @@ test('reports: create-only for riders, no impersonation, no signed-out writes', 
   const anon = testEnv.unauthenticatedContext().firestore();
   await assertFails(setDoc(doc(collection(anon, 'reports')), report()));
 });
+
+// ---------------------------------------------------------------------------
+// §109.10 — group-ride invites refuse a blocked rider (either direction)
+// ---------------------------------------------------------------------------
+
+async function blockAndRide(blocker, blocked) {
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    const db = ctx.firestore();
+    await setDoc(doc(db, 'users', blocker, 'blocks', blocked), { blockedAt: new Date() });
+    await setDoc(doc(db, 'groupRides', 'gr-blk'), groupRide(BOB, 'BLK123'));
+  });
+}
+// GroupRideRepository.inviteUsers, one invitee.
+const inviteBatch = (invitee) => {
+  const db = dbFor(BOB);
+  const ride = doc(db, 'groupRides', 'gr-blk');
+  const b = writeBatch(db);
+  b.set(doc(ride, 'invitations', invitee), {
+    userId: invitee, status: 'pending', invitedAt: serverTimestamp(),
+  });
+  b.set(doc(ride, 'members', invitee), rosterRow(invitee, 'X', 'pending'), { merge: true });
+  return b;
+};
+
+test('§109.10 invite: an unblocked rider can still be invited', async () => {
+  await blockAndRide(MALLORY, ALICE); // unrelated block
+  await assertSucceeds(inviteBatch(ALICE).commit());
+});
+
+test('§109.10 invite: refused when the invitee blocked the creator', async () => {
+  await blockAndRide(ALICE, BOB);
+  await assertFails(inviteBatch(ALICE).commit());
+  await assertFails(setDoc(doc(dbFor(BOB), 'groupRides', 'gr-blk', 'invitations', ALICE),
+    { userId: ALICE, status: 'pending', invitedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(dbFor(BOB), 'groupRides', 'gr-blk', 'members', ALICE),
+    rosterRow(ALICE, 'Alice', 'pending')));
+});
+
+test('§109.10 invite: refused when the creator blocked the invitee', async () => {
+  await blockAndRide(BOB, ALICE);
+  await assertFails(inviteBatch(ALICE).commit());
+});
