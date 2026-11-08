@@ -58,10 +58,14 @@ orphaned `users/{uid}` doc (no Auth user for that uid, checked with Admin SDK
 *claims* the app account is gone still goes through steps 2.2 to 2.4: check
 Auth yourself and confirm with `users/{uid}/private/account`.
 
-**Monthly sweep (recommended):** riders can delete in the app without
-emailing. Once a month, list `users` doc ids that have no Auth user (Admin
-SDK `getUsers` in batches of 100, or compare against an Auth export) and
-treat each one as a request received on the sweep date.
+**Monthly sweep (required until the trigger is live):** riders can delete
+in the app without emailing, and nothing else finds those accounts. On the
+**1st of every month** (the next working day if you are away; put it in your
+calendar as a repeating event), list `users` doc ids that have no Auth user
+(Admin SDK `getUsers` in batches of 100, or compare against an Auth export)
+and treat each one as a request received on the sweep date. Record every
+run in the same private list as the requests, even when it finds nothing:
+sweep date, number of orphaned uids found, date each was finished.
 
 ## 3. Delete
 

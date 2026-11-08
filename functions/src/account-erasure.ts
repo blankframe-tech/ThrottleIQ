@@ -484,7 +484,8 @@ export async function deleteUserData(
   // the Cloudinary sweep: the sweep is one HTTP call per asset, the slowest
   // step, and a timeout in it must not leave the rider's PII behind. The
   // ledger (users/{uid}/cloudinaryAssets) stays until the sweep is done, so
-  // a retry can still find the media.
+  // a retry can still find the media; the sweep removes each row as its
+  // asset is destroyed, so a retry only redoes what is left.
   const profile = db.collection("users").doc(uid);
   await step("delete profile", async () => {
     for (const sub of await profile.listCollections()) {
@@ -642,6 +643,10 @@ function forumIdOf(doc: FirebaseFirestore.QueryDocumentSnapshot, uid: string): s
  * console. There is no automatic folder sweep: a ledger row missed by a
  * failed client write is only found that way too.
  *
+ * Runs DESTROY_CONCURRENCY destroys at a time and deletes each ledger row
+ * once its asset is destroyed, so a retry after a timeout only sees the rows
+ * still left instead of starting again from the first one.
+ *
  * Returns the labels of the failed steps (empty on success).
  */
 async function destroyCloudinaryAssets(
@@ -674,7 +679,7 @@ async function destroyCloudinaryAssets(
     return ["cloudinary (no credentials)"];
   }
 
-  let failed = 0;
+  const rows: { ref: FirebaseFirestore.DocumentReference; publicId: string; resourceType: string }[] = [];
   for (const doc of ledger.docs) {
     const publicId = doc.get("publicId") as string | undefined;
     const resourceType = (doc.get("resourceType") as string) || "image";
@@ -694,26 +699,43 @@ async function destroyCloudinaryAssets(
       );
       continue;
     }
-    try {
-      await cloudinaryDestroy({
-        cloud,
-        apiKey,
-        apiSecret,
-        publicId,
-        resourceType,
-      });
-    } catch (e) {
-      failed++;
-      // Logged with the public_id only — that is not PII, and it is what a
-      // manual retry needs.
-      logger.error(
-        `destroyCloudinaryAssets: failed to destroy ${resourceType}/${publicId}`,
-        e
+    rows.push({ ref: doc.ref, publicId, resourceType });
+  }
+
+  let failed = 0;
+  let next = 0;
+  const worker = async () => {
+    while (next < rows.length) {
+      const { ref, publicId, resourceType } = rows[next++];
+      try {
+        await cloudinaryDestroy({ cloud, apiKey, apiSecret, publicId, resourceType });
+      } catch (e) {
+        failed++;
+        // Logged with the public_id only — that is not PII, and it is what a
+        // manual retry needs.
+        logger.error(
+          `destroyCloudinaryAssets: failed to destroy ${resourceType}/${publicId}`,
+          e
+        );
+        continue;
+      }
+      // The row goes with its asset, so a sweep cut off by the function
+      // timeout resumes on retry instead of destroying everything again.
+      // If this delete fails the asset is still gone, and the ledger step
+      // after the sweep removes the row.
+      await ref.delete().catch((e) =>
+        logger.warn(`destroyCloudinaryAssets: could not clear ledger row ${ref.id}`, e)
       );
     }
-  }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(DESTROY_CONCURRENCY, rows.length) }, worker)
+  );
   return failed > 0 ? [`cloudinary destroy (${failed} failed)`] : [];
 }
+
+/** Destroy calls in flight at once; a retry resumes from the rows left either way. */
+const DESTROY_CONCURRENCY = 5;
 
 /** One signed Cloudinary `destroy` call. No SDK — Node 22 has global fetch. */
 async function cloudinaryDestroy(opts: {

@@ -425,6 +425,67 @@ test('the profile goes before the Cloudinary sweep; the ledger after it', async 
   assert.equal(await exists(`users/${UID}/cloudinaryAssets/a1`), false);
 });
 
+// Each ledger row goes as soon as its asset is destroyed, so a sweep cut off
+// by the function timeout resumes on retry instead of starting over.
+test('a Cloudinary sweep cut off by a timeout resumes on retry, destroying nothing twice', async () => {
+  await clearEmulators();
+  const N = 2000;
+  for (let i = 0; i < N; i += 500) {
+    const batch = db.batch();
+    for (let j = i; j < Math.min(i + 500, N); j++) {
+      batch.set(db.doc(`users/${UID}/cloudinaryAssets/a${j}`), {
+        publicId: `avatars/${UID}/p${j}`,
+        resourceType: 'image',
+      });
+    }
+    await batch.commit();
+  }
+
+  const destroyed = new Map(); // publicId -> successful destroy calls
+  let callsThisAttempt = 0;
+  let limit = Infinity;
+  let hung = null; // resolves when an attempt "times out"
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (!String(url).startsWith('https://api.cloudinary.com/')) return realFetch(url, init);
+    if (++callsThisAttempt > limit) {
+      hung?.();
+      return new Promise(() => {}); // the instance is killed mid-call
+    }
+    const id = Object.fromEntries(init.body).public_id;
+    destroyed.set(id, (destroyed.get(id) ?? 0) + 1);
+    return { ok: true, json: async () => ({ result: 'ok' }) };
+  };
+  const opts = { rtdb: null, cloudinary: { cloud: 'demo-cloud', apiKey: 'k', apiSecret: 's' } };
+  const left = async () =>
+    (await db.collection(`users/${UID}/cloudinaryAssets`).count().get()).data().count;
+  try {
+    // Two attempts each die after 700 destroy calls; the third has time to finish.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      callsThisAttempt = 0;
+      limit = 700;
+      const timedOut = new Promise((r) => { hung = r; });
+      await Promise.race([deleteUserData(db, UID, opts), timedOut]);
+      await new Promise((r) => setTimeout(r, 300)); // let in-flight row deletes land
+      const remaining = await left();
+      assert.ok(remaining <= N - 700 * (attempt + 1) + 5 * (attempt + 1),
+        `attempt ${attempt} left ${remaining} rows: progress was not saved`);
+    }
+    callsThisAttempt = 0;
+    limit = Infinity;
+    hung = null;
+    const result = await deleteUserData(db, UID, opts);
+    assert.deepEqual(result.failedSteps, []);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+
+  assert.equal(destroyed.size, N, 'every asset destroyed');
+  const twice = [...destroyed].filter(([, n]) => n > 1);
+  assert.deepEqual(twice, [], 'an asset was destroyed twice');
+  assert.equal(await left(), 0);
+});
+
 test('empty credentials (an unset secret) skip the sweep without throwing', async () => {
   await clearEmulators();
   await db.doc(`users/${UID}/cloudinaryAssets/a1`).set({ publicId: `avatars/${UID}/x`, resourceType: 'image' });
