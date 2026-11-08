@@ -25,11 +25,23 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
           fetch-depth: 0
+      # A PR is scanned with the base branch's allowlist and ignore list, not
+      # its own copies.
+      - name: gitleaks config
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [ -n "$BASE_REF" ]; then
+            git show "origin/$BASE_REF:.gitleaks.toml" > "$RUNNER_TEMP/gitleaks.toml"
+            git show "origin/$BASE_REF:.gitleaksignore" > .gitleaksignore 2>/dev/null || rm -f .gitleaksignore
+          else
+            cp .gitleaks.toml "$RUNNER_TEMP/gitleaks.toml"
+          fi
       # Push/PR: scans the new commits. Schedule/manual: the whole history.
       - uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
+          GITLEAKS_CONFIG: ${{ runner.temp }}/gitleaks.toml
           # PR comments need write access; the job summary is enough.
           GITLEAKS_ENABLE_COMMENTS: false
 
@@ -37,6 +49,17 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      # A PR is scanned with the base branch's osv-scanner.toml ignore lists,
+      # not its own: drop every copy, then restore the base's.
+      - name: osv-scanner config from the base branch
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch -q --depth=1 origin "$BASE_REF"
+          git ls-files -z '*osv-scanner.toml' | xargs -0 rm -f
+          git ls-tree -r --name-only FETCH_HEAD | { grep 'osv-scanner\.toml$' || true; } |
+            while read -r f; do mkdir -p "$(dirname "$f")"; git show "FETCH_HEAD:$f" > "$f"; done
       # Known vulnerabilities in the app's, the functions' and the scripts' locked deps.
       - uses: google/osv-scanner-action/osv-scanner-action@b1d267aea5211fa648d9d442fa64b90dbdcbdd36 # v2.7.0
         with:

@@ -25,6 +25,7 @@ const { getFirestore } = require('firebase-admin/firestore');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { csvCell } = require('./csv_cell');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 const FIELDS = ['id', 'rider', 'rideId', 'at', 'tier', 'reason', 'peakUserG', 'peakRawG',
@@ -48,11 +49,7 @@ function toRecord(id, uid, d, salt) {
 }
 
 function toCsvRow(rec) {
-  return FIELDS.map((f) => {
-    const v = rec[f];
-    const s = v === undefined || v === null ? '' : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  }).join(',');
+  return FIELDS.map((f) => csvCell(rec[f])).join(',');
 }
 
 function arg(name) {

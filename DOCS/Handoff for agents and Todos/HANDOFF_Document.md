@@ -190,6 +190,15 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 ### 2026-11-08
 
 - **Shared-list field checks, group-ride notifications tied to a real ride, legacy comment-delete clause dropped** (branch `agent/sec-throttleiq-2`, not merged or deployed): rules plus app hardening, details in `issues_fixed.md` (top entry). Owner: merge, then deploy rules (`needs_attention.md`) before any +38-or-later upload; the app parts ship with the next AAB.
+- **Repo tooling hardened (CI, CLA, owners, exporters):**
+  - `summary.yml` runs only for issues from the owner, members and collaborators (§126).
+  - `cla.yml`: write token at job level, skips comments on plain issues, allowlist is bots only (maintainers sign once too).
+  - `security.yml`: PR scans take `.gitleaks.toml`, `.gitleaksignore` and every `osv-scanner.toml` from the base branch.
+  - `ci.yml`: firebase-tools is a locked devDependency in `scripts/` (no global install); an `@opentelemetry/core` override keeps OSV clean.
+  - `.github/CODEOWNERS` covers `.github/`, `.claude/`, `.githooks/`, `.agents/`, `scripts/check.sh`, `scripts/deploy.sh` and the scan configs. Takes effect once the ruleset requires code-owner review (owner, #16).
+  - `.claude/settings.json` no longer enables the ponytail marketplace; install it at user scope (`.agents/rules/efficiency-tools.md`).
+  - `deploy.sh` on `main` pushes `release/<tag>` and opens a PR instead of pushing `main`.
+  - `crash_stats.js` and `export_impact_events.js` CSVs prefix cells that start with `= + - @`, tab or CR with `'` (`scripts/csv_cell.js`).
 
 ### 2026-11-01
 

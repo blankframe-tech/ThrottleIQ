@@ -40,8 +40,11 @@ bash scripts/deploy.sh
    ```bash
    git add app/pubspec.yaml   # deploy.sh refuses to run with any other tracked file dirty
    git commit -m "chore(release): bump version to <version>"
-   git push origin main
+   # main takes changes only through PRs: push a release branch and open a PR.
+   git push origin HEAD:refs/heads/release/<tag>
+   gh pr create --base main --head release/<tag> --title "chore(release): <version>"
    ```
+   Merge the PR with a merge commit (not a squash) once the checks pass, so the tagged commit lands on `main`.
 
 3. **Deploy to connected iPhone**:
    ```bash

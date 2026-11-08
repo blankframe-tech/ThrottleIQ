@@ -1,0 +1,13 @@
+# Files that run code automatically: CI, agent and git hooks, the quality
+# gate, the release script, and the scan allowlists. A change to any of them
+# needs the owner's review once the main ruleset requires code-owner review.
+/.github/                    @blankframe-tech
+/.claude/                    @blankframe-tech
+/.githooks/                  @blankframe-tech
+/.agents/                    @blankframe-tech
+/scripts/check.sh            @blankframe-tech
+/scripts/deploy.sh           @blankframe-tech
+/.gitleaks.toml              @blankframe-tech
+/.gitleaksignore             @blankframe-tech
+/functions/osv-scanner.toml  @blankframe-tech
+/scripts/osv-scanner.toml    @blankframe-tech
