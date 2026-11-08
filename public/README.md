@@ -19,9 +19,10 @@ firebase deploy --only hosting
 - `privacy-policy.html` — the old policy path, now a redirect to `/privacy.html`
   so previously handed-out links keep working. No policy text lives here.
 - `follow.html` — fallback for follow links (the "My QR code" in the app).
-  Rewritten from `/u/**`, `/ThrottleIQ/u/**` and `/throttleiq/u/**`. Tries to
-  open the app (`intent://` on Android, `throttleiq://u/<uid>` button
-  elsewhere), otherwise links to the install page. URL rules mirror
+  Rewritten from `/u/**`, `/ThrottleIQ/u/**` and `/throttleiq/u/**`. Offers an
+  "Open in ThrottleIQ" button (`intent://` on Android, `throttleiq://u/<uid>`
+  elsewhere) and an install link. It never opens the app by itself, and the
+  app asks "Follow <name>?" before following. URL rules mirror
   `app/lib/features/social/domain/utilities/follow_link.dart`.
 - `well-known/assetlinks.json` and `well-known/apple-app-site-association.json`
   — served at `/.well-known/assetlinks.json` and

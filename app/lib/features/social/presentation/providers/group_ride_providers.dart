@@ -12,6 +12,15 @@ final groupRideRepositoryProvider = Provider<GroupRideRepository>(
   (ref) => GroupRideRepository(),
 );
 
+/// Group rides on which the rider agreed, this app session, to publish their
+/// live position. The map publishes nothing until the ride's id is here
+/// (the creator excepted), so no tap on an invite or link starts sharing by
+/// itself.
+// shortcut: in memory, so the map asks again after an app restart; persist
+// it if riders find that annoying.
+final groupRideLocationConsentProvider =
+    StateProvider<Set<String>>((ref) => const {});
+
 /// The signed-in rider's live group rides — the Social feed's "Riding Now"
 /// strip, the ride cockpit's push-to-talk button and the Record screen's
 /// "back to your group ride" banner. Empty (never an error state worth

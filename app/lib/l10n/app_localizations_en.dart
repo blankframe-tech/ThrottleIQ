@@ -7300,4 +7300,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String liveGroupRideCardSemantics(String name, int count) {
     return '$name, live group ride, $count riding. Open';
   }
+
+  @override
+  String groupRideInviteConfirmTitle(String name) {
+    return 'Join $name\'s ride?';
+  }
+
+  @override
+  String groupRideInviteConfirmBody(String name) {
+    return 'Joining shares your live location with $name and everyone else on this ride while the group map is open. Only join riders you know.';
+  }
+
+  @override
+  String get groupRideShareLocationTitle => 'Share your live location?';
+
+  @override
+  String get groupRideShareLocationBody =>
+      'Everyone on this ride, including its organiser, will see where you are while this map is open. If you don\'t share, you can still see the group.';
+
+  @override
+  String get groupRideNotSharingLocation =>
+      'You\'re not sharing your location, so the group can\'t see you. You can still see them.';
+
+  @override
+  String followLinkConfirmTitle(String name) {
+    return 'Follow $name?';
+  }
+
+  @override
+  String get followLinkConfirmBody =>
+      'Only follow riders you know. If they follow you back, they can see the rides and profile details you share with mutual followers.';
+
+  @override
+  String get followLinkUnavailable =>
+      'Couldn\'t load this rider\'s profile, so nobody was followed. Check your connection, or find them in Search.';
 }

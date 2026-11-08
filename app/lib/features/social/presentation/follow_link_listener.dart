@@ -13,10 +13,12 @@ import '../../auth/presentation/providers/auth_provider.dart';
 import '../domain/utilities/follow_link.dart';
 import '../domain/utilities/follow_link_outcome.dart';
 import 'providers/follow_link_providers.dart';
+import 'widgets/confirm_follow_dialog.dart';
 
 /// Turns follow links opened from outside the app — the system camera, a
 /// browser, the web fallback page's `throttleiq://u/<uid>` hand-off — into a
-/// follow, then lands on the People tab.
+/// "Follow <name>?" prompt, and on the Follow tap a follow, then lands on the
+/// People tab. A link can come from anyone, so it never follows by itself.
 ///
 /// Every link is stashed on disk first ([FollowLinkStore.savePendingFollow])
 /// and acted on only once the app is somewhere a follow makes sense: signed
@@ -112,17 +114,25 @@ class FollowLinkListener {
       final l10n = resolveL10n(_ref.read(appLocaleProvider));
       final result = await _ref
           .read(followLinkControllerProvider)
-          .followUid(uid, l10n: l10n);
+          .followUid(uid, l10n: l10n, confirm: _confirm);
       if (result.outcome == FollowLinkOutcome.followed ||
           result.outcome == FollowLinkOutcome.alreadyFollowing) {
         _ref.read(routerProvider).go(kFollowLinkLandingRoute);
       }
-      _showMessage(followLinkResultMessage(l10n, result));
+      final message = followLinkResultMessage(l10n, result);
+      if (message != null) _showMessage(message);
     } catch (e) {
       debugPrint('[follow-link] follow failed: $e');
     } finally {
       _draining = false;
     }
+  }
+
+  Future<bool> _confirm(String name) async {
+    final context =
+        _ref.read(routerProvider).routerDelegate.navigatorKey.currentContext;
+    if (context == null || !context.mounted) return false;
+    return confirmFollowFromLink(context, name);
   }
 
   void _showMessage(String text) {

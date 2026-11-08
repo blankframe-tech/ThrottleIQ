@@ -64,11 +64,14 @@ class FollowLinkController {
   final Ref _ref;
 
   /// Follows the rider [targetUid] (already parsed from a link; null means
-  /// the link didn't parse). Signed out, the follow is stashed for after
-  /// sign-in and [FollowLinkOutcome.pendingSignIn] is returned.
+  /// the link didn't parse) once [confirm], shown their name, returns true.
+  /// A link can come from anyone, so nothing is written without that tap.
+  /// Signed out, the uid is stashed for after sign-in and
+  /// [FollowLinkOutcome.pendingSignIn] is returned.
   Future<FollowLinkResult> followUid(
     String? targetUid, {
     required AppLocalizations l10n,
+    required Future<bool> Function(String name) confirm,
   }) async {
     final myUid = _ref.read(currentUserProvider)?.uid;
     var following = const <String>{};
@@ -103,13 +106,19 @@ class FollowLinkController {
         }
         name = profile.bestName;
       } catch (e) {
-        debugPrint('[follow-link] profile read skipped: $e');
+        debugPrint('[follow-link] profile read failed: $e');
         // Permission denied (a private/mutual-only profile — rules also deny
-        // a doc that doesn't exist, so the two can't be told apart here) or
-        // offline: follow anyway, without a name.
+        // a doc that doesn't exist) or offline. Without a name the rider
+        // can't see whom they'd follow, so nothing is followed.
+        if (pre == null) {
+          return const FollowLinkResult(FollowLinkOutcome.unavailable);
+        }
       }
     }
     if (pre != null) return FollowLinkResult(pre, targetName: name);
+    if (!await confirm(name!)) {
+      return FollowLinkResult(FollowLinkOutcome.cancelled, targetName: name);
+    }
 
     try {
       await _ref.read(followControllerProvider).setFollowing(
@@ -125,8 +134,8 @@ class FollowLinkController {
   }
 }
 
-/// The snackbar text for a [FollowLinkResult].
-String followLinkResultMessage(AppLocalizations l10n, FollowLinkResult r) {
+/// The snackbar text for a [FollowLinkResult]; null when the rider said no.
+String? followLinkResultMessage(AppLocalizations l10n, FollowLinkResult r) {
   final name = r.targetName ?? l10n.aRider;
   return switch (r.outcome) {
     FollowLinkOutcome.followed => l10n.followLinkFollowed(name),
@@ -135,5 +144,7 @@ String followLinkResultMessage(AppLocalizations l10n, FollowLinkResult r) {
     FollowLinkOutcome.invalid => l10n.followLinkInvalid,
     FollowLinkOutcome.pendingSignIn => l10n.followLinkSignInFirst,
     FollowLinkOutcome.failed => l10n.followLinkFailed,
+    FollowLinkOutcome.unavailable => l10n.followLinkUnavailable,
+    FollowLinkOutcome.cancelled => null,
   };
 }

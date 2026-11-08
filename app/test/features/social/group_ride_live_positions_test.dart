@@ -54,4 +54,65 @@ void main() {
     final repo = GroupRideRepository.withFirestore(FakeFirebaseFirestore());
     expect(await repo.fetchLivePositions('g', ['a']), isEmpty);
   });
+
+  group('leaving or ending a ride leaves no location behind', () {
+    late FakeFirebaseFirestore fs;
+    late GroupRideRepository repo;
+
+    setUp(() async {
+      fs = FakeFirebaseFirestore();
+      repo = GroupRideRepository.withFirestore(fs);
+      await fs.doc('groupRides/g').set({
+        'creatorId': 'c',
+        'memberIds': ['c', 'm', 'n'],
+        'invitedIds': <String>[],
+        'status': 'active',
+      });
+      for (final uid in ['c', 'm', 'n']) {
+        await repo.updateMemberLocation(
+            groupRideId: 'g', userId: uid, lat: 23.8, lng: 90.4, shared: true);
+      }
+    });
+
+    Future<List<String>> legacyIds() async =>
+        (await fs.collection('groupRides/g/memberLocations').get())
+            .docs
+            .map((d) => d.id)
+            .toList();
+
+    test('a member leaving drops their own position and only theirs', () async {
+      await repo.leaveGroupRide(groupRideId: 'g', userId: 'm');
+
+      final all = (await fs.doc('groupRides/g/positions/all').get()).data()!;
+      expect(all.keys, unorderedEquals(['c', 'n']));
+      expect(await legacyIds(), unorderedEquals(['c', 'n']));
+    });
+
+    test("a kicked rider's position goes with them", () async {
+      await repo.removeMember(groupRideId: 'g', userId: 'm');
+
+      final all = (await fs.doc('groupRides/g/positions/all').get()).data()!;
+      expect(all.keys, unorderedEquals(['c', 'n']));
+      expect(await legacyIds(), unorderedEquals(['c', 'n']));
+    });
+
+    test('ending the ride erases every position', () async {
+      await repo.endGroupRide('g');
+
+      expect(
+          (await fs.doc('groupRides/g').get()).data()!['status'], 'completed');
+      expect((await fs.doc('groupRides/g/positions/all').get()).exists, false);
+      expect(await legacyIds(), isEmpty);
+    });
+
+    test('the creator leaving ends the ride and erases every position',
+        () async {
+      await repo.leaveGroupRide(groupRideId: 'g', userId: 'c');
+
+      expect(
+          (await fs.doc('groupRides/g').get()).data()!['status'], 'completed');
+      expect((await fs.doc('groupRides/g/positions/all').get()).exists, false);
+      expect(await legacyIds(), isEmpty);
+    });
+  });
 }

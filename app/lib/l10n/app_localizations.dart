@@ -12449,6 +12449,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name}, live group ride, {count} riding. Open'**
   String liveGroupRideCardSemantics(String name, int count);
+
+  /// Title of the confirm dialog shown when a rider taps a group-ride invite notification.
+  ///
+  /// In en, this message translates to:
+  /// **'Join {name}\'s ride?'**
+  String groupRideInviteConfirmTitle(String name);
+
+  /// Body of the group-ride invite confirm dialog: says the rider's live location will be shared.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining shares your live location with {name} and everyone else on this ride while the group map is open. Only join riders you know.'**
+  String groupRideInviteConfirmBody(String name);
+
+  /// Title of the one-time consent dialog on the group ride map before this device publishes its position.
+  ///
+  /// In en, this message translates to:
+  /// **'Share your live location?'**
+  String get groupRideShareLocationTitle;
+
+  /// Body of the group ride map's location-sharing consent dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone on this ride, including its organiser, will see where you are while this map is open. If you don\'t share, you can still see the group.'**
+  String get groupRideShareLocationBody;
+
+  /// Banner on the group ride map after the rider declined to share their location.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re not sharing your location, so the group can\'t see you. You can still see them.'**
+  String get groupRideNotSharingLocation;
+
+  /// Title of the confirm dialog before a follow link or scanned QR code follows a rider.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow {name}?'**
+  String followLinkConfirmTitle(String name);
+
+  /// Body of the follow-link confirm dialog: explains what following can expose.
+  ///
+  /// In en, this message translates to:
+  /// **'Only follow riders you know. If they follow you back, they can see the rides and profile details you share with mutual followers.'**
+  String get followLinkConfirmBody;
+
+  /// Shown when a follow link's rider profile can't be read (private or offline), so no follow was written.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load this rider\'s profile, so nobody was followed. Check your connection, or find them in Search.'**
+  String get followLinkUnavailable;
 }
 
 class _AppLocalizationsDelegate
