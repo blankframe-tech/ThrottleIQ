@@ -33,6 +33,7 @@ const { getFirestore } = require('firebase-admin/firestore');
  */
 
 const fs = require('fs');
+const { csvCell } = require('./csv_cell');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 const FALL_LABELS = new Set(['crash', 'fall']);
@@ -137,11 +138,7 @@ const CSV_FIELDS = ['id', 'label', 'detectedTier', 'reason', 'peakG', 'speedBefo
   'rulesVersion', 'consentVersion', 'createdAt'];
 
 function toCsv(events) {
-  const cell = (v) => {
-    const s = v === undefined || v === null ? '' : String(v);
-    return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-  return [CSV_FIELDS.join(','), ...events.map((e) => CSV_FIELDS.map((f) => cell(e[f])).join(','))].join('\n') + '\n';
+  return [CSV_FIELDS.join(','), ...events.map((e) => CSV_FIELDS.map((f) => csvCell(e[f])).join(','))].join('\n') + '\n';
 }
 
 function arg(name) {
