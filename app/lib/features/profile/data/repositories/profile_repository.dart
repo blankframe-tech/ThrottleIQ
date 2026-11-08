@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../../../core/services/cloudinary_upload_service.dart';
 import '../../../../core/utils/photo_url_policy.dart';
@@ -14,6 +15,7 @@ import '../../../garage/domain/entities/bike_entity.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../models/user_profile_model.dart';
+import 'package:throttleiq/core/cloud/parse_docs.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
 
@@ -29,10 +31,14 @@ String emailLookupId(String email) =>
 class ProfileRepository {
   static final ProfileRepository _instance = ProfileRepository._internal();
   factory ProfileRepository() => _instance;
-  ProfileRepository._internal();
+  ProfileRepository._internal() : _firestore = FirebaseFirestore.instance;
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final CloudinaryUploadService _uploadService = CloudinaryUploadService();
+  /// For tests: a repository over a fake Firestore.
+  @visibleForTesting
+  ProfileRepository.withFirestore(this._firestore);
+
+  final FirebaseFirestore _firestore;
+  late final CloudinaryUploadService _uploadService = CloudinaryUploadService();
 
   CollectionReference<Map<String, dynamic>> get _users =>
       _firestore.collection('users');
@@ -384,9 +390,9 @@ class ProfileRepository {
         .where('usernameLower', isLessThan: q + String.fromCharCode(0xf8ff))
         .limit(limit)
         .get();
-    return snap.docs
-        .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
-        .toList();
+    return parseEachDoc(
+        snap.docs, (d) => UserProfileModel.fromFirestore(d.data(), d.id),
+        where: 'profile.parseProfile');
   }
 
   /// Recently joined riders with a public profile, for suggestions and All
@@ -419,9 +425,9 @@ class ProfileRepository {
       docs.addAll(snap.docs);
       if (snap.docs.length < page) break;
     }
-    return docs
-        .map((d) => UserProfileModel.fromFirestore(d.data(), d.id))
-        .toList();
+    return parseEachDoc(
+        docs, (d) => UserProfileModel.fromFirestore(d.data(), d.id),
+        where: 'profile.parseProfile');
   }
 
   /// Exact-match search by email, through `emailLookup` (B2): nobody can

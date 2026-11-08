@@ -1,3 +1,5 @@
+import '../utilities/follow_link.dart';
+
 enum NotificationType {
   follow,
 
@@ -51,13 +53,18 @@ class AppNotificationEntity {
   /// written before the id field existed (or with a blank id) must not render
   /// a tappable "join the ride" affordance that would open nothing.
   bool get isActionableGroupRideInvite =>
-      type == NotificationType.groupRideInvite &&
-      (groupRideId != null && groupRideId!.isNotEmpty);
+      type == NotificationType.groupRideInvite && _hasRoutableGroupRideId;
 
   /// True only when this "so-and-so joined" row can actually open a ride —
   /// same reasoning as [isActionableGroupRideInvite]: a blank/missing id must
   /// not render a tappable affordance that opens nothing.
   bool get isViewableGroupRideJoined =>
-      type == NotificationType.groupRideJoined &&
-      (groupRideId != null && groupRideId!.isNotEmpty);
+      type == NotificationType.groupRideJoined && _hasRoutableGroupRideId;
+
+  /// The id is pasted into the `/group-ride/<id>` route, and the row is
+  /// written by another rider's device, so it must be shaped like a document
+  /// id (the uid pattern): a '/', '.', '?' or '#' could steer the tap to
+  /// another screen or add `?start=1`, which starts a recording.
+  bool get _hasRoutableGroupRideId =>
+      groupRideId != null && isValidFollowUid(groupRideId!);
 }

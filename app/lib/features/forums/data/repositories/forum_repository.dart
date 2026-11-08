@@ -14,6 +14,7 @@ import '../../domain/entities/forum_reply_entity.dart';
 import '../models/forum_model.dart';
 import '../models/forum_post_model.dart';
 import '../models/forum_reply_model.dart';
+import 'package:throttleiq/core/cloud/parse_docs.dart';
 import 'package:throttleiq/core/cloud/vote_batch.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
@@ -640,13 +641,13 @@ class ForumRepository {
     if (forumIds.length == 1 && forumIds.first == kAllRidersForumId) {
       // The master group's feed: every post in every group.
       perForum = [
-        await _postsFrom(_firestore.collectionGroup('posts'),
+        await postsFrom(_firestore.collectionGroup('posts'),
             limit: limit, before: before)
       ];
     } else {
       perForum = await Future.wait([
         for (final id in forumIds)
-          _postsFrom(_forums.doc(id).collection('posts'),
+          postsFrom(_forums.doc(id).collection('posts'),
               limit: limit, before: before),
         _crossPostsInto(forumIds, limit: limit, before: before),
       ]);
@@ -672,7 +673,7 @@ class ForumRepository {
       // shortcut: array-contains-any takes 30 values; a Pulse following more
       // than 30 groups misses cross-posts into the rest. Split into chunks
       // if riders get there.
-      return await _postsFrom(
+      return await postsFrom(
           _firestore
               .collectionGroup('posts')
               .where('alsoIn', arrayContainsAny: forumIds.take(30).toList()),
@@ -687,11 +688,12 @@ class ForumRepository {
   /// [forumId]'s newest own post (not cross-posts), or null — one read.
   Future<ForumPostEntity?> getLatestPost(String forumId) async {
     final posts =
-        await _postsFrom(_forums.doc(forumId).collection('posts'), limit: 1);
+        await postsFrom(_forums.doc(forumId).collection('posts'), limit: 1);
     return posts.firstOrNull;
   }
 
-  Future<List<ForumPostEntity>> _postsFrom(
+  @visibleForTesting
+  Future<List<ForumPostEntity>> postsFrom(
     Query<Map<String, dynamic>> source, {
     required int limit,
     DateTime? before,
@@ -699,9 +701,9 @@ class ForumRepository {
     var q = source.orderBy('createdAt', descending: true);
     if (before != null) q = q.startAfter([Timestamp.fromDate(before)]);
     final snapshot = await q.limit(limit).get();
-    return snapshot.docs
-        .map((doc) => ForumPostModel.fromFirestore(doc).toEntity())
-        .toList();
+    return parseEachDoc(
+        snapshot.docs, (doc) => ForumPostModel.fromFirestore(doc).toEntity(),
+        where: 'forum.parsePost');
   }
 
   /// The model forums whose posts merge into a brand forum — see the

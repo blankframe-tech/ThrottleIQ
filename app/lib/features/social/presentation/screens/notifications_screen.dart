@@ -129,7 +129,12 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
     if (_accepting) return;
     final user = ref.read(currentUserProvider);
     final groupRideId = notification.groupRideId;
-    if (user == null || groupRideId == null || groupRideId.isEmpty) return;
+    // isActionableGroupRideInvite also checks the id is safe to route to.
+    if (user == null ||
+        groupRideId == null ||
+        !notification.isActionableGroupRideInvite) {
+      return;
+    }
 
     setState(() => _accepting = true);
     try {
