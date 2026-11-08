@@ -27,7 +27,16 @@ void reportNonFatal(Object error, StackTrace? stack, {String? reason}) {
 /// carries on without, §83.14): records it as a non-fatal so it still shows on
 /// the dashboard, tagged with [where]. A no-op in debug builds and tests, and
 /// for Firestore being offline (expected, not a failure). Never throws.
-void reportSilently(Object error, StackTrace? stack, {required String where}) {
+///
+/// [onceKey] (e.g. the row id) reports a given [where]+key only once per app
+/// run, for reads that hit the same broken row over and over.
+void reportSilently(
+  Object error,
+  StackTrace? stack, {
+  required String where,
+  String? onceKey,
+}) {
+  if (onceKey != null && !claimOnce('$where:$onceKey')) return;
   if (kDebugMode) return;
   if (error is FirebaseException &&
       (error.code == 'unavailable' || error.code == 'deadline-exceeded')) {
@@ -35,3 +44,12 @@ void reportSilently(Object error, StackTrace? stack, {required String where}) {
   }
   reportNonFatal(error, stack, reason: where);
 }
+
+final _onceKeys = <String>{};
+
+/// True the first time [key] is seen this run.
+@visibleForTesting
+bool claimOnce(String key) => _onceKeys.add(key);
+
+@visibleForTesting
+void resetOnceKeys() => _onceKeys.clear();

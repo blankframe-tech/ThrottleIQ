@@ -241,8 +241,8 @@ class _BlankTileProvider extends TileProvider {
 
   /// A 1×1 fully transparent PNG.
   static final Uint8List _pixel = base64Decode(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA'
-    '60e6kgAAAABJRU5ErkJggg==',
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpe'
+    'qz8AAAAASUVORK5CYII=',
   );
 
   @override

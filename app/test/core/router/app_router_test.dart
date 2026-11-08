@@ -8,10 +8,24 @@ import 'package:throttleiq/shared/widgets/app_shell.dart';
 
 void main() {
   group('computeAuthRedirect', () {
-    test('never redirects away from /splash (splash owns its own navigation)',
-        () {
+    test(
+      'never redirects away from /splash (splash owns its own navigation)',
+      () {
+        expect(
+          computeAuthRedirect(isAuth: true, isOnboarding: true, loc: '/splash'),
+          isNull,
+        );
+      },
+    );
+
+    test('holds while auth is still loading (no bounce to login)', () {
       expect(
-        computeAuthRedirect(isAuth: true, isOnboarding: true, loc: '/splash'),
+        computeAuthRedirect(
+          isAuth: false,
+          isOnboarding: true,
+          loc: '/home/record',
+          isLoading: true,
+        ),
         isNull,
       );
     });
@@ -19,7 +33,10 @@ void main() {
     test('sends a signed-out user to login', () {
       expect(
         computeAuthRedirect(
-            isAuth: false, isOnboarding: true, loc: '/home/record'),
+          isAuth: false,
+          isOnboarding: true,
+          loc: '/home/record',
+        ),
         '/auth/login',
       );
     });
@@ -27,7 +44,10 @@ void main() {
     test('sends a signed-in, onboarding user to onboarding', () {
       expect(
         computeAuthRedirect(
-            isAuth: true, isOnboarding: true, loc: '/home/record'),
+          isAuth: true,
+          isOnboarding: true,
+          loc: '/home/record',
+        ),
         '/auth/onboarding',
       );
     });
@@ -40,34 +60,50 @@ void main() {
       () {
         expect(
           computeAuthRedirect(
-              isAuth: true, isOnboarding: false, loc: '/auth/onboarding'),
+            isAuth: true,
+            isOnboarding: false,
+            loc: '/auth/onboarding',
+          ),
           isNull,
         );
         expect(
           computeAuthRedirect(
-              isAuth: true, isOnboarding: false, loc: '/home/record'),
+            isAuth: true,
+            isOnboarding: false,
+            loc: '/home/record',
+          ),
           isNull,
         );
       },
     );
 
-    test('sends an authenticated, non-onboarding user away from /auth screens',
-        () {
-      expect(
-        computeAuthRedirect(
-            isAuth: true, isOnboarding: false, loc: '/auth/login'),
-        '/home/record',
-      );
-    });
+    test(
+      'sends an authenticated, non-onboarding user away from /auth screens',
+      () {
+        expect(
+          computeAuthRedirect(
+            isAuth: true,
+            isOnboarding: false,
+            loc: '/auth/login',
+          ),
+          '/home/record',
+        );
+      },
+    );
 
-    test('does not touch a signed-in, non-onboarding user browsing /home/*',
-        () {
-      expect(
-        computeAuthRedirect(
-            isAuth: true, isOnboarding: false, loc: '/home/profile/add'),
-        isNull,
-      );
-    });
+    test(
+      'does not touch a signed-in, non-onboarding user browsing /home/*',
+      () {
+        expect(
+          computeAuthRedirect(
+            isAuth: true,
+            isOnboarding: false,
+            loc: '/home/profile/add',
+          ),
+          isNull,
+        );
+      },
+    );
 
     test(
       'regression: /auth/register is treated like /auth/login by the redirect '
@@ -78,12 +114,18 @@ void main() {
       () {
         expect(
           computeAuthRedirect(
-              isAuth: false, isOnboarding: true, loc: '/auth/register'),
+            isAuth: false,
+            isOnboarding: true,
+            loc: '/auth/register',
+          ),
           isNull,
         );
         expect(
           computeAuthRedirect(
-              isAuth: true, isOnboarding: false, loc: '/auth/register'),
+            isAuth: true,
+            isOnboarding: false,
+            loc: '/auth/register',
+          ),
           '/home/record',
         );
       },
@@ -94,9 +136,9 @@ void main() {
   // state and scroll position instead of rebuilding the screen.
   test('each bottom-nav tab is its own StatefulShellRoute branch', () {
     SharedPreferences.setMockInitialValues({});
-    final container = ProviderContainer(overrides: [
-      authStateProvider.overrideWith((ref) => Stream.value(null)),
-    ]);
+    final container = ProviderContainer(
+      overrides: [authStateProvider.overrideWith((ref) => Stream.value(null))],
+    );
     addTearDown(container.dispose);
 
     final shell = container

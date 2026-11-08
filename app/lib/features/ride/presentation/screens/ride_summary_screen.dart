@@ -701,9 +701,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             children: [
               Icon(Icons.two_wheeler, size: 20, color: context.palette.primary),
               const SizedBox(width: 12),
-              Text(l10n.ridingPaceLabel,
-                  style: TextStyle(
-                      color: context.palette.textSecondary, fontSize: 13)),
+              Flexible(
+                child: Text(l10n.ridingPaceLabel,
+                    style: TextStyle(
+                        color: context.palette.textSecondary, fontSize: 13)),
+              ),
               const Spacer(),
               Text('$avgKmh km/h',
                   style: TextStyle(
@@ -717,9 +719,11 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
             Row(
               children: [
                 const SizedBox(width: 32),
-                Text(l10n.movingStoppedLabel,
-                    style: TextStyle(
-                        color: context.palette.textSecondary, fontSize: 13)),
+                Flexible(
+                  child: Text(l10n.movingStoppedLabel,
+                      style: TextStyle(
+                          color: context.palette.textSecondary, fontSize: 13)),
+                ),
                 const Spacer(),
                 Text(
                     '${SpeedFormatter.durationFromSeconds(moving)} / '

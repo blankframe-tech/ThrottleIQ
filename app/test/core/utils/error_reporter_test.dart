@@ -28,6 +28,13 @@ void main() {
     );
   });
 
+  test('claimOnce is true only the first time per key', () {
+    resetOnceKeys();
+    expect(claimOnce('outbox.decodePayload:a'), isTrue);
+    expect(claimOnce('outbox.decodePayload:a'), isFalse);
+    expect(claimOnce('outbox.decodePayload:b'), isTrue);
+  });
+
   // kDebugMode is true under flutter test, so this only checks the test-time
   // no-op; the release path is reportNonFatal's own try/catch.
   test('reportSilently is a safe no-op in tests', () {

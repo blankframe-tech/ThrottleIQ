@@ -418,7 +418,7 @@ Fixed in code in `6264d72` (2026-10-06). `issues_fixed.md` §90 lists every fixe
 keeps the findings as first logged (90.A–90.E, the triage order, the architecture verdict).
 Re-checked against `main` (`3ebbd21d`) on 2026-10-22. Still open:
 
-- **90.A13 — LOW — deleting from My Shared Rides fails silently.**
+- **90.A13**ALREADY FIXED (checked 2026-11-06, try/catch + SnackBar + test exist; `issues_fixed.md` "2026-11-06 parallel lanes").**  — LOW — deleting from My Shared Rides fails silently.**
   `my_shared_rides_screen.dart:43` awaits `RideShareRepository().deleteSharedRide(rideId)`
   with no try/catch, so a failure shows nothing. *Fix:* try/catch around the delete, with a
   SnackBar on failure.
@@ -483,7 +483,7 @@ tracked in §83. The original writeup is in git history:
   doc id must equal the `rideId`, but ride ids are client-chosen, so a signed-in client can
   still write unlimited `pending` docs for itself. Each would trigger a Cloud Function once
   functions deploy (Blaze). App Check (§83.19) narrows this but doesn't bound volume.
-- **91.3 — LOW — the cockpit alert flash can't be switched off.**
+- **91.3 **ALREADY FIXED (checked 2026-11-06, Settings alert-flash switch exists; `issues_fixed.md` "2026-11-06 parallel lanes").** — LOW — the cockpit alert flash can't be switched off.**
   `active_ride_screen.dart:231-243` washes the live map with a translucent colour on brake /
   accel / overspeed / fatigue. Only the overspeed threshold is configurable. Add an off switch
   in settings.
@@ -609,7 +609,7 @@ whether the app keeps working on them once installed. Nothing below has been
 tested on a real budget phone yet. A full screen-off ride on a 2–3 GB itel,
 Tecno or Redmi would check all three.
 
-- **96.1 OEM battery managers kill background services — HIGH.** Xiaomi
+- **96.1 **PARTLY DONE 2026-11-06: Tecno/Infinix/itel/Samsung guides were already on main and Settings now reopens the guide (#190).** OEM battery managers kill background services — HIGH.** Xiaomi
   MIUI/HyperOS, Tecno/Infinix/itel (HiOS/XOS) and Realme/Oppo (ColorOS) kill
   background services aggressively. That can silently stop auto-tracking and
   crash detection.
@@ -662,14 +662,14 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
 - **101.S11** stale indexes in `firestore.indexes.json` (checked): `liveSessions (userId,
   expiresAt)` though the field is `uid`, the `crashNotifications` COLLECTION_GROUP index, and the
   legacy `rides` indexes. Remove them only together with an index deploy (§84).
-- **101.C9** outbox `next_attempt_at` is stored as local time (needs a compat read); the router
+- **101.C9** **PARTLY FIXED 2026-11-06 (#188, `issues_fixed.md` "2026-11-06 parallel lanes"): outbox UTC and the router auth-loading hold are done; English channel names and auth-error-as-signed-out remain.** outbox `next_attempt_at` is stored as local time (needs a compat read); the router
   treats auth loading/error as signed out; some notification channel names are English.
 - **101.R3** `latestLogFor` picks the highest odometer, not the latest date (needs a product
   rule for odometer resets). (R2 and R5 fixed 2026-10-29, `issues_fixed.md` "Lane G".)
   **101.R9** `forecast_strip`
   diamond semantics, `_UnitSegment` visual size, the swatch Auto tile reads 'Bike color'.
   **101.R10** the recording clock isn't a `Stopwatch`.
-- **101.A4** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card
+- **101.A4** **PARTLY FIXED 2026-11-06 (#185): group-ride card label and username link hint added.** the remaining `GestureDetector` semantics in the `social_feed_tab` group-ride card
   and the username link.
 - **101.P5** the English `displayName` fallback is stored in Firestore; no ODbL attribution on
   the places list and detail (the map tiles carry it). **101.P6** done (`searchPlacesByName`
@@ -832,9 +832,9 @@ The five grill files (2026-09-20 critique plus the `claude_sol.md` verification 
 
 - **108.1 Auto rides credit a bus or car trip to the bike at once.** `auto_ride_reconciler.dart` attributes the trip to the active bike and calls `incrementStats` at once, even at `bike_confidence='low'`. The "Not a motorcycle ride" action is done (`issues_fixed.md` §108.1, GitHub #56). Still open: defer odometer and maintenance increments until confirmed or 48 h pass; add a bus-pattern and max-speed filter. Source: grill `claude_sol` §2 item 4.2.
 - **108.2 Forum transactions fail offline: post and reply FIXED 2026-10-29 (#46, `issues_fixed.md` "Lane G").** Still transactions, so still fail offline (with the mapped "You're offline" text): `followForum`/`unfollowForum`, `votePost`, `createCustomForum`, and creating a forum this phone has never seen. An offline reply now shows after the 8 s `ackOrQueued` wait with no "will post when online" note. The `firestore.rules` comments on the reply counter still say "addReply's transaction" (behaviour unchanged; fix the wording with the next rules change).
-- **108.3 Haversine is copied in about 7 files** beside `app/lib/core/utils/geo_math.dart` (`motion_calculator.dart`, `auto_ride_reconciler.dart`, `daily_ride_summary.dart`, `ride_resume.dart`, `privacy_zone_clipper.dart`, `live_session_coordinator.dart`, `turn_instruction.dart`). Fix: one shared function. Source: `codebase.md` item 6.1 (scoreboard #32).
+- **108.3 Haversine: already done** (`3f206216`; `geo_math.dart` is the one copy). Found 2026-11-06: nothing left to change.
 - **108.4 FIXED 2026-10-29 (#33, `issues_fixed.md` §103.3): the pace row was removed.** Was: the shared-ride detail still showed runner pace. `shared_ride_detail_screen.dart:358` builds `m'ss" /km`; the ride summary already shows average moving speed. Fix: show km/h there too. Source: `claude_sol` §3 item 3.4.
-- **108.6 Profile stat cards may look tappable and aren't** (Rides, Routes). Not verified by the grill and not rechecked here. Fix: give them `onTap` (`/rides/all`, `/routes`) or restyle. Source: `claude_sol` §3 item 5.5.
+- **108.6 **ALREADY GONE (checked 2026-11-06: no Rides/Routes stat cards remain on the profile).** Profile stat cards may look tappable and aren't** (Rides, Routes). Not verified by the grill and not rechecked here. Fix: give them `onTap` (`/rides/all`, `/routes`) or restyle. Source: `claude_sol` §3 item 5.5.
 
 Dropped on purpose (no action): weather timezone skew (only wrong when the phone's timezone differs from the ride's; `weather_service.dart:56` notes it), unencrypted SQLite (`allowBackup=false`; rooted-device only), portrait lock (deliberate, `main.dart:66`), the crash-detector findings (shadow mode only, §78.1), and the claims `claude_sol` §6 marked false.
 
@@ -842,15 +842,14 @@ Dropped on purpose (no action): weather timezone skew (only wrong when the phone
 
 Both critiques were retired on 2026-10-22 (old text: `git show 3ebbd21d:"DOCS/Handoff for agents and Todos/CrtiQue_Oct15.md"`). Every finding was checked against `main` at `3ebbd21d`. Done in the oct14/oct15 rounds: B1 copy, B2, B3, B4, B6, B7, B9 to B14, N1 to N5, N8 (`kInstallUrl` is `throttleiqfb.web.app/install`), the install-page claims, the dark-map filter, schema v28 and last-writer-wins. Owner-side asks map to owner items (Blaze #3, SECURITY step 3 #2, Play #4, real phone #5, riders #6, Cloudinary #11, App Check #17, Apple $99 #21, pitch #22). What is left for an agent:
 
-- **109.1 N6, LOW-MEDIUM: a swiped-away ride records until the app is reopened.** `app/lib/core/services/auto_tracking_service.dart` `_watchManualRide` / `_startTakeover` (`:100-175`). Nothing ends the takeover. A rider who swipes the app away at the office keeps recording all day, and the next morning joins the same ride. Fix: end the takeover after 10-15 min without movement and leave the ride for restore; say "Open ThrottleIQ to finish" in the notification text. Source: CrtiQue_Oct15 N6.
-- **109.2 N7, LOW-MEDIUM, suspected: a missing UI heartbeat makes two writers record the same ride.** Same file, `uiGone` (`:697`) and `sendUiBeat` (swallows errors). If the beat fails on a phone, the handler (1 Hz) and the recorder (2 Hz) both write `ride_points`: zig-zag trail, doubled upload. `idx_ride_points_ride_timestamp` (`database_helper.dart:140`, `:1076`) is not unique. Fix: drop takeover points less than 1 s from a UI point, or add a unique index on `(ride_id, timestamp)`; one logcat check on a real phone ("UI gone" must never show in a foreground ride, see owner #5). Source: CrtiQue_Oct15 N7.
-- **109.4 LOW: public max speed.** `social_feed_tab.dart:652` and `shared_ride_detail_screen.dart:733` show max speed on public shared rides; `ride_sort.dart:10` keeps a "top speed" sort. Under the Motor Vehicle Act 2018 a published speed is self-incriminating, and it sits badly with the safety pitch. Fix: hide max speed on shared rides by default (opt-in toggle), and decide whether the sort stays. The speed badges are already gone. Source: CrtiQue_Oct14 §7 and §11, Oct15 §0.5.
+- **109.1 N6, 109.2 N7: FIXED 2026-11-06 (#187, `issues_fixed.md` "2026-11-06 parallel lanes").** Still open: the logcat check that "UI gone" never shows in a foreground ride (owner #5); the 12 min idle limit and the 1 s dedup are untested on a device.
+- **109.4 LOW: public max speed: OPEN again (owner decision 2026-11-07: do not hide max speed from everyone).** #189 hid it from everyone but the sharer; it was reverted. `social_feed_tab.dart`/`shared_ride_feed_card.dart` and `shared_ride_detail_screen.dart` show max speed on public shared rides again, and `ride_sort.dart` keeps the "top speed" sort. If the safety and Motor Vehicle Act 2018 concern is picked up again, the owner-chosen shape is still to be decided (a sharer opt-in needs a per-ride field and a rules change: the create rule is `hasOnly`, so ship it after `config/app.minBuild` passes build 29).
 - **109.5 LOW: write-only badge counters.** Nothing reads `stats/badges` since the rarity UI went (`12209669`). `app/lib/features/stats/data/badge_stats_counter.dart`, `badge_sync_provider.dart`, `profile_repository.dart` (sign-up write coupled to it), the `stats/badges` rules in `firestore.rules` and their rules tests keep a number nobody shows (about 450 lines). Also delete the dead `UserProfileEntity.email` (`user_profile_model.dart:20`; reads null after the email migration). Cut or keep on purpose. Source: CrtiQue_Oct15 §2 and §14.
 - **109.6** Same item as §110.4; tracked there.
-- **109.7 LOW: last-writer-wins trusts the phone clock** (`app/lib/core/cloud/last_writer_wins.dart:13`). A phone an hour fast wins every conflict for that hour. Fix: when adopting a remote row, reject an `updated_at` more than 5 min ahead of server time. Source: CrtiQue_Oct15 §0.2 and §4.
+- **109.7: FIXED 2026-11-06 (#188, `issues_fixed.md` "2026-11-06 parallel lanes").** A remote `updated_at` more than 5 min ahead of the doc's server `syncedAt` is clamped to `syncedAt`.
 - **109.8 LOW: first sync after v28 is a full pull** (`sync_manager.dart:231`, `resetPullMarksOnceForV28`): one read per ride, bike, maintenance and fuel row. Fine at 20 riders; a few hundred riders in one day can use up Spark's 50k reads. Watch it with the quota alert (owner #3 status); no code change unless riders grow. Source: CrtiQue_Oct15 N12.
-- **109.9 LOW, UX: the OEM guide can't be found again.** (a) The one-time OEM guide (`oem_guide_screen.dart`, shown from `record_screen.dart`) cannot be found again after "Not now": add a Settings entry "Rides keep stopping?". (b) "Export my rides" on the Update required screen is done (`issues_fixed.md` §109.9b, GitHub #38). Source: CrtiQue_Oct15 §7.
-- **109.10 LOW, unverified: group-ride invitations have no block check** (`firestore.rules`, `groupRides` `invitedIds`). The invite notification is refused for a blocked rider, but the invite itself is not. Check, then add the `blocks` `exists()` check and a rules test. Source: CrtiQue_Oct15 §5.
+- **109.9: FIXED 2026-11-06 (#190, `issues_fixed.md` "2026-11-06 parallel lanes").** (a) Settings has a "Rides keep stopping?" row on every Android phone; (b) was fixed earlier.
+- **109.10: FIXED 2026-11-06 (#186, `issues_fixed.md` "2026-11-06 parallel lanes"), rules deployed 2026-11-07.** Still open: rules cannot loop over `invitedIds`, so a hand-crafted `invitedIds` arrayUnion that skips the marker and the pending row still adds a blocked rider.
 - **109.11 LOW, measure first: GPS drops in dense streets.** The 25 m accuracy gate under-counts in Old Dhaka. Kept and dropped fixes per ride are logged (`gps_drop_log.dart`, last 20 rides, in the bug report). Read the numbers from five testers (owner #6) before changing `SensorConstants.maxGpsAccuracyM`. Source: CrtiQue_Oct15 §0.2.
 - **109.12 LOW: account deletion via a Spark-compatible request.** Deletion is still an email (`judge.md`: fails Apple 5.1.1(v) until Blaze). Option that needs no Blaze: the app writes `deletionRequests/{uid}` (create-only rule) before deleting the Auth user, and the owner runs an Admin-SDK script weekly that calls the emulator-tested `deleteUserData`. Update the dialog and `privacy.html` to match. Decide together with Blaze (owner #3). Source: CrtiQue_Oct15 §10, top-10 #4.
 - **109.13 LOW: Android sensitive permissions and a v1 without auto-tracking.** Owner #8 decided to submit as is. If Play review pushes back, the fallback is: drop `USE_FULL_SCREEN_INTENT` (`AndroidManifest.xml:57`, only crash alerts use it and they are off) and ship v1 without auto-tracking (no `ACCESS_BACKGROUND_LOCATION`, no activity recognition, no bus false positives). Source: CrtiQue_Oct15 §10.
@@ -893,7 +892,7 @@ Findings 1-9, 11-18 and 20 were fixed 2026-10-27 (see `issues_fixed.md` §115). 
 ## 123. Security sweep of 2026-10-30, leftovers (`security_sweep_2026-10-30.md`, PR #98)
 The fixed rows are in `issues_fixed.md` §123. Still open:
 - **C6 skipped (GitHub #84):** the legacy-votes full scan in account erasure stays; same condition as §115 #16. C1 turned on retries, so each retry pays for that scan again.
-- **C5 shortcut:** the app has no limit on emergency contacts (`emergency_contacts_provider.dart`). The function sends to the first 5 by document id. Cap contacts at 5 in the app, or let the rider choose, before `DELIVERY_IMPLEMENTED` goes on.
+- **C5 shortcut**FIXED 2026-11-06 (#185, `issues_fixed.md` "2026-11-06 parallel lanes"): the app now caps contacts at 5.** :** the app has no limit on emergency contacts (`emergency_contacts_provider.dart`). The function sends to the first 5 by document id. Cap contacts at 5 in the app, or let the rider choose, before `DELIVERY_IMPLEMENTED` goes on.
 - **Rules vs builds ≤ 26:** builds 26 and older have no update gate; their writes were not checked against the tightened rules (profile, notifications, routes, follows, roster).
 - **firebase-admin 14 in `scripts/`:** stays on 13.10; 14 drops `admin.firestore()` / `admin.auth()` / `admin.credential`, used about 80 times in the scripts. Optional: add `/scripts` to `.github/dependabot.yml`.
 - **Old live-link passwords:** riders who set an 8–11 character password before D5 keep it until they change it (only the hash is stored).

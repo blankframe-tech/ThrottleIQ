@@ -6,10 +6,11 @@ small, careful fixes help a lot.
 
 ## Before you start
 
-- **License.** ThrottleIQ is source-available, not open source. [LICENSE](LICENSE)
-  Section 1A lets you fork, change and run the code on your own devices
-  only to send a pull request here. You can't publish or release your
-  fork.
+- **License.** ThrottleIQ is under the [Business Source License 1.1](LICENSE).
+  You can fork, change, run and share the code. You can't use it to ship a
+  competing ride, motorcycle or car app, and each version becomes Apache 2.0
+  two years after it is published. The name and logo are covered by
+  [TRADEMARKS.md](TRADEMARKS.md).
 - **CLA.** Before we can merge your first pull request, you sign the
   [Contributor License Agreement](CLA.md). A bot comments on the PR with
   the sentence to post. It takes a minute and covers all your later PRs.

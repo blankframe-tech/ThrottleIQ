@@ -1,0 +1,15 @@
+reviews:
+  profile: assertive
+  path_instructions:
+    - path: "functions/**"
+      instructions: |
+        Firebase Cloud Functions. Check input validation, auth/authorization, secrets in code, and error handling. Flag unbounded reads/writes and missing idempotency.
+    - path: "{firestore.rules,database.rules.json}"
+      instructions: |
+        Security rules. Flag any rule that widens access, allows unauthenticated writes, or skips ownership checks.
+    - path: "app/**/*.dart"
+      instructions: |
+        Flutter app. Flag state/lifecycle bugs, unawaited futures, and secrets or keys in code.
+
+tone_instructions: |
+  Be concise, direct, and constructive.

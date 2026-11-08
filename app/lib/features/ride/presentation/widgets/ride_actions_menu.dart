@@ -24,6 +24,7 @@ const copCheckpointPlaceName = 'Cop checkpoint';
 enum _RideAction {
   copCheckpoint,
   parkingPin,
+  batterySaver,
   minimize,
 }
 
@@ -152,6 +153,11 @@ class RideActionsMenu extends ConsumerWidget {
           case _RideAction.parkingPin:
             _handleParkingPin(context, ref);
             break;
+          case _RideAction.batterySaver:
+            ref
+                .read(rideRecordingProvider.notifier)
+                .setBatterySaver(!ref.read(batterySaverProvider));
+            break;
           case _RideAction.minimize:
             _handleMinimize(context, ref);
             break;
@@ -165,6 +171,11 @@ class RideActionsMenu extends ConsumerWidget {
         PopupMenuItem(
           value: _RideAction.parkingPin,
           child: Text(context.l10n.parkingPinHere),
+        ),
+        CheckedPopupMenuItem(
+          value: _RideAction.batterySaver,
+          checked: ref.read(batterySaverProvider),
+          child: Text(context.l10n.batterySaver),
         ),
         PopupMenuItem(
           value: _RideAction.minimize,

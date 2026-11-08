@@ -4759,6 +4759,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'রাইডের মাঝপথে আপনার ফোন ThrottleIQ বন্ধ করে দিয়েছে। রাইড আবার চালু করতে ট্যাপ করুন।';
 
   @override
+  String get notifRecordingIdleBody =>
+      'আপনার রাইড কিছুক্ষণ নড়েনি, তাই রেকর্ডিং থেমে গেছে। শেষ করতে ThrottleIQ খুলুন।';
+
+  @override
   String get notifConfirm => 'নিশ্চিত করুন';
 
   @override
@@ -6861,6 +6865,17 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get oemGuideIntroGeneric =>
+      'কিছু ফোন ব্যাটারি বাঁচাতে ব্যাকগ্রাউন্ডের অ্যাপ বন্ধ করে দেয়, তাতে রাইড মাঝপথে কেটে যেতে পারে। বারবার এমন হলে এই তিনটি সেটিং একবার বদলে নিন।';
+
+  @override
+  String get oemGuideMoreHelpGeneric => 'অন্য ফোনের জন্য ধাপে ধাপে গাইড';
+
+  @override
+  String get oemGuideSettingsSubtitleGeneric =>
+      'আপনার ফোনে রেকর্ডিং চালু রাখার ব্যাটারি সেটিংস';
+
+  @override
   String get yourThrottleIqSection => 'আপনার ThrottleIQ';
 
   @override
@@ -7089,6 +7104,9 @@ class AppLocalizationsBn extends AppLocalizations {
   String get parkingPinHere => 'পার্কিং পিন';
 
   @override
+  String get batterySaver => 'ব্যাটারি সেভার';
+
+  @override
   String get minimizeRide => 'মিনিমাইজ';
 
   @override
@@ -7236,4 +7254,14 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get indriyoSimulationSubtitle =>
       'ক্যামেরার বদলে বানানো ট্রাফিক ও সতর্কতা দেখায়। শুধু মিররটি চেষ্টা করে দেখার জন্য।';
+
+  @override
+  String emergencyContactsLimitReached(int max) {
+    return 'সর্বোচ্চ $maxটি জরুরি যোগাযোগ যোগ করা যায়। নতুন যোগ করতে একটি সরান।';
+  }
+
+  @override
+  String liveGroupRideCardSemantics(String name, int count) {
+    return '$name, লাইভ গ্রুপ রাইড, $count জন চালাচ্ছেন। খুলুন';
+  }
 }

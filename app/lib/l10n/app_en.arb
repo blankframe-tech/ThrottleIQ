@@ -6690,6 +6690,10 @@
   "@notifRecordingStoppedBody": {
     "description": "Body of the recording-stopped notification; tapping opens the app on the paused ride."
   },
+  "notifRecordingIdleBody": "Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.",
+  "@notifRecordingIdleBody": {
+    "description": "Body of the recording-stopped notification when the background takeover gave up after the bike sat still; the ride waits for restore."
+  },
   "notifConfirm": "Confirm",
   "@notifConfirm": {
     "description": "Action button on the ride-detected notification."
@@ -9527,6 +9531,18 @@
       }
     }
   },
+  "oemGuideIntroGeneric": "Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.",
+  "@oemGuideIntroGeneric": {
+    "description": "Intro on the battery guide when the phone maker is not one we have a dedicated guide for."
+  },
+  "oemGuideMoreHelpGeneric": "Step-by-step guides for other phones",
+  "@oemGuideMoreHelpGeneric": {
+    "description": "Link to dontkillmyapp.com when the phone maker is unknown."
+  },
+  "oemGuideSettingsSubtitleGeneric": "Battery settings that keep your phone recording",
+  "@oemGuideSettingsSubtitleGeneric": {
+    "description": "Subtitle of the Settings row that reopens the battery guide on phones without a dedicated guide."
+  },
   "yourThrottleIqSection": "Your ThrottleIQ",
   "@yourThrottleIqSection": {
     "description": "Settings → Your ThrottleIQ (app modules)."
@@ -9813,6 +9829,10 @@
   "@parkingPinHere": {
     "description": "Menu option to mark bike parking location and pause the ride."
   },
+  "batterySaver": "Battery saver",
+  "@batterySaver": {
+    "description": "Ride menu toggle: lets the screen sleep and lowers GPS accuracy to save battery."
+  },
   "minimizeRide": "Minimize",
   "@minimizeRide": {
     "description": "Menu option to minimize the active ride screen to allow browsing other tabs."
@@ -10032,5 +10052,15 @@
   "indriyoSimulationSubtitle": "Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.",
   "@indriyoSimulationSubtitle": {
     "description": "Subtitle of the Demo mode switch; warns the alerts are fake."
+  },
+  "emergencyContactsLimitReached": "You can add up to {max} emergency contacts. Remove one to add another.",
+  "@emergencyContactsLimitReached": {
+    "description": "SnackBar when the rider tries to add a contact past the cap.",
+    "placeholders": {"max": {"type": "int"}}
+  },
+  "liveGroupRideCardSemantics": "{name}, live group ride, {count} riding. Open",
+  "@liveGroupRideCardSemantics": {
+    "description": "Screen-reader label of a card in the Riding Now strip.",
+    "placeholders": {"name": {"type": "String"}, "count": {"type": "int"}}
   }
 }

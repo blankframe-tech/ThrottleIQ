@@ -8352,6 +8352,12 @@ abstract class AppLocalizations {
   /// **'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.'**
   String get notifRecordingStoppedBody;
 
+  /// Body of the recording-stopped notification when the background takeover gave up after the bike sat still; the ride waits for restore.
+  ///
+  /// In en, this message translates to:
+  /// **'Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.'**
+  String get notifRecordingIdleBody;
+
   /// Action button on the ride-detected notification.
   ///
   /// In en, this message translates to:
@@ -11706,6 +11712,24 @@ abstract class AppLocalizations {
   /// **'Battery settings that keep {brand} phones recording'**
   String oemGuideSettingsSubtitle(String brand);
 
+  /// Intro on the battery guide when the phone maker is not one we have a dedicated guide for.
+  ///
+  /// In en, this message translates to:
+  /// **'Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.'**
+  String get oemGuideIntroGeneric;
+
+  /// Link to dontkillmyapp.com when the phone maker is unknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Step-by-step guides for other phones'**
+  String get oemGuideMoreHelpGeneric;
+
+  /// Subtitle of the Settings row that reopens the battery guide on phones without a dedicated guide.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery settings that keep your phone recording'**
+  String get oemGuideSettingsSubtitleGeneric;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:
@@ -12120,6 +12144,12 @@ abstract class AppLocalizations {
   /// **'Parking pin'**
   String get parkingPinHere;
 
+  /// Ride menu toggle: lets the screen sleep and lowers GPS accuracy to save battery.
+  ///
+  /// In en, this message translates to:
+  /// **'Battery saver'**
+  String get batterySaver;
+
   /// Menu option to minimize the active ride screen to allow browsing other tabs.
   ///
   /// In en, this message translates to:
@@ -12377,6 +12407,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.'**
   String get indriyoSimulationSubtitle;
+
+  /// SnackBar when the rider tries to add a contact past the cap.
+  ///
+  /// In en, this message translates to:
+  /// **'You can add up to {max} emergency contacts. Remove one to add another.'**
+  String emergencyContactsLimitReached(int max);
+
+  /// Screen-reader label of a card in the Riding Now strip.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, live group ride, {count} riding. Open'**
+  String liveGroupRideCardSemantics(String name, int count);
 }
 
 class _AppLocalizationsDelegate
