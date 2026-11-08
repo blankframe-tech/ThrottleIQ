@@ -180,7 +180,7 @@ dev_dependencies:
   flutter_lints: ^3.0.0
   mockito: ^5.4.4
   flutter_launcher_icons: ^0.14.4
-  sqflite_common_ffi: ^2.4.0+3
+  sqflite_common_ffi: ^2.4.5
   # setupFirebaseCoreMocks, for tests that build Firebase-backed notifiers.
   firebase_core_platform_interface: ^8.0.0
   # In-memory Firestore for repository tests (deletes, queries, doc ids).
