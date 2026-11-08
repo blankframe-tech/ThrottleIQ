@@ -174,3 +174,7 @@ DOCS/General/screenshots_ui/
 # Apify scrape data (Facebook posts, Google Maps content); only the notes (*.md) are tracked
 DOCS/**/apify/*
 !DOCS/**/apify/*.md
+
+# Details of open security weaknesses stay out of this public repo until fixed
+# (SECURITY.md "Known, hardening pending"). Owner-only notes.
+DOCS/private/

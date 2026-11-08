@@ -13,7 +13,7 @@ This file is the verdict. The full option analysis is in `DOCS/For Devs and Cont
 | Social data with per-audience visibility (public, followers, mutual, blocks) | About 2,300 lines of `firestore.rules`, plus emulator tests that cover each past exploit (§3, §10, §24, §33) | Yes. This is the most expensive part to rebuild anywhere else. |
 | Live location (live share, group rides) | Firestore docs polled every 20-40 s | **No.** Billing per read gives N² cost (§104.2). |
 | Server jobs (deletion, retention, TTL, signed uploads, rate limits) | Written in `functions/src/`, never deployed | Yes, once on Blaze. It's blocked by the plan, not by the platform. |
-| Media | Cloudinary, unsigned preset | Independent of the backend. Signing needs a function. |
+| Media | Cloudinary | Independent of the backend. Upload hardening needs a function. |
 | Small static site (live viewer, install, privacy) | Firebase Hosting | Yes |
 
 ## The alternatives, judged for this app

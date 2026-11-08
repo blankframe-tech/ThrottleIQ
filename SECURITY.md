@@ -20,7 +20,7 @@ ThrottleIQ is built by a small team, so the reward is small but real:
 
 ### Not eligible
 
-- **Known issues.** Anything already listed in this file (including the owner runbooks below), in `DOCS/Handoff for agents and Todos/` (`issues_open.md`, `security_sweep_*.md`, `needs_attention.md`), or in an open GitHub issue. If two people report the same new issue, the first report wins.
+- **Known issues.** Anything already listed in this file (including "Known, hardening pending" and the owner runbooks below), in `DOCS/Handoff for agents and Todos/` (`issues_open.md`, `security_sweep_*.md`, `needs_attention.md`), or in an open GitHub issue. If two people report the same new issue, the first report wins.
 - Firebase web API keys, the Cloudinary cloud name, and other client config that is public by design.
 - Missing headers or best practices with no working attack, self-XSS, clickjacking on pages with no sensitive action, and reports from automated scanners without a reproduced impact.
 - Denial of service, spam, social engineering, and physical attacks.
@@ -28,12 +28,22 @@ ThrottleIQ is built by a small team, so the reward is small but real:
 
 ### Rules (safe harbor)
 
-- Test only with accounts you created yourself, or against the Firebase emulators (`firebase emulators:start` from the repo root). Never access, change or delete another rider's data. If you reach it by accident, stop, don't keep a copy, and tell us.
+- Test only with accounts you created yourself, or against the Firebase emulators under a demo project (`firebase emulators:start --project demo-throttleiq` from the repo root; the repo's default project is production, so always pass `--project demo-throttleiq`). Never access, change or delete another rider's data. If you reach it by accident, stop, don't keep a copy, and tell us.
 - No denial of service, load testing, brute force, or mass uploads to Cloudinary or Firebase.
 - Don't trigger crash alerts or messages to real people's emergency contacts.
 - Give us a reasonable time to fix the issue before you talk about it publicly.
 
 If you follow these rules in good faith, we consider your testing authorised and will not take legal action against you or ask anyone else to.
+
+### Known, hardening pending (not eligible)
+
+These areas have known gaps that we are already working on. Reports about them are not eligible; the details stay private until they are fixed.
+
+- Known: media upload hardening pending.
+- Known: write rate limiting pending.
+- Known: live-link password guess limiting pending.
+- Known: server-side account erasure pending.
+- Known: test and review account cleanup pending.
 
 ### Credits
 
@@ -124,18 +134,9 @@ Do these in order.
    `public/privacy.html` first (raw trails older than 12 months are deleted,
    ride summaries kept):
    `firebase deploy --only functions:purgeOldGpsTracks --project throttleiqfb`
-7. **Cloudinary upload preset (open).** The app ships the cloud name and the
-   unsigned preset `throttleiq_unsigned`
-   (`app/lib/core/services/cloudinary_upload_service.dart`), so anyone can
-   upload to the account with a plain HTTP POST; checks in the app don't stop
-   that. Until uploads are signed, limit the damage in the Cloudinary console,
-   Settings, Upload, `throttleiq_unsigned`: allowed formats
-   `jpg,jpeg,png,webp,heic,aac,m4a`; max file size 5 MB; turn off
-   overwrite and "use filename"; set a usage alert. The real fix needs Blaze:
-   a callable function that checks `request.auth` and returns a signature
-   made with `CLOUDINARY_API_SECRET`, an app build that sends it, and then the
-   preset switched to signed (switching it before that build ships breaks
-   every upload).
+7. **Cloudinary upload preset.** Known, hardening pending (see above). The
+   console steps and the signed-upload plan are in the owner's private notes,
+   not in this public file.
 
 8. **Report evidence (2026-10-21).** The `reports` snapshot rule (chat and
    forum-post copies) rides on the step 3 rules deploy; until then the app
@@ -181,9 +182,10 @@ apps (App Attest and DeviceCheck with the Team ID, Play Integrity with the
 Play app-signing SHA-256), ship the build through Google Play only, register
 debug tokens, watch the metrics for a few days, then enforce Firestore.
 
-Sideloaded Android builds from 2026-10-21 on show an "install from Google
-Play" screen once App Check rejects them; older sideloaded builds just fail
-once Firestore is enforced.
-The web live viewer (`public/live-viewer.html`) has no App Check yet: add a
-reCAPTCHA Enterprise provider before you enforce Firestore, or partner live
-links stop working.
+**Status: enforced on Cloud Firestore since 2026-11-01.** Android uses Play
+Integrity, the web live viewer (`public/live-viewer.html`) uses reCAPTCHA
+Enterprise, and iOS waits on App Attest (only registered debug tokens work
+today). Sideloaded or self-built Android builds and unregistered iPhones lose
+Firestore access; sideloaded builds from 2026-10-21 on show an "install from
+Google Play" screen. Researchers: test against the emulators
+(`--project demo-throttleiq`), where App Check is not enforced.
