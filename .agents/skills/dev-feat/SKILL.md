@@ -23,6 +23,11 @@ gh issue create --assignee the-abraar --label enhancement \
 
 Use `--label bug` for a fix. Keep the issue number `N`.
 
+Fixing an unfixed security weakness? Don't describe it in a public issue, PR
+or commit: use a neutral title and no exploit detail, and keep the details in
+a draft security advisory or git-ignored `DOCS/private/`
+(`.agents/rules/parallel-agents.md`).
+
 ## 2. Branch in a worktree
 
 The main checkout often holds the owner's uncommitted work. Never branch,

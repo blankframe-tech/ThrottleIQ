@@ -4,6 +4,13 @@ When work is split across several implementation agents at once, create a github
 branches one by one into the integration branch and run `scripts/check.sh` **once, after the
 last merge** (it regenerates l10n). Each agent likewise runs it once at the end of its own work. then close the issues and the PRs. 
 
+Security work is the exception: never open a public issue, PR description or commit message that
+explains an unfixed weakness. Open it as a draft GitHub security advisory (Security → Advisories →
+New draft; agents without access hand it to the owner), keep the working notes in git-ignored
+`DOCS/private/`, and use a neutral title ("rules: tighten X validation") with no exploit steps
+until the fix is deployed. Public docs name the area only: "known: <area> hardening pending, not
+eligible" (`SECURITY.md`).
+
 Why: agents sharing one checkout break each other mid-run. On 2026-10-09 a half-added set of
 `tour*` l10n keys broke another agent's Android build, a `dart format` over a whole folder
 rewrapped files another agent owned, and `arb_parity_test` failed on a third agent's strings.
