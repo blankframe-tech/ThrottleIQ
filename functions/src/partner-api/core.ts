@@ -66,7 +66,7 @@ const keyed = (partnerId: string, label: string) =>
  */
 export const riderKeyOf = (partnerId: string, riderRef: string) => keyed(partnerId, `rider:${riderRef}`);
 
-/** One road-pool sample id per (ride, cell): stable for retries, unlinkable across cells. */
+/** One road-pool sample id per (ride, cell): stable for retries; the id itself reveals no ride or rider. */
 export const sampleIdOf = (partnerId: string, rideId: string, segmentId: string) =>
   keyed(partnerId, `sample:${rideId}:${segmentId}`);
 
