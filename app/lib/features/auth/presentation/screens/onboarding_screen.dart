@@ -84,9 +84,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _step = widget.demoMode ? 2 : 0;
     _tourSlide = widget.initialSlide.clamp(0, kOnboardingSlideCount - 1);
     _pageCtrl = PageController(initialPage: _tourSlide);
-    final email = ref.read(currentUserProvider)?.email;
-    if (email != null) {
-      _usernameCtrl.text = ProfileRepository().suggestUsernameBase(email);
+    if (ref.read(currentUserProvider) != null) {
+      _usernameCtrl.text = defaultUsername();
     }
   }
 

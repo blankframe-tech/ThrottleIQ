@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§128**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§129**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -900,3 +900,13 @@ Idea only, nothing built. Riders keep photos of registration, tax token, insuran
 - **Phase 2 (opt-in cloud sync):** client-side encryption so the server holds ciphertext only, owner-only storage rules with rules tests, cleanup in `onUserAccountDeleted`. No `firebase_storage` or `local_auth` dependency exists yet.
 - **Open design questions:** crypto scheme, key recovery (loss means unrecoverable data), whether expiry metadata stays unencrypted, whether to add `local_auth`. Phase 2 waits for a design posted on #171.
 - **Not started:** no schema, strings or code. Move to `features.md` when Phase 1 ships.
+
+## 128. App privacy hygiene before TestFlight and the next Play review (2026-11-08)
+Code done on `agent/sec-throttleiq-11`; waits on the next AAB and iOS build.
+- **Default @handle:** a new rider starts as `rider_` plus six random letters or digits (`defaultUsername()` in `profile_repository.dart`), never anything taken from the email. Onboarding prefills it and the rider can pick their own. Test: `test/features/profile/default_username_test.dart`.
+- **Android backup and device transfer:** `android:dataExtractionRules` (`res/xml/data_extraction_rules.xml`) excludes every domain from cloud backup and phone-to-phone transfer on Android 12+, next to `allowBackup="false"` for older Android.
+- **Full-screen intent:** `requestPermissions()` no longer asks for it while `SensorConstants.crashAlertsEnabled` is off. The manifest still declares it (owner item 8). Test: `test/core/services/notification_permissions_test.dart`.
+- **iOS backup:** after each open, `DatabaseHelper.excludeFromBackup` marks `throttleiq.db` and its `-wal`/`-shm`/`-journal` files excluded from iCloud and Finder backups through the `throttleiq/backup` channel in `AppDelegate.swift`. This matches Android; the owner can still choose to keep iOS backups. Test: `test/database/backup_exclusion_test.dart`.
+- **Delete account** now also clears Firestore's offline cache (`terminate()` then `clearPersistence()`) and the live-link key on the phone, best effort after the Auth account is gone (`afterDeleteAccount` in `authNotifierProvider`).
+- **Decision recorded:** places, reviews and forum posts are public content. Signed-in riders keep open reads of them, and abuse control relies on App Check (§62.12) rather than read limits.
+- **Open: device checks.** On an iPhone release build, the app's size under Settings > iCloud > Manage Storage > Backups should drop; on Android 12+, the merged manifest shows `dataExtractionRules`. After Delete account, sign in with another account and confirm Firestore still loads.

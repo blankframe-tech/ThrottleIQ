@@ -28,5 +28,27 @@ import flutter_foreground_task
     if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "YearVideoEncoder") {
       YearVideoEncoder.register(messenger: registrar.messenger())
     }
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "BackupExclusion") {
+      // Keeps the ride database out of iCloud/Finder backups, like Android's
+      // allowBackup="false". database_helper.dart calls it after each open.
+      FlutterMethodChannel(name: "throttleiq/backup", binaryMessenger: registrar.messenger())
+        .setMethodCallHandler { call, result in
+          guard call.method == "excludeFromBackup", let paths = call.arguments as? [String] else {
+            result(FlutterMethodNotImplemented)
+            return
+          }
+          do {
+            for path in paths where FileManager.default.fileExists(atPath: path) {
+              var url = URL(fileURLWithPath: path)
+              var values = URLResourceValues()
+              values.isExcludedFromBackup = true
+              try url.setResourceValues(values)
+            }
+            result(nil)
+          } catch {
+            result(FlutterError(code: "backup", message: error.localizedDescription, details: nil))
+          }
+        }
+    }
   }
 }
