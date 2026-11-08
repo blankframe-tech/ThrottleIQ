@@ -103,8 +103,7 @@ test('ride ingest scores against the pool before adding to it, and is idempotent
   assert.equal(sample.get('speedKmh'), 75);
   assert.equal(sample.get('source'), 'maya');
   assert.equal(typeof sample.get('hour'), 'number');
-  // One ride's cells get unrelated ids and an hour-rounded time, so they
-  // can't be grouped back into a trip.
+  // Sample ids hold no rider or ride id and differ per cell; time is to the hour.
   const ids = (await db.collectionGroup('samples').get()).docs.map((d) => d.id);
   assert.ok(ids.every((id) => !id.includes('r1') && !id.startsWith('maya')), ids.join());
   assert.notEqual(sampleDoc(SEG_A, 'r1').id, sampleDoc(SEG_B, 'r1').id);

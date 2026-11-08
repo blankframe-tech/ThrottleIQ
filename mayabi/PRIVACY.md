@@ -11,12 +11,12 @@
 | Data | When | Why | Kept |
 |---|---|---|---|
 | Ride summary: start and end time, km per leg, moving time, average and top speed, hard brake / acceleration / jerk / overspeed counts, weather code | After each trip | The riding score | With the ride record |
-| Average speed per ~150 m road cell (a geohash, not an address) | After each trip | Compare her speed with Dhaka's usual speed there. The same averages, with no rider or ride attached, join ThrottleIQ's shared Dhaka road-speed pool | Pool: indefinitely, one unlinked sample per cell. Ride record: with the ride |
+| Average speed per ~150 m road cell (a geohash, not an address) | After each trip | Compare her speed with Dhaka's usual speed there. The same averages, with no rider or ride attached, join ThrottleIQ's shared Dhaka road-speed pool | Pool: indefinitely, one sample per cell, with no rider or ride id. Ride record: with the ride |
 | Impact events (strength, speed before) and her "Did you fall?" answer | After each trip with an impact | Teach crash detection Dhaka's potholes from real falls | With the ride record |
 | Live position, speed, battery | Only while she shares a live link | Show the link | Until the link ends or expires after 12 h |
 | Alert: kind, position, live link | On SOS or an unanswered safety prompt | Tell Maya ops | Alert log |
 
-Rides and scores are stored under a **keyed hash (HMAC) of Maya's rider id**, made with a secret that only ThrottleIQ's server holds, so the id can't be recovered by trying likely ids. ThrottleIQ can't tell who a rider is; Maya can, because it holds the id. The ride record keeps the trip's road cells, readable only by ThrottleIQ's server. Road-pool samples carry no rider and no ride: only the cell, speed, weekday, hour and weather, plus a "source: maya" tag so they can be removed if needed. Each cell's sample has its own unrelated id and only an hour-level time, so one trip's cells are not linked to each other in the pool.
+Rides and scores are stored under a **keyed hash (HMAC) of Maya's rider id**, made with a secret that only ThrottleIQ's server holds, so the id can't be recovered by trying likely ids. ThrottleIQ can't tell who a rider is; Maya can, because it holds the id. The ride record keeps the trip's road cells, readable only by ThrottleIQ's server. Road-pool samples carry no rider and no ride: only the cell, speed, weekday, hour and weather, plus a "source: maya" tag so they can be removed if needed. No per-trip id is stored with them.
 
 A live link shows her position, speed and battery to whoever holds it, and nothing that identifies her. Ending the link revokes it at once and clears her last position.
 

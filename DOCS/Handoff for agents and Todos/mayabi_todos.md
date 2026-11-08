@@ -9,7 +9,7 @@ This part stays with us. It's the partner API in our Cloud Functions (`functions
 - **After every trip:** the app uploads speed per road segment plus the ride totals. No GPS track leaves the phone. Those speeds go into the same Dhaka road-speed pool our ThrottleIQ riders feed (`roadSpeedSamples`), tagged as Maya's (`source: maya`).
 - **Scoring:** the server scores each ride against how Dhaka riders usually ride each segment at that time of day and in that weather. The scoring and the pooled data stay on our server, which is why handing over the phone code doesn't give away the model.
 - **Also on the API:** each rider's running score, deleting a rider's data, live-share links, and alerts that turn the rider's live link red and notify Maya's ops server.
-- **Privacy:** Maya's rider IDs are stored only as an HMAC keyed with the server secret `PARTNER_RIDER_SECRET`, never raw. Pool samples get one unrelated id per road cell.
+- **Privacy:** Maya's rider IDs are stored only as an HMAC keyed with the server secret `PARTNER_RIDER_SECRET`, never raw. Pool samples carry no rider or ride id and no stored per-trip id.
 
 ## To go live (in order)
 

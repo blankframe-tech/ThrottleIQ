@@ -59,7 +59,7 @@ The response is `200`, or `404` before her first ride:
 
 ## `DELETE v1/riders/{riderRef}`: erase a rider
 
-Deletes her rides, running score, alerts and live links. The response is `200 { riderRef, deleted }`. Her road-pool samples stay. They carry no rider or ride id, each road cell is stored under its own unrelated id, and their time is only the hour, so one trip's cells are not linked to each other or to her.
+Deletes her rides, running score, alerts and live links. The response is `200 { riderRef, deleted }`. Her road-pool samples stay. They carry no rider or ride id and no stored per-trip id.
 
 ## Live share
 

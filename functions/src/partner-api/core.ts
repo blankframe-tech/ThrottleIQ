@@ -207,9 +207,8 @@ async function readStats(db: Firestore, segmentIds: string[]): Promise<Map<strin
  * Adds the ride's segment speeds to the shared Dhaka pool, in the same shape
  * the ThrottleIQ app writes (plus `source`). Each cell gets its own keyed id
  * (sampleIdOf), so a retry overwrites instead of adding a second sample and
- * the stats trigger (onCreate) counts each one once, yet a reader of the
- * pool can't group one ride's cells by id. `createdAt` is rounded down to the
- * hour so one batch's identical server time doesn't group them either.
+ * the stats trigger (onCreate) counts each one once. Samples carry no rider
+ * or ride id and no stored per-trip id; `createdAt` is kept to the hour.
  */
 async function writeSamples(db: Firestore, partnerId: string, ride: RideUpload) {
   const weekday = bdWeekday(ride.startedAt);
@@ -335,7 +334,7 @@ export async function riderScore(db: Firestore, partner: Partner, riderRefRaw: s
 /**
  * `DELETE v1/riders/{riderRef}`: erases a rider's rides, running score,
  * alerts and live sessions. Her road-pool samples stay: they carry no rider
- * or ride id, and each cell has an unrelated id (see writeSamples).
+ * or ride id and no stored per-trip id (see writeSamples).
  */
 export async function deleteRider(db: Firestore, partner: Partner, riderRefRaw: string) {
   const riderRef = ref({ riderRef: riderRefRaw }, 'riderRef');
