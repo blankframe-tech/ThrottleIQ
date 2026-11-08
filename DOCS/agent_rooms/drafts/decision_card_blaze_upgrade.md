@@ -18,8 +18,8 @@
 | Badge counts on the server (`badge-stats.ts`, not exported) | The Blaze version of the client-written `stats/badges` | `functions/src/index.ts` comment; `issues_open.md` "Follow-ups" §62.2 |
 | Firestore TTL on `liveSessions.expiresAt` | Expired live sessions are never reaped | `issues_open.md` "Follow-ups" §4, §102 |
 | Firestore TTL on `places.expiresAt` | Expired cop checkpoints stay in Firestore; the client only hides them | `issues_open.md` §107.4 |
-| Signed Cloudinary uploads | The unsigned preset `throttleiq_unsigned` lets anyone upload. The fix is a callable function that signs uploads | `SECURITY.md` step 7; `backend_options.md` (§33.5) |
-| Rate limits | No write throttling on shares, posts, chats, reviews or reports. Needs Functions or per-user counter docs in the rules | `issues_open.md` §62.12 |
+| Signed uploads | Known, hardening pending | `SECURITY.md` |
+| Rate limits | Known, hardening pending | `issues_open.md` §62.12 |
 | Real SMS and crash escalation | Needs Blaze, an SMS provider and calibrated detection | `needs_attention.md` "Decisions"; HANDOFF ideas list |
 | Server-side feed blocking | Rules cannot filter a list query, so filtering blocked riders out of the feed needs a server edge (Blaze) or `not-in` | `issues_open.md` §107.3 (§83.18) |
 | Maya partner API (`mayabi` branch) | `partnerApi` and `onRoadSpeedSampleCreated` deploy after Blaze. | Owner page, Maya pilot and Blaze items |
@@ -70,7 +70,7 @@ Before the upgrade, keep the protection against a runaway bill:
 - Create budget alerts. `SECURITY.md` suggests $5; `backend_options.md` suggests $25 and $50. Use the $5 one as a canary.
 - Keep the existing Cloud Monitoring alert at 80% of daily reads, writes and deletes (`scripts/monitoring/firestore-quota-alert.yaml`). It measures usage counts, so it should still warn at the old free-tier levels [PLACEHOLDER: confirm after the upgrade].
 - Ask whether a hard cap is possible: [PLACEHOLDER: whether Google Cloud lets you cap Firestore or Functions usage on Blaze (quota limits or an automatic billing shut-off), and how].
-- Follow the abuse fixes already planned: App Check enforcement (#17, after a release that sends tokens), rate limits (§62.12) and the Cloudinary size cap (#11).
+- App Check is already enforced on Firestore (since 2026-11-01). Follow the other planned hardening: rate limits (§62.12) and media uploads (`SECURITY.md`).
 
 If you will not put a card on a Google account, take Option 2 and use the App Store submission as the trigger. Option 3 is only worth it if Option 2's trigger is far off and the manual deletion duty becomes a burden.
 
