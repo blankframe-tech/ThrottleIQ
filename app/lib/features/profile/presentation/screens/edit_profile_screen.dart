@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/utils/error_reporter.dart';
+import '../../../../core/services/cloudinary_upload_service.dart'
+    show kMaxUploadImageEdge;
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
 import '../../../../shared/widgets/user_avatar.dart';
@@ -81,8 +83,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xfile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: kMaxUploadImageEdge.toDouble(),
+        maxHeight: kMaxUploadImageEdge.toDouble());
     if (xfile != null) setState(() => _localImagePath = xfile.path);
   }
 

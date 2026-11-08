@@ -52,6 +52,43 @@ void main() {
     expect(decoded.height, 40);
   });
 
+  test('a full-size 12 MP phone photo comes back capped at 2048 px, stripped',
+      () {
+    final photo = img.Image(width: 4032, height: 3024);
+    img.fill(photo, color: img.ColorRgb8(30, 120, 200));
+    photo.exif.gpsIfd
+      ..gpsLatitude = 23.7
+      ..gpsLongitude = 90.4;
+    photo.exif.imageIfd.orientation = 6; // portrait, as phones store it
+    final sw = Stopwatch()..start();
+    final out = stripImageMetadata(img.encodeJpg(photo));
+    final decoded = img.decodeImage(out)!;
+    expect(_hasExifSegment(out), isFalse);
+    expect((decoded.width, decoded.height), (1536, 2048));
+    // Not a benchmark, just far inside the 45 s upload bound on a desktop.
+    expect(sw.elapsed, lessThan(const Duration(seconds: 20)));
+  });
+
+  test('every image picker caps the size of what it returns', () {
+    // stripImageMetadata resizes too, but a platform-side cap means a 12 MP
+    // original is never decoded in Dart at all. features/maintenance keeps
+    // its own 1600 px width cap: those photos stay on the device.
+    final call =
+        RegExp(r'\.(pickImage|pickMultiImage)\(([^;]*?)\);', dotAll: true);
+    var calls = 0;
+    for (final f in Directory('lib').listSync(recursive: true)) {
+      if (f is! File || !f.path.endsWith('.dart')) continue;
+      for (final m in call.allMatches(f.readAsStringSync())) {
+        calls++;
+        expect(m[2], contains('maxWidth:'), reason: '${f.path}: ${m[0]}');
+        if (!f.path.contains('maintenance')) {
+          expect(m[2], contains('maxHeight:'), reason: '${f.path}: ${m[0]}');
+        }
+      }
+    }
+    expect(calls, greaterThanOrEqualTo(7));
+  });
+
   test('stripImageMetadata refuses bytes it cannot decode', () {
     expect(() => stripImageMetadata(Uint8List.fromList([1, 2, 3, 4])),
         throwsA(isA<FormatException>()));

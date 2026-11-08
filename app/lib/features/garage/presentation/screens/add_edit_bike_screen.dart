@@ -95,8 +95,11 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   /// receives, so cropping doesn't compound the loss much.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile =
-        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final xfile = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: kMaxUploadImageEdge.toDouble(),
+        maxHeight: kMaxUploadImageEdge.toDouble());
     if (xfile == null || !mounted) return;
 
     final cropped = await ImageCropScreen.open(

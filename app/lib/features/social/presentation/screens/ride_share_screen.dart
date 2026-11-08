@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/cloud/outbox_service.dart';
+import '../../../../core/services/cloudinary_upload_service.dart'
+    show kMaxUploadImageEdge;
 import '../../../../core/cloud/ride_track_loader.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/constants/app_dimensions.dart';
@@ -95,8 +97,11 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     }
 
     final picker = ImagePicker();
-    final picked =
-        await picker.pickMultiImage(imageQuality: 80, limit: remaining);
+    final picked = await picker.pickMultiImage(
+        imageQuality: 80,
+        maxWidth: kMaxUploadImageEdge.toDouble(),
+        maxHeight: kMaxUploadImageEdge.toDouble(),
+        limit: remaining);
     if (picked.isEmpty || !mounted) return;
 
     final accepted = picked.take(remaining).map((x) => x.path).toList();

@@ -1,12 +1,15 @@
 @Timeout(Duration(seconds: 30))
 library;
 
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:throttleiq/core/cloud/outbox_service.dart';
 import 'package:throttleiq/core/database/daos/outbox_dao.dart';
 import 'package:throttleiq/core/database/database_helper.dart';
+import 'package:throttleiq/features/social/data/repositories/ride_share_repository.dart';
 
 /// Covers the offline write queue behind "end a ride / share a ride with no
 /// connection" (DOCS/Handoff for agents and Todos/issues_open.md or issues_fixed.md §25).
@@ -84,7 +87,8 @@ void main() {
       expect(entries.single.attempts, 0);
     });
 
-    test('enqueueShareRide persists maxSpeedKmh and all fields in payload', () async {
+    test('enqueueShareRide persists maxSpeedKmh and all fields in payload',
+        () async {
       final service = OutboxService(dao: dao);
       final enqueued = await service.enqueueShareRide(
         rideId: 'ride-test-1',
@@ -113,7 +117,8 @@ void main() {
       expect(payload['maxSpeedKmh'], 48.5);
     });
 
-    group('the immediate attempt is scoped to the signed-in rider (§78.29)', () {
+    group('the immediate attempt is scoped to the signed-in rider (§78.29)',
+        () {
       Future<bool> share(OutboxService service, {required String owner}) =>
           service.enqueueShareRide(
             rideId: 'ride-scope-1',
@@ -131,7 +136,8 @@ void main() {
             audience: 'public',
           );
 
-      test("another account's queued write is not attempted, and stays queued", () async {
+      test("another account's queued write is not attempted, and stays queued",
+          () async {
         final attempted = <String>[];
         final service = OutboxService(
           dao: dao,
@@ -145,11 +151,14 @@ void main() {
         final delivered = await share(service, owner: 'rider-A');
 
         expect(delivered, isFalse);
-        expect(attempted, isEmpty, reason: 'must not run under rider-B credentials');
-        expect(await dao.all(), hasLength(1), reason: 'left for rider-A to sign back in');
+        expect(attempted, isEmpty,
+            reason: 'must not run under rider-B credentials');
+        expect(await dao.all(), hasLength(1),
+            reason: 'left for rider-A to sign back in');
       });
 
-      test("the signed-in rider's own write is still attempted immediately", () async {
+      test("the signed-in rider's own write is still attempted immediately",
+          () async {
         final attempted = <String>[];
         final service = OutboxService(
           dao: dao,
@@ -167,7 +176,64 @@ void main() {
       });
     });
 
-    test('maintenance log outbox intent enqueues and round-trips correctly', () async {
+    test('a photo that cannot be re-encoded is skipped, not retried forever',
+        () async {
+      final dir = await Directory.systemTemp.createTemp('outbox_photo');
+      addTearDown(() => dir.delete(recursive: true));
+      final paths = [
+        for (final n in ['a.jpg', 'b.heic', 'c.jpg'])
+          (File('${dir.path}/$n')..writeAsBytesSync([1, 2, 3])).path,
+      ];
+      final repo = _PhotoRepo();
+      final service = OutboxService(
+          dao: dao, shareRepository: repo, currentUid: () => 'rider-A');
+
+      final delivered = await service.enqueueShareRide(
+        rideId: 'ride-heic',
+        userId: 'rider-A',
+        userName: 'A',
+        userPhotoUrl: '',
+        bikeId: 'bike-1',
+        bikeName: 'Honda CBR',
+        bikeType: '160cc',
+        rideDate: DateTime.parse('2026-09-09T10:00:00Z'),
+        distanceKm: 1,
+        durationSeconds: 60,
+        maxSpeedKmh: 30,
+        polyline: const [],
+        audience: 'followers',
+        localPhotoPaths: paths,
+      );
+
+      expect(delivered, isTrue);
+      expect(repo.sharedPhotoUrls, ['https://cdn/a.jpg', 'https://cdn/c.jpg']);
+      expect(await dao.all(), isEmpty);
+    });
+
+    test('a retry after a skipped photo resumes where it stopped', () async {
+      final dir = await Directory.systemTemp.createTemp('outbox_photo');
+      addTearDown(() => dir.delete(recursive: true));
+      final paths = [
+        for (final n in ['x.heic', 'a.jpg', 'c.jpg'])
+          (File('${dir.path}/$n')..writeAsBytesSync([1])).path,
+      ];
+      // x.heic was skipped, a.jpg landed, c.jpg timed out last time.
+      await dao.enqueue(id: 'share:r', kind: OutboxKind.shareRide, payload: {
+        'rideId': 'r',
+        'userId': 'rider-A',
+        'localPhotoPaths': paths,
+        'uploadedPhotoUrls': ['https://cdn/a.jpg'],
+        'nextPhotoIndex': 2,
+      });
+      final repo = _PhotoRepo();
+      await OutboxService(
+          dao: dao, shareRepository: repo, currentUid: () => 'rider-A').drain();
+      expect(repo.uploads, [paths[2]], reason: 'a.jpg must not upload twice');
+      expect(repo.sharedPhotoUrls, ['https://cdn/a.jpg', 'https://cdn/c.jpg']);
+    });
+
+    test('maintenance log outbox intent enqueues and round-trips correctly',
+        () async {
       await dao.enqueue(
         id: 'maintenance:m-1',
         kind: OutboxKind.maintenanceLog,
@@ -244,7 +310,8 @@ void main() {
       expect(await dao.due(), hasLength(1));
     });
 
-    test('a long error message is truncated rather than stored whole', () async {
+    test('a long error message is truncated rather than stored whole',
+        () async {
       await dao.enqueue(id: 'a', kind: OutboxKind.shareRide, payload: {});
       await dao.recordFailure(
         id: 'a',
@@ -257,7 +324,8 @@ void main() {
     test('due() returns oldest intent first', () async {
       // Ordering is load-bearing: ending a ride is queued before the share
       // that refers to it.
-      await dao.enqueue(id: 'first', kind: OutboxKind.liveSessionTeardown, payload: {});
+      await dao.enqueue(
+          id: 'first', kind: OutboxKind.liveSessionTeardown, payload: {});
       await Future<void>.delayed(const Duration(milliseconds: 5));
       await dao.enqueue(id: 'second', kind: OutboxKind.shareRide, payload: {});
 
@@ -270,13 +338,19 @@ void main() {
       await dao.enqueue(
         id: 'share:ride-1',
         kind: OutboxKind.shareRide,
-        payload: {'localPhotoPaths': ['/a.jpg', '/b.jpg'], 'uploadedPhotoUrls': []},
+        payload: {
+          'localPhotoPaths': ['/a.jpg', '/b.jpg'],
+          'uploadedPhotoUrls': []
+        },
       );
 
       final entry = (await dao.all()).single;
       await dao.updatePayload(
         id: entry.id,
-        payload: {...entry.payload, 'uploadedPhotoUrls': ['https://x/a.jpg']},
+        payload: {
+          ...entry.payload,
+          'uploadedPhotoUrls': ['https://x/a.jpg']
+        },
       );
 
       final updated = (await dao.all()).single;
@@ -304,7 +378,8 @@ void main() {
     test('pendingCount and pendingCountOfKind report queue depth', () async {
       await dao.enqueue(id: 'a', kind: OutboxKind.shareRide, payload: {});
       await dao.enqueue(id: 'b', kind: OutboxKind.shareRide, payload: {});
-      await dao.enqueue(id: 'c', kind: OutboxKind.liveSessionTeardown, payload: {});
+      await dao
+          .enqueue(id: 'c', kind: OutboxKind.liveSessionTeardown, payload: {});
 
       expect(await dao.pendingCount(), 3);
       expect(await dao.pendingCountOfKind(OutboxKind.shareRide), 2);
@@ -361,3 +436,28 @@ void main() {
 }
 
 class _FakeOutboxService extends Fake implements OutboxService {}
+
+/// Uploads everything but a .heic (which throws FormatException, as
+/// stripImageMetadata does) and records what the share was posted with.
+class _PhotoRepo extends Fake implements RideShareRepository {
+  final uploads = <String>[];
+  List<String>? sharedPhotoUrls;
+
+  @override
+  Future<String> uploadRidePhoto(String uid, String rideId, File file) async {
+    if (file.path.endsWith('.heic')) {
+      throw const FormatException('Unsupported image format; not uploading.');
+    }
+    uploads.add(file.path);
+    return 'https://cdn/${file.uri.pathSegments.last}';
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation i) {
+    if (i.memberName == #shareRide) {
+      sharedPhotoUrls = i.namedArguments[#photoUrls] as List<String>;
+      return Future.value('r');
+    }
+    return super.noSuchMethod(i);
+  }
+}

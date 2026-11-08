@@ -18,22 +18,34 @@ import 'package:throttleiq/core/utils/error_reporter.dart';
 /// tags. Cloudinary serves the original file as uploaded, so they must be
 /// gone before the bytes leave the device.
 ///
-/// PNG stays PNG (transparency); everything else becomes JPEG. Throws
-/// [FormatException] for bytes package:image cannot decode, rather than
-/// uploading them unstripped.
+/// The long edge is capped at [kMaxUploadImageEdge] px (the pickers already
+/// ask for that, but a platform may ignore it), which also keeps the encode
+/// short. PNG stays PNG (transparency); everything else becomes JPEG at
+/// quality 85. Throws [FormatException] for bytes package:image cannot
+/// decode, rather than uploading them unstripped.
 Uint8List stripImageMetadata(Uint8List bytes) {
   final decoder = img.findDecoderForData(bytes);
   final image = decoder?.decode(bytes);
   if (decoder == null || image == null) {
     throw const FormatException('Unsupported image format; not uploading.');
   }
-  final clean = img.bakeOrientation(image)..exif = img.ExifData();
+  var clean = img.bakeOrientation(image);
+  if (clean.width > kMaxUploadImageEdge || clean.height > kMaxUploadImageEdge) {
+    clean = clean.width >= clean.height
+        ? img.copyResize(clean, width: kMaxUploadImageEdge)
+        : img.copyResize(clean, height: kMaxUploadImageEdge);
+  }
+  clean.exif = img.ExifData();
   // A PNG's text chunks can carry metadata too.
   clean.textData = null;
   return decoder is img.PngDecoder
       ? img.encodePng(clean)
-      : img.encodeJpg(clean, quality: 90);
+      : img.encodeJpg(clean, quality: 85);
 }
+
+/// Longest edge, in px, of any photo the app uploads. Every image picker
+/// whose result is uploaded passes it as maxWidth/maxHeight.
+const int kMaxUploadImageEdge = 2048;
 
 /// Uploads images to Cloudinary via an unsigned upload preset.
 ///
