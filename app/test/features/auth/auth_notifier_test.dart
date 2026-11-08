@@ -175,6 +175,30 @@ void main() {
       expect(user.log, ['delete', 'reauth', 'delete']);
     });
 
+    test('a deleted account also clears the device caches', () async {
+      final events = <String>[];
+      final n = AuthNotifier(_FakeAuth(_FakeUser(), events),
+          afterDeleteAccount: () async => events.add('clearCaches'));
+      await n.deleteAccount();
+      expect(events, ['clearCaches']);
+    });
+
+    test('a failed delete leaves the device caches alone', () async {
+      final events = <String>[];
+      final n = AuthNotifier(
+          _FakeAuth(_FakeUser(deleteError: needsLogin()), events),
+          afterDeleteAccount: () async => events.add('clearCaches'));
+      await expectLater(
+          n.deleteAccount(), throwsA(isA<FirebaseAuthException>()));
+      expect(events, isEmpty);
+    });
+
+    test('a failing cache clear does not fail the delete', () async {
+      final n = AuthNotifier(_FakeAuth(_FakeUser(), []),
+          afterDeleteAccount: () async => throw StateError('offline'));
+      await n.deleteAccount(); // a failed delete rethrows
+    });
+
     test('reauthenticate without a password for an email user throws',
         () async {
       final user = _FakeUser();

@@ -104,5 +104,5 @@ The other limits:
 ## Not verified
 
 - The Firestore storage numbers are calculated with the documented formulas, not read from the console. The available service account has no access to `throttleiqfb` billing or console metrics.
-- I didn't check whether iOS iCloud backup includes `throttleiq.db`.
+- iOS backups: since 2026-11-08 (issues_open.md §128) the app marks `throttleiq.db` and its side files excluded from iCloud and Finder backups after each open. Not yet confirmed on a real iPhone.
 - I didn't check the per-point data for the second account's  rides.

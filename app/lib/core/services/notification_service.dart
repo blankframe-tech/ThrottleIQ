@@ -159,7 +159,10 @@ class NotificationService {
       // Android 14+ gates full-screen intents behind their own permission.
       // Without it a crash alert degrades to an ordinary heads-up notification
       // — still delivered, just not able to take over a locked screen.
-      await android.requestFullScreenIntentPermission();
+      // Only crash alerts use it, so don't ask while they are compiled off.
+      if (SensorConstants.crashAlertsEnabled) {
+        await android.requestFullScreenIntentPermission();
+      }
       return granted;
     }
 

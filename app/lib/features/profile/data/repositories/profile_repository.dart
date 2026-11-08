@@ -25,6 +25,16 @@ import 'package:throttleiq/core/utils/error_reporter.dart';
 String emailLookupId(String email) =>
     sha256.convert(utf8.encode(email.trim().toLowerCase())).toString();
 
+/// A new rider's starting @handle: `rider_` plus six random lowercase letters
+/// or digits. Never derived from the email, so a public handle can't reveal
+/// the rider's address; riders opt into their own handle in onboarding or
+/// Edit profile.
+String defaultUsername([Random? rnd]) {
+  final r = rnd ?? Random.secure();
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  return 'rider_${List.generate(6, (_) => chars[r.nextInt(chars.length)]).join()}';
+}
+
 /// Reads/writes the public `users/{uid}` profile doc, handles unique @username
 /// reservation, avatar uploads, and rider search (by username prefix / exact
 /// email).
@@ -219,27 +229,12 @@ class ProfileRepository {
     });
   }
 
-  /// Derives a candidate @handle from an email's local part (before the
-  /// `@`): lowercased, stripped to `[a-z0-9_]`, clamped to setUsername's
-  /// 3-20 length window. Padded with trailing zeros if the sanitized result
-  /// is under 3 chars (e.g. an email like "a@x.com").
-  String suggestUsernameBase(String email) {
-    final local = email.split('@').first.toLowerCase();
-    var base = local.replaceAll(RegExp(r'[^a-z0-9_]'), '');
-    if (base.length > 20) base = base.substring(0, 20);
-    while (base.length < 3) {
-      base += '0';
-    }
-    return base;
-  }
-
   /// Best-effort: claims [base] for [uid], or [base] with a random numeric
   /// suffix appended if it's taken, retrying a handful of times. Used both
   /// to prefill onboarding's username field and as the no-username-chosen
   /// fallback (see AuthNotifier._seedProfile) so every rider ends up with a
-  /// handle even if they never visit the username field themselves —
-  /// "assigned their email name, and if that's taken, append [something] to
-  /// it," per spec.
+  /// handle even if they never visit the username field themselves. [base]
+  /// is [defaultUsername]; a taken one gets a numeric suffix.
   Future<String?> claimUsernameWithFallback(String uid, String base) async {
     final rnd = Random();
     for (var attempt = 0; attempt < 8; attempt++) {

@@ -18,7 +18,7 @@ Source: `public/privacy.html`, deployed from a pushed `main` with `bash scripts/
 - `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`
 - `ACTIVITY_RECOGNITION` (both the Android and the GMS variant): auto ride detection
 - `RECORD_AUDIO`: group-ride push-to-talk voice clips (`record` package). **Must be declared on the form. See "Audio" below.**
-- `USE_FULL_SCREEN_INTENT`: the crash-countdown alert over the lock screen (`NotificationService.showCrashAlert`). Crash detection is off in every build and `showCrashAlert` now returns early while it is, so nothing uses this today; consider dropping the permission until the detector ships. Since Android 14, Play only auto-grants this to calling/alarm apps, so expect a Play Console declaration for it (issues_open.md §69.O8)
+- `USE_FULL_SCREEN_INTENT`: the crash-countdown alert over the lock screen (`NotificationService.showCrashAlert`). Crash detection is off in every build and `showCrashAlert` now returns early while it is, so nothing uses this today, and `requestPermissions()` no longer asks riders for it while crash alerts are off; consider dropping the permission until the detector ships. Since Android 14, Play only auto-grants this to calling/alarm apps, so expect a Play Console declaration for it (issues_open.md §69.O8)
 - `AD_ID` is explicitly **removed** (`tools:node="remove"` in the manifest), so answer "No" to advertising ID
 - No `READ_CONTACTS`, `CAMERA`, or `SMS` permission — the app uses `image_picker` (system photo picker, no runtime permission needed on modern Android) and emergency contacts are typed in manually, not read from the phone's contact list.
 

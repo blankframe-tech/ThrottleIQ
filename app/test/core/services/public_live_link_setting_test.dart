@@ -60,4 +60,15 @@ void main() {
     await PublicLiveLinkSetting.disable();
     expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
   });
+
+  test('forget drops the link key from the phone (Delete account)', () async {
+    SharedPreferences.setMockInitialValues({
+      PublicLiveLinkSetting.prefsKey: 'k',
+      PublicLiveLinkSetting.legacyPrefsKey: true,
+    });
+    await PublicLiveLinkSetting.forget();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.containsKey(PublicLiveLinkSetting.prefsKey), isFalse);
+    expect(prefs.containsKey(PublicLiveLinkSetting.legacyPrefsKey), isFalse);
+  });
 }

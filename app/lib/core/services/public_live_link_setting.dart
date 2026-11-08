@@ -80,6 +80,14 @@ class PublicLiveLinkSetting {
     if (old != null) await _delete(old, firestore);
   }
 
+  /// Drops the link key from the phone without touching the link doc, for
+  /// Delete account (the uid is gone, so the doc can't be written).
+  static Future<void> forget() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(prefsKey);
+    await prefs.remove(legacyPrefsKey);
+  }
+
   static Future<void> _delete(String key, FirebaseFirestore? firestore) async {
     try {
       await (firestore ?? FirebaseFirestore.instance)

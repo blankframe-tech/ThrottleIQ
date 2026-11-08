@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:throttleiq/core/utils/error_reporter.dart';
@@ -73,6 +74,33 @@ class DatabaseHelper {
 
   Future<Database> _initDb() async {
     final path = join(await getDatabasesPath(), 'throttleiq.db');
+    final db = await _openOrRecover(path);
+    await excludeFromBackup(path);
+    return db;
+  }
+
+  static const _backupChannel = MethodChannel('throttleiq/backup');
+
+  /// iOS backs up the Documents folder, where sqflite keeps this database,
+  /// to iCloud and Finder backups. Mark the database and its side files
+  /// excluded, like Android's allowBackup="false". Runs on every open, so a
+  /// side file created since the last launch is caught next time.
+  @visibleForTesting
+  static Future<void> excludeFromBackup(String path, {bool? isIOS}) async {
+    if (!(isIOS ?? Platform.isIOS)) return;
+    try {
+      await _backupChannel.invokeMethod<void>('excludeFromBackup', [
+        for (final s in const ['', '-wal', '-shm', '-journal']) '$path$s'
+      ]);
+    } on MissingPluginException {
+      // The background (auto-tracking) engine has no Runner channels; the
+      // app's main engine marks the files on its next open.
+    } catch (e, st) {
+      reportSilently(e, st, where: 'db.excludeFromBackup');
+    }
+  }
+
+  Future<Database> _openOrRecover(String path) async {
     try {
       return await _openDb(path);
     } catch (e) {

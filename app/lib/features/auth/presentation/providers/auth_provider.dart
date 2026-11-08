@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/database/database_helper.dart';
+import '../../../../core/services/public_live_link_setting.dart';
 import '../../../profile/data/repositories/profile_repository.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../../core/analytics/analytics_service.dart';
@@ -40,8 +41,11 @@ final isAdminProvider = FutureProvider<bool>((ref) async {
 });
 
 class AuthNotifier extends StateNotifier<AsyncValue<void>> {
-  AuthNotifier(this._auth, {Future<void> Function()? beforeSignOut})
+  AuthNotifier(this._auth,
+      {Future<void> Function()? beforeSignOut,
+      Future<void> Function()? afterDeleteAccount})
       : _beforeSignOut = beforeSignOut,
+        _afterDeleteAccount = afterDeleteAccount,
         super(const AsyncValue.data(null));
 
   final FirebaseAuth _auth;
@@ -50,6 +54,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   /// (issues §101.A2): used to revoke an active live-share link, whose
   /// teardown writes are rejected / skipped once the uid is gone.
   final Future<void> Function()? _beforeSignOut;
+
+  /// Runs once the Auth account is gone: clears what the account left in
+  /// device caches (Firestore's offline cache, the live-link key). Failures
+  /// are reported, never thrown: the account is already deleted.
+  final Future<void> Function()? _afterDeleteAccount;
 
   /// Upper bound on [_beforeSignOut] so an offline phone can still sign out.
   static const Duration beforeSignOutTimeout = Duration(seconds: 6);
@@ -71,9 +80,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   }
 
   /// Every rider ends up with an @handle even if they never touch the
-  /// onboarding/edit-profile username field: default to their email's local
-  /// part, falling back to a numeric suffix if that's taken. Runs on every
-  /// login (cheap — one doc read when a username already exists) so it also
+  /// onboarding/edit-profile username field: default to a random
+  /// `rider_xxxxxx` (never the email), with a numeric suffix if that's
+  /// taken. Runs on every login (cheap — one doc read when a username already exists) so it also
   /// backfills legacy accounts, not just brand-new ones. Onboarding calls
   /// setUsername directly when the rider picks their own handle, which
   /// makes this a no-op for them (username already set by the time this
@@ -84,8 +93,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
     final uid = user.uid;
     final existing = await _profiles.getProfile(uid);
     if (existing?.username != null) return;
-    await _profiles.claimUsernameWithFallback(
-        uid, _profiles.suggestUsernameBase(email));
+    await _profiles.claimUsernameWithFallback(uid, defaultUsername());
   }
 
   Future<void> signIn(String email, String password) async {
@@ -257,6 +265,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
   /// 1. Firebase Auth account
   /// 2. Local SQLite database records (rides, bikes, maintenance, etc.)
   /// 3. Google Sign-In session
+  /// 4. Device caches: Firestore's offline cache and the live-link key
+  ///    ([afterDeleteAccount] in [authNotifierProvider])
   ///
   /// The Firestore profile document and username claim are cleaned up
   /// separately, server-side — see `functions/src/account-deletion.ts`'s
@@ -300,6 +310,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<void>> {
       try {
         await GoogleSignIn().signOut();
       } catch (_) {/* not signed in via Google, or already signed out */}
+      try {
+        await _afterDeleteAccount?.call();
+      } catch (e, st) {
+        reportSilently(e, st, where: 'auth.afterDeleteAccount');
+      }
     });
     state = result;
 
@@ -320,5 +335,14 @@ final authNotifierProvider =
     ref.watch(firebaseAuthProvider),
     beforeSignOut: () =>
         ref.read(rideRecordingProvider.notifier).stopLiveSharing(),
+    afterDeleteAccount: () async {
+      await PublicLiveLinkSetting.forget();
+      // Firestore's offline cache keeps the deleted account's docs (medical
+      // card, rides) on the phone. clearPersistence needs a terminated
+      // instance; the next Firestore call starts a fresh one.
+      final db = ref.read(firestoreProvider);
+      await db.terminate();
+      await db.clearPersistence();
+    },
   );
 });
