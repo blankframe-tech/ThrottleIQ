@@ -172,6 +172,18 @@ Do these in order.
    `node oneoff/backfill_vote_uid.js --service-account=../secret/<throttleiqfb key>.json`
    (dry run), then the same with `--yes-i-really-mean-it` (done 2026-10-29, 110/110). Run the backfill
    again once `config/app.minBuild` passes that release.
+12. **Road-speed pool without exact times (2026-11-08).** The app now writes
+   pool samples with a UTC `day` number instead of `createdAt`, in shuffled
+   order, and reads them by `day`. Order matters: (a) release the build with
+   it (`scripts/deploy.sh`); its pool writes are refused until (c), which
+   only costs pool contributions. (b) Raise `config/app.minBuild` past it,
+   because older builds still send `createdAt`. (c)
+   `npx firebase-tools@15 deploy --only firestore:rules --project throttleiqfb`.
+   (d) From `scripts/`, rewrite the old samples so they keep counting:
+   `node oneoff/rewrite_road_speed_samples.js --service-account=../secret/<throttleiqfb key>.json`
+   (dry run), then the same with `--yes-i-really-mean-it`. The privacy page
+   change (`public/privacy.html` §2) has no dependency: deploy Hosting from
+   pushed `main` with `npx firebase-tools@15 deploy --only hosting --project throttleiqfb`.
 
 ### App Check enforcement
 

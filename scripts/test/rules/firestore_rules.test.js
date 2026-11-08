@@ -846,9 +846,14 @@ function roadSpeedSampleData(overrides = {}) {
     weekday: 3,
     hour: 14,
     weatherCode: 1,
-    createdAt: serverTimestamp(),
+    day: todayUtc(),
     ...overrides,
   };
+}
+
+/** UTC day number (days since the epoch), the sample's only time field. */
+function todayUtc() {
+  return Math.floor(Date.now() / 86400000);
 }
 
 function roadSpeedSamplesCollection(db, segmentId = SEGMENT_ID) {
@@ -962,14 +967,35 @@ test('a non-integer weatherCode is denied', async () => {
   );
 });
 
-test('a sample stamped with a client clock instead of serverTimestamp() is denied', async () => {
+test('a sample with an exact timestamp is denied, server or client clock', async () => {
   const db = dbFor(ALICE);
+  for (const createdAt of [serverTimestamp(), new Date()]) {
+    await assertFails(
+      setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData({ createdAt }))
+    );
+  }
+  // Nor can an exact time ride in the day field itself.
   await assertFails(
-    setDoc(
-      doc(roadSpeedSamplesCollection(db)),
-      roadSpeedSampleData({ createdAt: new Date() })
-    )
+    setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData({ day: serverTimestamp() }))
   );
+});
+
+test('a sample from yesterday (UTC) is allowed, so a ride over midnight still counts', async () => {
+  const db = dbFor(ALICE);
+  await assertSucceeds(
+    setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData({ day: todayUtc() - 1 }))
+  );
+});
+
+test('a sample without a day, or dated in the future or the past, is denied', async () => {
+  const db = dbFor(ALICE);
+  const { day, ...noDay } = roadSpeedSampleData();
+  await assertFails(setDoc(doc(roadSpeedSamplesCollection(db)), noDay));
+  for (const bad of [todayUtc() + 1, todayUtc() - 2, todayUtc() + 0.5, String(todayUtc())]) {
+    await assertFails(
+      setDoc(doc(roadSpeedSamplesCollection(db)), roadSpeedSampleData({ day: bad }))
+    );
+  }
 });
 
 test('a sample can never be updated or deleted, even by its own contributor', async () => {

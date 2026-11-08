@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import '../../../../core/utils/geohash_util.dart';
 
 /// One geohash-cell "segment" this ride passed through, and the average
@@ -42,4 +44,32 @@ List<SegmentSpeedSample> averageSpeedPerSegment(
         pointCount: counts[id]!
       ),
   ];
+}
+
+/// The anonymous pool docs (`roadSpeedSamples/{segmentId}/samples`) for one
+/// ride's [segments], in random order. No exact timestamp, only the UTC day
+/// number of [now], and the order is shuffled, so a reader of the pool can't
+/// sort one ride's cells back into its path. `firestore.rules` checks the
+/// shape and that `day` is today or yesterday.
+List<({String segmentId, Map<String, Object?> data})> roadSpeedSampleDocs(
+  List<SegmentSpeedSample> segments, {
+  required DateTime startTime,
+  required DateTime now,
+  int? weatherCode,
+  Random? random,
+}) {
+  final day = now.millisecondsSinceEpoch ~/ Duration.millisecondsPerDay;
+  return [
+    for (final s in segments)
+      (
+        segmentId: s.segmentId,
+        data: {
+          'speedKmh': s.avgSpeedKmh,
+          'weekday': startTime.weekday,
+          'hour': startTime.hour,
+          'weatherCode': weatherCode,
+          'day': day,
+        },
+      ),
+  ]..shuffle(random);
 }

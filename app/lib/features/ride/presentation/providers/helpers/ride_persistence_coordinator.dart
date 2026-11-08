@@ -192,20 +192,17 @@ class RidePersistenceCoordinator {
       at: startTime,
     );
 
-    for (final segment in segments) {
+    for (final sample in roadSpeedSampleDocs(segments,
+        startTime: startTime,
+        now: DateTime.now(),
+        weatherCode: weather?.weatherCode)) {
       await _bestEffortWrite(
-        'roadSpeedSample:${segment.segmentId}',
+        'roadSpeedSample:${sample.segmentId}',
         () => _firestore
             .collection('roadSpeedSamples')
-            .doc(segment.segmentId)
+            .doc(sample.segmentId)
             .collection('samples')
-            .add({
-          'speedKmh': segment.avgSpeedKmh,
-          'weekday': startTime.weekday,
-          'hour': startTime.hour,
-          'weatherCode': weather?.weatherCode,
-          'createdAt': FieldValue.serverTimestamp(),
-        }),
+            .add(sample.data),
       );
     }
   }

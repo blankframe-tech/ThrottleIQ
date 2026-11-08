@@ -50,6 +50,9 @@ App Check has been enforced on Cloud Firestore since 2026-11-01
 (`HANDOFF_Document.md` backend table). Rate limits are still to do; they need
 Cloud Functions (Blaze) or counter docs checked in the rules (owner item #33
 asks the same for reports). Details in the owner's private notes (`DOCS/private/`, git-ignored).
+The anonymous road-speed pool (`roadSpeedSamples`) has no owner field by
+design, so a per-rider cap there also needs a Cloud Function (Blaze). Since
+2026-11-08 its baseline is a median.
 
 ### 62.13 Architecture notes (not bugs, but raise the odds of the next one)
 

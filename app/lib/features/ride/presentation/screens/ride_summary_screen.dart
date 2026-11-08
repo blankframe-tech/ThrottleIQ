@@ -142,7 +142,7 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
       if (!mounted) return;
       setState(() {
         _speedOutlier =
-            (riderKmh: fastest.avgSpeedKmh, baselineKmh: baseline.meanKmh);
+            (riderKmh: fastest.avgSpeedKmh, baselineKmh: baseline.medianKmh);
       });
     } catch (e) {
       debugPrint('[RideSummary] speed-outlier check failed: $e');
