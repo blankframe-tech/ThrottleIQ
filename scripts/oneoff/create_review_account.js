@@ -7,8 +7,8 @@
  * App content → App access → Admin Account), so a Play reviewer can sign in
  * with email/password and reach the main app past onboarding.
  *
- * Mirrors exactly what the app itself writes on first sign-in/registration,
- * so this account is indistinguishable from a real one to the client:
+ * Writes the same docs the app writes on first sign-in/registration, so the
+ * client treats this account like a real one:
  *   - Firebase Auth user with `displayName` set — app_router.dart gates
  *     onboarding on `auth.displayName == null`, so this alone is what lets
  *     the reviewer skip onboarding after logging in.
@@ -16,10 +16,10 @@
  *     writes on first login (displayName, email, emailLower, followerCount,
  *     followingCount, createdAt, updatedAt).
  *   - `usernames/{handle}` claim + `users/{uid}.username`/`usernameLower` —
- *     same shape ProfileRepository.setUsername's transaction writes. Handle
- *     is derived from the email's local part exactly like
- *     ProfileRepository.suggestUsernameBase does (lowercase, strip to
- *     [a-z0-9_], clamp 3-20 chars).
+ *     same shape ProfileRepository.setUsername's transaction writes. The
+ *     handle is derived from the email's local part (lowercase, strip to
+ *     [a-z0-9_], clamp 3-20 chars). That is a choice for this one review
+ *     account; new app accounts get a random rider_xxxxxx handle instead.
  *
  * Tagged `playReviewAccount: true` (not `qaSeed`) so cleanup_qa_test_riders.js
  * can never touch it and it's easy to find again — this account should
@@ -52,6 +52,7 @@
  *                           '[redacted]' on a permanent production account.
  *   --display-name <name>  Default: "ThrottleIQ Reviewer"
  *   --username <handle>    Default: derived from the email's local part
+ *                          (review account only; the app no longer does this)
  *   --dry-run              Explicit form of the default. Prints the planned
  *                          payload only. No credentials needed.
  *   --yes-i-really-mean-it Actually create/update the Auth account and
@@ -95,10 +96,9 @@ function rule(char = '-') {
   log(char.repeat(66));
 }
 
-// Same sanitizing as ProfileRepository.suggestUsernameBase in
-// app/lib/features/profile/data/repositories/profile_repository.dart —
-// lowercase, strip to [a-z0-9_], clamp to the 3-20 char window
-// setUsername's regex (`^[a-z0-9_]{3,20}$`) requires.
+// The review account's handle is email-derived by choice (the app itself now
+// defaults to rider_xxxxxx). Lowercase, strip to [a-z0-9_], clamp to the
+// 3-20 char window setUsername's regex (`^[a-z0-9_]{3,20}$`) requires.
 function suggestUsernameBase(email) {
   const local = email.split('@')[0].toLowerCase();
   let base = local.replace(/[^a-z0-9_]/g, '');
@@ -162,6 +162,7 @@ Flags:
                            untouched unless you pass this flag.
   --display-name <name>   Default: ${DEFAULTS.displayName}
   --username <handle>     Default: derived from the email's local part
+                           (review account only, by choice)
   --dry-run               Explicit form of the default.
   --yes-i-really-mean-it  Required to actually create/update anything.
   --non-interactive       Skip the typed confirmation prompt.

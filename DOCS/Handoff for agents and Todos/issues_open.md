@@ -54,6 +54,10 @@ The anonymous road-speed pool (`roadSpeedSamples`) has no owner field by
 design, so a per-rider cap there also needs a Cloud Function (Blaze). Since
 2026-11-08 its baseline is a median.
 
+Update 2026-11-01: the "not enforced" part above is out of date. Firestore
+App Check has been enforced since 2026-11-01 (`HANDOFF_Document.md`); the
+rate limits are still open.
+
 ### 62.13 Architecture notes (not bugs, but raise the odds of the next one)
 
 - `firestore.rules` is a 2,252-line monolith (2026-10-22) that grew
@@ -908,5 +912,5 @@ Code done on `agent/sec-throttleiq-11`; waits on the next AAB and iOS build.
 - **Full-screen intent:** `requestPermissions()` no longer asks for it while `SensorConstants.crashAlertsEnabled` is off. The manifest still declares it (owner item 8). Test: `test/core/services/notification_permissions_test.dart`.
 - **iOS backup:** after each open, `DatabaseHelper.excludeFromBackup` marks `throttleiq.db` and its `-wal`/`-shm`/`-journal` files excluded from iCloud and Finder backups through the `throttleiq/backup` channel in `AppDelegate.swift`. This matches Android; the owner can still choose to keep iOS backups. Test: `test/database/backup_exclusion_test.dart`.
 - **Delete account** now also clears Firestore's offline cache (`terminate()` then `clearPersistence()`) and the live-link key on the phone, best effort after the Auth account is gone (`afterDeleteAccount` in `authNotifierProvider`).
-- **Decision recorded:** open reads of places, reviews and forum posts by signed-in riders are accepted as public content. The planned abuse control is App Check enforcement, which is not on yet (§62.12, owner items #17 and #32), so the risk of bulk reads stays open until it is enforced.
+- **Decision recorded:** open reads of places, reviews and forum posts by signed-in riders are accepted as public content. Firestore App Check has been enforced since 2026-11-01 (`HANDOFF_Document.md`). The remaining gap is that there are no per-rider volume or rate limits (§62.12).
 - **Open: device checks.** On an iPhone release build, the app's size under Settings > iCloud > Manage Storage > Backups should drop; on Android 12+, the merged manifest shows `dataExtractionRules`. After Delete account, sign in with another account and confirm Firestore still loads.
