@@ -104,7 +104,7 @@ test('live viewer paths get a script/connect CSP that still lets the page run (W
 
 test('live viewer has no inline script or inline event handler the CSP would block', () => {
   const html = read('public/live-viewer.html');
-  for (const [, attrs, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
+  for (const [, attrs, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)) {
     assert.match(attrs, /\bsrc="/, 'inline <script> blocks are blocked by script-src');
     assert.equal(body.trim(), '');
   }
