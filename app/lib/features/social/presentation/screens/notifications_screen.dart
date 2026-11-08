@@ -122,9 +122,9 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
     return '${diff.inDays}d ago';
   }
 
-  /// Tapping a group-ride invite *is* the accept — the owner's flow is
-  /// "their friend clicks on the notification [and] they all see everyone
-  /// else on the map", so there's no separate accept step to get wrong.
+  /// Tapping a group-ride invite asks first: anyone can send an invite, and
+  /// joining shares the rider's live location with the whole ride. Agreeing
+  /// here also counts as the map's location consent, so it isn't asked twice.
   Future<void> _acceptGroupRideInvite() async {
     if (_accepting) return;
     final user = ref.read(currentUserProvider);
@@ -135,6 +135,28 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
         !notification.isActionableGroupRideInvite) {
       return;
     }
+
+    final name = notification.fromName.trim().isEmpty
+        ? context.l10n.aRider
+        : notification.fromName.trim();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.groupRideInviteConfirmTitle(name)),
+        content: Text(dialogContext.l10n.groupRideInviteConfirmBody(name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(dialogContext.l10n.cancelAction),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(dialogContext.l10n.joinRideAction),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || confirmed != true) return;
 
     setState(() => _accepting = true);
     try {
@@ -157,6 +179,9 @@ class _NotificationTileState extends ConsumerState<_NotificationTile> {
     }
     if (!mounted) return;
     setState(() => _accepting = false);
+    ref
+        .read(groupRideLocationConsentProvider.notifier)
+        .update((ids) => {...ids, groupRideId});
 
     // Best-effort: tells the inviter their friend actually showed up, same
     // "written from the joining rider's device" model as joining by code

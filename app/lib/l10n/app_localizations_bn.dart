@@ -7279,4 +7279,38 @@ class AppLocalizationsBn extends AppLocalizations {
   String liveGroupRideCardSemantics(String name, int count) {
     return '$name, লাইভ গ্রুপ রাইড, $count জন চালাচ্ছেন। খুলুন';
   }
+
+  @override
+  String groupRideInviteConfirmTitle(String name) {
+    return '$name-এর রাইডে যোগ দেবেন?';
+  }
+
+  @override
+  String groupRideInviteConfirmBody(String name) {
+    return 'যোগ দিলে গ্রুপ ম্যাপ খোলা থাকা পর্যন্ত $name এবং এই রাইডের সবাই আপনার লাইভ লোকেশন দেখতে পাবে। শুধু পরিচিত রাইডারদের সাথে যোগ দিন।';
+  }
+
+  @override
+  String get groupRideShareLocationTitle => 'আপনার লাইভ লোকেশন শেয়ার করবেন?';
+
+  @override
+  String get groupRideShareLocationBody =>
+      'এই ম্যাপ খোলা থাকা পর্যন্ত আয়োজকসহ এই রাইডের সবাই দেখতে পাবে আপনি কোথায় আছেন। শেয়ার না করলেও আপনি গ্রুপকে দেখতে পাবেন।';
+
+  @override
+  String get groupRideNotSharingLocation =>
+      'আপনি লোকেশন শেয়ার করছেন না, তাই গ্রুপ আপনাকে দেখতে পাচ্ছে না। আপনি তাদের দেখতে পাচ্ছেন।';
+
+  @override
+  String followLinkConfirmTitle(String name) {
+    return '$name-কে ফলো করবেন?';
+  }
+
+  @override
+  String get followLinkConfirmBody =>
+      'শুধু পরিচিত রাইডারদের ফলো করুন। তারা আপনাকে ফলো ব্যাক করলে, মিউচুয়াল ফলোয়ারদের জন্য শেয়ার করা রাইড আর প্রোফাইলের তথ্য দেখতে পাবে।';
+
+  @override
+  String get followLinkUnavailable =>
+      'এই রাইডারের প্রোফাইল লোড করা যায়নি, তাই কাউকে ফলো করা হয়নি। ইন্টারনেট দেখুন, অথবা সার্চে খুঁজুন।';
 }

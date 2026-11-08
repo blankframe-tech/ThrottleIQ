@@ -147,8 +147,14 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
       }
     }
 
-    await _ensureLocationPermission();
+    _shareLocation = await _confirmLocationSharing();
     if (!mounted) return;
+    if (_shareLocation) {
+      await _ensureLocationPermission();
+      if (!mounted) return;
+    } else {
+      setState(() => _locationError = context.l10n.groupRideNotSharingLocation);
+    }
 
     // Decides _sharedPositions (§104.2) before the first publish.
     await _pollPositions();
@@ -174,6 +180,58 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
   }
 
   Timer? _heartbeatTimer;
+
+  /// Whether this device publishes its position. Off until the rider agrees
+  /// ([_confirmLocationSharing]); a rider who says no still sees the group.
+  bool _shareLocation = false;
+
+  /// One-time consent per ride before anything is published: the creator
+  /// started the ride, and accepting an invite already asked
+  /// ([groupRideLocationConsentProvider]); everyone else is asked here.
+  Future<bool> _confirmLocationSharing() async {
+    final uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return false;
+    if (ref
+        .read(groupRideLocationConsentProvider)
+        .contains(widget.groupRideId)) {
+      return true;
+    }
+    GroupRideEntity? ride;
+    try {
+      ride = await ref
+          .read(groupRideProvider(widget.groupRideId).future)
+          .timeout(const Duration(seconds: 8));
+    } catch (e, st) {
+      // Unknown creator: ask, below.
+      reportSilently(e, st, where: 'groupRide.consentRideRead');
+    }
+    if (!mounted) return false;
+    if (ride != null && ride.creatorId == uid) return true;
+
+    final agreed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(dialogContext.l10n.groupRideShareLocationTitle),
+        content: Text(dialogContext.l10n.groupRideShareLocationBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(dialogContext.l10n.notNow),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(dialogContext.l10n.shareAction),
+          ),
+        ],
+      ),
+    );
+    if (agreed != true || !mounted) return false;
+    ref
+        .read(groupRideLocationConsentProvider.notifier)
+        .update((ids) => {...ids, widget.groupRideId});
+    return true;
+  }
 
   /// Publish, then (shared mode) poll: the poll then includes this rider's
   /// own new position.
@@ -294,7 +352,7 @@ class _GroupRideMapScreenState extends ConsumerState<GroupRideMapScreen> {
 
   Future<void> _broadcastPosition() async {
     final uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
+    if (uid == null || !_shareLocation) return;
 
     final position = await _resolvePosition();
     if (!mounted || position == null) return;

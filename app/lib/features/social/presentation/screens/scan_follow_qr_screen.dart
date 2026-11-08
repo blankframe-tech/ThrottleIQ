@@ -9,10 +9,11 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../domain/utilities/follow_link.dart';
 import '../../domain/utilities/follow_link_outcome.dart';
 import '../providers/follow_link_providers.dart';
+import '../widgets/confirm_follow_dialog.dart';
 
-/// "Scan QR": reads another rider's follow QR (see MyFollowQrScreen) and
-/// follows them straight away through [FollowLinkController], then opens the
-/// People tab. Own code, already-followed riders and non-ThrottleIQ codes get
+/// "Scan QR": reads another rider's follow QR (see MyFollowQrScreen), asks
+/// "Follow <name>?" and on the Follow tap follows them through
+/// [FollowLinkController], then opens the People tab. Own code, already-followed riders and non-ThrottleIQ codes get
 /// a message and scanning carries on.
 class ScanFollowQrScreen extends ConsumerStatefulWidget {
   const ScanFollowQrScreen({super.key});
@@ -48,21 +49,25 @@ class _ScanFollowQrScreenState extends ConsumerState<ScanFollowQrScreen> {
     final l10n = context.l10n;
     final messenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
-    final result = await ref
-        .read(followLinkControllerProvider)
-        .followUid(parseFollowLink(raw), l10n: l10n);
+    final result = await ref.read(followLinkControllerProvider).followUid(
+        parseFollowLink(raw),
+        l10n: l10n,
+        confirm: (name) async =>
+            mounted && await confirmFollowFromLink(context, name));
     if (!mounted) return;
 
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-          SnackBar(content: Text(followLinkResultMessage(l10n, result))));
+    final message = followLinkResultMessage(l10n, result);
+    if (message != null) {
+      messenger
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(message)));
+    }
     if (result.outcome == FollowLinkOutcome.followed ||
         result.outcome == FollowLinkOutcome.alreadyFollowing) {
       router.go(kFollowLinkLandingRoute);
       return;
     }
-    // Self / invalid / failed: keep scanning. A short pause stops the same
+    // Self / invalid / failed / cancelled: keep scanning. A short pause stops the same
     // message firing again while the code is still in frame.
     await Future<void>.delayed(const Duration(seconds: 2));
     if (mounted) setState(() => _handling = false);

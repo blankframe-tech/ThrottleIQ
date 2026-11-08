@@ -2062,14 +2062,22 @@ service cloud.firestore {
     // is inexpressible. GroupRideRepository keeps all three in lockstep.
     // ------------------------------------------------------------------
     match /groupRides/{groupRideId} {
+      // A rider holding an open invitation to [ride], which stops counting
+      // once the ride is completed.
+      function invitedReader(ride) {
+        return request.auth.uid in ride.get('invitedIds', []) &&
+          ride.get('status', 'planned') != 'completed';
+      }
+
       // Creator, joined members, and riders still holding an open invitation.
       // Invitees need read access BEFORE accepting: tapping the notification
-      // reads the ride, accepts, and opens the map in one motion.
+      // reads the ride, accepts, and opens the map. An invitation stops
+      // opening anything once the ride is completed (see invitedReader).
       function inGroupRide() {
         return request.auth != null && (
           request.auth.uid == resource.data.creatorId ||
           request.auth.uid in resource.data.get('memberIds', []) ||
-          request.auth.uid in resource.data.get('invitedIds', []));
+          invitedReader(resource.data));
       }
 
       // Also readable by `get` (never `list`, so nobody can enumerate rides)
@@ -2136,11 +2144,18 @@ service cloud.firestore {
         //    accept (2) and join-by-code (4) clauses, where the rider adds
         //    themselves. Inviting (invitedIds) stays with the creator.
         //    `bannedIds` (kick list, §90.D4) is creator-written here.
+        //    A completed ride is final: it can't be reopened, and nobody new
+        //    can be invited into it (an invitee could otherwise read the
+        //    positions and voice notes it still held).
         (resource.data.creatorId == request.auth.uid &&
          request.resource.data.creatorId == resource.data.creatorId &&
          request.resource.data.get('status', 'planned') in ['planned', 'active', 'completed'] &&
          request.resource.data.get('memberIds', [])
-           .hasOnly(resource.data.get('memberIds', []))) ||
+           .hasOnly(resource.data.get('memberIds', [])) &&
+         (resource.data.get('status', 'planned') != 'completed' ||
+          (request.resource.data.get('status', 'planned') == 'completed' &&
+           request.resource.data.get('invitedIds', [])
+             .hasOnly(resource.data.get('invitedIds', []))))) ||
 
         // 2. An invited rider accepting or declining. The roster is no longer
         //    here — it lives in the members subcollection below, where a
@@ -2161,9 +2176,13 @@ service cloud.firestore {
         //    fixed the equivalent hole in memberIds by moving the roster to
         //    documents; it survived here because §10 never touched the
         //    invite array.
+        //    Declining still works on a completed ride; accepting doesn't.
         (request.auth.uid in resource.data.get('invitedIds', []) &&
          request.resource.data.diff(resource.data).affectedKeys()
            .hasOnly(['memberIds', 'invitedIds']) &&
+         (resource.data.get('status', 'planned') != 'completed' ||
+          request.resource.data.get('memberIds', [])
+            .hasOnly(resource.data.get('memberIds', []))) &&
          // new invitedIds ⊆ old invitedIds (nobody added)...
          !(request.auth.uid in request.resource.data.get('invitedIds', [])) &&
          request.resource.data.get('invitedIds', [])
@@ -2247,7 +2266,7 @@ service cloud.firestore {
         allow read: if request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
-          request.auth.uid in ride().get('invitedIds', []));
+          invitedReader(ride()));
         // Security sweep B7: a row is GroupRideMemberModel.toDocument's keys
         // (unchanged since 2026-07), for this uid, with a capped name, an
         // allow-listed avatar (every member's device shows it) and typed
@@ -2341,7 +2360,7 @@ service cloud.firestore {
         allow read: if request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
-          request.auth.uid in ride().get('invitedIds', []));
+          invitedReader(ride()));
 
         allow create: if request.auth != null &&
           request.auth.uid == request.resource.data.senderId &&
@@ -2366,10 +2385,12 @@ service cloud.firestore {
         // subcollection doc before the ride itself. With delete pinned to
         // `false`, deleting any ride that had even one voice note failed with
         // permission-denied AFTER members/invitations were already gone,
-        // leaving a half-deleted ride behind.
+        // leaving a half-deleted ride behind. The sender may delete their
+        // own clip too, even after leaving the ride.
         allow update: if false;
         allow delete: if request.auth != null &&
-          request.auth.uid == ride().creatorId;
+          (request.auth.uid == ride().creatorId ||
+           request.auth.uid == resource.data.get('senderId', null));
       }
 
       // Live positions, one document per rider at `memberLocations/{uid}`.
@@ -2384,11 +2405,16 @@ service cloud.firestore {
         allow read: if request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
-          request.auth.uid in ride().get('invitedIds', []));
-        allow write: if request.auth != null &&
+          invitedReader(ride()));
+        allow create, update: if request.auth != null &&
           request.auth.uid == riderUid && (
             request.auth.uid == ride().creatorId ||
             request.auth.uid in ride().get('memberIds', []));
+        // The rider may erase their own position at any time, including
+        // after leaving; the creator erases everyone's when the ride ends.
+        allow delete: if request.auth != null && (
+          request.auth.uid == riderUid ||
+          request.auth.uid == ride().creatorId);
       }
 
       // issues §104.2: every rider's live position in ONE doc,
@@ -2409,13 +2435,23 @@ service cloud.firestore {
         allow get: if docId == 'all' && request.auth != null && (
           request.auth.uid == ride().creatorId ||
           request.auth.uid in ride().get('memberIds', []) ||
-          request.auth.uid in ride().get('invitedIds', []));
+          invitedReader(ride()));
         allow create, update: if docId == 'all' && request.auth != null && (
             request.auth.uid == ride().creatorId ||
             request.auth.uid in ride().get('memberIds', [])) &&
           request.resource.data.diff(resource == null ? {} : resource.data)
             .affectedKeys().hasOnly([request.auth.uid]) &&
           positionValid(request.resource.data.get(request.auth.uid, null));
+        // Removing keys only: a rider their own, at any time — including
+        // after leaving (GroupRideRepository.leaveGroupRide) — and the
+        // creator a kicked rider's (removeMember; they may delete the whole
+        // doc anyway).
+        allow update: if docId == 'all' && request.auth != null &&
+          request.resource.data.diff(resource.data).addedKeys().size() == 0 &&
+          request.resource.data.diff(resource.data).changedKeys().size() == 0 &&
+          (request.resource.data.diff(resource.data).removedKeys()
+             .hasOnly([request.auth.uid]) ||
+           request.auth.uid == ride().creatorId);
         allow delete: if request.auth != null &&
           request.auth.uid == ride().creatorId;
       }

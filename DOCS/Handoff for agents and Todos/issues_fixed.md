@@ -11,6 +11,17 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## Consent before group-ride sharing and follow links; group rides keep no positions — FIXED in code (2026-11-08, branch `agent/sec-throttleiq-6`), not yet shipped
+
+- **Group-ride invite:** tapping an invite in Notifications asks "Join <name>'s ride?" and says joining shares live location; **Cancel** writes nothing (`notifications_screen.dart`).
+- **Group map:** publishes no position until the rider agrees once per ride ("Share your live location?", `groupRideLocationConsentProvider`, in memory). The creator and a rider who just accepted an invite aren't asked twice. Saying no still shows the group.
+- **Follow links and QR:** every entry point (App Link, `throttleiq://u/<uid>`, the in-app scanner, a link stashed before sign-in) shows "Follow <name>?" and follows only on the tap. A profile that can't be read follows nobody. `public/follow.html` no longer opens the app by itself; it shows an "Open in ThrottleIQ" button.
+- **Retention:** leaving deletes the rider's `memberLocations` doc (inside the leave transaction) and their `positions/all` key; a kick removes both for the kicked rider; ending a ride deletes `positions/all` and every `memberLocations` doc.
+- **Rules:** a rider may delete their own `memberLocations` doc, `positions/all` key and voice notes at any time, including after leaving; the creator may remove keys and `memberLocations` docs. A completed ride can't be reopened or take new invites, an invitation no longer reads it or its subcollections, and it can't be accepted (declining still works). Tests: `scripts/test/rules/group_ride_retention_rules.test.js`, `app/test/features/social/{follow_link_confirm,group_ride_invite_confirm,group_ride_live_positions}_test.dart`.
+- **Ship order:** app build first, then `firestore.rules`. Older rules refuse the new deletes; the app treats those as best-effort.
+
+---
+
 ## Shared lists, group-ride notifications, §115 #1 — FIXED (2026-11-08, branch `agent/sec-throttleiq-2`, rules not deployed yet)
 - **Rules (`firestore.rules`):** a shared ride must carry `userName` (a string, may be empty), `userPhotoUrl`, `bikeId`, `bikeName` and `bikeType` as strings, polyline points that are `{lat, lng}` numbers (first and last point checked: rules can't loop) and a timestamp `createdAt` no more than an hour ahead of the server. A ride comment needs string `userName` and `userPhotoUrl`. A profile's `createdAt`/`updatedAt` must be timestamps and `bikesVisibility` one of `kBikesVisibilityLevels`. A forum post's `forumId` field must equal its path forum. A `groupRideInvite` notification needs a real group ride whose creator sends it to a rider on its `invitedIds`; a `groupRideJoined` comes from a member and goes to the ride's creator; `groupRideId` must be document-id shaped. Tests: `scripts/test/rules/poison_pill_rules.test.js`, `notifications_pin_rules.test.js`; existing suites updated.
 - **§115 #1:** `config/app.minBuild` is 35, so the legacy owner comment-delete clause is gone: every comment delete carries the ride's `comments` -1 or follows the ride's delete.

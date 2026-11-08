@@ -1805,3 +1805,13 @@ liveGroupRideCardSemantics
 
 # batch: swiped-away ride idle stop (2026-11-06)
 notifRecordingIdleBody
+
+# batch: group-ride and follow-link consent (2026-11-08)
+groupRideInviteConfirmTitle
+groupRideInviteConfirmBody
+groupRideShareLocationTitle
+groupRideShareLocationBody
+groupRideNotSharingLocation
+followLinkConfirmTitle
+followLinkConfirmBody
+followLinkUnavailable

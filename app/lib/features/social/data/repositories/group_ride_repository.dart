@@ -8,6 +8,7 @@ import '../../domain/utilities/group_ride_liveness.dart';
 import '../../domain/utilities/group_ride_members.dart';
 import '../models/group_ride_model.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
+import 'package:throttleiq/core/utils/error_reporter.dart';
 
 /// Thrown by [GroupRideRepository.joinByCode] with a message fit to show the
 /// rider verbatim — "wrong/expired code" and "ride is full" are both real,
@@ -753,12 +754,32 @@ class GroupRideRepository {
         .update({'status': 'active'});
   }
 
-  /// Ends a group ride (changes status to completed).
+  /// Ends a group ride (changes status to completed) and erases every
+  /// member's last position, so a finished ride keeps nobody's location.
   Future<void> endGroupRide(String groupRideId) async {
     await _firestore
         .collection('groupRides')
         .doc(groupRideId)
         .update(_endedFields());
+    await _erasePositions(groupRideId);
+  }
+
+  /// Deletes the shared positions doc and every `memberLocations` doc. The
+  /// creator may delete both (firestore.rules). Best-effort: the ride has
+  /// already ended, and rules deployed before this build refuse the
+  /// `memberLocations` deletes.
+  Future<void> _erasePositions(String groupRideId) async {
+    final rideRef = _rideRef(groupRideId);
+    try {
+      final legacy = await rideRef.collection('memberLocations').get();
+      await Future.wait([
+        ackOrQueued(_positionsRef(groupRideId).delete()),
+        for (final doc in legacy.docs) ackOrQueued(doc.reference.delete()),
+      ]);
+    } catch (e, st) {
+      // Offline or refused: the ride is ended either way.
+      reportSilently(e, st, where: 'groupRide.erasePositions');
+    }
   }
 
   /// What ending a ride writes. `endedAt` is informational (nothing reads it
@@ -773,17 +794,19 @@ class GroupRideRepository {
   /// Distinct from [removeMember] (a creator kicking someone) because the
   /// firestore rules treat the two very differently: self-removal is allowed
   /// for any joined member, kicking is creator-only. Also drops their live
-  /// location document so the rest of the group stops seeing a marker that
-  /// will never move again.
+  /// location (their `memberLocations` doc and their key in the shared
+  /// positions doc), so nobody keeps their last position.
   ///
   /// The creator leaving would orphan the ride, so for them this ends it
-  /// instead (status → completed).
+  /// instead (status → completed) and erases every position, as
+  /// [endGroupRide] does.
   Future<void> leaveGroupRide({
     required String groupRideId,
     required String userId,
   }) async {
     final rideRef = _rideRef(groupRideId);
 
+    var ended = false;
     await _firestore.runTransaction((txn) async {
       final snap = await txn.get(rideRef);
       if (!snap.exists) return;
@@ -791,21 +814,28 @@ class GroupRideRepository {
 
       if (data['creatorId'] == userId) {
         txn.update(rideRef, _endedFields());
+        ended = true;
         return;
       }
 
-      // Their own member document and their own uid — the only two things the
-      // rules let a departing rider touch.
+      // Their own member and location documents and their own uid. The
+      // location delete is in the transaction because rules check it against
+      // the ride as it was, while the rider is still a member — afterwards
+      // rules older than this build refuse it.
       txn.delete(_membersRef(groupRideId).doc(userId));
+      txn.delete(rideRef.collection('memberLocations').doc(userId));
       txn.update(rideRef, {
         'memberIds': FieldValue.arrayRemove([userId]),
       });
     });
 
+    if (ended) return _erasePositions(groupRideId);
+    // Not in the transaction: rules older than this build refuse removing a
+    // key from the shared doc, and that must not block leaving.
     try {
       await ackOrQueued(
-          rideRef.collection('memberLocations').doc(userId).delete());
-    } catch (_) {/* nothing published yet, or already gone */}
+          _positionsRef(groupRideId).update({userId: FieldValue.delete()}));
+    } catch (_) {/* never published here, or older rules */}
   }
 
   /// The creator removing somebody else from a ride ("kick"). See
@@ -846,10 +876,14 @@ class GroupRideRepository {
       });
     });
 
+    // Their last position goes too, so the group stops seeing it.
     try {
-      await ackOrQueued(
-          rideRef.collection('memberLocations').doc(userId).delete());
-    } catch (_) {/* nothing published yet, or already gone */}
+      await Future.wait([
+        ackOrQueued(rideRef.collection('memberLocations').doc(userId).delete()),
+        ackOrQueued(
+            _positionsRef(groupRideId).update({userId: FieldValue.delete()})),
+      ]);
+    } catch (_) {/* nothing published yet, or older rules */}
   }
 
   /// Deletes a group ride and everything hanging off it.

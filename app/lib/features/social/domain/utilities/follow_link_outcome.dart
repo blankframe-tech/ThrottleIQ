@@ -18,6 +18,13 @@ enum FollowLinkOutcome {
 
   /// The follow write was rejected.
   failed,
+
+  /// The rider's profile couldn't be read (private, or offline), so they
+  /// couldn't be shown before following — nothing written.
+  unavailable,
+
+  /// The rider was shown whom they'd follow and said no — nothing written.
+  cancelled,
 }
 
 /// The decision that needs no network: whether a follow link can be acted on
