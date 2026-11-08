@@ -3,12 +3,19 @@
 `ThrottleIqClient` (README) wraps all of this. Use this page if Maya's server calls the API directly.
 
 - **Base URL:** `https://throttleiqfb.web.app/api/partner/`
-- **Auth:** header `x-api-key: <key>` on every request. A missing, unknown or revoked key returns `401`.
-- **Format:** JSON in and out. Errors are `{ "error": "<reason>" }`. `400` means the payload was refused, so don't retry it. `404` means unknown or not yours. `5xx` means retry with backoff.
+- **Auth**, one of:
+  - `x-api-key: <key>` from **Maya's server** only. Reaches any Maya rider. Never put it in an app.
+  - `authorization: Bearer <rider token>` from **the rider's app**. Reaches only that rider: a different `riderRef` returns `403`, another rider's live link `404`, and minting tokens `403`.
+  - A missing, unknown, revoked, expired or tampered key or token returns `401`.
+- **Format:** JSON in and out. Errors are `{ "error": "<reason>" }`. `400` means the payload was refused, so don't retry it. `404` means unknown or not yours. `429` means over the rate limit (about 1200 calls a minute per partner, 60 per rider): retry after a minute. `5xx` means retry with backoff.
 - **Ids you choose** (`rideId`, `riderRef`): 1-64 characters of `A-Z a-z 0-9 _ -`.
 - Server code: `functions/src/partner-api/` (scoring in `scoring.ts`).
 
 ---
+
+## `POST v1/riders/{riderRef}/token`: a rider token (API key only)
+
+No body. The response is `201 { token, expiresAt }`. The token is valid for 24 h; mint a new one before then. It is stateless: to cut every token off at once, ask ThrottleIQ to deactivate the partner.
 
 ## `POST v1/rides`: upload a finished ride, get its score
 
@@ -52,7 +59,7 @@ The response is `200`, or `404` before her first ride:
 
 ## `DELETE v1/riders/{riderRef}`: erase a rider
 
-Deletes her rides, running score, alerts and live links. The response is `200 { riderRef, deleted }`. Her anonymous road-pool samples stay; nothing links them to her once the rides are gone.
+Deletes her rides, running score, alerts and live links. The response is `200 { riderRef, deleted }`. Her road-pool samples stay. They carry no rider or ride id and no stored per-trip id.
 
 ## Live share
 
@@ -60,7 +67,7 @@ Deletes her rides, running score, alerts and live links. The response is `200 { 
 |---|---|---|
 | `POST v1/live` | `{ riderRef, lat, lng, speedMs, batteryPct? }` | `201 { token, url, expiresAt }` |
 | `POST v1/live/{token}` | `{ lat, lng, speedMs, batteryPct?, status: "riding" or "paused" }` | `200` |
-| `DELETE v1/live/{token}` | none | `200`. The page shows "completed" |
+| `DELETE v1/live/{token}` | none | `200`. The link is revoked at once and her last position is cleared |
 
 `url` opens in any browser for 12 h. After an alert the status stays `sos` or `crash` even if a later update says `riding`. Send updates on 100 m, 15 s or a pause change (`LiveShareThrottle`).
 
@@ -68,4 +75,4 @@ Deletes her rides, running score, alerts and live links. The response is `200 { 
 
 The body is `{ riderRef, kind: "sos" | "crash" | "unusualStop", lat?, lng?, liveToken?, rideId? }`.
 
-The response is `201 { alertId, delivery, liveUrl }`. `delivery` is one of `delivered`, `no_webhook`, `failed_network` or `failed_http_<code>`. The alert is stored either way. With `liveToken`, the live page turns red. The partner webhook payload and its signature are in README §7.
+The response is `201 { alertId, delivery, liveUrl }`. `delivery` is one of `delivered`, `no_webhook`, `failed_network`, `failed_unsafe_webhook` (the webhook URL is not HTTPS on a public address at send time) or `failed_http_<code>`. Redirects are not followed: a `3xx` is `failed_http_3xx`. The alert is stored either way. With `liveToken`, the live page turns red. The partner webhook payload and its signature are in README §7.

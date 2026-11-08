@@ -8,8 +8,13 @@ import 'package:throttleiq_mayabi/throttleiq_mayabi.dart';
 /// whatever [reply] returns.
 class _Server {
   late HttpServer _s;
-  final requests =
-      <({String method, String path, String? key, Object? body})>[];
+  final requests = <({
+    String method,
+    String path,
+    String? key,
+    String? bearer,
+    Object? body
+  })>[];
   (int, Object?) Function(String method, String path) reply =
       (_, __) => (200, <String, Object?>{});
 
@@ -21,6 +26,7 @@ class _Server {
         method: req.method,
         path: req.uri.path,
         key: req.headers.value('x-api-key'),
+        bearer: req.headers.value(HttpHeaders.authorizationHeader),
         body: text.isEmpty ? null : jsonDecode(text),
       ));
       final (status, body) = reply(req.method, req.uri.path);
@@ -80,11 +86,12 @@ RideReport _report() => RideReport(
 void main() {
   late _Server server;
   late ThrottleIqClient client;
+  late Uri base;
 
   setUp(() async {
     server = _Server();
-    client = ThrottleIqClient(
-        apiKey: 'tiq_maya_test', baseUrl: await server.start());
+    base = await server.start();
+    client = ThrottleIqClient(apiKey: 'tiq_maya_test', baseUrl: base);
   });
   tearDown(() async {
     client.close();
@@ -102,6 +109,25 @@ void main() {
     expect(s.score, 91);
     expect(s.fasterThanUsual.single.typicalKmh, 30);
     expect(s.replayed, isFalse);
+  });
+
+  test('the server mints a rider token; the rider client sends it as a bearer',
+      () async {
+    server.reply = (_, __) =>
+        (201, {'token': 'tiqr.abc.def', 'expiresAt': '2026-11-09T00:00:00Z'});
+    final t = await client.mintRiderToken('mayabi-42');
+    expect(server.requests.single.method, 'POST');
+    expect(
+        server.requests.single.path, '/api/partner/v1/riders/mayabi-42/token');
+    expect(t.token, 'tiqr.abc.def');
+    expect(t.expiresAt, DateTime.utc(2026, 11, 9));
+
+    final app = ThrottleIqClient.forRider(riderToken: t.token, baseUrl: base);
+    server.reply = (_, __) => (200, _score);
+    await app.uploadRide(_report());
+    app.close();
+    expect(server.requests.last.bearer, 'Bearer tiqr.abc.def');
+    expect(server.requests.last.key, isNull);
   });
 
   test('errors carry status and the server message; 4xx is not retryable',

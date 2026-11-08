@@ -6,6 +6,8 @@
  * sessions, alerts with a signed webhook, and the road-stats fold.
  */
 
+process.env.PARTNER_RIDER_SECRET = 'test-only-secret-0123456789abcdef0123456789';
+
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createHmac } = require('node:crypto');
@@ -21,6 +23,7 @@ const SEG_B = 'wh0r3qt';
 async function seedPartner({ webhook = true } = {}) {
   await clearEmulators();
   core.clearKeyCache();
+  core.clearRateLimits();
   await db.doc('partners/maya').set({
     name: 'Maya Ride',
     active: true,
@@ -31,8 +34,14 @@ async function seedPartner({ webhook = true } = {}) {
   await db.doc(`partnerKeys/${core.sha256(KEY + 'other')}`).set({ partnerId: 'other', active: true });
 }
 
+// A webhook host that resolves to a public address (no real DNS in tests).
+const PUBLIC_DNS = async () => ['93.184.216.34'];
+
 const call = (method, path, body, key = KEY, deps) =>
   route(db, { method, path, headers: { 'x-api-key': key }, body }, deps);
+const asRider = (token, method, path, body, deps) =>
+  route(db, { method, path, headers: { authorization: `Bearer ${token}` }, body }, deps);
+const sampleDoc = (seg, rideId) => db.doc(`roadSpeedSamples/${seg}/samples/${core.sampleIdOf('maya', rideId, seg)}`);
 
 function rideBody(over = {}) {
   const end = new Date(Date.now() - 60_000);
@@ -90,10 +99,15 @@ test('ride ingest scores against the pool before adding to it, and is idempotent
   assert.equal(first.body.score, 91);
 
   // Samples joined the shared pool in the app's shape, tagged by source.
-  const sample = await db.doc(`roadSpeedSamples/${SEG_B}/samples/maya__r1`).get();
+  const sample = await sampleDoc(SEG_B, 'r1').get();
   assert.equal(sample.get('speedKmh'), 75);
   assert.equal(sample.get('source'), 'maya');
   assert.equal(typeof sample.get('hour'), 'number');
+  // Sample ids hold no rider or ride id and differ per cell; time is to the hour.
+  const ids = (await db.collectionGroup('samples').get()).docs.map((d) => d.id);
+  assert.ok(ids.every((id) => !id.includes('r1') && !id.startsWith('maya')), ids.join());
+  assert.notEqual(sampleDoc(SEG_A, 'r1').id, sampleDoc(SEG_B, 'r1').id);
+  assert.equal(sample.get('createdAt').toMillis() % 3_600_000, 0);
   assert.equal((await db.doc('partnerRides/maya__r1').get()).get('samplesWritten'), true);
 
   // Retry: same score back, rider counted once.
@@ -137,6 +151,9 @@ test('live share: start, update, end; viewer-shaped doc; other partners locked o
   assert.equal(doc.get('shareable'), true);
   assert.equal(doc.get('status'), 'riding');
   assert.ok(doc.get('expiresAt').toDate() > new Date());
+  // The link is readable by anyone holding it: no rider key in it.
+  assert.equal(doc.get('riderKey'), undefined);
+  assert.ok(!JSON.stringify(doc.data()).includes(core.riderKeyOf('maya', 'mayabi-42')));
 
   assert.equal((await call('POST', `/v1/live/${token}`, { lat: 23.79, lng: 90.42, speedMs: 0, status: 'paused' })).status, 200);
   doc = await db.doc(`liveSessions/${token}`).get();
@@ -148,6 +165,11 @@ test('live share: start, update, end; viewer-shaped doc; other partners locked o
   doc = await db.doc(`liveSessions/${token}`).get();
   assert.equal(doc.get('status'), 'completed');
   assert.equal(doc.get('active'), false);
+  // Ending revokes the link (the viewer rule keys on shareable) and drops
+  // her last position.
+  assert.equal(doc.get('shareable'), false);
+  assert.equal(doc.get('lastLat'), undefined);
+  assert.equal(doc.get('lastLng'), undefined);
   assert.equal((await call('POST', `/v1/live/${token}`, { lat: 1, lng: 1, speedMs: 0 })).status, 404);
 });
 
@@ -159,7 +181,7 @@ test('SOS alert: stored, live link turns sos and stays sos, webhook signed', asy
     sent.push({ url, init });
     return { ok: true, status: 200 };
   };
-  const res = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos', lat: 23.781, lng: 90.411, liveToken: token, rideId: 'r1' }, KEY, { fetch: fakeFetch });
+  const res = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos', lat: 23.781, lng: 90.411, liveToken: token, rideId: 'r1' }, KEY, { fetch: fakeFetch, resolve: PUBLIC_DNS });
   assert.equal(res.status, 201, JSON.stringify(res.body));
   assert.equal(res.body.delivery, 'delivered');
 
@@ -170,6 +192,7 @@ test('SOS alert: stored, live link turns sos and stays sos, webhook signed', asy
   assert.equal(payload.liveUrl, `https://throttleiqfb.web.app/live/${token}`);
   const sig = createHmac('sha256', 'whsec').update(sent[0].init.body).digest('hex');
   assert.equal(sent[0].init.headers['x-throttleiq-signature'], sig);
+  assert.equal(sent[0].init.redirect, 'manual');
 
   const alert = await db.doc(`partnerAlerts/${res.body.alertId}`).get();
   assert.equal(alert.get('delivery'), 'delivered');
@@ -183,10 +206,10 @@ test('SOS alert: stored, live link turns sos and stays sos, webhook signed', asy
 test('alert delivery failures are recorded, not thrown', async () => {
   await seedPartner();
   const down = async () => { throw new Error('ECONNREFUSED'); };
-  const r1 = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'crash' }, KEY, { fetch: down });
+  const r1 = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'crash' }, KEY, { fetch: down, resolve: PUBLIC_DNS });
   assert.equal(r1.status, 201);
   assert.equal(r1.body.delivery, 'failed_network');
-  const r500 = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'unusualStop' }, KEY, { fetch: async () => ({ ok: false, status: 503 }) });
+  const r500 = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'unusualStop' }, KEY, { fetch: async () => ({ ok: false, status: 503 }), resolve: PUBLIC_DNS });
   assert.equal(r500.body.delivery, 'failed_http_503');
   assert.equal((await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'panic' })).status, 400);
 
@@ -223,7 +246,91 @@ test('deleting a rider erases her rides, score, alerts and links, and only hers'
   assert.equal((await db.doc(`liveSessions/${token}`).get()).exists, false);
   assert.equal((await call('GET', '/v1/riders/another-rider')).status, 200);
   // Anonymous pool samples stay.
-  assert.equal((await db.doc(`roadSpeedSamples/${SEG_A}/samples/maya__r1`).get()).exists, true);
+  assert.equal((await sampleDoc(SEG_A, 'r1').get()).exists, true);
+});
+
+test('rider tokens: minted only with the partner key, and scoped to one rider', async () => {
+  await seedPartner({ webhook: false });
+  const mint = await call('POST', '/v1/riders/mayabi-42/token');
+  assert.equal(mint.status, 201, JSON.stringify(mint.body));
+  const tokA = mint.body.token;
+  const tokB = (await call('POST', '/v1/riders/mayabi-43/token')).body.token;
+  assert.ok(new Date(mint.body.expiresAt) > new Date());
+
+  // A rider token can't mint tokens.
+  assert.equal((await asRider(tokA, 'POST', '/v1/riders/mayabi-43/token')).status, 403);
+  // Bad or missing bearer is 401.
+  assert.equal((await asRider('tiqr.nope.nope', 'GET', '/v1/riders/mayabi-42')).status, 401);
+
+  // Her own data: fine.
+  assert.equal((await asRider(tokA, 'POST', '/v1/rides', rideBody())).status, 200);
+  assert.equal((await asRider(tokB, 'POST', '/v1/rides', rideBody({ rideId: 'b1', riderRef: 'mayabi-43' }))).status, 200);
+  assert.equal((await asRider(tokA, 'GET', '/v1/riders/mayabi-42')).status, 200);
+
+  // Someone else's: 403 for read, delete, ride upload, live and alerts.
+  assert.equal((await asRider(tokA, 'GET', '/v1/riders/mayabi-43')).status, 403);
+  assert.equal((await asRider(tokA, 'DELETE', '/v1/riders/mayabi-43')).status, 403);
+  assert.equal((await asRider(tokA, 'POST', '/v1/rides', rideBody({ rideId: 'x9', riderRef: 'mayabi-43' }))).status, 403);
+  assert.equal((await asRider(tokA, 'POST', '/v1/live', { riderRef: 'mayabi-43', lat: 23.78, lng: 90.41, speedMs: 0 })).status, 403);
+  assert.equal((await asRider(tokA, 'POST', '/v1/alerts', { riderRef: 'mayabi-43', kind: 'sos' })).status, 403);
+  assert.equal((await call('GET', '/v1/riders/mayabi-43')).body.rides, 1);
+
+  // B's live link can't be moved, ended or used for an alert by A.
+  const live = (await asRider(tokB, 'POST', '/v1/live', { riderRef: 'mayabi-43', lat: 23.78, lng: 90.41, speedMs: 0 })).body;
+  assert.equal((await asRider(tokA, 'POST', `/v1/live/${live.token}`, { lat: 1, lng: 1, speedMs: 0 })).status, 404);
+  assert.equal((await asRider(tokA, 'DELETE', `/v1/live/${live.token}`)).status, 404);
+  assert.equal((await asRider(tokA, 'POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos', liveToken: live.token })).status, 404);
+  assert.equal((await asRider(tokB, 'POST', `/v1/live/${live.token}`, { lat: 23.79, lng: 90.42, speedMs: 1 })).status, 200);
+
+  // B erases herself; A is untouched; the partner key still reaches A.
+  assert.equal((await asRider(tokB, 'DELETE', '/v1/riders/mayabi-43')).status, 200);
+  assert.equal((await db.doc(`liveSessions/${live.token}`).get()).exists, false);
+  assert.equal((await call('GET', '/v1/riders/mayabi-43')).status, 404);
+  assert.equal((await call('GET', '/v1/riders/mayabi-42')).status, 200);
+});
+
+test('webhook: redirects are not followed, private hosts are refused', async () => {
+  await seedPartner();
+  const sent = [];
+  const redirecting = async (url, init) => {
+    sent.push({ url, init });
+    return { ok: false, status: 302, headers: new Map([['location', 'http://169.254.169.254/']]) };
+  };
+  const r = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos' }, KEY, { fetch: redirecting, resolve: PUBLIC_DNS });
+  assert.equal(r.status, 201);
+  assert.equal(r.body.delivery, 'failed_http_302');
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].init.redirect, 'manual');
+  assert.equal((await db.doc(`partnerAlerts/${r.body.alertId}`).get()).get('delivery'), 'failed_http_302');
+
+  // The host is re-resolved on every send: a private answer blocks it.
+  sent.length = 0;
+  const internal = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos' }, KEY, { fetch: redirecting, resolve: async () => ['93.184.216.34', '10.0.0.5'] });
+  assert.equal(internal.body.delivery, 'failed_unsafe_webhook');
+  assert.equal(sent.length, 0);
+
+  // A stored webhook that isn't https is refused at send time too.
+  await db.doc('partners/maya').update({ webhookUrl: 'http://ops.maya.example/hook' });
+  core.clearKeyCache();
+  const plain = await call('POST', '/v1/alerts', { riderRef: 'mayabi-42', kind: 'sos' }, KEY, { fetch: redirecting, resolve: PUBLIC_DNS });
+  assert.equal(plain.body.delivery, 'failed_unsafe_webhook');
+  assert.equal(sent.length, 0);
+});
+
+test('rate limits: per rider and per partner key', async () => {
+  await seedPartner({ webhook: false });
+  const tok = (await call('POST', '/v1/riders/mayabi-42/token')).body.token;
+  let last;
+  for (let i = 0; i <= core.RIDER_RATE_PER_MIN; i++) last = await asRider(tok, 'GET', '/v1/riders/mayabi-42');
+  assert.equal(last.status, 429);
+  // The partner key naming the same rider hits the same rider bucket.
+  assert.equal((await call('GET', '/v1/riders/mayabi-42')).status, 429);
+  // Another rider is unaffected.
+  assert.equal((await call('GET', '/v1/riders/mayabi-43')).status, 404);
+
+  core.clearRateLimits();
+  for (let i = 0; i < core.KEY_RATE_PER_MIN; i++) core.checkRate('key:maya', core.KEY_RATE_PER_MIN);
+  assert.equal((await call('GET', '/v1/riders/someone')).status, 429);
 });
 
 test('unknown paths and methods are 404', async () => {
