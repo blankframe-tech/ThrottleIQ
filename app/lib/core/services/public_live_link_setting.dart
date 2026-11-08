@@ -33,7 +33,7 @@ class PublicLiveLinkSetting {
 
   static const collection = 'handleLinks';
 
-  /// Must match `linkKey` in public/live-viewer.html.
+  /// Must match `linkKey` in public/live-viewer.js.
   static String linkKey(String uid, String password) =>
       sha256.convert(utf8.encode('throttleiq-r:$uid:$password')).toString();
 

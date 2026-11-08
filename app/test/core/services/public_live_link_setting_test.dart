@@ -19,7 +19,7 @@ void main() {
     expect(await PublicLiveLinkSetting.isEnabled(), isFalse);
   });
 
-  test('linkKey matches the viewer page (live-viewer.html linkKey)', () {
+  test('linkKey matches the viewer page (live-viewer.js linkKey)', () {
     // sha256("throttleiq-r:u1:hunter22"); the page must hash the same string.
     expect(PublicLiveLinkSetting.linkKey('u1', 'hunter22'),
         '7d4dbde7ff972b126dba87e79932c15e0a816c780197f45d7b65fd1feeca53ed');

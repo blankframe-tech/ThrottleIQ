@@ -8,7 +8,7 @@ Based on the actual permissions in `app/android/app/src/main/AndroidManifest.xml
 https://throttleiqfb.web.app/privacy.html
 ```
 
-Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. Must be live and anonymously reachable **before** submitting — a background-location app is rejected without it. The answers below must stay consistent with what that page says; if you change one, change the other.
+Source: `public/privacy.html`, deployed from a pushed `main` with `bash scripts/deploy_hosting.sh`. Must be live and anonymously reachable **before** submitting — a background-location app is rejected without it. The answers below must stay consistent with what that page says; if you change one, change the other.
 
 ## Permissions actually declared in the manifest
 - `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`, `ACCESS_BACKGROUND_LOCATION`
@@ -32,7 +32,7 @@ Source: `public/privacy.html`, deployed with `firebase deploy --only hosting`. M
 |---|---|---|---|
 | Precise location | Yes | Yes* | App functionality (ride recording, live share, nearby places) |
 
-\* Mark "Shared" — a live-share link exposes real-time location to whoever holds the link, and a shared/public ride can expose the route to other users. If you're not comfortable calling that "shared" in the Play sense, an alternative is to restrict this answer to "collected, not shared" only if you remove/disable the live-share and public-feed features before launch — but as shipped today, mark it shared.
+\* Mark "Shared" — a live-share link (and the optional `/r/` password link, which also keeps the last ride's end point between rides) exposes real-time location to whoever holds the link, and a shared/public ride can expose the route to other users. If you're not comfortable calling that "shared" in the Play sense, an alternative is to restrict this answer to "collected, not shared" only if you remove/disable the live-share and public-feed features before launch — but as shipped today, mark it shared.
 
 ### Personal info
 | Type | Collected? | Shared? | Purpose |

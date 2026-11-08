@@ -18,11 +18,14 @@ explains the background-location use.
 
 The page's source of truth is **`public/privacy.html`** at the repo root — it is
 served by Firebase Hosting (`firebase.json` → `hosting.public: "public"`, project
-`throttleiqfb`). Publish or update it with:
+`throttleiqfb`). Commit and push the change to `main`, then publish it with:
 
 ```bash
-firebase deploy --only hosting
+bash scripts/deploy_hosting.sh
 ```
+
+The script refuses a dirty `public/` or `firebase.json`, or a HEAD that is not on
+`origin/main`, so the live page always matches the repo.
 
 Verify it loads publicly (no sign-in, no redirect chain) before pasting the URL
 into Play Console — Play's reviewers fetch it anonymously.

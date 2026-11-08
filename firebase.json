@@ -46,6 +46,12 @@
         ]
       },
       {
+        "regex": "^/(live-viewer\\.html|live/.*|r/.*)$",
+        "headers": [
+          { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://unpkg.com https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://*.firebasedatabase.app wss://*.firebasedatabase.app; img-src 'self' https://tile.openstreetmap.org https://*.tile.openstreetmap.org data:; style-src 'self' 'unsafe-inline' https://unpkg.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" }
+        ]
+      },
+      {
         "source": "/.well-known/**",
         "headers": [
           { "key": "Content-Type", "value": "application/json" },
@@ -58,6 +64,9 @@
           { "key": "Content-Type", "value": "application/json" }
         ]
       }
+    ],
+    "redirects": [
+      { "source": "/", "destination": "/install", "type": 302 }
     ],
     "rewrites": [
       {

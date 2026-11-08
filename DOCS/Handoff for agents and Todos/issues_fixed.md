@@ -11,6 +11,17 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 2026-11-08 Hosting: live viewer CSP and SRI, root redirect, Hosting deploys only from main, privacy §6 — FIXED IN CODE (branch `agent/sec-throttleiq-9`, not deployed)
+
+- **101.S7.** The four gstatic Firebase SDK tags in `public/live-viewer.html` now carry `integrity` (sha384) and `crossorigin="anonymous"`, like Leaflet. The page script moved out of the HTML into `public/live-viewer.js` (same code; the Copy button uses `addEventListener` instead of `onclick=`), so `firebase.json` can send a CSP for `/live-viewer.html`, `/live/**` and `/r/**` with no `'unsafe-inline'` for scripts. It allows scripts from this site, gstatic, unpkg and reCAPTCHA (App Check loads reCAPTCHA Enterprise at runtime), frames from reCAPTCHA, connections to `*.googleapis.com` and the RTDB hosts, and images from `tile.openstreetmap.org`. Every other path keeps `frame-ancestors 'none'` only.
+- `/` now redirects (302) to `/install` instead of Hosting's 404.
+- `scripts/deploy_hosting.sh` is the only Hosting deploy: it refuses when `public/` or `firebase.json` is dirty, or HEAD is not on `origin/main`. `scripts/deploy.sh` stops if the gate (`flutter gen-l10n`) changed tracked files, before it pushes or builds.
+- `privacy.html`: §6 describes the `/r/<handle>` password link (off by default, every ride, keeps the last ride's end point, how to turn it off); §8 adds its retention; the Cloudinary rows list every photo type, including bike photos, and say a photo file is sent as is; §2 no longer promises the road-speed pool can never be linked back.
+- Tests: `scripts/test/hosting_repo_hygiene.test.js` (SRI on every CDN tag, the CSP and its scope, no inline script, the redirect, the deploy guards, the §6 text).
+- **Owner:** push, then `bash scripts/deploy_hosting.sh`, then open a real `/live/` and `/r/` link and check the console.
+
+---
+
 ## Consent before group-ride sharing and follow links; group rides keep no positions — FIXED in code (2026-11-08, branch `agent/sec-throttleiq-6`), not yet shipped
 
 - **Group-ride invite:** tapping an invite in Notifications asks "Join <name>'s ride?" and says joining shares live location; **Cancel** writes nothing (`notifications_screen.dart`).

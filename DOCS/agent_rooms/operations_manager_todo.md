@@ -14,7 +14,7 @@
     2. Execute dry run: `FIREBASE_PROJECT_ID=throttleiqfb node scripts/oneoff/migrate_emails_private.js`.
     3. Execute live run with confirmation: `FIREBASE_PROJECT_ID=throttleiqfb node scripts/oneoff/migrate_emails_private.js --yes-i-really-mean-it`.
     4. Run `node scripts/oneoff/set_admin_claim.js` to set custom claims on admin accounts and remove the temporary Gmail fallback in `firestore.rules`.
-    5. Update `public/privacy.html` §5 to state that email addresses are strictly private, then deploy Hosting: `firebase deploy --only hosting`.
+    5. Update `public/privacy.html` §5 to state that email addresses are strictly private, then push to `main` and deploy Hosting: `bash scripts/deploy_hosting.sh`.
 
 - [ ] **2. Finalize Google Play Data Safety Form ([`owner_works_now.html #8`](../../../../housekeeping/owner_works_now.html), [`data_safety_and_permissions.md`](../General/Files%20for%20Stores/store_listing/data_safety_and_permissions.md)):**
   - **Status 2026-10-22 (branch `integration/agent-rooms-2026-10-22`):** draft: `DOCS/General/Files for Stores/store_listing/throttleiq_data_safety.DRAFT.csv` + `data_safety_review.DRAFT.md` (23 answers changed, 7 owner decisions, `privacy.html` gaps listed).

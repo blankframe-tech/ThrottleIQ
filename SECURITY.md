@@ -115,7 +115,7 @@ Do these in order.
    and become findable by email after they click it and next open the app.
    Then update `public/privacy.html` §5 (the email is no longer readable by
    other riders; someone who already knows a verified address can find the
-   account) and deploy Hosting: `firebase deploy --only hosting --project throttleiqfb`.
+   account) and deploy Hosting from a pushed main: `bash scripts/deploy_hosting.sh`.
 4. **Realtime Database rules**, only if an RTDB instance exists (the
    rules now deny everything):
    `firebase deploy --only database --project throttleiqfb`

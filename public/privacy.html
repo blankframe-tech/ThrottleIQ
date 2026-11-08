@@ -232,9 +232,9 @@
             <td>Your private cloud area, readable only by you. Anyone who scans your printed or shared QR code sees what is on it. Deleted with your account</td>
           </tr>
           <tr>
-            <td><strong>Photos you choose to attach</strong> — profile picture, photos on shared rides</td>
+            <td><strong>Photos you choose to attach</strong> — profile picture, bike photos, photos on shared rides, forum posts and places you add</td>
             <td>To display them in the app</td>
-            <td>Uploaded to Cloudinary (see §4). Bike photos stay on your phone only</td>
+            <td>Uploaded to Cloudinary (see §4). A bike photo is uploaded when you are signed in, so it comes back after a reinstall</td>
           </tr>
           <tr>
             <td><strong>Voice clips</strong> — short push-to-talk recordings (under 60 seconds each), only while you hold the talk button inside a group ride</td>
@@ -385,7 +385,7 @@
           </tr>
           <tr>
             <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
-            <td>Only the files you choose to upload: your profile picture, any photo you attach to a shared ride, and group-ride voice clips. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides, your location, or your account details.</td>
+            <td>Only the files you choose to upload: your profile picture, bike photos, photos you attach to a shared ride, a forum post or a place, and group-ride voice clips. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides or your account details. A photo is sent as the file it is, so any details stored inside the file, such as the place a phone camera recorded when it took the picture, go with it.</td>
           </tr>
           <tr>
             <td><strong>OpenStreetMap tile servers</strong> — <code>tile.openstreetmap.org</code></td>
@@ -468,6 +468,27 @@
         </ul>
       </div>
 
+      <h3>The permanent password link (/r/@&lt;handle&gt;)</h3>
+      <p>There is also an optional permanent link,
+      <code>https://throttleiqfb.web.app/r/&lt;handle&gt;</code>, for family or for finding a lost
+      phone. It is <strong>off by default</strong>. You turn it on in Settings → Privacy &amp; Safety →
+      Password link, where you set a password of at least 12 characters. The password itself is
+      never stored or sent; only a one-way hash of it is.</p>
+      <ul>
+        <li>While it is on, <strong>every ride</strong> shares to this link: whoever opens it and
+        enters the password sees the same live position, speed, battery and status as a
+        <code>/live/</code> link.</li>
+        <li>Between rides it keeps showing <strong>where your last ride ended</strong> and when, with
+        a link to open that spot in a map app. For many riders that is near home or work. It is
+        replaced at the end of the next ride, and is not covered by the privacy zones that trim
+        shared rides.</li>
+        <li>It does not expire. Anyone with your handle and the password can open it, and they can
+        pass both on. Treat the password like the link itself.</li>
+        <li><strong>To stop it:</strong> turn Password link off in Settings → Privacy &amp; Safety. The
+        link and the stored last position are deleted straight away. Setting a new password turns
+        the old one off. Deleting your account also deletes it (§9).</li>
+      </ul>
+
       <h2>7. Crash detection</h2>
 
       <p>Crash detection is still being tested and <strong>does not alert anyone</strong>: no
@@ -519,6 +540,8 @@
         account.</li>
         <li><strong>Live-share sessions:</strong> stop being viewable 24 hours after they start;
         the underlying record persists until deleted (see §6).</li>
+        <li><strong>Password link (/r/):</strong> while it is on, the end point of your last ride is
+        kept until your next ride replaces it or you turn the link off (see §6).</li>
         <li><strong>Deleted content:</strong> when you delete a ride, post, review, or emergency
         contact in the app, the record is removed. Photos already uploaded to Cloudinary are not
         automatically removed when the post referencing them is deleted — email the address below
