@@ -8,9 +8,11 @@ number. Done items are deleted, not ticked; git history keeps them._
 ## Release and deploy
 
 - [ ] **Security sweep follow-ups (new 2026-10-30, PR #98, GitHub #92 #93 #94 #96 #97):** sweep
-      rules deployed 2026-10-31 from `main` at `1044c3ea` (done); rotate the Play review account password (old one is in git history); restrict the
-      Cloudinary `throttleiq_unsigned` preset; check the Firebase API key restrictions; decide on
-      `secret/`. Before functions go live on Blaze, confirm the crash-alert caps (5 contacts, 3 alerts
+      rules deployed 2026-10-31 from `main` at `1044c3ea` (done); review password rotated
+      2026-11-01 (done). Left: run the test-account cleanup
+      (`scripts/oneoff/cleanup_qa_test_riders.js`, dry run first) and update or close #92–#94;
+      media upload limits; check the Firebase API key restrictions; decide on `secret/`. Details in
+      the owner's private notes (`DOCS/private/`, git-ignored). Before functions go live on Blaze, confirm the crash-alert caps (5 contacts, 3 alerts
       an hour). Details: `security_sweep_2026-10-30.md` "Before you deploy".
 - [ ] **Deploy (#30, #31):** rules, indexes and Hosting last went out 2026-10-27 (critique fixes
       included). Left: Cloud Functions once on Blaze (deletion, retention, chat moderation).
@@ -33,8 +35,6 @@ number. Done items are deleted, not ticked; git history keeps them._
       `forums/throttleiq_notice_board/posts` not written by an admin.
 - [ ] **Legacy likes, steps 2-3 (#45, new 2026-10-22):** after that release, raise
       `config/app.minBuild`, then delete the `likes` rule and deploy rules (issues §80).
-- [ ] **App Check enforcement (#17):** only after riders are on a build that sends tokens.
-      Enforcing early locks out every older build.
 - [ ] **Check that the Firestore quota alert emails reach you (#24).** The rehearsal sent 6 to
       blankframe.technologies@gmail.com on 2026-10-21. If they are in Spam, mark them Not spam.
 
@@ -73,8 +73,8 @@ number. Done items are deleted, not ticked; git history keeps them._
       Firebase API keys.
 - [ ] **CodeQL (#49, new 2026-10-22):** the push of `a0bf4f4f` bypassed the main ruleset while CodeQL
       was pending; check its result.
-- [ ] **Cloudinary (#11):** size cap and usage alert on the `throttleiq_unsigned` preset (formats are
-      locked). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
+- [ ] **Cloudinary (#11):** finish the upload limits and usage alert (details in the private
+      notes). Before any functions deploy, confirm public IDs keep the `<kind>/<uid>/` prefix, or
       the deletion sweep's ownership check skips every asset.
 - [ ] **Security scans (#55, new 2026-10-28):** `security.yml` (gitleaks + osv-scanner) and
       `.gitleaks.toml` are written but uncommitted; tell an agent to commit and push them.

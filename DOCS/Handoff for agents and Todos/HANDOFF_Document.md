@@ -121,7 +121,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 | Moderation | Reports plus manual admin review within 24 h (owner item 15). |
 | Google data in Places | Ratings dropped (2026-10-19). Keeping or removing the scraped places: owner item 1. |
 | First Play submission | Keeps background location and the full-screen intent, with declarations (owner item 8, 2026-10-21). |
-| App Check | Enforce on Firestore once riders install from Play (owner item 17). |
+| App Check | Enforced on Firestore since 2026-11-01 (see the backend table). Left: App Attest once the paid Apple team is set up. |
 | Apple Developer Program | Enrol (owner item 21, 2026-10-21). |
 | Map tiles | Thunderforest `atlas` in release builds; the key is in gitignored `secret/tiles.env`, which `scripts/deploy.sh` reads. Free tier: 150k tiles a month. |
 | Impact records | Cloud `impactEvents` copies outlive a local ride delete (2026-10-15 merge). |
@@ -136,7 +136,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 | App id | `com.bft.throttleiq` (Android and iOS) |
 | Version, schema | `1.0.0-beta.4.8.0+30`; local DB schema v29 (`database_helper.dart`) |
 | Tests | 2026-10-21/22: about 2,300 Flutter tests, 315 rules tests, functions unit and emulator suites. All through `scripts/check.sh`. |
-| File storage | Cloudinary, cloud `vjvcigkt`, unsigned preset `throttleiq_unsigned` (limits: owner item 11). No Firebase Storage. |
+| File storage | Cloudinary, cloud `vjvcigkt` (upload hardening pending: owner item 11). No Firebase Storage. |
 | Signing | `throttleiq-release.keystore` (repo root, gitignored, backed up 2026-09-21) and `app/android/key.properties`. Moving it out of the Drive-synced repo: owner item 9. |
 | Accounts | GCP project owner: `blankframe.technologies@gmail.com`. In-app admin: `the.abraar.rar@gmail.com` (`admin` claim, or the email fallback in `firestore.rules`, §110.4). Privacy and deletion contact: hello@blankframe.tech. |
 | Play publishing | Service account `throttleiq-play-publisher` in GCP project `throttle-iq-gcc1`; key in gitignored `secrets/`. |
@@ -198,8 +198,8 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
   - Sideload screen: "Apply for alpha testing" (WhatsApp, asks for the Play email), "Try demo mode" (feature tour; Show-me hidden; ends back on the screen), Play Store.
   - Update gate: live `config/app` listener; Android button opens Google Play, iOS keeps the install page (shortcut until an App Store listing).
   - `SECURITY.md`: swag bounty (tee + cha-nashta-adda; international pays shipping), known issues not eligible, safe harbor. Pinned announcement issue drafted.
-  - E1 #92: Play review password rotated (owner, 2026-11-01); 30 `@qa-seed.invalid` riders still to delete with `cleanup_qa_test_riders.js`. History rewrite on hold (4 forks keep the strings anyway).
-  - Cloudinary `throttleiq_unsigned`: overwrite off, allowed formats `jpg,jpeg,png,webp,heic,heif,m4a` (no max-size field in the preset).
+  - E1 #92: Play review password rotated (owner, 2026-11-01); test-account cleanup still to run (owner, `needs_attention.md`).
+  - Cloudinary: upload limits partly set (details in the owner's git-ignored `DOCS/private/` notes).
 - **`deploy.sh` follows the new deploy rule:** it builds the AAB again (step 3/5, `--skip-android` to skip) and writes `release-notes-<versionCode>.md` beside it. The file lists the commits since the last AAB (taken from the newest notes file's `built from … at <sha>` line) and has `<en-US>` / `<bn-BD>` TODO blocks that the deploy agent fills in. It stops before committing if the versionCode isn't above the last AAB's (so the next build needs `+38`). The iPhone step prefers Abraar's iPhone. The `deploy` skill and the rule's flag list are updated to match. Not run end to end yet.
 - **Build 1.0.0-beta.4.14.0 (+37):** AAB for a manual Play upload; release notes (EN + BN) in `app/build/app/outputs/bundle/release/release.md`. Adds the Year in Review story and video, and the Log Fuel widget. Release build installed on the iPhone. +36 was already built, so its versionCode can't be reused.
 - **Build 1.0.0-beta.4.13.0 (+36):** pubspec bumped and AAB built from `53f1d1c9` (upload key `8542b8ad…`) for a manual Play upload; bilingual Play release notes in `app/build/app/outputs/bundle/release/release note.md`. Carries the year in review redesign and follow-ups. Release build installed and launched on the iPhone. `check.sh` not run for this build; no GitHub release or tag.

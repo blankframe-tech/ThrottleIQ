@@ -32,25 +32,11 @@ but each one leaves a smaller item behind:
 
 > The resolved parts and the full context of this section are in `issues_fixed.md` §33.
 
-### 33.5 Cloudinary unsigned-upload credentials are public and unbounded — HIGH
+### 33.5 Media uploads — known: hardening pending, not eligible
 
-`app/lib/core/services/cloudinary_upload_service.dart:62-63` ships the cloud
-name (`vjvcigkt`) and the unsigned upload preset (`throttleiq_unsigned`) in the
-binary; `strings` on the APK/IPA pulls them out. Anyone can then POST images,
-video or audio straight to Cloudinary (`/image/upload`, `/video/upload`) into
-any folder, with no ThrottleIQ account, no auth and no rate limit. That is a
-quota-exhaustion and abusive-hosting vector: a Cloudinary ToS suspension would
-take down every avatar, ride photo and group-ride voice note at once. Voice
-notes also sit at permanent public URLs. §63.3 and §83.16 are the same finding.
-
-- **Now (owner item #11, partly done):** in the Cloudinary console, cap file
-  size and formats on the `throttleiq_unsigned` preset and set a usage alert.
-  No code change.
-- **Real fix, after Blaze (owner item #3):** a callable Cloud Function mints a
-  short-lived signature with a server-only `CLOUDINARY_API_SECRET`, and
-  `CloudinaryUploadService` asks for one before each upload. Verify against a
-  real Cloudinary account and deployed Functions; a blind change risks
-  breaking every upload path (avatars, ride photos, voice notes).
+Signed uploads need Cloud Functions (Blaze, owner item #3) and an app build;
+the interim console limits are owner item #11. Details, file paths and the
+plan are in the owner's private notes (`DOCS/private/`, git-ignored). §63.3 and §83.16 are the same item.
 
 ---
 
@@ -58,17 +44,12 @@ notes also sit at permanent public URLs. §63.3 and §83.16 are the same finding
 
 > The resolved parts and the full context of this section are in `issues_fixed.md` §62.
 
-### 62.12 No App Check enforcement, no rate limiting — MEDIUM
+### 62.12 Write rate limiting — known: hardening pending, not eligible
 
-Nothing in `firestore.rules` throttles write volume for ride shares, forum
-posts, chat messages, reviews or reports, so a scripted client can flood
-feeds at will and, with §62.2's leftover, pad leaderboards. App Check is
-active in the client (§83.19, `app/lib/main.dart` `_activateAppCheck()`)
-but not enforced: owner items #17 (when to enforce) and #32 (the sideload
-gate). Enforce only once a build with App Check is what riders run, or older
-builds get locked out. Rate limits need either Cloud Functions (Blaze) or
-per-user counter docs checked in the rules; owner item #33 asks the same
-question for reports.
+App Check has been enforced on Cloud Firestore since 2026-11-01
+(`HANDOFF_Document.md` backend table). Rate limits are still to do; they need
+Cloud Functions (Blaze) or counter docs checked in the rules (owner item #33
+asks the same for reports). Details in the owner's private notes (`DOCS/private/`, git-ignored).
 
 ### 62.13 Architecture notes (not bugs, but raise the odds of the next one)
 
@@ -86,14 +67,13 @@ question for reports.
 
 ---
 
-## 64. Open parts of §64 (chat `permission-denied` report) — 63.3 Cloudinary unsigned preset NOT FIXED; the resolved parts are in `issues_fixed.md` §64
+## 64. Open parts of §64 (chat `permission-denied` report) — 63.3 media upload hardening still open; the resolved parts are in `issues_fixed.md` §64
 
 > The resolved parts and the full context of this section are in `issues_fixed.md` §64.
 
-### 63.3 Cloudinary unsigned upload preset lets anyone who decompiles the app bypass it entirely — MEDIUM
+### 63.3 Media uploads — known: hardening pending, not eligible
 
-Same finding as §33.5; the status, the interim mitigation and the real fix
-are tracked there.
+Same item as §33.5; tracked there.
 
 ---
 
@@ -256,7 +236,7 @@ every tick in a dead zone, and the §104.2 positions poll, same reason); baselin
 and `profile.parseBike` report again on every read of the same broken row; add
 a once-per-key guard if that gets noisy.
 
-### 83.16 (part) — the Cloudinary preset is still an open upload endpoint
+### 83.16 (part) — media upload hardening
 
 Same finding as §33.5; tracked there.
 
@@ -479,10 +459,8 @@ tracked in §83. The original writeup is in git history:
 - **91.1 — LOW — `bikesVisibleTo(uid)` does a `get()` of the owner's profile per bike read**
   (`firestore.rules:102-104`). These are billed rules reads and count against the 10/20 access
   limits. Fix: denormalise the visibility onto the bike doc.
-- **91.2 — LOW — `crashNotifications` create has no rate limit** (`firestore.rules:894`). The
-  doc id must equal the `rideId`, but ride ids are client-chosen, so a signed-in client can
-  still write unlimited `pending` docs for itself. Each would trigger a Cloud Function once
-  functions deploy (Blaze). App Check (§83.19) narrows this but doesn't bound volume.
+- **91.2 — LOW — crash-alert write limiting: known, hardening pending, not eligible.** Latent while
+  crash alerts are off; needs the functions deploy (Blaze). Details in the owner's private notes (`DOCS/private/`, git-ignored).
 - **91.3 **ALREADY FIXED (checked 2026-11-06, Settings alert-flash switch exists; `issues_fixed.md` "2026-11-06 parallel lanes").** — LOW — the cockpit alert flash can't be switched off.**
   `active_ride_screen.dart:231-243` washes the live map with a translucent colour on brake /
   accel / overspeed / fatigue. Only the overspeed threshold is configurable. Add an off switch
@@ -574,7 +552,7 @@ part of the Bangla review in `needs_attention.md`. Still open:
 - **[needs-you] 95.5 Receipt photos aren't backed up.** They are stored only in the app
   documents folder; the path syncs, the image doesn't. There is no receipt OCR
   either. Uploading private receipts needs a non-public store (Cloudinary
-  presets here are unsigned/public).
+  uploads here are public URLs).
 - **[doable-now] 95.9 Detected-trip credits go to the active bike**, since a detection carries
   no bike (`detected_odometer_credit.dart:28`, `:102-109` picks `is_active DESC, last_ride_at
   DESC`). A rider who switches bikes without changing the active one credits the wrong bike.
@@ -869,7 +847,7 @@ Open developer items found while rewriting `HANDOFF_Document.md` that no other s
 
 ## 112. Password link /r/@handle follow-ups (2026-10-25)
 - Background auto-detected rides (AutoTrackingService isolate) don't share to the password link; only rides recorded through RideRecordingNotifier do.
-- No rate limit on password guesses (rules-only, doc id = hash). Mitigated by the 8-char minimum; a Cloud Function check would be needed for real limiting.
+- Password guess limiting: known, hardening pending, not eligible. Needs a Cloud Function (Blaze). Details in the owner's private notes (`DOCS/private/`, git-ignored).
 - Deployed 2026-10-25: firestore.rules and hosting (live `/r/` page asks for the password). NOT deployed: functions (account-erasure deletes `handleLinks`). Like every function here, it waits on Blaze (owner item #3): deploy refuses on Spark. Use the npm `firebase-tools` (`"$(npm prefix -g)/bin/firebase"`); the standalone `/usr/local/bin/firebase` crashes in the functions predeploy (`reading 'stdin'`). Not tried end to end on a device.
 - BN strings for the new keys await native review (bn_pending_review.txt).
 
@@ -894,8 +872,7 @@ The fixed rows are in `issues_fixed.md` §123. Still open:
 - **C5 shortcut**FIXED 2026-11-06 (#185, `issues_fixed.md` "2026-11-06 parallel lanes"): the app now caps contacts at 5.** :** the app has no limit on emergency contacts (`emergency_contacts_provider.dart`). The function sends to the first 5 by document id. Cap contacts at 5 in the app, or let the rider choose, before `DELIVERY_IMPLEMENTED` goes on.
 - **Rules vs builds ≤ 26:** builds 26 and older have no update gate; their writes were not checked against the tightened rules (profile, notifications, routes, follows, roster).
 - **firebase-admin 14 in `scripts/`:** stays on 13.10; 14 drops `admin.firestore()` / `admin.auth()` / `admin.credential`, used about 80 times in the scripts. Optional: add `/scripts` to `.github/dependabot.yml`.
-- **Old live-link passwords:** riders who set an 8–11 character password before D5 keep it until they change it (only the hash is stored).
-- **Owner-only (GitHub #92 #93 #94 #96 #97):** rotate the Play review password (the old one is in git history), restrict the Cloudinary unsigned preset, check API key restrictions / App Check, decide on `secret/`, deploy functions on Blaze. Rules deployed 2026-10-31.
+- **Owner-only (GitHub #92 #93 #94 #96 #97):** account cleanup, media upload limits, API key restrictions, `secret/`, functions on Blaze. Rules deployed 2026-10-31. Details in the owner's private notes (`DOCS/private/`, git-ignored).
 
 ## 124. osv-scanner ignores two functions advisories until 2026-12-31 (2026-10-31)
 The `security / dependencies` job failed on `1044c3ea`: GHSA-3g3m-2fjr-6pw4 (`glob` 10.5.0) and GHSA-g3hv-75wg-m249 (`minimatch` 9.0.9), published 2026-10-30, in `functions/package-lock.json` only. Path: `firebase-admin` > `@google-cloud/firestore` > `@google-cloud/firestore-api` > `google-gax` 5.0.8 > `rimraf` 5 > `glob` > `minimatch`. `google-gax` declares `rimraf` but its build never requires it, so neither package loads. Fixes exist only in `glob` 14 / `minimatch` 11.
@@ -904,13 +881,10 @@ The `security / dependencies` job failed on `1044c3ea`: GHSA-3g3m-2fjr-6pw4 (`gl
 - **Open:** when the ignore expires, check whether `google-gax` dropped `rimraf`; if not, extend it or override.
 
 ## 125. Before a public bug bounty: security docs leak and drift (2026-11-01)
-Found while planning a swag bug bounty (tee + cha-coffee).
-- **Progress 2026-11-01 (uncommitted):** `SECURITY.md` has the swag bounty, "known issues not eligible" and safe harbor; not published yet (waits for App Check enforcement). App Check: API on, Android Play Integrity registered, web app `ThrottleIQ Live Viewer` created, live viewer wired for reCAPTCHA v3 (site key still empty, not deployed). Sideload screen now leads with "Apply for alpha testing", adds "Try demo mode" (feature tour, Show-me hidden) and keeps Play; ships with the next release. Status: `guides/app_check.md` "Status (2026-11-01)".
-- **E1 #92:** 30 `@qa-seed.invalid` riders still exist; `rider.admin@example.com` signed in 2026-11-01 00:58 UTC (likely the Play reviewer). History rewrite on hold: 4 forks keep the strings anyway, and agent worktrees, open PRs and another session were live on the repo.
-- **`SECURITY.md` is public and lists open holes.** Its "Owner runbooks" name the unsigned Cloudinary preset, unenforced App Check and the live viewer without App Check. Move the runbooks to a private doc, or list them as "known, not eligible", before announcing a bounty. Its "There is no bug bounty" line must change too.
-- **Bounty shape:** reports go through GitHub private vulnerability reporting (on) or the `SECURITY.md` email, never a public issue. Add scope (own accounts or the emulator only, no other riders' data, no DoS or mass Cloudinary uploads), safe harbor, and "Firebase API keys are public by design" as not eligible.
-- **Signed Cloudinary uploads are not written.** `decision_card_blaze_upgrade.md` says they are "written but switched off"; `functions/src` has no signing callable and the app has no signed path. Blaze alone does not fix §123's preset issue: the callable, an app build and the preset switch are still to do.
-- **`guides/app_check.md` step 1 is stale:** `SECURITY.md` step 3 was done 2026-10-27. Left for App Check: paid Apple team (still `NJ4675FFUX`), every Android tester on a Play track, console registration, and a web provider for `public/live-viewer.html` (Firebase's reCAPTCHA v3 provider may do; Enterprise is not required).
+Found while planning the swag bug bounty (published 2026-11-01, GitHub #166).
+- **Done 2026-11-08:** `SECURITY.md`, this file, `security_sweep_2026-10-30.md`, `needs_attention.md` and `HANDOFF_Document.md` now name open security items only as "known: <area> hardening pending, not eligible"; the details moved to the owner's git-ignored `DOCS/private/` notes (git history before this change still has them). The stale "live viewer has no App Check" lines were corrected (enforced 2026-11-01, live viewer on reCAPTCHA Enterprise). Researchers are told to run the emulators with `--project demo-throttleiq`. `.agents/rules/parallel-agents.md` now keeps security work off public issues.
+- **Owner:** turn the private notes into draft GitHub security advisories if wanted; run the test-account cleanup and update or close #92–#94 to match; decide the Google Maps places (owner item #1).
+- **Rule for agents:** never write how to exploit an open weakness into a tracked file. Name the area here, put the details in `DOCS/private/` or a draft advisory.
 
 ## 126. "Summarize new issues" workflow fails on every new issue (2026-11-01)
 `.github/workflows/summary.yml` (actions/ai-inference) fails in ~6s with `Cannot use 'in' operator to search for 'choices' in OK`. `models.github.ai` (inference and catalog) answers a plain-text `200 OK`, so the GitHub Models API looks retired or changed. Seen on runs #91–#115 (issues #115–#166).

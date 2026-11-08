@@ -1559,15 +1559,8 @@ but it is worth stating in safety terms rather than deployment terms.
   automatic cloud backup and `adb backup` extraction — no
   `dataExtractionRules`/`fullBackupContent` needed on top, since those only
   matter for fine-tuning what gets backed up when backup is otherwise on.
-- **Cloudinary unsigned preset is client-extractable — NEEDS YOUR ACTION,
-  not a code fix.** `cloudinary_upload_service.dart:29-30` hardcodes cloud
-  name `vjvcigkt` and preset `throttleiq_unsigned`; that this is
-  APK-extractable is expected for an unsigned preset, not itself a bug.
-  What needs checking lives in the Cloudinary dashboard (Settings → Upload
-  → Upload presets), which this agent has no login for: confirm the preset
-  restricts resource type and file size and has moderation enabled, so a
-  pulled preset can't be used for quota exhaustion or hosting arbitrary/
-  illegal content. Tracked in `HANDOFF_Document.md`'s key-facts table too.
+- **Cloudinary unsigned preset — NEEDS YOUR ACTION, not a code fix.** Known: media uploads
+  hardening pending (see `SECURITY.md`). Tracked in `HANDOFF_Document.md`'s key-facts table too.
 - **Email enumeration — NOT FIXED, left as-is on purpose.** `searchByEmail`
   (`profile_repository.dart:268-274`) still lets any authed rider confirm
   whether an arbitrary email is registered and pull the full profile —
@@ -3992,10 +3985,8 @@ user base), nothing with trivial evasion (spacing/leetspeak), and
 false-positives on innocuous text ("I hate potholes"). It auto-files a
 `reports` doc already stamped `status: 'actioned'` even though nothing was
 verified, so downstream tooling trusts unreviewed content as resolved.
-Compounding this, `reports/{reportId}` create validation
-(`firestore.rules:1176-1181`) only checks `reporterId` — any client can
-also fabricate a pre-`'actioned'` report against an arbitrary target, and
-there's no rate limit on report creation (spam/false-report flooding).
+The report-creation half is covered by the status note above. Write throttling is part of
+the known rate-limiting item (§62.12).
 
 ### 62.6 Sync layer: one bad row blocks an entire batch for bikes/maintenance (but not rides) — HIGH
 
@@ -7550,28 +7541,8 @@ ecosystem) and is rewritten. CodeQL default setup fails for `java-kotlin` and `s
 autobuild a Flutter app): untick both in Settings → Code security. The template workflows
 `swift.yml`, `android.yml`, `dart.yml` pulled from the remote will likely fail on this repo.
 
-**Cloudinary preset lock-down — plan correction (2026-10-08):** do NOT lock a fixed folder on
-`throttleiq_unsigned`. `CloudinaryUploadService` sends a per-upload `folder` (`avatars`,
-`rideShares/$uid`, `<kind>/<uid>`) and the account-deletion sweep relies on the `<kind>/<uid>`
-prefix. The one preset also serves the `image/upload` and `video/upload` (voice notes) endpoints,
-so set: allowed formats for both (check whether iPhone photos arrive as HEIC), a single max file
-size (~10 MB), overwrite off. The usage alert stays a console-only step. Applying it through the
-Admin API is waiting on the numeric API key (`secret/.envclound.txt` holds only a 27-character
-value that looks like the API secret).
-
-**Cloudinary preset — current state (2026-10-08):** the `def` API key + `secret/.env.new` pair works
-against the Admin API. `throttleiq_unsigned` already has `overwrite:false` and `use_filename:false`
-but **no `allowed_formats` and no size limit**. Proposed `allowed_formats=jpg,jpeg,png,webp,heic,
-heif,m4a,aac,mp3` (founder to apply via `PUT`, then verify one photo + one voice note upload; undo
-by PUTting an empty `allowed_formats`). A size cap is probably account-level (console Settings →
-Upload), unconfirmed. Usage alert is console-only.
-
-**Cloudinary `allowed_formats` applied (2026-10-08):** `throttleiq_unsigned` now allows
-`jpg,jpeg,png,webp,heic,heif,m4a,aac,mp3`. Verified with unsigned uploads: PNG accepted (image),
-`.m4a` accepted (video resource, format `m4a`), `.txt` rejected ("Raw file format txt not allowed").
-Two test assets sit in the `preset_test/` folder and can be deleted in the Media Library. Still open:
-size cap (probably account-level) and the console usage alert; a real in-app photo + voice note
-upload on a device has not been tried.
+**Cloudinary upload preset (2026-10-08):** the preset settings were tightened through the Admin
+API and checked with test uploads. Known: media uploads hardening pending (see `SECURITY.md`).
 
 **§4 TTL attempt (2026-10-08):** creating the TTL policy on `liveSessions.expiresAt` in the Google
 Cloud console fails with `403: Project throttleiqfb has billing disabled`. TTL needs Blaze, so it is

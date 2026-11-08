@@ -286,6 +286,6 @@ enough. Either way:
    keep orphaning them?
 7. Voice-note expiry: how long?
 8. Any per-rider upload rate limit at the signer (counts per uid per day)?
-   §62.12 notes there is no rate limiting anywhere today.
+   Rate limiting is tracked in §62.12.
 
 Out of scope: the blocking design half of §107.3 (§83.18).
