@@ -58,7 +58,12 @@ bash scripts/deploy.sh
    the `config/app.minBuild` gate compares it, and Play rejects a reused one, so `deploy.sh` stops unless it is
    above the last AAB's.
 
-5. **GitHub Release** (notes only, no binaries):
+5. **Hosting** (`public/`, `firebase.json`) is separate and is never deployed from a dirty or
+   unpushed tree. Push to `main` first, then run `bash scripts/deploy_hosting.sh`. It refuses
+   unless `git status --porcelain public firebase.json` is empty and HEAD is on `origin/main`.
+   Never run `firebase deploy --only hosting` by hand.
+
+6. **GitHub Release** (notes only, no binaries):
    ```bash
    gh release create <tag> --title "ThrottleIQ — <tag> (v<version>)" --notes "<notes + https://throttleiqfb.web.app/install>"
    ```

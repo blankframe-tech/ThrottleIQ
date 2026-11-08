@@ -164,6 +164,9 @@ else
   echo ""
   echo "==> [2/5] QA Gate skipped (--skip-qa)"
 fi
+# The gate regenerates files (flutter gen-l10n). If that changed anything, the
+# build below would not match the commit it is recorded against.
+git diff --quiet HEAD || { echo "❌ tree changed after the gate:"; git diff --name-only HEAD | sed 's/^/    /'; echo "Commit or revert these, then re-run."; exit 1; }
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 echo "Pushing ${CURRENT_BRANCH} to origin..."

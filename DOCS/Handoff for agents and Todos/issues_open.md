@@ -637,8 +637,7 @@ Every item, with its 2026-10-08 verdict and resolution, is in `issues_fixed.md` 
   needs cancel tokens or idempotent batches first.
 - **101.S3** username squatting (tie `usernames` to `users/{uid}.usernameLower`);
   `groupRides/members` writes by non-members (needs a Cloud Function).
-- **101.S7** full CSP and SRI for `public/live-viewer.html` (Leaflet from unpkg, Firebase from
-  gstatic). Checked: `firebase.json` sends only `frame-ancestors 'none'`. Needs a browser check.
+- **101.S7** **FIXED in code 2026-11-08 (branch `agent/sec-throttleiq-9`, `issues_fixed.md` "2026-11-08 Hosting"); not live until Hosting is deployed.** Still needs the browser check after that deploy: open a real `/live/<token>` and `/r/<handle>` link and confirm the map, the session and the App Check token load with no CSP or SRI errors in the console.
 - **101.S9** `scripts/` pins `firebase-admin ^12`, `functions/` `^14`.
 - **101.S11** stale indexes in `firestore.indexes.json` (checked): `liveSessions (userId,
   expiresAt)` though the field is `uid`, the `crashNotifications` COLLECTION_GROUP index, and the

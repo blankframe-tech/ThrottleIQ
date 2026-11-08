@@ -1,17 +1,35 @@
 # Public Directory
 
 Static assets served by Firebase Hosting for project `throttleiqfb`
-(`firebase.json` → `hosting.public: "public"`). Deploy with:
+(`firebase.json` → `hosting.public: "public"`). Deploy only from a pushed
+commit on `main`, with:
 
 ```bash
-firebase deploy --only hosting
+bash scripts/deploy_hosting.sh
 ```
+
+It refuses to run if `public/` or `firebase.json` has uncommitted changes, or
+if HEAD is not on `origin/main`, so the live pages always match the repo.
+Pushing `main` does not deploy Hosting.
+
+The bare root `/` redirects (302) to `/install`.
 
 ## Files
 
-- `live-viewer.html` — the live-ride viewer. Hosting rewrites `/live/**` to it
-  (see `firebase.json`); the last path segment is the session token, which it
-  looks up in the `liveSessions` Firestore collection.
+- `live-viewer.html` — the live-ride viewer. Hosting rewrites `/live/**` and
+  `/r/**` to it (see `firebase.json`); the last path segment is the session
+  token (or the rider's handle), which it looks up in Firestore. Its script is
+  `live-viewer.js` (plus the pure helpers in `live-viewer-core.js`).
+  - These paths get their own Content-Security-Policy in `firebase.json`: no
+    inline scripts or `on*=` handlers, scripts only from this site, gstatic,
+    unpkg and reCAPTCHA (App Check), connections only to Firebase. Keep page
+    logic in `live-viewer.js`. A new CDN or API host must be added to that
+    policy, or the browser blocks it.
+  - Every CDN `<script>`/`<link>` carries `integrity` (SRI) and
+    `crossorigin="anonymous"`. When you bump a version, recompute the hash:
+    `curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A`.
+  - The Hosting emulator sends the same CSP, so the `?emulator=1` mode (which
+    talks to `127.0.0.1`) only works when `public/` is served some other way.
 - `privacy.html` — **the** privacy policy, published at
   <https://throttleiqfb.web.app/privacy.html>. This URL is what goes into Play
   Console → App content → Privacy policy, and Play will not publish the app
