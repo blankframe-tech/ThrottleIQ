@@ -79,9 +79,9 @@ class RideShareRepository {
     int? rapidAccelCount,
     int? highJerkCount,
   }) async {
-    // Apply privacy-zone clipping (drops every point within the rider's
-    // 200-350 m jittered radius of either end, to hide
-    // home/work). On a short or near-home ride the clip can consume the whole
+    // Apply privacy-zone clipping (drops every point inside the rider's
+    // hidden circle around either end, at least 200 m and up to ~750 m from
+    // it, to hide home/work). On a short or near-home ride the clip can consume the whole
     // track — that must NOT block sharing (this was the "share throws an
     // error" bug). Instead we share with NO route line at all, which is the
     // privacy-safe outcome anyway: the ride still posts, the feed card just

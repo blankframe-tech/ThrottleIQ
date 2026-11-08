@@ -107,8 +107,11 @@ void main() {
           PrivacyZoneClipper.clipPolyline(track, seed: seed).toSet();
       expect(written.every(clipped.contains), isTrue);
       for (final p in written) {
-        expect(haversineMetersLatLng(p, track.first), greaterThan(r));
-        expect(haversineMetersLatLng(p, track.last), greaterThan(r));
+        for (final end in [track.first, track.last]) {
+          final centre = PrivacyZoneClipper.hiddenCentre(end, seed);
+          expect(haversineMetersLatLng(p, centre), greaterThan(r));
+          expect(haversineMetersLatLng(p, end), greaterThan(200));
+        }
       }
     });
 

@@ -1206,6 +1206,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Includes people who follow you later. Following doesn\'t need your approval.';
 
   @override
+  String get routeEndsHiddenNote =>
+      'The map hides the area around where your ride starts and ends, but the hidden area is approximate, not an exact boundary.';
+
+  @override
   String get ridersFollowEachOther => 'Riders you follow each other';
 
   @override

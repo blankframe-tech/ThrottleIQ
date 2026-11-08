@@ -12,7 +12,7 @@ import '../../core/i18n/l10n_context.dart';
 /// Auto-fits the camera to the polyline's bounds (with a little padding) and
 /// marks the start/end. Degrades gracefully: an empty polyline renders a
 /// bordered placeholder rather than a blank world map. That case is normal,
-/// not an error — PrivacyZoneClipper hides 200-350 m around each end at share
+/// not an error — PrivacyZoneClipper hides 200-750 m around each end at share
 /// time and can legitimately consume a short ride's entire track.
 class RideRouteMap extends StatelessWidget {
   final List<LatLng> polyline;
@@ -45,12 +45,14 @@ class RideRouteMap extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.map_outlined, size: 22, color: context.palette.textTertiary),
+              Icon(Icons.map_outlined,
+                  size: 22, color: context.palette.textTertiary),
               const SizedBox(height: 6),
               Text(
                 context.l10n.noRouteRecorded,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: context.palette.textTertiary),
+                style: TextStyle(
+                    fontSize: 12, color: context.palette.textTertiary),
               ),
             ],
           ),
@@ -64,47 +66,47 @@ class RideRouteMap extends StatelessWidget {
         height: height,
         child: IgnorePointer(
           child: FlutterMap(
-          options: MapOptions(
-            initialCenter: polyline.first,
-            initialZoom: polyline.length > 1 ? 13 : 15,
-            initialCameraFit: CameraFit.coordinates(
-              coordinates: polyline,
-              padding: const EdgeInsets.all(24),
-              maxZoom: 16,
-            ),
-            interactionOptions:
-                const InteractionOptions(flags: InteractiveFlag.none),
-          ),
-          children: [
-            const AppTileLayer(),
-            if (polyline.length > 1)
-              PolylineLayer(
-                polylines: [
-                  Polyline(
-                      points: polyline,
-                      color: context.palette.primary,
-                      strokeWidth: 4),
-                ],
+            options: MapOptions(
+              initialCenter: polyline.first,
+              initialZoom: polyline.length > 1 ? 13 : 15,
+              initialCameraFit: CameraFit.coordinates(
+                coordinates: polyline,
+                padding: const EdgeInsets.all(24),
+                maxZoom: 16,
               ),
-            MarkerLayer(
-              markers: [
-                Marker(
-                  point: polyline.first,
-                  width: 14,
-                  height: 14,
-                  child: _endpointDot(context.palette.success),
+              interactionOptions:
+                  const InteractionOptions(flags: InteractiveFlag.none),
+            ),
+            children: [
+              const AppTileLayer(),
+              if (polyline.length > 1)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                        points: polyline,
+                        color: context.palette.primary,
+                        strokeWidth: 4),
+                  ],
                 ),
-                if (polyline.length > 1)
+              MarkerLayer(
+                markers: [
                   Marker(
-                    point: polyline.last,
+                    point: polyline.first,
                     width: 14,
                     height: 14,
-                    child: _endpointDot(context.palette.danger),
+                    child: _endpointDot(context.palette.success),
                   ),
-              ],
-            ),
-          ],
-        ),
+                  if (polyline.length > 1)
+                    Marker(
+                      point: polyline.last,
+                      width: 14,
+                      height: 14,
+                      child: _endpointDot(context.palette.danger),
+                    ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

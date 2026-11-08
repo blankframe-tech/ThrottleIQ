@@ -1207,6 +1207,10 @@ class AppLocalizationsBn extends AppLocalizations {
       'পরে যারা ফলো করবে তারাও দেখতে পাবে। ফলো করতে আপনার অনুমতি লাগে না।';
 
   @override
+  String get routeEndsHiddenNote =>
+      'ম্যাপে আপনার রাইড শুরু ও শেষের আশেপাশের এলাকা লুকানো থাকে, তবে লুকানো এলাকাটি আনুমানিক, নির্দিষ্ট সীমানা নয়।';
+
+  @override
   String get ridersFollowEachOther => 'যাদের সাথে আপনারা পরস্পরকে ফলো করেন';
 
   @override

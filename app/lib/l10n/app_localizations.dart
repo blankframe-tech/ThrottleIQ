@@ -2252,6 +2252,12 @@ abstract class AppLocalizations {
   /// **'Includes people who follow you later. Following doesn\'t need your approval.'**
   String get peopleWhoFollow;
 
+  /// One-line caveat on the ride share screen: start/end hiding on the shared route map is approximate.
+  ///
+  /// In en, this message translates to:
+  /// **'The map hides the area around where your ride starts and ends, but the hidden area is approximate, not an exact boundary.'**
+  String get routeEndsHiddenNote;
+
   /// Text in ride_share_screen.
   ///
   /// In en, this message translates to:

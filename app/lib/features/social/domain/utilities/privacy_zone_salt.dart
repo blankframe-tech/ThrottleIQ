@@ -2,8 +2,8 @@ import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Supplies the per-rider secret that [PrivacyZoneClipper] jitters its hidden
-/// radius with.
+/// Supplies the per-rider secret that [PrivacyZoneClipper] derives its hidden
+/// circle from: the decoy centre's offset and bearing, and the radius.
 ///
 /// ## Why this isn't derived from the uid
 ///
@@ -52,10 +52,11 @@ class PrivacyZoneSalt {
 
   /// The rider's salt, creating one on first use.
   ///
-  /// Falls back to 0 (base radius, no jitter) if Firestore is unreachable —
-  /// the ride still gets its 200 m clip, which is the part that actually hides
-  /// the address. Silently skipping the clip entirely would be the wrong
-  /// failure mode; a slightly-more-guessable radius is the right one.
+  /// Falls back to a one-off random salt (not stored, not cached) if
+  /// Firestore is unreachable. The ride still gets its full clip; only this
+  /// one share uses a different decoy. A fixed fallback such as 0 would put
+  /// every offline share's decoy at a publicly known spot, and silently
+  /// skipping the clip would be worse still.
   Future<int> forUid(String uid) async {
     final cached = _cache[uid];
     if (cached != null) return cached;
@@ -74,10 +75,9 @@ class PrivacyZoneSalt {
       return fresh;
     } catch (_) {
       // Offline, or the create raced another device and lost. Either way the
-      // ride still gets the base 200 m clip; only the jitter is skipped, and
-      // only for this attempt — the next share re-reads and picks up whatever
-      // salt actually landed.
-      return 0;
+      // ride still gets a full clip around a random decoy, for this attempt
+      // only — the next share re-reads and picks up whatever salt landed.
+      return _random.nextInt(1 << 31);
     }
   }
 }
