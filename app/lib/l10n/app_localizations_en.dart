@@ -7277,6 +7277,15 @@ class AppLocalizationsEn extends AppLocalizations {
       'Shows made-up traffic and alerts instead of the camera. Only for trying the mirror out.';
 
   @override
+  String get unitDistanceKm => 'km';
+
+  @override
+  String get unitDistanceMi => 'mi';
+
+  @override
+  String get chartFuelCostPerMile => 'Fuel cost per mile';
+
+  @override
   String emergencyContactsLimitReached(int max) {
     return 'You can add up to $max emergency contacts. Remove one to add another.';
   }

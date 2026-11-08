@@ -10053,6 +10053,18 @@
   "@indriyoSimulationSubtitle": {
     "description": "Subtitle of the Demo mode switch; warns the alerts are fake."
   },
+  "unitDistanceKm": "km",
+  "@unitDistanceKm": {
+    "description": "Abbreviation for kilometres"
+  },
+  "unitDistanceMi": "mi",
+  "@unitDistanceMi": {
+    "description": "Abbreviation for miles"
+  },
+  "chartFuelCostPerMile": "Fuel cost per mile",
+  "@chartFuelCostPerMile": {
+    "description": "Analytics chart title: fuel cost per mile in imperial mode."
+  },
   "emergencyContactsLimitReached": "You can add up to {max} emergency contacts. Remove one to add another.",
   "@emergencyContactsLimitReached": {
     "description": "SnackBar when the rider tries to add a contact past the cap.",

@@ -99,7 +99,7 @@ class ChartTableContext {
   final String kmHeader;
   final String Function(double v) formatValue;
   final String Function(String bikeId) bikeName;
-
+  final String distanceUnit;
   const ChartTableContext({
     required this.l10n,
     required this.unit,
@@ -107,6 +107,7 @@ class ChartTableContext {
     required this.kmHeader,
     required this.formatValue,
     required this.bikeName,
+    this.distanceUnit = 'km',
   });
 
   /// "Header (unit)", or just the header for a unitless column.
@@ -254,12 +255,10 @@ class ChartPresentation {
         _ => points.isNotEmpty,
       };
 
-  String insightText(
-    AppLocalizations l10n,
-    AnalyticsInsight i, {
-    required String Function(String bikeId) bikeName,
-  }) {
-    final u = unit(l10n);
+  String insightText(AppLocalizations l10n, AnalyticsInsight i,
+      {required String Function(String bikeId) bikeName,
+      String? unitOverride}) {
+    final u = unitOverride ?? unit(l10n);
     final own = wordInsight?.call(
       InsightWording(l10n: l10n, unit: u, bikeName: bikeName),
       i,
@@ -281,20 +280,24 @@ class ChartPresentation {
     throw StateError('${chart.id} has no wording for ${i.kind}');
   }
 
-  ChartTable buildTable(
-    AppLocalizations l10n,
-    List<AnalyticsPoint> points, {
-    required String Function(String bikeId) bikeName,
-  }) {
-    final u = unit(l10n);
+  ChartTable buildTable(AppLocalizations l10n, List<AnalyticsPoint> points,
+      {required String Function(String bikeId) bikeName,
+      String? unitOverride,
+      String? distanceUnitOverride,
+      String? titleOverride}) {
+    final u = unitOverride ?? unit(l10n);
     return table(
       ChartTableContext(
         l10n: l10n,
         unit: u,
-        valueHeader: ChartTableContext.withUnit(title(l10n), u),
+        valueHeader: ChartTableContext.withUnit(
+          titleOverride ?? title(l10n),
+          u,
+        ),
         kmHeader: ChartTableContext.withUnit(l10n.analyticsTotal, 'km'),
         formatValue: formatValue,
         bikeName: bikeName,
+        distanceUnit: distanceUnitOverride ?? 'km',
       ),
       points,
     );

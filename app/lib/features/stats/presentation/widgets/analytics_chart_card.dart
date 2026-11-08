@@ -15,20 +15,23 @@ class AnalyticsChartCard extends StatelessWidget {
   final String? insight;
   final VoidCallback onTap;
   final String Function(String bikeId) bikeName;
+  final String? unitOverride;
+  final String? titleOverride;
 
-  const AnalyticsChartCard({
-    super.key,
-    required this.chart,
-    required this.points,
-    required this.onTap,
-    required this.bikeName,
-    this.insight,
-  });
+  const AnalyticsChartCard(
+      {super.key,
+      required this.chart,
+      required this.points,
+      required this.onTap,
+      required this.bikeName,
+      this.insight,
+      this.unitOverride,
+      this.titleOverride});
 
   @override
   Widget build(BuildContext context) {
     final spec = chartPresentationOf(chart);
-    final title = spec.title(context.l10n);
+    final title = titleOverride ?? spec.title(context.l10n);
     return Semantics(
       button: true,
       label: title,
@@ -67,6 +70,7 @@ class AnalyticsChartCard extends StatelessWidget {
               chart: chart,
               points: points,
               bikeName: bikeName,
+              unitOverride: unitOverride,
             ),
             if (insight != null) ...[
               const SizedBox(height: 6),

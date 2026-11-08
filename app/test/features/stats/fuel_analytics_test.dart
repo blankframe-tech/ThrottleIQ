@@ -10,6 +10,7 @@ import 'package:throttleiq/features/stats/presentation/analytics_chart_registry.
 import 'package:throttleiq/features/stats/presentation/screens/analytics_detail_screen.dart';
 import 'package:throttleiq/features/stats/presentation/widgets/analytics_chart_card.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 final _now = DateTime(2026, 10, 9, 15);
 
@@ -44,11 +45,17 @@ List<FuelLogEntity> _logs() => [
       _fill('d', DateTime(2026, 10, 3), 1750, 5), // 50 km/L
     ];
 
-Widget _app(Widget home, {Locale locale = const Locale('en')}) => MaterialApp(
-      locale: locale,
-      localizationsDelegates: AppLocalizations.localizationsDelegates,
-      supportedLocales: AppLocalizations.supportedLocales,
-      home: home,
+Widget _app(
+  Widget home, {
+  Locale locale = const Locale('en'),
+}) =>
+    ProviderScope(
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: home,
+      ),
     );
 
 const _fuelCharts = [
