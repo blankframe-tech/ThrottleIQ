@@ -9186,6 +9186,14 @@
   "@unitMpg": {
     "description": "Fuel efficiency unit, miles per US gallon."
   },
+  "unitMi": "mi",
+  "@unitMi": {
+    "description": "Short unit for miles, after a number (12 mi), and in the cost-per-mile unit."
+  },
+  "unitMph": "mph",
+  "@unitMph": {
+    "description": "Speed unit, miles per hour."
+  },
   "widgetServiceIn": "{item} in {when}",
   "@widgetServiceIn": {
     "description": "Home-screen maintenance widget: the next service and how far off it is. when is a distance (240 km) or widgetDays.",

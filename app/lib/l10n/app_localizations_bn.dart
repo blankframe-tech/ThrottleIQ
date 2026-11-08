@@ -6613,6 +6613,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get unitMpg => 'mpg';
 
   @override
+  String get unitMi => 'মাইল';
+
+  @override
+  String get unitMph => 'মাইল/ঘণ্টা';
+
+  @override
   String widgetServiceIn(String item, String when) {
     return '$when পরে $item';
   }

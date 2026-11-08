@@ -20,6 +20,7 @@ final List<ChartPresentation> fuelPresentations = [
     FuelCharts.fuelEfficiency,
     title: (l) => l.chartFuelEfficiency,
     unit: (l) => l.unitKmPerLitre,
+    valueKind: ChartUnitKind.efficiency,
     icon: Icons.local_gas_station_outlined,
     color: (p) => p.success,
     higherIsBetter: true,
@@ -29,6 +30,7 @@ final List<ChartPresentation> fuelPresentations = [
     FuelCharts.fuelCostPerKm,
     title: (l) => l.chartFuelCostPerKm,
     unit: (_) => '$kCurrencySymbol/km',
+    valueKind: ChartUnitKind.costPerDistance,
     icon: Icons.price_change_outlined,
     color: (p) => p.attention,
     higherIsBetter: false,
@@ -79,6 +81,7 @@ ChartPresentation _stretch(
   FuelSegmentChart chart, {
   required String Function(AppLocalizations l) title,
   required String Function(AppLocalizations l) unit,
+  required ChartUnitKind valueKind,
   required IconData icon,
   required Color Function(AppColorPalette p) color,
   required bool? higherIsBetter,
@@ -88,6 +91,8 @@ ChartPresentation _stretch(
       chart: chart,
       title: title,
       unit: unit,
+      valueKind: valueKind,
+      secondaryKind: ChartUnitKind.distance,
       icon: icon,
       color: color,
       shape: ChartShape.line,
@@ -102,13 +107,13 @@ ChartPresentation _stretch(
 String? _word(InsightWording w, AnalyticsInsight i) {
   if (i.kind == peakMonthInsight) {
     return w.l10n.insightPeakMonth(
-      formatWithUnit(i.value ?? 0, w.unit),
+      formatWithUnit(w.display(i.value ?? 0), w.unit),
       longMonth(i.date!),
     );
   }
   if (i.kind == fuelAverageInsight) {
     return w.l10n.insightFuelAverage(
-      formatWithUnit(i.value ?? 0, w.unit),
+      formatWithUnit(w.display(i.value ?? 0), w.unit),
       (i.value2 ?? 0).round(),
     );
   }

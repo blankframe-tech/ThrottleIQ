@@ -10,6 +10,7 @@ final List<ChartPresentation> activityPatternPresentations = [
     chart: ActivityPatternCharts.activityCalendar,
     title: (l) => l.chartActivityCalendar,
     unit: (_) => 'km',
+    valueKind: ChartUnitKind.distance,
     icon: Icons.calendar_month_outlined,
     color: (p) => p.primary,
     shape: ChartShape.heatmap,
@@ -21,6 +22,7 @@ final List<ChartPresentation> activityPatternPresentations = [
     chart: ActivityPatternCharts.hourOfDay,
     title: (l) => l.chartHourOfDay,
     unit: (l) => l.analyticsUnitRides,
+    secondaryKind: ChartUnitKind.distance,
     icon: Icons.schedule_outlined,
     color: (p) => p.secondary,
     shape: ChartShape.bars,
@@ -37,6 +39,7 @@ final List<ChartPresentation> activityPatternPresentations = [
     chart: ActivityPatternCharts.weekday,
     title: (l) => l.chartWeekday,
     unit: (l) => l.analyticsUnitRides,
+    secondaryKind: ChartUnitKind.distance,
     icon: Icons.view_week_outlined,
     color: (p) => p.secondary,
     shape: ChartShape.bars,
@@ -72,7 +75,11 @@ String? _word(InsightWording w, AnalyticsInsight i) {
 ChartTable _calendarTable(ChartTableContext t, List<AnalyticsPoint> points) {
   final ridden = points.where((p) => (p.secondary ?? 0) > 0).toList();
   return ChartTable(
-    headers: [t.l10n.analyticsColDate, t.l10n.analyticsColRides, t.kmHeader],
+    headers: [
+      t.l10n.analyticsColDate,
+      t.l10n.analyticsColRides,
+      t.distanceHeader
+    ],
     displayRows: [
       for (final p in ridden.reversed)
         [
@@ -99,7 +106,7 @@ ChartTable _bucketTable(
   String Function(int bucket) label,
 ) =>
     ChartTable(
-      headers: [bucketHeader, t.l10n.analyticsColRides, t.kmHeader],
+      headers: [bucketHeader, t.l10n.analyticsColRides, t.distanceHeader],
       displayRows: [
         for (final p in points)
           [

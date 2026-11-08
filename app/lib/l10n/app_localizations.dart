@@ -11322,6 +11322,18 @@ abstract class AppLocalizations {
   /// **'mpg'**
   String get unitMpg;
 
+  /// Short unit for miles, after a number (12 mi), and in the cost-per-mile unit.
+  ///
+  /// In en, this message translates to:
+  /// **'mi'**
+  String get unitMi;
+
+  /// Speed unit, miles per hour.
+  ///
+  /// In en, this message translates to:
+  /// **'mph'**
+  String get unitMph;
+
   /// Home-screen maintenance widget: the next service and how far off it is. when is a distance (240 km) or widgetDays.
   ///
   /// In en, this message translates to:

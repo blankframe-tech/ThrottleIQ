@@ -1870,6 +1870,8 @@
   "unitLitre": "লি.",
   "unitKmPerLitre": "km/L",
   "unitMpg": "mpg",
+  "unitMi": "মাইল",
+  "unitMph": "মাইল/ঘণ্টা",
   "widgetServiceIn": "{when} পরে {item}",
   "widgetServiceOverdueBy": "{item}-এর সময় {when} পেরিয়ে গেছে",
   "widgetServiceDueNow": "{item} এখনই করতে হবে",

@@ -17,7 +17,6 @@ import '../../../ride/domain/entities/ride_entity.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_l10n.dart';
 import '../analytics_chart_registry.dart';
-import '../fuel_chart_units.dart';
 import '../widgets/analytics_chart_view.dart';
 
 /// Full-screen view of one analytics chart: a larger chart, a time range
@@ -75,30 +74,18 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
     final chart = widget.chart;
     final spec = chartPresentationOf(chart);
     final detail = chart.detail(_input, _range, now: _now);
-    final insights = [
-      for (final insight in detail.insights)
-        convertFuelChartInsight(chart, insight, imperial),
-    ];
-    final series = convertFuelChartPoints(chart, detail.series, imperial);
+    final series = spec.displayPoints(detail.series, imperial: imperial);
     final trend = detail.trend;
     final summary = MetricSummary.of(series.map((p) => p.value));
-    final unitOverride = fuelChartUnitOverride(chart, l10n, imperial);
-    final unit = unitOverride ?? spec.unit(l10n);
-
-    final distanceUnitOverride = unitOverride == null
-        ? null
-        : (imperial ? l10n.unitDistanceMi : l10n.unitDistanceKm);
-
-    final titleOverride = fuelChartTitleOverride(chart, l10n, imperial);
-
-    final title = titleOverride ?? spec.title(l10n);
+    final table = spec.buildTable(
+      l10n,
+      series,
+      bikeName: _bikeName,
+      imperial: imperial,
+    );
+    final unit = spec.unitOf(l10n, imperial: imperial);
+    final title = spec.titleOf(l10n, imperial: imperial);
     final stackLabels = spec.stackLabels?.call(l10n);
-
-    final table = spec.buildTable(l10n, series,
-        bikeName: _bikeName,
-        unitOverride: unitOverride,
-        distanceUnitOverride: distanceUnitOverride,
-        titleOverride: title);
 
     return Scaffold(
       backgroundColor: context.palette.background,
@@ -155,7 +142,7 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
                     points: series,
                     bikeName: _bikeName,
                     detailed: true,
-                    unitOverride: unit,
+                    imperial: imperial,
                   ),
                 ),
                 if (stackLabels != null) ...[
@@ -196,13 +183,13 @@ class _AnalyticsDetailScreenState extends ConsumerState<AnalyticsDetailScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          insights
+                          detail.insights
                               .map(
                                 (i) => spec.insightText(
                                   l10n,
                                   i,
                                   bikeName: _bikeName,
-                                  unitOverride: unit,
+                                  imperial: imperial,
                                 ),
                               )
                               .join(' '),

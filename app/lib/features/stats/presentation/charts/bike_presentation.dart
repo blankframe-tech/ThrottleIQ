@@ -10,6 +10,7 @@ final List<ChartPresentation> bikePresentations = [
     chart: BikeCharts.distanceByBike,
     title: (l) => l.chartDistanceByBike,
     unit: (_) => 'km',
+    valueKind: ChartUnitKind.distance,
     icon: Icons.two_wheeler_outlined,
     color: (p) => p.primary,
     shape: ChartShape.ranked,
@@ -21,6 +22,7 @@ final List<ChartPresentation> bikePresentations = [
     chart: BikeCharts.longestRides,
     title: (l) => l.chartLongestRides,
     unit: (_) => 'km',
+    valueKind: ChartUnitKind.distance,
     icon: Icons.emoji_events_outlined,
     color: (p) => p.primary,
     shape: ChartShape.ranked,
@@ -33,12 +35,12 @@ String? _word(InsightWording w, AnalyticsInsight i) {
   if (i.kind == topBikeInsight) {
     return w.l10n.insightTopBike(
       w.bikeName(i.key ?? ''),
-      (i.value ?? 0).toStringAsFixed(0),
+      w.display(i.value ?? 0).toStringAsFixed(0),
     );
   }
   if (i.kind == longestRideInsight) {
     return w.l10n.insightLongestRide(
-      formatWithUnit(i.value ?? 0, 'km'),
+      formatWithUnit(w.display(i.value ?? 0), w.unit),
       shortDate(i.date!),
     );
   }
@@ -47,7 +49,11 @@ String? _word(InsightWording w, AnalyticsInsight i) {
 
 ChartTable _bikeTable(ChartTableContext t, List<AnalyticsPoint> points) =>
     ChartTable(
-      headers: [t.l10n.analyticsColBike, t.l10n.analyticsColRides, t.kmHeader],
+      headers: [
+        t.l10n.analyticsColBike,
+        t.l10n.analyticsColRides,
+        t.distanceHeader
+      ],
       displayRows: [
         for (final p in points)
           [

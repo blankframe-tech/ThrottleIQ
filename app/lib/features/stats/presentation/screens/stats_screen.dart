@@ -15,6 +15,7 @@ import '../providers/rider_stats_provider.dart';
 import '../widgets/badge_grid.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
+import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 import '../../domain/analytics_chart_registry.dart';
 import '../../domain/ride_analytics.dart';
 import '../analytics_chart_registry.dart';
@@ -25,8 +26,6 @@ import 'year_in_review_screen.dart';
 import '../../../../shared/widgets/error_view.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
-import '../../../maintenance/presentation/providers/maintenance_provider.dart';
-import '../fuel_chart_units.dart';
 
 List<String> _ranks(AppLocalizations l10n) => [
       l10n.rankNewRider,
@@ -407,34 +406,18 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
           ChartInput(rides: rides, fuelLogs: fuelLogs),
           now: now,
         );
-        final points = convertFuelChartPoints(
-          chart,
-          preview.points,
-          imperial,
-        );
-
-        final unitOverride = fuelChartUnitOverride(
-          chart,
-          l10n,
-          imperial,
-        );
-
-        final insight = convertFuelChartInsight(
-          chart,
-          preview.insights.first,
-          imperial,
-        );
-
+        final spec = chartPresentationOf(chart);
+        final insights = preview.insights;
         return AnalyticsChartCard(
           chart: chart,
-          points: points,
+          points: spec.displayPoints(preview.points, imperial: imperial),
           bikeName: bikeName,
-          unitOverride: unitOverride,
-          insight: chartPresentationOf(chart).insightText(
+          imperial: imperial,
+          insight: spec.insightText(
             l10n,
-            insight,
+            insights.first,
             bikeName: bikeName,
-            unitOverride: unitOverride,
+            imperial: imperial,
           ),
           onTap: () => Navigator.of(context, rootNavigator: true).push(
             MaterialPageRoute<void>(
@@ -446,7 +429,6 @@ class _StatsScreenState extends ConsumerState<StatsScreen>
               ),
             ),
           ),
-          titleOverride: fuelChartTitleOverride(chart, l10n, imperial),
         );
       },
     );
