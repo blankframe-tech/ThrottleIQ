@@ -77,7 +77,9 @@ else (§33.5).
   (`functions/src/account-erasure.ts:528` onward) reads the ledger, skips any
   row that fails `isOwnedPublicId` (`:563-568`), and destroys the rest with
   `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` from Secret Manager
-  (`functions/src/account-deletion.ts:11-12`, `:91-98`). Without credentials
+  (`functions/src/account-deletion.ts:11-12`, `:91-98`), five at a time,
+  deleting each ledger row once its asset is gone so a timed-out run resumes
+  on retry. Without credentials
   it records a skip (`account-erasure.ts:551-555`). There is no folder
   sweep; a missed ledger row has to be found by hand (`:522-523`).
 - None of this runs yet: Functions have never been deployed (Spark,
