@@ -164,7 +164,7 @@ gcloud projects delete $LAB --account=$OWNER   # can be undone for 30 days
 # `reclip_shared_routes.js` — re-clip old shared route lines
 
 One-off, for lines shared before the build whose clipper centres the hidden
-circle on a secret per-rider point. Run it once, by hand, **after** that build
+circle on a secret decoy point per rider and place. Run it once, by hand, **after** that build
 is on Play; pass `--before=<the date it shipped>` so lines the new build
 clipped are skipped.
 
@@ -177,8 +177,10 @@ node oneoff/reclip_shared_routes.js --service-account=/path/outside/the/repo/key
 
 A shared ride is re-clipped from `users/{uid}/rides/{id}/track` when it was
 backed up, else from its stored line. Public routes always use their stored
-line. A rider with no `zoneSalt` gets one. The JS clipper mirrors
-`privacy_zone_clipper.dart`; keep them in step. Tests: `npm test`
+line. A rider with no `zoneSalt` gets one, and a place with no anchor gets
+one (appended to `anchors` in `users/{uid}/private/privacy`). The JS mirrors
+`privacy_zone_clipper.dart` and `privacy_zone_salt.dart` (a shared test vector
+checks the per-place seed); keep them in step. Tests: `npm test`
 (`test/reclip_shared_routes.test.js`).
 
 ---
@@ -199,8 +201,25 @@ node oneoff/strip_cloudinary_exif.js --folder=avatars --apply # writes, after ty
 node oneoff/strip_cloudinary_exif.js --apply                  # the rest
 ```
 
-Check one result with `exiftool` on its `secure_url`: no GPS tags. Tests:
-`npm test` (`test/strip_cloudinary_exif.test.js`).
+Before `--apply`:
+
+- **A dry-run count of 0 is suspicious, not good news.** It most likely means
+  the folder or `public_id` prefix the script lists (`avatars/`, ...) does not
+  match what the preset actually writes. Open a few assets in the console
+  (Media Library) and compare their `public_id` with the folders above before
+  trusting it.
+- **Old URLs may still serve the old file.** The re-upload invalidates the CDN
+  copy, but a `secure_url` stored in Firestore carries a version (`/v1712.../`),
+  and Cloudinary only purges versioned URLs when *Invalidate versioned URLs*
+  is on (console > Settings > Upload, or ask Cloudinary support if the plan
+  hides it). Turn it on first.
+
+After the run, check an **old** versioned `secure_url` (copy one from a
+Firestore doc written before the run, not a fresh URL from the console):
+`curl -s <url> -o old.jpg && exiftool old.jpg` must show no GPS tags. If it
+still does, the versioned URL was not invalidated: turn the setting on and
+re-run, or wait out the CDN cache. Tests: `npm test`
+(`test/strip_cloudinary_exif.test.js`).
 
 ---
 

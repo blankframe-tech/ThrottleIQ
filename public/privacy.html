@@ -234,7 +234,7 @@
           <tr>
             <td><strong>Photos you choose to attach</strong> — profile picture, bike photos, photos on shared rides, forum posts and places you add</td>
             <td>To display them in the app</td>
-            <td>Uploaded to Cloudinary (see §4). Before upload, the app re-encodes each photo on your phone without its metadata, so the location, time and camera details a phone camera saves inside a photo are not uploaded. A bike photo is uploaded when you are signed in, so it comes back after a reinstall</td>
+            <td>Uploaded to Cloudinary (see §4). Before upload, the app scales each photo down to at most 2048 pixels on its long side and re-encodes it on your phone without its metadata, so the location, time and camera details a phone camera saves inside a photo are not uploaded. A bike photo is uploaded when you are signed in, so it comes back after a reinstall</td>
           </tr>
           <tr>
             <td><strong>Voice clips</strong> — short push-to-talk recordings (under 60 seconds each), only while you hold the talk button inside a group ride</td>
@@ -430,8 +430,11 @@
         <li><strong>Group-ride voice clips</strong> can be heard by the other members of that group ride.</li>
         <li><strong>Route trimming.</strong> When a ride is shared, or a saved route is made public,
         the part of the route near where it starts and ends is cut off before it is uploaded: at
-        least 200 metres, and usually several hundred, by an amount and in a shape that differ
-        from rider to rider. This makes your exact start and end point hard to find, but the
+        least 200 metres and up to about 1.5 km, by an amount and in a shape that differ from
+        rider to rider and from place to place. So that the same place is trimmed the same way
+        every time, the app keeps a rough note (to about 100 metres) of the places your shared
+        rides start and end in your private cloud area, readable only by you and deleted with
+        your account. This makes your exact start and end point hard to find, but the
         hidden area is approximate: someone who sees many of your shared rides may still be able
         to tell roughly which neighbourhood they start from. That is why a new share is visible
         to your followers unless you choose public. If a ride is short enough that trimming
