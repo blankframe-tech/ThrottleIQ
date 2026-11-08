@@ -234,7 +234,7 @@
           <tr>
             <td><strong>Photos you choose to attach</strong> — profile picture, bike photos, photos on shared rides, forum posts and places you add</td>
             <td>To display them in the app</td>
-            <td>Uploaded to Cloudinary (see §4). A bike photo is uploaded when you are signed in, so it comes back after a reinstall</td>
+            <td>Uploaded to Cloudinary (see §4). Before upload, the app re-encodes each photo on your phone without its metadata, so the location, time and camera details a phone camera saves inside a photo are not uploaded. A bike photo is uploaded when you are signed in, so it comes back after a reinstall</td>
           </tr>
           <tr>
             <td><strong>Voice clips</strong> — short push-to-talk recordings (under 60 seconds each), only while you hold the talk button inside a group ride</td>
@@ -385,7 +385,7 @@
           </tr>
           <tr>
             <td><strong>Cloudinary</strong> — cloud name <code>vjvcigkt</code></td>
-            <td>Only the files you choose to upload: your profile picture, bike photos, photos you attach to a shared ride, a forum post or a place, and group-ride voice clips. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides or your account details. A photo is sent as the file it is, so any details stored inside the file, such as the place a phone camera recorded when it took the picture, go with it.</td>
+            <td>Only the files you choose to upload: your profile picture, bike photos, photos you attach to a shared ride, a forum post or a place, and group-ride voice clips. Photos are stripped of their metadata (including any GPS position the camera saved) on your phone before upload. Uploads are unsigned and each one gets a public, unguessable URL that is then stored in the database. Cloudinary does not receive your rides, your location, or your account details.</td>
           </tr>
           <tr>
             <td><strong>OpenStreetMap tile servers</strong> — <code>tile.openstreetmap.org</code></td>
@@ -397,7 +397,7 @@
           </tr>
           <tr>
             <td><strong>Open-Meteo</strong> — <code>api.open-meteo.com</code></td>
-            <td>After each ride, the coordinates of where it started and the ride's date/time, to look up the weather then and there for the anonymous road-speed feature described in §2. No API key, login, or account is used — like the OpenStreetMap row above, the request necessarily reveals your device's IP address to Open-Meteo, but never your ThrottleIQ account or identity.</td>
+            <td>After each ride, the coordinates of where it started, rounded to about 1 km, and the ride's date/time, to look up the weather then and there for the anonymous road-speed feature described in §2. No API key, login, or account is used — like the OpenStreetMap row above, the request necessarily reveals your device's IP address to Open-Meteo, but never your ThrottleIQ account or identity.</td>
           </tr>
           <tr>
             <td><strong>Google Sign-In</strong></td>
@@ -428,10 +428,15 @@
         the audience: public, your followers, or mutual follows only. A shared ride carries its
         route line, stats (including a riding score worked out from counts of hard braking and rapid acceleration on that ride), your name and photo, the bike, and any caption or photo you attached.</li>
         <li><strong>Group-ride voice clips</strong> can be heard by the other members of that group ride.</li>
-        <li><strong>Route trimming.</strong> When a ride is shared, roughly the first and last 200
-        metres of the route are cut off before it is uploaded, so the shared trace does not begin
-        or end at your front door. If a ride is short enough that trimming consumes the whole
-        track, the ride is shared with no route line at all rather than an untrimmed one.</li>
+        <li><strong>Route trimming.</strong> When a ride is shared, or a saved route is made public,
+        the part of the route near where it starts and ends is cut off before it is uploaded: at
+        least 200 metres, and usually several hundred, by an amount and in a shape that differ
+        from rider to rider. This makes your exact start and end point hard to find, but the
+        hidden area is approximate: someone who sees many of your shared rides may still be able
+        to tell roughly which neighbourhood they start from. That is why a new share is visible
+        to your followers unless you choose public. If a ride is short enough that trimming
+        consumes the whole track, the ride is shared with no route line at all rather than an
+        untrimmed one.</li>
         <li><strong>Forum posts, comments, votes, places you add, and reviews you write</strong>
         are visible to other signed-in riders and carry your name.</li>
       </ul>

@@ -97,7 +97,7 @@ It runs once per commit, and git runs it before every push. CI calls the same sc
 
 ## 🔒 Privacy
 
-Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides clip the start and end inside a 200–349 m privacy zone. There is no ad SDK. Firebase Analytics is **on by default**: it counts screen views and a fixed list of funnel events (sign-up, ride started, bike added and so on), never a location, ride figure or account id, and riders can turn it off in Settings → Privacy & Safety. Crashlytics collects crash diagnostics. Riders can turn off social features, Places, or ride tracking (no location use at all) in Settings → Your ThrottleIQ. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
+Private data lives under `/users/{uid}/...`, owner-only per `firestore.rules`. Shared data has per-feature rules. Shared rides and public routes hide at least 200 m around the start and end, inside a circle whose size and centre are secret per rider; new shares default to followers. Uploaded photos are re-encoded on the phone without EXIF/GPS metadata. There is no ad SDK. Firebase Analytics is **on by default**: it counts screen views and a fixed list of funnel events (sign-up, ride started, bike added and so on), never a location, ride figure or account id, and riders can turn it off in Settings → Privacy & Safety. Crashlytics collects crash diagnostics. Riders can turn off social features, Places, or ride tracking (no location use at all) in Settings → Your ThrottleIQ. See [`public/privacy.html`](public/privacy.html) and [`SECURITY.md`](SECURITY.md).
 
 ## 📚 Documentation
 

@@ -27,7 +27,8 @@ ThrottleIQ is an **offline-first motorcycle telemetry intelligence platform and 
 4. **Zero Cross-DAO Calls Inside Transactions**:
    - To prevent SQLite transaction deadlocks, a DAO method executing inside a transaction boundary must never invoke another DAO.
 5. **Privacy by Design**:
-   - Automatic radius clipping (200-349 m, stable per rider) on the start and end of shared rides (obscuring homes and workplaces).
+   - Automatic clipping on the start and end of shared rides and public routes (obscuring homes and workplaces): a hidden circle centred on a secret per-rider point 130-200 m from the endpoint, radius 330-549 m, plus a random 0-50 m per share (`privacy_zone_clipper.dart`, salt in `users/{uid}/private/privacy`).
+   - Photos are re-encoded without metadata (EXIF, GPS) before upload (`cloudinary_upload_service.dart`); the weather lookup sends the ride start rounded to 2 decimals.
    - Unguessable tokenized URLs with 24-hour TTL for emergency live sharing.
 
 ---

@@ -199,6 +199,11 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
   - `.claude/settings.json` no longer enables the ponytail marketplace; install it at user scope (`.agents/rules/efficiency-tools.md`).
   - `deploy.sh` on `main` pushes `release/<tag>` and opens a PR instead of pushing `main`.
   - `crash_stats.js` and `export_impact_events.js` CSVs prefix cells that start with `= + - @`, tab or CR with `'` (`scripts/csv_cell.js`).
+- **Shared-route and photo location privacy** (branch `agent/sec-throttleiq-1`, not merged or released):
+  - `PrivacyZoneClipper` centres the hidden circle on a secret per-rider decoy point (from the existing `zoneSalt`), not on the start/end, and trims a random 0-50 m extra per share. Test: a circle fit through 6 shares misses the start by >100 m for >=95% of 500 simulated riders. `PrivacyZoneSalt` falls back to a one-off random salt, not 0, when offline.
+  - The share screen defaults to followers and says the end hiding is approximate (`routeEndsHiddenNote`, BN pending review).
+  - `CloudinaryUploadService.upload` re-encodes every photo without EXIF/XMP/IPTC (orientation baked in) and refuses formats package:image cannot decode (HEIC). Weather lookups round lat/lng to 2 decimals.
+  - Owner, after the build is on Play: `scripts/oneoff/reclip_shared_routes.js` (re-clips old shared rides and public routes; dry run by default) and `scripts/oneoff/strip_cloudinary_exif.js` (strips metadata from images already on Cloudinary; dry run by default). Then deploy `public/privacy.html` (photo rows, Open-Meteo row, route trimming).
 
 ### 2026-11-01
 
