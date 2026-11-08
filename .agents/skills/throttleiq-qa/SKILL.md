@@ -96,8 +96,8 @@ npm run test:rules
 
 If the Firebase emulator is not installed:
 ```bash
-npm install -g firebase-tools
-firebase setup:emulators:firestore
+cd scripts && npm ci   # firebase-tools is a locked devDependency
+npx firebase setup:emulators:firestore
 ```
 
 ---

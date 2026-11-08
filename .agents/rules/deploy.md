@@ -12,7 +12,7 @@ Whenever the user asks to "deploy", "ddeploy", "release", or "publish", you MUST
    - Verify/bump version in `app/pubspec.yaml` (e.g. `1.0.0-beta.2.x+y`).
    - Derive the tag name (e.g. `beta-v2.x`).
    - Commit only `app/pubspec.yaml`: `chore(release): bump version to <version>`. `deploy.sh` stops if any other tracked file is dirty; commit or drop that work first.
-   - Push to remote `origin/main`.
+   - Push. On `main`, `deploy.sh` pushes `release/<tag>` and opens a PR into `main` (main takes changes only through PRs); merge it with a merge commit once the checks pass, so the tagged commit lands on `main`. On any other branch it pushes that branch.
 
 3. **Deploy Release to Connected iPhone**
    - Detect connected iOS device via `flutter devices` (e.g., Abraar’s iPhone `00008120-001E5D190A85A01E`). Look for Abraar's iphone as the first priority.

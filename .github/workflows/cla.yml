@@ -1,4 +1,4 @@
-# Asks every outside contributor to sign CLA.md once, by PR comment, and
+# Asks every contributor (maintainers too) to sign CLA.md once, by PR comment, and
 # fails the "CLAAssistant" check until they do. Signatures are committed to
 # signatures/cla.json on the `cla-signatures` branch, so main never gets bot
 # commits. That branch must exist and must not be protected.
@@ -12,15 +12,18 @@ on:
   pull_request_target:
     types: [opened, closed, synchronize]
 
-permissions:
-  actions: write
-  contents: write
-  pull-requests: write
-  statuses: write
+permissions: {}
 
 jobs:
   CLAAssistant:
+    # Comments on plain issues never need a CLA run.
+    if: github.event_name == 'pull_request_target' || github.event.issue.pull_request
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+      contents: write
+      pull-requests: write
+      statuses: write
     steps:
       - if: (github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target'
         # Pinned to the v2.6.1 commit: this job holds a write token.
@@ -31,5 +34,7 @@ jobs:
           path-to-signatures: signatures/cla.json
           path-to-document: https://github.com/blankframe-tech/ThrottleIQ/blob/main/CLA.md
           branch: cla-signatures
-          allowlist: the-abraar,blankframe-tech,dependabot[bot],github-actions[bot]
+          # Bots only: every human signs once, maintainers included (the
+          # action matches git author names, which a PR can set freely).
+          allowlist: dependabot[bot],github-actions[bot]
           lock-pullrequest-aftermerge: false

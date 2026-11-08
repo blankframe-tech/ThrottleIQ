@@ -1,6 +1,6 @@
-// Static guards for hosting headers, public/ pages, deploy.sh staging, CI
-// workflow and .gitignore (issues §101.S7-S10, §101.D3). No emulator or
-// network needed; runs under `npm test`.
+// Static guards for hosting headers, public/ pages, deploy.sh staging and
+// push, CI workflows, CODEOWNERS, agent settings and .gitignore (issues
+// §101.S7-S10, §101.D3). No emulator or network needed; runs under `npm test`.
 'use strict';
 
 const test = require('node:test');
@@ -275,11 +275,117 @@ test('deploy_hosting.sh refuses a commit that is not on origin/main', () => {
   assert.ok(!fs.existsSync(log));
 });
 
-test('CI workflow is read-only and pins firebase-tools', () => {
+test('CI workflow is read-only and runs the locked firebase-tools', () => {
   const yml = read('.github/workflows/ci.yml');
   assert.match(yml, /^permissions:\n {2}contents: read\n/m);
-  assert.doesNotMatch(yml, /npm install -g firebase-tools\s*$/m);
-  assert.match(yml, /npm install -g firebase-tools@\d+/);
+  // No run-time global install: the CLI comes from scripts/package-lock.json.
+  for (const f of fs.readdirSync(path.join(ROOT, '.github/workflows'))) {
+    assert.doesNotMatch(read(`.github/workflows/${f}`), /npm install -g/, f);
+  }
+  const dev = JSON.parse(read('scripts/package.json')).devDependencies;
+  assert.match(dev['firebase-tools'] || '', /^\^15\./);
+  const lock = JSON.parse(read('scripts/package-lock.json'));
+  assert.match(lock.packages['node_modules/firebase-tools'].version, /^15\./);
+});
+
+test('issue-summary bot runs only for trusted issue authors', () => {
+  const yml = read('.github/workflows/summary.yml');
+  assert.match(yml, /^ {4}if: contains\(fromJSON\('\["OWNER","MEMBER","COLLABORATOR"\]'\), github\.event\.issue\.author_association\)$/m);
+});
+
+test('CLA workflow: job-level write token, PRs only, no human allowlist', () => {
+  const yml = read('.github/workflows/cla.yml');
+  assert.match(yml, /^permissions: \{\}$/m, 'workflow-level token must be empty');
+  assert.match(yml, /^ {4}if: github\.event_name == 'pull_request_target' \|\| github\.event\.issue\.pull_request$/m);
+  const allow = yml.match(/allowlist: (.*)$/m)[1].split(',').map((s) => s.trim());
+  assert.ok(allow.every((n) => n.endsWith('[bot]')), `humans in allowlist: ${allow}`);
+});
+
+test('PR scans use the base branch allowlists, not the PR copy', () => {
+  const yml = read('.github/workflows/security.yml');
+  assert.doesNotMatch(yml, /GITLEAKS_CONFIG: \.gitleaks\.toml/);
+  assert.match(yml, /git show "origin\/\$BASE_REF:\.gitleaks\.toml"/);
+  assert.match(yml, /git show "origin\/\$BASE_REF:\.gitleaksignore" > \.gitleaksignore/);
+  assert.match(yml, /GITLEAKS_CONFIG: \$\{\{ runner\.temp \}\}\/gitleaks\.toml/);
+  assert.match(yml, /git show "FETCH_HEAD:\$f"/, 'osv-scanner.toml must come from the base');
+});
+
+test('CODEOWNERS covers CI, agent hooks, git hooks and scan configs', () => {
+  const owners = read('.github/CODEOWNERS').split('\n')
+    .filter((l) => l.trim() && !l.startsWith('#')).map((l) => l.split(/\s+/));
+  const paths = owners.map(([p]) => p);
+  for (const p of ['/.github/', '/.claude/', '/.githooks/', '/.agents/', '/scripts/check.sh',
+    '/scripts/deploy.sh', '/.gitleaks.toml', '/.gitleaksignore', '/functions/osv-scanner.toml',
+    '/scripts/osv-scanner.toml']) {
+    assert.ok(paths.includes(p), `CODEOWNERS misses ${p}`);
+  }
+  for (const [, ...who] of owners) assert.ok(who.length && who.every((w) => /^@[\w-]+$/.test(w)));
+});
+
+test('project settings enable no third-party plugin marketplace', () => {
+  const s = JSON.parse(read('.claude/settings.json'));
+  // Unpinned marketplaces would run their hooks for anyone opening the repo.
+  assert.equal(s.extraKnownMarketplaces, undefined);
+  assert.equal(s.enabledPlugins, undefined);
+});
+
+function pushBlock() {
+  const sh = read('scripts/deploy.sh');
+  const start = sh.indexOf('CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)');
+  const end = sh.indexOf('echo "✅ Git push complete!"');
+  assert.ok(start >= 0 && end > start, 'push block not found');
+  return sh.slice(start, end);
+}
+
+function pushScratch() {
+  const { dir, git } = scratchRepo();
+  const remote = fs.mkdtempSync(path.join(os.tmpdir(), 'deploy-remote-'));
+  execFileSync('git', ['init', '-q', '--bare', remote]);
+  git('branch', '-M', 'main');
+  git('remote', 'add', 'origin', remote);
+  git('push', '-q', 'origin', 'main');
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'deploy-bin-'));
+  const ghLog = path.join(bin, 'gh.log');
+  // `gh pr view` finds no PR; every call is logged.
+  fs.writeFileSync(path.join(bin, 'gh'), `#!/bin/sh\necho "$*" >> '${ghLog}'\n[ "$2" = view ] && exit 1\nexit 0\n`, { mode: 0o755 });
+  const run = () => spawnSync('bash', ['-euo', 'pipefail', '-c', pushBlock()], {
+    cwd: dir, encoding: 'utf8',
+    env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, SKIP_QA: 'false', RELEASE_TAG: 'beta-v9.9', PUBSPEC_VERSION: '1.0.0-beta.9.9+99' },
+  });
+  const remoteRef = (ref) => spawnSync('git', ['rev-parse', '-q', '--verify', ref], { cwd: remote, encoding: 'utf8' }).stdout.trim();
+  const gh = () => (fs.existsSync(ghLog) ? fs.readFileSync(ghLog, 'utf8') : '');
+  return { dir, git, run, remoteRef, gh };
+}
+
+test('deploy.sh on main pushes a release branch and opens a PR, never main', () => {
+  const { dir, git, run, remoteRef, gh } = pushScratch();
+  const before = remoteRef('refs/heads/main');
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 2\n');
+  git('commit', '-qam', 'bump');
+  const r = run();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(remoteRef('refs/heads/main'), before, 'main must not be pushed');
+  assert.equal(remoteRef('refs/heads/release/beta-v9.9'), git('rev-parse', 'HEAD').trim());
+  assert.match(gh(), /^pr create --base main --head release\/beta-v9\.9 /m);
+});
+
+test('deploy.sh on main with nothing new pushes nothing', () => {
+  const { run, remoteRef, gh } = pushScratch();
+  const r = run();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(remoteRef('refs/heads/release/beta-v9.9'), '');
+  assert.equal(gh(), '');
+});
+
+test('deploy.sh on another branch pushes that branch as before', () => {
+  const { dir, git, run, remoteRef, gh } = pushScratch();
+  git('checkout', '-qb', 'feature');
+  fs.writeFileSync(path.join(dir, 'app/pubspec.yaml'), 'version: 3\n');
+  git('commit', '-qam', 'bump');
+  const r = run();
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(remoteRef('refs/heads/feature'), git('rev-parse', 'HEAD').trim());
+  assert.equal(gh(), '');
 });
 
 test('workflows pin every action to a commit SHA and run once per PR (#53)', () => {

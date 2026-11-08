@@ -14,7 +14,7 @@ const run = (script, ...args) =>
   });
 
 test('create_review_account dry run does not echo a provided password', () => {
-  const out = run('create_review_account.js', '--dry-run', '--password', 'Provided-Secret-123');
+  const out = run('create_review_account.js', '--dry-run', '--password', 'Provided-Secret-123'); // gitleaks:allow (test literal)
   assert.ok(!out.includes('Provided-Secret-123'), out);
   assert.match(out, /as provided, not echoed/);
 });

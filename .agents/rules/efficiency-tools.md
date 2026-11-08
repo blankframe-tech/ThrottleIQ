@@ -8,7 +8,8 @@ trigger: always_on
    active (`claude-work`/`-hat`/`-biz`/`-grr` or plain `claude`). Do not disable them,
    switch them off, or work around them. If either is missing, tell the user
    how to fix it; do not continue silently.
-   - ponytail: `claude plugin install ponytail@ponytail`
+   - ponytail: `claude plugin marketplace add DietrichGebert/ponytail && claude plugin install ponytail@ponytail`
+     (user scope; the repo's `.claude/settings.json` enables no third-party marketplace)
    - caveman: `python3 -I ~/Everything/dev/systems/0_tools/ensure_caveman.py fix`
 2. **Retro at 60%**: when a single chat has consumed 60% or more of the
    5-hour usage limit, run `/retro` (from the `mattpocock-skills` plugin; user-invocable only, so ask the user to type it).

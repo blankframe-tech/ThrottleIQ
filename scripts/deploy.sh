@@ -6,7 +6,8 @@ set -euo pipefail
 #
 # Pipeline:
 #   1. Commit release changes
-#   2. Quality gate (scripts/check.sh) and push the current branch
+#   2. Quality gate (scripts/check.sh) and push the current branch (on main:
+#      push release/<tag> and open a PR, since main only takes PRs)
 #   3. Build the Android AAB (no APK) and draft its EN/BN release-notes file
 #   4. Build and launch release build on connected iPhone
 #   5. Create GitHub Release with tag and notes only (no binaries)
@@ -74,7 +75,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --help|-h)
-      sed -n '3,29p' "$0" | sed 's/^# \?//'
+      sed -n '3,30p' "$0" | sed 's/^# \?//'
       exit 0
       ;;
     *)
@@ -169,8 +170,31 @@ fi
 git diff --quiet HEAD || { echo "❌ tree changed after the gate:"; git diff --name-only HEAD | sed 's/^/    /'; echo "Commit or revert these, then re-run."; exit 1; }
 
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-echo "Pushing ${CURRENT_BRANCH} to origin..."
-if [ "$SKIP_QA" = true ]; then git push --no-verify origin "${CURRENT_BRANCH}"; else git push origin "${CURRENT_BRANCH}"; fi
+PUSH_FLAGS=()
+[ "$SKIP_QA" = true ] && PUSH_FLAGS+=(--no-verify)
+if [ "$CURRENT_BRANCH" = main ]; then
+  # main takes changes only through pull requests, so a release made on main
+  # goes up as release/<tag> with a PR. Merge it with a merge commit (not a
+  # squash) so the commit the release tag points at lands on main.
+  git fetch -q origin main
+  if [ "$(git rev-list --count origin/main..HEAD)" = 0 ]; then
+    echo "origin/main already has ${CURRENT_BRANCH} at $(git rev-parse --short HEAD); nothing to push."
+  else
+    RELEASE_BRANCH="release/${RELEASE_TAG}"
+    echo "Pushing main to origin/${RELEASE_BRANCH}..."
+    git push ${PUSH_FLAGS[@]+"${PUSH_FLAGS[@]}"} origin "HEAD:refs/heads/${RELEASE_BRANCH}"
+    if gh pr view "${RELEASE_BRANCH}" >/dev/null 2>&1; then
+      echo "PR for ${RELEASE_BRANCH} already open."
+    else
+      gh pr create --base main --head "${RELEASE_BRANCH}" \
+        --title "chore(release): ${PUBSPEC_VERSION}" \
+        --body "Release ${RELEASE_TAG} (${PUBSPEC_VERSION}), opened by scripts/deploy.sh. Merge with a merge commit once the checks pass."
+    fi
+  fi
+else
+  echo "Pushing ${CURRENT_BRANCH} to origin..."
+  git push ${PUSH_FLAGS[@]+"${PUSH_FLAGS[@]}"} origin "${CURRENT_BRANCH}"
+fi
 echo "✅ Git push complete!"
 
 # Map tile provider (issues §78.16). The public OpenStreetMap tile server is not

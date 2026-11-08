@@ -77,9 +77,8 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: scripts/package-lock.json
-      # Pinned to the major the rules/rtdb suites pass with locally, so a new
-      # firebase-tools major can't break the emulator jobs unannounced.
-      - run: npm install -g firebase-tools@15
+      # firebase-tools comes from scripts/package-lock.json (a devDependency),
+      # so CI runs the exact locked CLI; npm scripts find it in node_modules/.bin.
       - run: npm ci
       - run: npm test
       # Same as `npm run test:rules` minus the Mac-only JAVA_HOME.
