@@ -1476,7 +1476,7 @@ service cloud.firestore {
           // #1: createPost's batch bumps postCount for this post.
           counterMovedFor(/databases/$(database)/documents/forums/$(forumId),
             'postCount', 1, 'lastPostId', postId);
-        // Three disjoint shapes: addReply's replyCount +1 bump, now tied to
+        // Three disjoint shapes: the reply-counter replyCount +1 bump, now tied to
         // the reply doc named by `lastReplyId` being created in the same
         // transaction (issues §24.7 — addReply() was made
         // transactional to allow this, mirroring addComment() on rides); a
@@ -1580,7 +1580,7 @@ service cloud.firestore {
             request.resource.data.body.size() > 0 &&
             request.resource.data.body.size() <= 20000 &&
             request.resource.data.createdAt == request.time &&
-            // #1: addReply's transaction bumps replyCount for this reply.
+            // #1: the reply flow's transaction bumps replyCount for this reply.
             counterMovedFor(/databases/$(database)/documents/forums/$(forumId)/posts/$(postId),
               'replyCount', 1, 'lastReplyId', replyId);
           // Same ownership-or-moderator shape as the post delete above, and
@@ -2188,7 +2188,18 @@ service cloud.firestore {
             (after.get('currentLat', null) == null || after.currentLat is number) &&
             (after.get('currentLng', null) == null || after.currentLng is number);
         }
-        allow create, update: if rowWriter() &&
+        // §109.10: the creator may not seed a `pending` (invite) row for a
+        // rider on either side of a block. Rules cannot loop over the
+        // invitedIds array, so the per-rider invite writes (this row and the
+        // invitations marker below) carry the check; both are in the same
+        // batch as the invitedIds bump, so a blocked invitee fails the batch.
+        function inviteNotBlocked() {
+          return request.auth.uid == memberUid ||
+            request.resource.data.get('status', 'pending') != 'pending' ||
+            (!exists(/databases/$(database)/documents/users/$(memberUid)/blocks/$(request.auth.uid)) &&
+             !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(memberUid)));
+        }
+        allow create, update: if rowWriter() && inviteNotBlocked() &&
           rosterRowValid(resource == null ? {} : resource.data, request.resource.data);
         allow delete: if rowWriter();
         function rowWriter() {
@@ -2225,8 +2236,11 @@ service cloud.firestore {
         }
         allow read: if request.auth != null &&
           (request.auth.uid == invitedUid || request.auth.uid == rideCreator());
+        // §109.10: no invite for a rider on either side of a block.
         allow create, update: if request.auth != null &&
-          request.auth.uid == rideCreator();
+          request.auth.uid == rideCreator() &&
+          !exists(/databases/$(database)/documents/users/$(invitedUid)/blocks/$(request.auth.uid)) &&
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid)/blocks/$(invitedUid));
         allow delete: if request.auth != null &&
           (request.auth.uid == invitedUid || request.auth.uid == rideCreator());
       }

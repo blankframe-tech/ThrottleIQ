@@ -1,0 +1,10 @@
+# Reviewed 2026-11-03: none of these is a secret. Fingerprints pin the exact
+# commit+line, so any new finding still fails .github/workflows/security.yml.
+# reCAPTCHA Enterprise site key: public by design.
+a2a400dc0252d04bfd039a186db8c0f6358de414:public/live-viewer.html:generic-api-key:496
+# Fake password in a test asserting it is not echoed.
+aaeaccf6df34b13a2ac98f7c47dbc259fc5b5029:scripts/test/password_logging.test.js:generic-api-key:17
+# Emulator-only test key (file since removed).
+0f17bb34c0a38f5c6b855349c94caf84c3115a8b:functions/test/emulator/partner-api.test.js:generic-api-key:17
+# Placeholder token in a docs JSON example (file since removed).
+ac0df7f0f68d3fdbc2a0c392a16afd62b9b7bbec:docs/P6_CRASH_DETECTION_GUIDE.md:generic-api-key:85

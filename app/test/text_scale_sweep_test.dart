@@ -17,6 +17,9 @@ void main() {
         testWidgets('${screen.name} at ${scale}x (${locale.languageCode})',
             (tester) async {
           await pumpKeyScreen(tester, screen, textScale: scale, locale: locale);
+          // Unmount and let leftover timers fire, or a pending one fails the test.
+          await tester.pumpWidget(const SizedBox());
+          await tester.pump(const Duration(seconds: 30));
         });
       }
     }

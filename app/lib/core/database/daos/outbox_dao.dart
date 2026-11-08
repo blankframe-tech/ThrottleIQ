@@ -70,9 +70,11 @@ class OutboxEntry {
       // A row whose payload can't be decoded is not recoverable by retrying,
       // so it decodes to an empty map and its handler will reject it — which
       // routes it to the permanent-failure path rather than looping forever.
-      payload: _decodePayload(raw),
+      payload: _decodePayload(raw, row['id'] as String),
       createdAt: DateTime.parse(row['created_at'] as String),
       attempts: (row['attempts'] as num?)?.toInt() ?? 0,
+      // Rows from before §101.C9 hold local time without a zone; parse reads
+      // those as local and new UTC ones ('Z') as UTC, so both compare right.
       nextAttemptAt: row['next_attempt_at'] == null
           ? null
           : DateTime.tryParse(row['next_attempt_at'] as String),
@@ -82,13 +84,13 @@ class OutboxEntry {
     );
   }
 
-  static Map<String, dynamic> _decodePayload(String? raw) {
+  static Map<String, dynamic> _decodePayload(String? raw, String id) {
     if (raw == null) return const {};
     try {
       final decoded = jsonDecode(raw);
       return decoded is Map<String, dynamic> ? decoded : const {};
     } catch (e, st) {
-      reportSilently(e, st, where: 'outbox.decodePayload');
+      reportSilently(e, st, where: 'outbox.decodePayload', onceKey: id);
       return const {};
     }
   }
@@ -136,16 +138,19 @@ class OutboxDao {
   /// finalizes.
   Future<List<OutboxEntry>> due({DateTime? now, int limit = 50}) async {
     final db = await DatabaseHelper.instance.database;
-    final stamp = (now ?? DateTime.now()).toIso8601String();
+    final at = now ?? DateTime.now();
+    // Filtered in Dart, not SQL: next_attempt_at is a mix of legacy local and
+    // new UTC strings, which don't compare as text. The queue is small.
     final rows = await db.query(
       'outbox',
-      where: "status != 'dead' AND "
-          '(next_attempt_at IS NULL OR next_attempt_at <= ?)',
-      whereArgs: [stamp],
+      where: "status != 'dead'",
       orderBy: 'created_at ASC',
-      limit: limit,
     );
-    return rows.map(OutboxEntry.fromRow).toList();
+    return rows
+        .map(OutboxEntry.fromRow)
+        .where((e) => e.nextAttemptAt == null || !e.nextAttemptAt!.isAfter(at))
+        .take(limit)
+        .toList();
   }
 
   Future<List<OutboxEntry>> all() async {
@@ -259,7 +264,7 @@ class OutboxDao {
       'last_error = ?, permanent_failures = permanent_failures + ?, '
       'status = ? WHERE id = ?',
       [
-        nextAttemptAt.toIso8601String(),
+        nextAttemptAt.toUtc().toIso8601String(),
         // Bounded: a stack trace in a queue row is worth nothing and can be
         // arbitrarily long.
         error.length > 500 ? error.substring(0, 500) : error,

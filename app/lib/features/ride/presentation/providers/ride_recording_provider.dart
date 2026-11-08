@@ -260,6 +260,10 @@ final rideRecordingProvider =
 /// - [CrashCoordinator]: 60s countdown timer, notifications, emergency triggers
 /// - [RidePersistenceCoordinator]: batch point buffer, SQLite persistence, interruption recovery
 /// - [SensorFusionCoordinator]: IMU streams, axis calibration, complementary filtering
+/// Rider-chosen battery saver for the ride in progress: no screen wakelock and
+/// coarser GPS. Session-only on purpose; each ride start resets it (on at 15% battery or less).
+final batterySaverProvider = StateProvider<bool>((ref) => false);
+
 class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     with WidgetsBindingObserver {
   /// Collaborators default to the real ones; tests override
@@ -512,6 +516,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
           : PhonePlacement.unknown;
       _chargingAtStart = null;
       unawaited(_readCharging());
+      // Every ride starts from its own battery level, not the last ride's
+      // toggle. shortcut: checked once at start, not while riding; upgrade to
+      // a battery stream if riders report dying mid-ride.
+      final level = await BatteryService.getBatteryLevel()
+          .timeout(const Duration(seconds: 2), onTimeout: () => 100);
+      _ref.read(batterySaverProvider.notifier).state = level <= 15;
 
       final ride = RideEntity(
         id: _uuid.v4(),
@@ -579,7 +589,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       await _persistenceCoordinator.persistRecordingState(ride);
       _inService = await _hostInService(ride.id);
       WidgetsBinding.instance.addObserver(this);
-      if (_userInitiated) {
+      if (_userInitiated && !_batterySaver) {
         await WakelockPlus.enable();
       }
       await HapticService.rideStart();
@@ -704,6 +714,20 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
   /// Opens the GPS + IMU subscriptions, replacing any already open
   /// (§90.C1/C5 — see [RecordingSubscriptions]).
+  bool get _batterySaver => _ref.read(batterySaverProvider);
+
+  /// Flips battery saver mid-ride: re-opens GPS with the new settings and
+  /// drops/restores the screen wakelock. Only an active ride has either.
+  Future<void> setBatterySaver(bool on) async {
+    _ref.read(batterySaverProvider.notifier).state = on;
+    if (state.status != RecordingStatus.active || state.transitionPending) {
+      return;
+    }
+    _openStreams();
+    if (!_userInitiated) return;
+    on ? await WakelockPlus.disable() : await WakelockPlus.enable();
+  }
+
   void _openStreams() {
     _subs.open(() => [
           _listenLocation(),
@@ -715,10 +739,13 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     // Notification text is fixed when the stream starts, so a snapshot of the
     // rider's language is right here — there is no widget to rebuild.
     final l10n = resolveL10n(_ref.read(appLocaleProvider));
-    final accuracy = _userInitiated
-        ? LocationAccuracy.bestForNavigation
-        : LocationAccuracy.high;
-    final distanceFilter = _userInitiated ? 3 : 10;
+    final saver = _batterySaver;
+    final accuracy = saver
+        ? LocationAccuracy.medium
+        : _userInitiated
+            ? LocationAccuracy.bestForNavigation
+            : LocationAccuracy.high;
+    final distanceFilter = saver ? 25 : (_userInitiated ? 3 : 10);
 
     final settings = Platform.isIOS
         ? AppleSettings(
@@ -733,8 +760,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
             accuracy: accuracy,
             distanceFilter: distanceFilter,
             forceLocationManager: false,
-            intervalDuration:
-                Duration(milliseconds: _userInitiated ? 500 : 2000),
+            intervalDuration: Duration(
+                milliseconds: saver ? 3000 : (_userInitiated ? 500 : 2000)),
             // Hosted in the foreground-task service (B5), that service is
             // the location foreground service; a second one would only
             // duplicate its notification.
@@ -1243,7 +1270,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       _userInitiated = true;
 
       if (coldStart) {
-        await WakelockPlus.enable();
+        if (!_batterySaver) await WakelockPlus.enable();
         _startTimer();
         _persistenceCoordinator.startFlushTimer();
         _sessionLive = true;

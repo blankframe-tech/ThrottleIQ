@@ -197,4 +197,41 @@ void main() {
     expect(await n.stopRide(), isNull);
     expect(c.read(rideRecordingProvider).status, RecordingStatus.idle);
   });
+
+  test('battery saver: toggles mid-ride, reopens GPS, resets on next start',
+      () async {
+    final c = ProviderContainer(overrides: [
+      syncManagerProvider.overrideWithValue(_Sync()),
+      currentUserProvider.overrideWithValue(_User()),
+      realtimeServicesProvider
+          .overrideWith((ref) => RealtimeServices.disabled()),
+    ]);
+    addTearDown(c.dispose);
+    final n = c.read(rideRecordingProvider.notifier);
+
+    await quietly(() async {
+      await n.startRide(bikeId: 'b1');
+      expect(c.read(batterySaverProvider), isFalse);
+
+      await n.setBatterySaver(true);
+      expect(c.read(batterySaverProvider), isTrue);
+      expect(geo.fixes.hasListener, isTrue, reason: 'GPS reopened, not lost');
+
+      // Paused: only the flag moves; no stream is opened behind the pause.
+      await n.pauseRide();
+      await n.setBatterySaver(false);
+      expect(c.read(batterySaverProvider), isFalse);
+      expect(geo.fixes.hasListener, isFalse);
+
+      await n.setBatterySaver(true);
+      await n.resumeRide();
+      expect(geo.fixes.hasListener, isTrue);
+      await n.stopRide();
+
+      await n.startRide(bikeId: 'b1');
+      expect(c.read(batterySaverProvider), isFalse,
+          reason: 'a new ride does not inherit the last toggle');
+      await n.stopRide();
+    });
+  });
 }

@@ -9,7 +9,7 @@
 Every ride recorded. Every service remembered. Every rider connected.<br/>
 Offline-first. Built in Bangladesh, in English and বাংলা.
 
-[![License](https://img.shields.io/badge/license-TSAL-blue?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/license-BSL%201.1-blue?style=for-the-badge)](LICENSE)
 ![Flutter](https://img.shields.io/badge/Flutter-Dart%203-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase-Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 ![Tests](https://img.shields.io/badge/tests-2100%2B-C6F432?style=for-the-badge)
@@ -109,14 +109,32 @@ Everything is under [`DOCS/`](DOCS/README.md). Start with [`HANDOFF_Document.md`
 - **Next**: crash detection field calibration, then real alert delivery (needs an SMS/email provider and Blaze).
 - **Later**: lean-angle tracking, clubs and events, weekly reports, curvy-route planner, Indriyo hardware integration in the main app.
 
-## 🤝 Contributing
+## 🤝 Contributing: please break it, fix it, and make it better
 
-Contributions are welcome: code, tests, bug reports and Bangla translation review. Start with [`CONTRIBUTING.md`](CONTRIBUTING.md) and the [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) list. You sign the [CLA](CLA.md) once, on your first pull request.
+**I want people in this code.** Clone it, run it with your own Firebase project, poke at it and try to break it. All of these are welcome:
 
-## 📄 License
+- 🔓 **Find vulnerabilities.** ThrottleIQ holds riders' locations, rides and emergency contacts, so we want people trying to break in. Report privately through **Security → Report a vulnerability** (see [`SECURITY.md`](SECURITY.md)). Every valid, new finding gets a ThrottleIQ t-shirt and cha-nashta-adda with the team ([#166](https://github.com/blankframe-tech/ThrottleIQ/issues/166)).
+- 💡 **Suggest features.** Open a [Discussion](https://github.com/blankframe-tech/ThrottleIQ/discussions) or an issue. Wild ideas are fine.
+- 🛠️ **Send pull requests.** Code, tests, performance work, refactors, docs, and Bangla translation review. Start with [`good first issue`](https://github.com/blankframe-tech/ThrottleIQ/labels/good%20first%20issue) or [`help wanted`](https://github.com/blankframe-tech/ThrottleIQ/labels/help%20wanted), then read [`CONTRIBUTING.md`](CONTRIBUTING.md).
+- 🐛 **Report bugs**, even small ones.
 
-**ThrottleIQ Source-Available License (TSAL) v1.1** — see [LICENSE](LICENSE). You can view and audit the source, and fork it only to send a pull request. You can't release your fork or build a competing app.
+The license explicitly allows all of this: fork, change, build, run and share your fork, and open a pull request. You sign the [CLA](CLA.md) once, on your first pull request.
+
+## 📄 License: Business Source License 1.1
+
+**[BSL 1.1](LICENSE)**, which turns into **Apache 2.0 two years after each version is published.** Code from today is fully open source in two years.
+
+ThrottleIQ is a real product and a business, so the license only stops one thing: **using this code to run a competing ride, motorcycle or car app.** It doesn't stop you from reading, changing, sharing or contributing to the code.
+
+| ✅ You can | ❌ You can't (until the code turns Apache 2.0) |
+|---|---|
+| Read, audit, copy and change all of the code | Ship it, or a fork of it, as a ride, motorcycle or car app (tracking, garage, maintenance, crash alerts) |
+| Fork it and share your fork, for learning, testing or research | Publish it in an app store or run it as a service for others in those areas |
+| Use it in production for something that isn't a competing app | Use the ThrottleIQ name, logo or look: see [`TRADEMARKS.md`](TRADEMARKS.md) |
+| Hunt for security bugs, open issues, send pull requests | |
+
+The exact wording is the "Additional Use Grant" at the top of [LICENSE](LICENSE). Want to do something it doesn't cover? Ask: the contact is in the LICENSE.
 
 ---
 
-*Built for riders. Ride safe. 🏍️ · Last updated: 2026-10-22*
+*Built for riders. Ride safe. 🏍️ · Last updated: 2026-11-07*

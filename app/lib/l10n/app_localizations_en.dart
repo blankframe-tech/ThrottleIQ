@@ -4766,6 +4766,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Your phone stopped ThrottleIQ mid-ride. Tap to resume your ride.';
 
   @override
+  String get notifRecordingIdleBody =>
+      'Your ride has not moved for a while, so recording paused. Open ThrottleIQ to finish.';
+
+  @override
   String get notifConfirm => 'Confirm';
 
   @override
@@ -6884,6 +6888,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get oemGuideIntroGeneric =>
+      'Some phones close apps in the background to save battery, which can cut a ride short. If that keeps happening, change these three settings once.';
+
+  @override
+  String get oemGuideMoreHelpGeneric => 'Step-by-step guides for other phones';
+
+  @override
+  String get oemGuideSettingsSubtitleGeneric =>
+      'Battery settings that keep your phone recording';
+
+  @override
   String get yourThrottleIqSection => 'Your ThrottleIQ';
 
   @override
@@ -7111,6 +7126,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get parkingPinHere => 'Parking pin';
 
   @override
+  String get batterySaver => 'Battery saver';
+
+  @override
   String get minimizeRide => 'Minimize';
 
   @override
@@ -7266,4 +7284,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get chartFuelCostPerMile => 'Fuel cost per mile';
+
+  @override
+  String emergencyContactsLimitReached(int max) {
+    return 'You can add up to $max emergency contacts. Remove one to add another.';
+  }
+
+  @override
+  String liveGroupRideCardSemantics(String name, int count) {
+    return '$name, live group ride, $count riding. Open';
+  }
 }

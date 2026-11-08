@@ -1,142 +1,114 @@
-ThrottleIQ Source-Available License (TSAL) v1.1
-Copyright (c) 2026 ThrottleIQ. All Rights Reserved.
+Business Source License 1.1
 
-1. GRANT OF LIMITED VIEWING RIGHTS
+Parameters
 
-Subject to the terms of this License, the copyright holder ("Licensor")
-grants any person obtaining access to this repository ("You") a
-limited, non-exclusive, non-transferable, revocable right to VIEW and
-READ the source code contained herein, for the sole purpose of
-transparency, security auditing, and evaluation of how the ThrottleIQ
-application handles user data.
+Licensor:             Abrar Masud Nafiz (GitHub: the-abraar)
+Licensed Work:        ThrottleIQ, all versions published in this repository.
+                      The Licensed Work is (c) 2026 Abrar Masud Nafiz.
+Additional Use Grant: You may make production use of the Licensed Work,
+                      provided your use is not a Competing Offering.
 
-This is NOT an open-source license. No rights are granted beyond
-viewing the code as published in this repository, and the limited
-contribution rights in Section 1A.
+                      A "Competing Offering" is any product or service,
+                      free or paid, offered to anyone other than you, that:
+                      (a) records, tracks, analyses or shares rides, trips
+                          or drives made by motorcycle, scooter, car or any
+                          other motor vehicle;
+                      (b) helps riders, drivers or owners manage, log or
+                          maintain a motorcycle, scooter, car or other motor
+                          vehicle (for example a garage, maintenance, fuel,
+                          document or service-history app); or
+                      (c) detects crashes or sends safety alerts for riders
+                          or drivers.
 
-1A. LIMITED RIGHTS TO CONTRIBUTE
+                      Publishing the Licensed Work or a modified version of
+                      it in an app store, or running it as a service for
+                      others, is production use. Building, running and
+                      changing the Licensed Work on your own devices, and
+                      preparing a contribution to this repository, are not
+                      Competing Offerings.
+Change Date:          Two years from the date each version of the Licensed
+                      Work is first publicly published in this repository.
+Change License:       Apache License, Version 2.0
 
-Notwithstanding Section 2, You may, solely for the purpose of
-preparing a Contribution to this repository:
+For information about alternative licensing arrangements for the Licensed
+Work, please contact blankframe.technologies@gmail.com.
 
-  a. fork this repository on GitHub and clone that fork to devices
-     You control;
+Notice
 
-  b. modify, build, test, and run the code on devices You control,
-     using Your own Firebase, Cloudinary, and other service accounts;
+The Business Source License (this document, or the "License") is not an Open
+Source license. However, the Licensed Work will eventually be made available
+under an Open Source License, as stated in this License.
 
-  c. push Your changes to Your fork and submit them to this
-     repository as a pull request.
+License text copyright (c) 2017 MariaDB Corporation Ab, All Rights Reserved.
+"Business Source License" is a trademark of MariaDB Corporation Ab.
 
-A "Contribution" is any code, documentation, translation, design, or
-other material You submit to this repository through a pull request,
-issue, or comment. Every Contribution is accepted only under the
-ThrottleIQ Contributor License Agreement (CLA.md in this repository),
-which You must sign before the Licensor merges Your pull request.
+-----------------------------------------------------------------------------
 
-These rights do not let You publish, release, distribute, or deploy
-any build of the code or of Your fork, or use Your fork for any
-purpose other than preparing Contributions. Your fork stays under
-this License. The Licensor may revoke these rights for You at any
-time, and they end with this License under Section 6.
+Business Source License 1.1
 
-2. RESTRICTIONS
+Terms
 
-Except as expressly permitted under Sections 1 and 1A, You may NOT, under any
-circumstances, without prior written permission from the Licensor:
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work. The
+Licensor may make an Additional Use Grant, above, permitting limited
+production use.
 
-  a. Copy, reproduce, or duplicate this code or any portion of it,
-     in whole or in part, in any form or medium;
+Effective on the Change Date, or the fourth anniversary of the first publicly
+available distribution of a specific version of the Licensed Work under this
+License, whichever comes first, the Licensor hereby grants you rights under
+the terms of the Change License, and the rights granted in the paragraph
+above terminate.
 
-  b. Modify, adapt, translate, reverse-engineer, decompile, or create
-     derivative works based on this code or its underlying ideas,
-     concepts, algorithms, data models, or system design;
+If your use of the Licensed Work does not comply with the requirements
+currently in effect as described in this License, you must purchase a
+commercial license from the Licensor, its affiliated entities, or authorized
+resellers, or you must refrain from using the Licensed Work.
 
-  c. Distribute, publish, sublicense, rent, lease, or transfer this
-     code or any derivative of it to any third party;
+All copies of the original and modified Licensed Work, and derivative works
+of the Licensed Work, are subject to this License. This License applies
+separately for each version of the Licensed Work and the Change Date may vary
+for each version of the Licensed Work released by Licensor.
 
-  d. Use this code, in whole or in part, in any other software
-     product or service, whether commercial, non-commercial, or
-     open-source;
+You must conspicuously display this License on each original or modified copy
+of the Licensed Work. If you receive the Licensed Work in original or
+modified form from a third party, the terms and conditions set forth in this
+License apply to your use of that work.
 
-  e. Sell, offer for sale, or otherwise commercially exploit this
-     code, this repository, or any derivative work;
+Any use of the Licensed Work in violation of this License will automatically
+terminate your rights under this License for the current and all other
+versions of the Licensed Work.
 
-  f. Use the name "ThrottleIQ," its logo, branding, UI design system,
-     or any confusingly similar name or mark, in connection with any
-     product, service, app store listing, domain name, or business;
+This License does not grant you any right in any trademark or logo of
+Licensor or its affiliates (provided that you may use a trademark or logo of
+Licensor as expressly required by this License).
 
-  g. Recreate, clone, or build a substantially similar product based
-     on the concept, feature set, data model, UI/UX design, or
-     branding described or shown in this repository, even if no
-     code is directly copied;
+TO THE EXTENT PERMITTED BY APPLICABLE LAW, THE LICENSED WORK IS PROVIDED ON
+AN "AS IS" BASIS. LICENSOR HEREBY DISCLAIMS ALL WARRANTIES AND CONDITIONS,
+EXPRESS OR IMPLIED, INCLUDING (WITHOUT LIMITATION) WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, NON-INFRINGEMENT, AND
+TITLE.
 
-  h. Deploy, host, or run this code, or any modified version of it,
-     for use by any third party, including as a hosted service (SaaS);
+MariaDB hereby grants you permission to use this License's text to license
+your works, and to refer to it using the trademark "Business Source License",
+as long as you comply with the Covenants of Licensor below.
 
-  i. Remove or alter any copyright, trademark, or proprietary notice
-     contained in this repository.
+Covenants of Licensor
 
-3. NO IMPLIED LICENSE
+In consideration of the right to use this License's text and the "Business
+Source License" name and trademark, Licensor covenants to MariaDB, and to all
+other recipients of the licensed work to be provided by Licensor:
 
-Nothing in this License shall be construed as granting, by
-implication, estoppel, or otherwise, any license or right to any
-patent, trademark, trade name, trade dress, service mark, or other
-intellectual property right of the Licensor, except the limited
-viewing and contribution rights expressly stated in Sections 1 and 1A.
+1. To specify as the Change License the GPL Version 2.0 or any later version,
+   or a license that is compatible with GPL Version 2.0 or a later version,
+   where "compatible" means that software provided under the Change License can
+   be included in a program with software provided under GPL Version 2.0 or a
+   later version. Licensor may specify additional Change Licenses without
+   limitation.
 
-4. OWNERSHIP
+2. To either: (a) specify an additional grant of rights to use that does not
+   impose any additional restriction on the right granted in this License, as
+   the Additional Use Grant; or (b) insert the text "None".
 
-All right, title, and interest in and to this repository, including
-all source code, documentation, designs, data models, concepts, ideas,
-trademarks, and associated intellectual property, remain exclusively
-with the Licensor. This License does not transfer any ownership
-rights whatsoever.
+3. To specify a Change Date.
 
-5. NO WARRANTY
-
-THIS CODE IS PROVIDED "AS IS," WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY
-CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF, OR
-INABILITY TO USE, THIS CODE.
-
-6. TERMINATION
-
-This License and the limited viewing right granted herein terminate
-automatically, without notice, if You breach any term of this
-License. Upon termination, You must immediately cease all access to
-and use of this repository and destroy any local copies in Your
-possession.
-
-7. ENFORCEMENT
-
-Any unauthorized copying, modification, distribution, commercial use,
-or use of the ThrottleIQ name, branding, or underlying product concept
-constitutes a material breach of this License and may result in legal
-action, including but not limited to claims for copyright
-infringement, trademark infringement, and misappropriation of trade
-secrets, to the fullest extent permitted by law.
-
-8. CONTACT FOR PERMISSIONS
-
-Any use beyond the limited rights granted in Sections 1 and 1A requires
-prior written permission from the Licensor. To request permission,
-contact: blankframe.technologies@gmail.com
-
-9. GOVERNING LAW
-
-This License shall be governed by and construed in accordance with
-the laws of all states of the USA, India, Cananda, Bangladesh, Europe, Australia and Newzealand, without regard to its conflict of
-law provisions.
-
----
-
-SUMMARY (non-binding, for human readability):
-You may look at this code to verify how ThrottleIQ works and confirm
-we're not doing anything shady with your data. You may also fork it
-and change it on your own devices to send us a pull request, after
-signing the CLA. That's it. You cannot release, publish, sell or host
-it or your fork, or build a competing app using this name, design, or
-idea. All rights reserved.
+4. Not to modify this License in any other way.

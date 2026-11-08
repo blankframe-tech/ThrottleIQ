@@ -66,6 +66,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
   Timer? _hostWatchdog;
   StreamSubscription<Position>? _takeoverSub;
   var _stoppedNotified = false;
+  DateTime _lastMoveAt = DateTime.now();
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -113,7 +114,19 @@ class _AutoTrackingTaskHandler extends TaskHandler {
         await _stopTakeover();
         return;
       }
-      if (_takeoverSub != null || _stoppedNotified) return;
+      if (_stoppedNotified) return;
+      if (_takeoverSub != null) {
+        // §109.1: nobody is riding any more; leave the ride for restore.
+        if (AutoTrackingService.takeoverIdle(
+            now: DateTime.now(), lastMoveAt: _lastMoveAt)) {
+          _stoppedNotified = true;
+          await _stopTakeover();
+          await NotificationService.instance
+              .showRecordingStopped(openToFinish: true);
+          await FlutterForegroundTask.stopService();
+        }
+        return;
+      }
       if (!AutoTrackingService.uiGone(
           now: DateTime.now(),
           hostedSince: _hostedSince,
@@ -153,6 +166,7 @@ class _AutoTrackingTaskHandler extends TaskHandler {
     // Upgrade if restarted rides show short durations.
     final clockFrom = _lastUiBeat ?? _hostedSince;
     final points = RidePointDao();
+    _lastMoveAt = DateTime.now();
     debugPrint('[ride-service] UI gone, recording ride $rideId here');
     _takeoverSub = Geolocator.getPositionStream(
       locationSettings: AndroidSettings(
@@ -164,6 +178,14 @@ class _AutoTrackingTaskHandler extends TaskHandler {
       (position) => unawaited(AutoTrackingService.guardedFix(() async {
         final row = AutoTrackingService.takeoverPointRow(rideId, position);
         if (row == null) return;
+        if (position.speed.isFinite && position.speed >= 1) {
+          _lastMoveAt = DateTime.now();
+        }
+        // §109.2: the recorder may be writing too if the UI beat failed.
+        if (!AutoTrackingService.takeoverPointWanted(
+            position.timestamp, await points.latestTimestamp(rideId))) {
+          return;
+        }
         await points.insert(row);
         await prefs.setInt(RidePrefsKeys.elapsedSeconds,
             baseSeconds + DateTime.now().difference(clockFrom).inSeconds);
@@ -716,6 +738,24 @@ class AutoTrackingService {
   }) =>
       permission == LocationPermission.always ||
       (!startedBySystem && permission == LocationPermission.whileInUse);
+
+  /// How long a hosted ride may sit without movement before the takeover
+  /// ends it (§109.1).
+  static const takeoverIdleLimit = Duration(minutes: 12);
+
+  @visibleForTesting
+  static bool takeoverIdle({
+    required DateTime now,
+    required DateTime lastMoveAt,
+  }) =>
+      now.difference(lastMoveAt) >= takeoverIdleLimit;
+
+  /// False when the ride already has a point less than 1 s from [fixAt]
+  /// (§109.2: a UI recorder that is still writing owns the trail).
+  @visibleForTesting
+  static bool takeoverPointWanted(DateTime fixAt, DateTime? latestStored) =>
+      latestStored == null ||
+      fixAt.difference(latestStored).abs() >= const Duration(seconds: 1);
 
   /// The `ride_points` row for a fix stored by the handler, or null when the
   /// recorder's accuracy gate would drop it. Same columns and units as the

@@ -54,12 +54,12 @@ dependencies:
   # tel: and geo: links (e.g. Directions and Call on a place's detail
   # screen). ThrottleIQ deliberately does NOT route to a destination itself —
   # see place_directions.dart.
-  url_launcher: ^6.2.5
+  url_launcher: ^6.3.3
 
   # Image
   image_picker: ^1.0.7
   cached_network_image: ^3.3.1
-  image: ^4.1.0
+  image: ^4.12.0
 
   # Haptics / Feedback
   vibration: ^2.0.0
@@ -130,7 +130,7 @@ dependencies:
   # configures the platform session so record/playback actually route
   # through a paired Bluetooth headset instead of the phone's own mic/
   # speaker. See group_ride_map_screen.dart.
-  record: ^7.1.1
+  record: ^7.1.2
   just_audio: ^0.9.40
   audio_session: ^0.1.21
 

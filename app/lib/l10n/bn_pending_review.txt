@@ -1717,6 +1717,10 @@ oemGuideOpenBatterySettings
 # batch: Settings reopens battery guide (2026-10-29)
 oemGuideSettingsTitle
 oemGuideSettingsSubtitle
+# batch: battery guide for any phone (2026-11-06)
+oemGuideIntroGeneric
+oemGuideMoreHelpGeneric
+oemGuideSettingsSubtitleGeneric
 # batch: cockpit alert flash toggle (2026-10-29)
 alertFlashSettingTitle
 alertFlashSettingSubtitle
@@ -1795,3 +1799,9 @@ pinnedNotice
 waitingToUpload
 # batch: update screen opens Google Play (2026-11-01)
 updateRequiredPlayAction
+# batch: uimisc
+emergencyContactsLimitReached
+liveGroupRideCardSemantics
+
+# batch: swiped-away ride idle stop (2026-11-06)
+notifRecordingIdleBody

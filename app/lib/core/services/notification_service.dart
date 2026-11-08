@@ -235,13 +235,15 @@ class NotificationService {
   /// mid-ride (critique B5). The tap just opens the app, which restores the
   /// ride paused for the rider to resume. Callable from the foreground-task
   /// isolate as well as the UI one.
-  Future<void> showRecordingStopped() async {
+  Future<void> showRecordingStopped({bool openToFinish = false}) async {
     await init();
     final l10n = await savedL10n();
     await _plugin.show(
       recordingStoppedId,
       l10n.notifRecordingStoppedTitle,
-      l10n.notifRecordingStoppedBody,
+      openToFinish
+          ? l10n.notifRecordingIdleBody
+          : l10n.notifRecordingStoppedBody,
       NotificationDetails(
         android: AndroidNotificationDetails(
           ridesChannelId,
