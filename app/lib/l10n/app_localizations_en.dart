@@ -6635,6 +6635,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get unitMpg => 'mpg';
 
   @override
+  String get unitMi => 'mi';
+
+  @override
+  String get unitMph => 'mph';
+
+  @override
   String widgetServiceIn(String item, String when) {
     return '$item in $when';
   }

@@ -5,6 +5,7 @@ import '../../../core/i18n/numeric_locale.dart';
 import '../../../core/theme/app_theme_context.dart';
 import '../../../core/theme/app_theme_style.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../maintenance/domain/calculators/fuel_units.dart';
 import '../domain/ride_analytics.dart';
 
 /// Wording, units, colours, shape and table layout of the analytics charts.
@@ -69,6 +70,30 @@ String weekdayLabel(int isoWeekday) => DateFormat.E(
       kNumericLocale,
     ).format(DateTime(2024, 1, isoWeekday)); // 1 Jan 2024 was a Monday.
 
+// ─── Units ─────────────────────────────────────────────────────────────────
+
+/// What a plotted number measures when the rider can read it in km or miles.
+/// Data stays metric everywhere; only the display converts.
+enum ChartUnitKind { none, distance, speed, efficiency, costPerDistance }
+
+const double _kmToMi = 1 / FuelUnits.kmPerMile;
+
+/// [metric] (km, km/h, km/L or ৳/km) as the rider reads it: miles, mph, mpg
+/// (US) or ৳/mi when [imperial]. Unchanged for [ChartUnitKind.none].
+double chartDisplayValue(
+  ChartUnitKind kind,
+  double metric, {
+  required bool imperial,
+}) {
+  if (!imperial) return metric;
+  return switch (kind) {
+    ChartUnitKind.none => metric,
+    ChartUnitKind.distance || ChartUnitKind.speed => metric * _kmToMi,
+    ChartUnitKind.efficiency => FuelUnits.kmPerLitreToMpg(metric),
+    ChartUnitKind.costPerDistance => FuelUnits.costPerKmToPerMile(metric),
+  };
+}
+
 // ─── Tables ────────────────────────────────────────────────────────────────
 
 /// A chart's data as a table: display cells for the screen (newest first)
@@ -95,19 +120,22 @@ class ChartTableContext {
   /// "<chart title> (<unit>)".
   final String valueHeader;
 
-  /// "Total (km)".
-  final String kmHeader;
+  /// "Total (km)", or miles when the rider reads miles.
+  final String distanceHeader;
+
+  /// "km" or "mi".
+  final String distanceUnit;
   final String Function(double v) formatValue;
   final String Function(String bikeId) bikeName;
-  final String distanceUnit;
+
   const ChartTableContext({
     required this.l10n,
     required this.unit,
     required this.valueHeader,
-    required this.kmHeader,
+    required this.distanceHeader,
+    required this.distanceUnit,
     required this.formatValue,
     required this.bikeName,
-    this.distanceUnit = 'km',
   });
 
   /// "Header (unit)", or just the header for a unitless column.
@@ -141,12 +169,18 @@ class InsightWording {
   final String unit;
   final String Function(String bikeId) bikeName;
 
+  /// An insight's metric value as the chart shows it, in [unit].
+  final double Function(double metric) display;
+
   const InsightWording({
     required this.l10n,
     required this.unit,
     required this.bikeName,
+    this.display = _same,
   });
 }
+
+double _same(double v) => v;
 
 String _dateLabel(AnalyticsPoint p) => p.date == null ? '' : shortDate(p.date!);
 String _rankDate(AnalyticsPoint p, String Function(String) bikeName) =>
@@ -172,8 +206,14 @@ class ChartPresentation {
   final AnalyticsChart chart;
   final String Function(AppLocalizations l10n) title;
 
-  /// Unit of the plotted value; empty for a unitless score.
+  /// Unit of the plotted value, metric; empty for a unitless score. Read
+  /// it through [unitOf] so miles show for a rider on miles.
   final String Function(AppLocalizations l10n) unit;
+
+  /// What the plotted value and [AnalyticsPoint.secondary] measure, for the
+  /// km/mi switch.
+  final ChartUnitKind valueKind;
+  final ChartUnitKind secondaryKind;
   final IconData icon;
   final Color Function(AppColorPalette p) color;
   final ChartShape shape;
@@ -226,6 +266,8 @@ class ChartPresentation {
     required this.chart,
     required this.title,
     required this.unit,
+    this.valueKind = ChartUnitKind.none,
+    this.secondaryKind = ChartUnitKind.none,
     required this.icon,
     required this.color,
     required this.shape,
@@ -245,6 +287,50 @@ class ChartPresentation {
     this.countLabel = _ridesCount,
   });
 
+  /// The title the rider reads: [title], except fuel cost per distance, which
+  /// says "per mile" for a rider on miles.
+  String titleOf(AppLocalizations l10n, {bool imperial = false}) =>
+      imperial && valueKind == ChartUnitKind.costPerDistance
+          ? l10n.chartFuelCostPerMile
+          : title(l10n);
+
+  /// The unit the rider reads: [unit], or its imperial twin.
+  String unitOf(AppLocalizations l10n, {bool imperial = false}) {
+    if (!imperial) return unit(l10n);
+    return switch (valueKind) {
+      ChartUnitKind.none => unit(l10n),
+      ChartUnitKind.distance => l10n.unitMi,
+      ChartUnitKind.speed => l10n.unitMph,
+      ChartUnitKind.efficiency => l10n.unitMpg,
+      ChartUnitKind.costPerDistance => '$kCurrencySymbol/${l10n.unitMi}',
+    };
+  }
+
+  /// [points] (metric) converted for display; the same list when metric.
+  List<AnalyticsPoint> displayPoints(
+    List<AnalyticsPoint> points, {
+    required bool imperial,
+  }) {
+    if (!imperial ||
+        (valueKind == ChartUnitKind.none &&
+            secondaryKind == ChartUnitKind.none)) {
+      return points;
+    }
+    double? sec(double? v) =>
+        v == null ? null : chartDisplayValue(secondaryKind, v, imperial: true);
+    return [
+      for (final p in points)
+        AnalyticsPoint(
+          key: p.key,
+          date: p.date,
+          value: chartDisplayValue(valueKind, p.value, imperial: true),
+          secondary: sec(p.secondary),
+          tertiary: p.tertiary,
+          bucket: p.bucket,
+        ),
+    ];
+  }
+
   Color colorOf(BuildContext context) => color(context.palette);
 
   /// Whether [points] are enough to draw.
@@ -255,12 +341,17 @@ class ChartPresentation {
         _ => points.isNotEmpty,
       };
 
-  String insightText(AppLocalizations l10n, AnalyticsInsight i,
-      {required String Function(String bikeId) bikeName,
-      String? unitOverride}) {
-    final u = unitOverride ?? unit(l10n);
+  String insightText(
+    AppLocalizations l10n,
+    AnalyticsInsight i, {
+    required String Function(String bikeId) bikeName,
+    bool imperial = false,
+  }) {
+    final u = unitOf(l10n, imperial: imperial);
+    double display(double v) =>
+        chartDisplayValue(valueKind, v, imperial: imperial);
     final own = wordInsight?.call(
-      InsightWording(l10n: l10n, unit: u, bikeName: bikeName),
+      InsightWording(l10n: l10n, unit: u, bikeName: bikeName, display: display),
       i,
     );
     if (own != null) return own;
@@ -273,31 +364,32 @@ class ChartPresentation {
     if (i.kind == InsightKind.trendFlat) return l10n.insightTrendFlat;
     if (i.kind == InsightKind.peakValue) {
       return l10n.insightPeakValue(
-        formatWithUnit(i.value ?? 0, u),
+        formatWithUnit(display(i.value ?? 0), u),
         shortDate(i.date!),
       );
     }
     throw StateError('${chart.id} has no wording for ${i.kind}');
   }
 
-  ChartTable buildTable(AppLocalizations l10n, List<AnalyticsPoint> points,
-      {required String Function(String bikeId) bikeName,
-      String? unitOverride,
-      String? distanceUnitOverride,
-      String? titleOverride}) {
-    final u = unitOverride ?? unit(l10n);
+  ChartTable buildTable(
+    AppLocalizations l10n,
+    List<AnalyticsPoint> points, {
+    required String Function(String bikeId) bikeName,
+    bool imperial = false,
+  }) {
+    final u = unitOf(l10n, imperial: imperial);
+    final distanceUnit = imperial ? l10n.unitMi : 'km';
     return table(
       ChartTableContext(
         l10n: l10n,
         unit: u,
-        valueHeader: ChartTableContext.withUnit(
-          titleOverride ?? title(l10n),
-          u,
-        ),
-        kmHeader: ChartTableContext.withUnit(l10n.analyticsTotal, 'km'),
+        valueHeader:
+            ChartTableContext.withUnit(titleOf(l10n, imperial: imperial), u),
+        distanceHeader:
+            ChartTableContext.withUnit(l10n.analyticsTotal, distanceUnit),
+        distanceUnit: distanceUnit,
         formatValue: formatValue,
         bikeName: bikeName,
-        distanceUnit: distanceUnitOverride ?? 'km',
       ),
       points,
     );
