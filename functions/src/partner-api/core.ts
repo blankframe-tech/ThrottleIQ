@@ -1,4 +1,6 @@
-import { createHash, createHmac, randomBytes } from 'node:crypto';
+import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { lookup } from 'node:dns/promises';
+import { BlockList, isIP } from 'node:net';
 import { FieldValue, Firestore, Timestamp } from 'firebase-admin/firestore';
 import {
   RideScore,
@@ -24,6 +26,7 @@ import {
  *   partnerRides/{partnerId}__{rideId}    → ride summary, segments, impacts, score
  *   partnerRiders/{partnerId}__{riderKey} → running score per rider
  *   partnerAlerts/{auto}                  → SOS / crash / unusual-stop alerts
+ *   partnerLive/{token}                   → { partnerId, riderKey } owner of a live link
  *   roadSegmentStats/{segmentId}          → pooled speed moments (trigger-owned)
  * plus the shared pools the app already uses: roadSpeedSamples and
  * liveSessions (the hosted viewer reads those unchanged).
@@ -37,17 +40,99 @@ export interface Partner {
 }
 
 export class AuthError extends Error {}
+export class ForbiddenError extends Error {}
 export class NotFoundError extends Error {}
+export class RateLimitError extends Error {}
 
 export const sha256 = (s: string) => createHash('sha256').update(s).digest('hex');
 
 /**
- * A rider as stored: a hash of the partner's own rider id, so ThrottleIQ
- * never holds Maya's ids, names or phone numbers, yet the same rider always
- * maps to the same key.
+ * Per-partner key derived from the server-only Functions secret
+ * PARTNER_RIDER_SECRET. Fails closed: no secret, no partner API.
  */
-export const riderKeyOf = (partnerId: string, riderRef: string) =>
-  sha256(`${partnerId}:${riderRef}`).slice(0, 32);
+function partnerSecret(partnerId: string): Buffer {
+  const master = process.env.PARTNER_RIDER_SECRET;
+  if (!master || master.length < 32) throw new Error('PARTNER_RIDER_SECRET is not set');
+  return createHmac('sha256', master).update(`partner:${partnerId}`).digest();
+}
+
+const keyed = (partnerId: string, label: string) =>
+  createHmac('sha256', partnerSecret(partnerId)).update(label).digest('hex').slice(0, 32);
+
+/**
+ * A rider as stored: a keyed HMAC of the partner's own rider id, so
+ * ThrottleIQ never holds Maya's ids, the same rider always maps to the same
+ * key, and nobody without the server secret can reverse it by guessing ids.
+ */
+export const riderKeyOf = (partnerId: string, riderRef: string) => keyed(partnerId, `rider:${riderRef}`);
+
+/** One road-pool sample id per (ride, cell): stable for retries, unlinkable across cells. */
+export const sampleIdOf = (partnerId: string, rideId: string, segmentId: string) =>
+  keyed(partnerId, `sample:${rideId}:${segmentId}`);
+
+// ── Rider tokens ───────────────────────────────────────────────────────────
+
+export const RIDER_TOKEN_TTL_MS = 24 * 3600 * 1000;
+
+const tokenSig = (partnerId: string, body: string) =>
+  createHmac('sha256', partnerSecret(partnerId)).update(`token:${body}`).digest();
+
+/**
+ * A bearer token for ONE rider, minted by the partner's server with its API
+ * key (`POST v1/riders/{riderRef}/token`) and handed to that rider's app.
+ * Format `tiqr.<base64url {p, r, e}>.<base64url HMAC>`; stateless, so it
+ * lives until `e` (revoke all of a partner's by deactivating the partner).
+ */
+export function mintRiderToken(partnerId: string, riderRef: string, now = Date.now()) {
+  const e = now + RIDER_TOKEN_TTL_MS;
+  const body = Buffer.from(JSON.stringify({ p: partnerId, r: riderRef, e })).toString('base64url');
+  return { token: `tiqr.${body}.${tokenSig(partnerId, body).toString('base64url')}`, expiresAt: new Date(e).toISOString() };
+}
+
+export function verifyRiderToken(token: string, now = Date.now()): { partnerId: string; riderRef: string } {
+  const bad = () => new AuthError('invalid or expired rider token');
+  const parts = token.split('.');
+  if (token.length > 1000 || parts.length !== 3 || parts[0] !== 'tiqr') throw bad();
+  let claims: { p?: unknown; r?: unknown; e?: unknown };
+  try {
+    claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  } catch {
+    throw bad();
+  }
+  const { p, r, e } = claims ?? {};
+  if (typeof p !== 'string' || !/^[a-z0-9-]{2,32}$/.test(p) || typeof r !== 'string' || typeof e !== 'number') throw bad();
+  const want = tokenSig(p, parts[1]);
+  const got = Buffer.from(parts[2], 'base64url');
+  if (got.length !== want.length || !timingSafeEqual(got, want) || e <= now) throw bad();
+  return { partnerId: p, riderRef: r };
+}
+
+// ── Rate limits ────────────────────────────────────────────────────────────
+
+export const KEY_RATE_PER_MIN = 1200;
+export const RIDER_RATE_PER_MIN = 60;
+const hits = new Map<string, { minute: number; n: number }>();
+
+/** Test hook. */
+export function clearRateLimits() {
+  hits.clear();
+}
+
+/**
+ * Fixed one-minute window per bucket (`key:<partnerId>`, `rider:<partnerId>:<riderKey>`).
+ * shortcut: per instance, so the real cap is limit × maxInstances (20);
+ * move to a Firestore/Redis counter if a partner needs a hard global quota.
+ */
+export function checkRate(bucket: string, limit: number, now = Date.now()) {
+  const minute = Math.floor(now / 60_000);
+  const h = hits.get(bucket);
+  if (!h || h.minute !== minute) {
+    if (hits.size > 50_000) hits.clear();
+    hits.set(bucket, { minute, n: 1 });
+    return;
+  }
+  if (++h.n > limit) throw new RateLimitError('rate limit exceeded, retry in a minute');
+}
 
 const keyCache = new Map<string, { partner: Partner; until: number }>();
 const KEY_CACHE_MS = 5 * 60 * 1000;
@@ -69,17 +154,30 @@ export async function authenticate(db: Firestore, apiKey: string | undefined, no
 
   const key = await db.doc(`partnerKeys/${hash}`).get();
   if (!key.exists || key.get('active') !== true) throw new AuthError('unknown or revoked API key');
-  const partnerId = key.get('partnerId') as string;
+  const partner = await loadPartner(db, key.get('partnerId') as string);
+  keyCache.set(hash, { partner, until: now + KEY_CACHE_MS });
+  return partner;
+}
+
+async function loadPartner(db: Firestore, partnerId: string): Promise<Partner> {
   const doc = await db.doc(`partners/${partnerId}`).get();
   if (!doc.exists || doc.get('active') !== true) throw new AuthError('partner is not active');
-  const partner: Partner = {
+  return {
     id: partnerId,
     name: (doc.get('name') as string) ?? partnerId,
     webhookUrl: doc.get('webhookUrl') ?? undefined,
     webhookSecret: doc.get('webhookSecret') ?? undefined,
   };
-  keyCache.set(hash, { partner, until: now + KEY_CACHE_MS });
-  return partner;
+}
+
+/** Resolves a rider bearer token to its (active) partner and rider. Cached like keys. */
+export async function authenticateRider(db: Firestore, token: string, now = Date.now()) {
+  const { partnerId, riderRef } = verifyRiderToken(token, now);
+  const cacheKey = `partner:${partnerId}`;
+  const hit = keyCache.get(cacheKey);
+  const partner = hit && hit.until > now ? hit.partner : await loadPartner(db, partnerId);
+  if (!hit || hit.until <= now) keyCache.set(cacheKey, { partner, until: now + KEY_CACHE_MS });
+  return { partner, riderRef };
 }
 
 // ── Rides ──────────────────────────────────────────────────────────────────
@@ -107,23 +205,25 @@ async function readStats(db: Firestore, segmentIds: string[]): Promise<Map<strin
 
 /**
  * Adds the ride's segment speeds to the shared Dhaka pool, in the same shape
- * the ThrottleIQ app writes (plus `source`). Doc ids are deterministic, so a
- * retry overwrites instead of adding a second sample, and the stats trigger
- * (onCreate) counts each one once.
+ * the ThrottleIQ app writes (plus `source`). Each cell gets its own keyed id
+ * (sampleIdOf), so a retry overwrites instead of adding a second sample and
+ * the stats trigger (onCreate) counts each one once, yet a reader of the
+ * pool can't group one ride's cells by id. `createdAt` is rounded down to the
+ * hour so one batch's identical server time doesn't group them either.
  */
 async function writeSamples(db: Firestore, partnerId: string, ride: RideUpload) {
-  const sampleId = `${partnerId}__${ride.rideId}`;
   const weekday = bdWeekday(ride.startedAt);
   const hour = bdHour(ride.startedAt);
+  const createdAt = Timestamp.fromMillis(Math.floor(Date.now() / 3_600_000) * 3_600_000);
   for (let i = 0; i < ride.segments.length; i += SAMPLE_BATCH) {
     const batch = db.batch();
     for (const s of ride.segments.slice(i, i + SAMPLE_BATCH)) {
-      batch.set(db.doc(`roadSpeedSamples/${s.segmentId}/samples/${sampleId}`), {
+      batch.set(db.doc(`roadSpeedSamples/${s.segmentId}/samples/${sampleIdOf(partnerId, ride.rideId, s.segmentId)}`), {
         speedKmh: s.avgSpeedKmh,
         weekday,
         hour,
         weatherCode: ride.weatherCode,
-        createdAt: FieldValue.serverTimestamp(),
+        createdAt,
         source: partnerId,
       });
     }
@@ -234,24 +334,28 @@ export async function riderScore(db: Firestore, partner: Partner, riderRefRaw: s
 
 /**
  * `DELETE v1/riders/{riderRef}`: erases a rider's rides, running score,
- * alerts and live sessions. Her anonymous road-pool samples stay: they
- * carry no rider, and once the rides are gone nothing links them to her.
+ * alerts and live sessions. Her road-pool samples stay: they carry no rider
+ * or ride id, and each cell has an unrelated id (see writeSamples).
  */
 export async function deleteRider(db: Firestore, partner: Partner, riderRefRaw: string) {
   const riderRef = ref({ riderRef: riderRefRaw }, 'riderRef');
   const riderKey = riderKeyOf(partner.id, riderRef);
   let deleted = 0;
-  for (const collection of ['partnerRides', 'partnerAlerts', 'liveSessions']) {
+  for (const collection of ['partnerRides', 'partnerAlerts', 'partnerLive']) {
     for (;;) {
       const page = await db
         .collection(collection)
         .where('partnerId', '==', partner.id)
         .where('riderKey', '==', riderKey)
-        .limit(400)
+        .limit(200)
         .get();
       if (page.empty) break;
       const batch = db.batch();
-      page.docs.forEach((d) => batch.delete(d.ref));
+      page.docs.forEach((d) => {
+        batch.delete(d.ref);
+        // partnerLive/{token} is the server-only owner record of liveSessions/{token}.
+        if (collection === 'partnerLive') batch.delete(db.doc(`liveSessions/${d.id}`));
+      });
       await batch.commit();
       deleted += page.size;
     }
@@ -317,7 +421,8 @@ export function newLiveToken(): string {
 /**
  * `POST /v1/live`: a `liveSessions` doc in the shape the hosted viewer
  * already reads (`shareable: true`, Timestamp `expiresAt`), so the link
- * works in any browser with no app.
+ * works in any browser with no app. Link holders can read that doc, so the
+ * rider key lives only in the server-only `partnerLive/{token}`.
  */
 export async function startLive(db: Firestore, partner: Partner, body: unknown, now = new Date()) {
   const o = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>;
@@ -325,11 +430,16 @@ export async function startLive(db: Firestore, partner: Partner, body: unknown, 
   const pos = parseLivePosition(body);
   const token = newLiveToken();
   const expiresAt = new Date(now.getTime() + LIVE_TTL_MS);
-  await db.doc(`liveSessions/${token}`).create({
+  const batch = db.batch();
+  batch.create(db.doc(`partnerLive/${token}`), {
+    partnerId: partner.id,
+    riderKey: riderKeyOf(partner.id, riderRef),
+    createdAt: FieldValue.serverTimestamp(),
+  });
+  batch.create(db.doc(`liveSessions/${token}`), {
     token,
     uid: `partner:${partner.id}`,
     partnerId: partner.id,
-    riderKey: riderKeyOf(partner.id, riderRef),
     rideId: null,
     active: true,
     lastLat: pos.lat,
@@ -341,21 +451,28 @@ export async function startLive(db: Firestore, partner: Partner, body: unknown, 
     updatedAt: FieldValue.serverTimestamp(),
     expiresAt: Timestamp.fromDate(expiresAt),
   });
+  await batch.commit();
   return { token, url: `${LIVE_VIEWER_BASE}/${token}`, expiresAt: expiresAt.toISOString() };
 }
 
-async function ownedLive(db: Firestore, partner: Partner, token: string) {
-  if (!/^[A-Za-z0-9]{32}$/.test(token)) throw new NotFoundError('unknown live session');
+/**
+ * The partner's live session [token]. With [riderRef] (a rider-token
+ * caller), it must also be that rider's own link.
+ */
+async function ownedLive(db: Firestore, partner: Partner, token: string, riderRef?: string) {
+  const unknown = () => new NotFoundError('unknown live session');
+  if (!/^[A-Za-z0-9]{32}$/.test(token)) throw unknown();
   const doc = db.doc(`liveSessions/${token}`);
-  const snap = await doc.get();
-  if (!snap.exists || snap.get('partnerId') !== partner.id) throw new NotFoundError('unknown live session');
+  const [snap, owner] = await db.getAll(doc, db.doc(`partnerLive/${token}`));
+  if (!snap.exists || !owner.exists || owner.get('partnerId') !== partner.id) throw unknown();
+  if (riderRef !== undefined && owner.get('riderKey') !== riderKeyOf(partner.id, riderRef)) throw unknown();
   return { doc, snap };
 }
 
 /** `POST /v1/live/{token}`: a position update. SOS/crash status is sticky. */
-export async function updateLive(db: Firestore, partner: Partner, token: string, body: unknown) {
+export async function updateLive(db: Firestore, partner: Partner, token: string, body: unknown, riderRef?: string) {
   const pos = parseLivePosition(body);
-  const { doc, snap } = await ownedLive(db, partner, token);
+  const { doc, snap } = await ownedLive(db, partner, token, riderRef);
   if (snap.get('active') !== true) throw new NotFoundError('live session has ended');
   const current = snap.get('status');
   await doc.update({
@@ -368,10 +485,21 @@ export async function updateLive(db: Firestore, partner: Partner, token: string,
   });
 }
 
-/** `DELETE /v1/live/{token}`: the viewer shows "completed". */
-export async function endLive(db: Firestore, partner: Partner, token: string) {
-  const { doc } = await ownedLive(db, partner, token);
-  await doc.update({ active: false, status: 'completed', updatedAt: FieldValue.serverTimestamp() });
+/**
+ * `DELETE /v1/live/{token}`: ends and revokes the link. The viewer's get
+ * rule keys on `shareable`, not `active`, so clear it (as the app's own
+ * teardown does) and drop her last position.
+ */
+export async function endLive(db: Firestore, partner: Partner, token: string, riderRef?: string) {
+  const { doc } = await ownedLive(db, partner, token, riderRef);
+  await doc.update({
+    active: false,
+    shareable: false,
+    status: 'completed',
+    lastLat: FieldValue.delete(),
+    lastLng: FieldValue.delete(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
 }
 
 // ── Alerts (SOS, crash, unusual stop) ──────────────────────────────────────
@@ -380,7 +508,53 @@ export type AlertKind = 'sos' | 'crash' | 'unusualStop';
 
 export interface AlertDeps {
   fetch: typeof fetch;
+  /** Host → its addresses; defaults to DNS. Injected by tests. */
+  resolve?: (host: string) => Promise<string[]>;
   now?: Date;
+}
+
+const PRIVATE = new BlockList();
+for (const [net, bits] of [
+  ['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16],
+  ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['224.0.0.0', 3],
+] as const) PRIVATE.addSubnet(net, bits, 'ipv4');
+for (const [net, bits] of [
+  ['::', 127], ['64:ff9b::', 96], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8],
+] as const) PRIVATE.addSubnet(net, bits, 'ipv6');
+// No ::ffff:0:0/96 entry: BlockList already checks a mapped address against the
+// ipv4 subnets above, and that entry would match every ipv4 address too.
+
+/** True for a routable public unicast address; false for anything internal or not an IP. */
+export function isPublicAddress(ip: string): boolean {
+  const v = isIP(ip);
+  if (v === 0) return false;
+  return !PRIVATE.check(ip, v === 4 ? 'ipv4' : 'ipv6');
+}
+
+const dnsResolve = async (host: string) => (await lookup(host, { all: true })).map((a) => a.address);
+
+/**
+ * The webhook may only go to https on a host that resolves (now, on this
+ * send) to public addresses only.
+ * shortcut: fetch resolves again, so DNS rebinding between the two lookups
+ * could still slip through; pin the address with an undici Agent if the
+ * webhook URL ever becomes partner-editable.
+ */
+async function safeWebhook(url: string, resolve: (host: string) => Promise<string[]>): Promise<boolean> {
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return false;
+  }
+  if (u.protocol !== 'https:' || u.username || u.password) return false;
+  const host = u.hostname.replace(/^\[|\]$/g, '');
+  try {
+    const addrs = await resolve(host);
+    return addrs.length > 0 && addrs.every(isPublicAddress);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -393,7 +567,7 @@ export interface AlertDeps {
  * still stored and `delivery` says so, and the app must still offer the
  * rider SMS/999 itself.
  */
-export async function raiseAlert(db: Firestore, partner: Partner, body: unknown, deps: AlertDeps) {
+export async function raiseAlert(db: Firestore, partner: Partner, body: unknown, deps: AlertDeps, scopedRider?: string) {
   const o = (typeof body === 'object' && body !== null ? body : {}) as Record<string, unknown>;
   const riderRef = ref(o, 'riderRef');
   const kind = o.kind;
@@ -414,7 +588,7 @@ export async function raiseAlert(db: Firestore, partner: Partner, body: unknown,
 
   let liveUrl: string | null = null;
   if (liveToken) {
-    const { doc } = await ownedLive(db, partner, liveToken);
+    const { doc } = await ownedLive(db, partner, liveToken, scopedRider);
     await doc.update({
       status: kind === 'crash' ? 'crash' : 'sos',
       ...(lat != null && lng != null ? { lastLat: lat, lastLng: lng } : {}),
@@ -449,16 +623,23 @@ export async function raiseAlert(db: Firestore, partner: Partner, body: unknown,
       createdAt: now.toISOString(),
     });
     try {
-      const res = await deps.fetch(partner.webhookUrl, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'x-throttleiq-signature': createHmac('sha256', partner.webhookSecret).update(payload).digest('hex'),
-        },
-        body: payload,
-        signal: AbortSignal.timeout(5000),
-      });
-      delivery = res.ok ? 'delivered' : `failed_http_${res.status}`;
+      if (!(await safeWebhook(partner.webhookUrl, deps.resolve ?? dnsResolve))) {
+        delivery = 'failed_unsafe_webhook';
+        console.warn('partner webhook refused (not public https)', partner.id);
+      } else {
+        const res = await deps.fetch(partner.webhookUrl, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'x-throttleiq-signature': createHmac('sha256', partner.webhookSecret).update(payload).digest('hex'),
+          },
+          body: payload,
+          // A 3xx is a failed delivery: never re-send the signed body elsewhere.
+          redirect: 'manual',
+          signal: AbortSignal.timeout(5000),
+        });
+        delivery = res.status >= 200 && res.status < 300 ? 'delivered' : `failed_http_${res.status}`;
+      }
     } catch (e) {
       delivery = 'failed_network';
       console.warn('partner webhook failed', partner.id, e);

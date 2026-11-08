@@ -6,7 +6,8 @@ import 'dart:math' as math;
 import '../ride/ride_report.dart';
 
 /// The API answered with an error. [statusCode] 400 means the payload was
-/// refused (don't retry it), 401 a bad or revoked key, 5xx or a
+/// refused (don't retry it), 401 a bad or revoked key or an expired rider
+/// token, 403 another rider's data, 429 too many calls, 5xx or a
 /// [SocketException]/[TimeoutException] means try again later.
 class ApiException implements Exception {
   final int statusCode;
@@ -117,7 +118,8 @@ enum AlertKind { sos, crash, unusualStop }
 class AlertResult {
   final String alertId;
 
-  /// `delivered`, `no_webhook`, `failed_network` or `failed_http_<code>`:
+  /// `delivered`, `no_webhook`, `failed_network`, `failed_unsafe_webhook` or
+  /// `failed_http_<code>` (a redirect counts as failed):
   /// whether Maya's ops webhook got it. Anything but `delivered` means the
   /// app must still offer SMS/999 (it should anyway).
   final String delivery;
@@ -132,28 +134,55 @@ class AlertResult {
   bool get delivered => delivery == 'delivered';
 }
 
+/// A 24 h bearer token for one rider (`mintRiderToken`).
+class RiderToken {
+  final String token;
+  final DateTime expiresAt;
+
+  RiderToken.fromJson(Map<String, Object?> j)
+      : token = j['token'] as String,
+        expiresAt = DateTime.parse(j['expiresAt'] as String);
+}
+
 /// Client for the ThrottleIQ partner API (mayabi/API.md).
 ///
-/// The API key identifies Maya, not a rider. Anyone holding it can write to
-/// Maya's account, so prefer calling from Maya's own server; if it ships
-/// inside the app, rotate it when a build leaks (see README).
+/// Two ways in:
+/// - `ThrottleIqClient(apiKey: ...)` on Maya's SERVER: any rider, and
+///   [mintRiderToken]. The key must never ship in the app.
+/// - `ThrottleIqClient.forRider(riderToken: ...)` in the rider's APP, with a
+///   token Maya's server minted for her: only her own data and live links.
 class ThrottleIqClient {
   ThrottleIqClient({
     required String apiKey,
     Uri? baseUrl,
     HttpClient? httpClient,
     this.timeout = const Duration(seconds: 15),
-  })  : _apiKey = apiKey,
+  })  : _auth = ('x-api-key', apiKey),
+        _base = baseUrl ?? defaultBaseUrl,
+        _http = httpClient ?? HttpClient();
+
+  ThrottleIqClient.forRider({
+    required String riderToken,
+    Uri? baseUrl,
+    HttpClient? httpClient,
+    this.timeout = const Duration(seconds: 15),
+  })  : _auth = (HttpHeaders.authorizationHeader, 'Bearer $riderToken'),
         _base = baseUrl ?? defaultBaseUrl,
         _http = httpClient ?? HttpClient();
 
   static final defaultBaseUrl =
       Uri.parse('https://throttleiqfb.web.app/api/partner/');
 
-  final String _apiKey;
+  final (String, String) _auth;
   final Uri _base;
   final HttpClient _http;
   final Duration timeout;
+
+  /// Server only (API key): a token for [riderRef]'s app. Mint a fresh one
+  /// when it nears [RiderToken.expiresAt]; a 401 in the app means re-mint.
+  Future<RiderToken> mintRiderToken(String riderRef) async =>
+      RiderToken.fromJson(await _send(
+          'POST', 'v1/riders/${Uri.encodeComponent(riderRef)}/token'));
 
   /// Uploads a finished ride and returns its score. Safe to retry with the
   /// same report: the server keys it by `rideId` and won't count it twice.
@@ -236,7 +265,7 @@ class ThrottleIqClient {
       [Map<String, Object?>? body]) async {
     final req =
         await _http.openUrl(method, _base.resolve(path)).timeout(timeout);
-    req.headers.set('x-api-key', _apiKey);
+    req.headers.set(_auth.$1, _auth.$2);
     req.headers.set(HttpHeaders.acceptHeader, 'application/json');
     if (body != null) {
       req.headers.contentType = ContentType.json;
