@@ -1,6 +1,7 @@
 # Account deletion runbook (manual, owner only)
 
-_Written 2026-10-14 (critique `CrtiQue_Oct14.md` B1)._
+_Written 2026-10-14 (critique `CrtiQue_Oct14.md` B1). Identity check changed
+2026-11-08: a code sent to the account's own address, not the sender's._
 
 **Why this is manual:** the project is on the Spark plan, so the
 `onUserAccountDeleted` trigger (`functions/src/account-erasure.ts`) never
@@ -13,24 +14,47 @@ Retire this runbook once the trigger is live on Blaze with the three
 
 ## 1. Take the request
 
-- Requests arrive at **hello@blankframe.tech**, from the address the rider
-  signed up with. That match is the identity check. If the address does not
-  match any account, reply and ask them to write from their signup address.
+- Requests arrive at **hello@blankframe.tech**. The sender's address is
+  **not** proof of identity: a From header can be forged, and a username is
+  public. Never delete on the strength of the From address or a username.
 - Log the request in a **private** list outside this repo (the repo is
-  public): date received, uid, deadline (received + 30 days), date done.
-- Reply the same week to confirm receipt.
+  public): date received, uid, confirmation code, date confirmed, deadline
+  (confirmed + 30 days), date done.
+- Reply the same week to confirm receipt, and send the confirmation in step 2.
 
-## 2. Find the uid
+## 2. Find the uid and confirm with the account's own mailbox
 
-1. Firebase console → Authentication → search the email. The uid is in the
-   "User UID" column.
-2. If the rider already deleted the account in the app, Auth has no record.
-   Look in Firestore → `users` for a doc whose `email` field matches (after
-   the B2 fix, look where the email moved to), or ask the rider for their
-   username and read `usernames/{handle}.uid`.
-3. Before deleting anything, note the profile's `username` and open
+1. Find the uid from the address in the request: Firebase console →
+   Authentication → search the email ("User UID" column). If Auth has no
+   record, read `emailLookup/{sha256(lowercased email)}` → `uid` (only
+   verified addresses have one). If the request gives only a username,
+   `usernames/{handle}.uid` tells you which account to write to, nothing
+   more: a username is never enough to act on.
+2. Read the account's stored address: the Auth user's email, or, if Auth has
+   no user for that uid, `users/{uid}/private/account`. That is the only
+   address the confirmation goes to, even when the request came from
+   somewhere else. If neither holds an address, do not delete on request;
+   the rider can delete in the app (it asks them to sign in again) and the
+   monthly sweep below picks the data up.
+3. Send a confirmation to that stored address, as a **new** email (not a
+   reply to the request, which goes to the From address). Include a random
+   single-use code (`openssl rand -hex 4`), the account's username, and
+   "Reply with this code to confirm the deletion. If you did not ask for
+   this, ignore this email and nothing will be deleted." Log the code.
+4. Act only on a reply that carries that exact code. The code is the proof,
+   since only the account's mailbox received it. A reply without the code
+   is not a confirmation, whatever its From address says: send a new code
+   to the stored address. If no valid reply arrives within 14 days,
+   close the request without deleting anything.
+5. Before deleting anything, note the profile's `username` and open
    `users/{uid}/cloudinaryAssets`: copy every `publicId`. Both are gone once
    the profile is deleted.
+
+**Already deleted in the app:** that path signed the rider in again, so an
+orphaned `users/{uid}` doc (no Auth user for that uid, checked with Admin SDK
+`getUser` or the console) needs no email confirmation. A request that only
+*claims* the app account is gone still goes through steps 2.2 to 2.4: check
+Auth yourself and confirm with `users/{uid}/private/account`.
 
 **Monthly sweep (recommended):** riders can delete in the app without
 emailing. Once a month, list `users` doc ids that have no Auth user (Admin
@@ -91,7 +115,7 @@ above, `chat_presence/{chatId}/{uid}` for each chat, and
 `group_rides/{rideId}` (rides they created) or
 `group_rides/{rideId}/locations/{uid}` (rides they joined).
 
-**Cloudinary:** delete every `publicId` copied in step 2.3 (Media Library,
+**Cloudinary:** delete every `publicId` copied in step 2.5 (Media Library,
 or the Admin API with the account key). Public ids follow
 `<folder>/<uid>/...`, so also search the Media Library for the uid to catch
 uploads missing from the ledger: avatars, bike and ride photos, forum
