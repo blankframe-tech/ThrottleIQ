@@ -20,41 +20,51 @@ import '../../../../core/utils/polyline_simplify.dart';
 /// on the start, even with a secret radius, gives itself away: the first
 /// visible point of every share sits on its edge, and a circle fitted through
 /// 3-6 shares recovers the centre (home) to within metres, without knowing
-/// the radius. So each rider gets a secret *decoy*: the circle is centred on
-/// start + an offset of 130-200 m on a secret bearing, and its radius is
-/// offset + 200-349 m (330-549 m in all), so the true start is always at
-/// least 200 m inside it. A perfect circle fit then finds only the decoy. The same offset is used
-/// for the end point. Each share also loses a random 0-50 m extra, so the
-/// first visible point does not sit exactly on the circle.
+/// the radius. So the circle is centred on a secret *decoy*: the endpoint
+/// plus an offset of 130-600 m on a secret bearing, with a radius of offset
+/// + 200-349 m, so the true endpoint is always at least 200 m inside it.
+/// Each share also loses a random 0-50 m extra, so the first visible point
+/// does not sit exactly on the circle.
 ///
-/// The offset, bearing and radius all come from the rider's salt in
-/// `PrivacyZoneSalt`: a random value stored in an owner-only document. It
-/// used to be derived from the uid, which defeated the whole point (see
-/// [seedForUid] and issues §83.17). A salt nobody else can read is as good as
-/// storing the offset itself, and needs no new field.
+/// The offset is drawn area-uniform over the 130-600 m ring, so no spot in
+/// it is likelier than another. It is also different for every place: the
+/// offset and bearing come from a seed that `PrivacyZoneSalt.seedsFor`
+/// derives from the rider's secret salt and the place (an anchor within
+/// ~1 km), so the offset at one place a viewer already knows (a workplace,
+/// a shop) says nothing about the offset at home.
 ///
 /// Only leading and trailing hidden runs are trimmed. A loop ride that
 /// passes near home mid-ride keeps that middle section, since the share
 /// model stores a single polyline and splitting it is a larger change.
 class PrivacyZoneClipper {
   /// The least distance kept hidden around the true start and end; the
-  /// per-rider jitter adds 0-149 m on top.
+  /// seed's jitter adds 0-149 m on top.
   static const double privacyZoneDistanceMeters = 200.0;
 
-  /// Span of the per-rider jitter added to the base radius, in metres.
+  /// Span of the seed's jitter added to the base radius, in metres.
   static const int jitterSpanMeters = 150;
 
   /// Most random extra trim one share loses beyond the rider's radius.
   static const double maxExtraTrimMeters = 50.0;
 
-  /// How far the decoy centre sits from the true endpoint: 130-200 m. The
-  /// floor is above 100 m so a noisy fit near the decoy still misses home.
-  static double offsetMetersFor(int seed) =>
-      130.0 + (seed.abs() ~/ jitterSpanMeters) % 71;
+  /// The decoy's distance from the true endpoint lies in this range. The
+  /// floor is above 100 m so a fit that lands near the decoy still misses
+  /// home; the ceiling sets how wide the ring a viewer is left with is.
+  static const double minOffsetMeters = 130.0;
+  static const double maxOffsetMeters = 600.0;
+
+  /// How far the decoy centre sits from the true endpoint: 130-600 m, spread
+  /// evenly over the ring's area rather than its radius, so no part of the
+  /// ring is a better guess than another.
+  static double offsetMetersFor(int seed) {
+    final u = ((seed.abs() ~/ jitterSpanMeters) % 1000) / 1000;
+    const lo2 = minOffsetMeters * minOffsetMeters;
+    return sqrt(lo2 + u * (maxOffsetMeters * maxOffsetMeters - lo2));
+  }
 
   /// The decoy's bearing from the true endpoint, in degrees (-180..179).
   static double bearingFor(int seed) =>
-      ((seed.abs() ~/ (jitterSpanMeters * 71)) % 360) - 180.0;
+      ((seed.abs() ~/ (jitterSpanMeters * 1000)) % 360) - 180.0;
 
   /// Where the hidden circle around [endpoint] is centred for [seed].
   static LatLng hiddenCentre(LatLng endpoint, int seed) =>
@@ -74,7 +84,7 @@ class PrivacyZoneClipper {
   /// every shared ride document, and this function is in a source-available
   /// repo, so anyone reading the feed can recompute a rider's exact radius —
   /// which makes triangulating their home *easier* than a fixed radius would
-  /// (issues §83.17). Use `PrivacyZoneSalt.forUid` instead.
+  /// (issues §83.17). Use `PrivacyZoneSalt.seedsFor` instead.
   ///
   /// Kept only so the existing tests can still generate a deterministic,
   /// realistic-looking seed value without reaching for Firestore.
@@ -90,25 +100,30 @@ class PrivacyZoneClipper {
 
   /// Returns [polyline] with every leading point within the hidden circle
   /// around either endpoint removed (see [hiddenCentre] and [radiusFor]),
-  /// and likewise every trailing point. [extraTrimM] widens both circles for
+  /// and likewise every trailing point. [seed] shapes the circle around the
+  /// start and [endSeed] (default: [seed]) the one around the end; they come
+  /// from `PrivacyZoneSalt.seedsFor`. [extraTrimM] widens both circles for
   /// this one ride. Returns an empty list when nothing is left outside the
   /// zones (a short ride, or one that never left the neighbourhood).
   static List<LatLng> clipPolyline(
     List<LatLng> polyline, {
     double radiusM = privacyZoneDistanceMeters,
     int seed = 0,
+    int? endSeed,
     double extraTrimM = 0,
   }) {
     if (polyline.length < 3) {
       return [];
     }
 
+    final eSeed = endSeed ?? seed;
     final startCentre = hiddenCentre(polyline.first, seed);
-    final endCentre = hiddenCentre(polyline.last, seed);
-    final r = radiusFor(seed, radiusM: radiusM) + extraTrimM;
+    final endCentre = hiddenCentre(polyline.last, eSeed);
+    final rStart = radiusFor(seed, radiusM: radiusM) + extraTrimM;
+    final rEnd = radiusFor(eSeed, radiusM: radiusM) + extraTrimM;
     bool hidden(LatLng p) =>
-        haversineMetersLatLng(p, startCentre) <= r ||
-        haversineMetersLatLng(p, endCentre) <= r;
+        haversineMetersLatLng(p, startCentre) <= rStart ||
+        haversineMetersLatLng(p, endCentre) <= rEnd;
 
     var i = 0;
     while (i < polyline.length && hidden(polyline[i])) {
@@ -132,9 +147,10 @@ class PrivacyZoneClipper {
   /// so nothing clipped can come back; the clip also needs the raw endpoints,
   /// which simplifying first would move.
   static List<LatLng> clipForSharing(List<LatLng> polyline,
-          {int seed = 0, Random? random}) =>
+          {int seed = 0, int? endSeed, Random? random}) =>
       simplifyPolyline(clipPolyline(polyline,
           seed: seed,
+          endSeed: endSeed,
           extraTrimM:
               (random ?? Random.secure()).nextDouble() * maxExtraTrimMeters));
 }

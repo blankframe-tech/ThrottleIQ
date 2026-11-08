@@ -6,22 +6,24 @@
  * and public routes with the current privacy-zone clipper.
  *
  * Older builds hid a circle centred on the ride's start and end. The app now
- * centres that circle on a secret per-rider decoy point instead (see
- * app/lib/features/social/domain/utilities/privacy_zone_clipper.dart, which
- * this file mirrors). Lines shared before that build still use the old shape,
+ * centres that circle on a secret decoy point, different for every place a
+ * rider starts or ends (see app/lib/features/social/domain/utilities/
+ * privacy_zone_clipper.dart and privacy_zone_salt.dart, which this file
+ * mirrors). Lines shared before that build still use the old shape,
  * so this rewrites them:
  *
  *   - rides/{id}.polyline: re-clipped from the rider's full track at
  *     users/{uid}/rides/{id}/track when the track was backed up; otherwise
  *     the stored (already clipped) line is clipped again around its own
- *     ends, which hides a further 330-600 m off each end.
+ *     ends, which hides a further 330-1600 m off each end.
  *   - users/{uid}/routes/{id}.polyline where isPublic == true: going public
  *     already replaced the full trail with the clipped one, so these are
  *     always clipped again around their own ends.
  *
- * The decoy comes from the rider's salt at users/{uid}/private/privacy
- * (field `zoneSalt`, the app's own). A rider with no salt yet gets one, the
- * same way the app would create it on their next share.
+ * The decoy comes from the rider's salt and place anchors at
+ * users/{uid}/private/privacy (fields `zoneSalt` and `anchors`, the app's
+ * own). A rider with no salt yet gets one, and a place with no anchor yet
+ * gets one, the same way the app would create them on their next share.
  *
  * Run it AFTER the build with the new clipper is on Play, and pass
  * --before=<date that build shipped>: docs created on or after that date
@@ -31,9 +33,9 @@
  * Safety:
  *   - Dry run is the DEFAULT: reads only, prints counts.
  *   - The service-account key's project_id must be 'throttleiqfb'.
- *   - Writes need --apply, --before, --backup=<file> (the old polylines and
- *     any salt it would create are written there first) and a typed
- *     confirmation.
+ *   - Writes need --apply, --before, --backup=<file> (the old polylines, and
+ *     which riders get a new salt or new anchors, are written there first)
+ *     and a typed confirmation.
  *
  * Usage (from scripts/):
  *   node oneoff/reclip_shared_routes.js --service-account=/path/to/key.json --before=2026-09-20
@@ -61,8 +63,16 @@ const EQUATOR_RADIUS_M = 6378137; // latlong2 Distance.offset
 const rad = (d) => (d * Math.PI) / 180;
 const deg = (r) => (r * 180) / Math.PI;
 
-const offsetMetersFor = (seed) => 130 + (Math.floor(Math.abs(seed) / JITTER_SPAN_M) % 71);
-const bearingFor = (seed) => (Math.floor(Math.abs(seed) / (JITTER_SPAN_M * 71)) % 360) - 180;
+const MIN_OFFSET_M = 130;
+const MAX_OFFSET_M = 600;
+const ANCHOR_REUSE_M = 1000;
+
+function offsetMetersFor(seed) {
+  const u = (Math.floor(Math.abs(seed) / JITTER_SPAN_M) % 1000) / 1000;
+  const lo2 = MIN_OFFSET_M * MIN_OFFSET_M;
+  return Math.sqrt(lo2 + u * (MAX_OFFSET_M * MAX_OFFSET_M - lo2));
+}
+const bearingFor = (seed) => (Math.floor(Math.abs(seed) / (JITTER_SPAN_M * 1000)) % 360) - 180;
 const radiusFor = (seed) => offsetMetersFor(seed) + PRIVACY_ZONE_M + (Math.abs(seed) % JITTER_SPAN_M);
 
 function haversine(a, b) {
@@ -83,12 +93,13 @@ function destination(from, meters, bearingDeg) {
 
 const hiddenCentre = (endpoint, seed) => destination(endpoint, offsetMetersFor(seed), bearingFor(seed));
 
-function clipPolyline(pts, seed, extraTrimM = 0) {
+function clipPolyline(pts, seed, extraTrimM = 0, endSeed = seed) {
   if (pts.length < 3) return [];
   const startCentre = hiddenCentre(pts[0], seed);
-  const endCentre = hiddenCentre(pts[pts.length - 1], seed);
-  const r = radiusFor(seed) + extraTrimM;
-  const hidden = (p) => haversine(p, startCentre) <= r || haversine(p, endCentre) <= r;
+  const endCentre = hiddenCentre(pts[pts.length - 1], endSeed);
+  const rStart = radiusFor(seed) + extraTrimM;
+  const rEnd = radiusFor(endSeed) + extraTrimM;
+  const hidden = (p) => haversine(p, startCentre) <= rStart || haversine(p, endCentre) <= rEnd;
   let i = 0;
   while (i < pts.length && hidden(pts[i])) i++;
   let j = pts.length - 1;
@@ -146,8 +157,44 @@ function simplifyPolyline(pts, toleranceM = 5, maxPoints = MAX_POINTS) {
 const secureRandom = () => crypto.randomInt(0, 2 ** 31) / 2 ** 31;
 
 /** The polyline as the current app would share it (clip, random extra trim, thin). */
-const clipForSharing = (pts, seed, random = secureRandom) =>
-  simplifyPolyline(clipPolyline(pts, seed, random() * MAX_EXTRA_TRIM_M));
+const clipForSharing = (pts, seed, random = secureRandom, endSeed = seed) =>
+  simplifyPolyline(clipPolyline(pts, seed, random() * MAX_EXTRA_TRIM_M, endSeed));
+
+// ── Per-place seeds (mirrors privacy_zone_salt.dart) ─────────────────────────
+
+/** The anchor nearest `p` within 1 km, or null. */
+function nearestAnchor(anchors, p) {
+  let best = null;
+  let bestM = ANCHOR_REUSE_M;
+  for (const a of anchors) {
+    const m = haversine(a, p);
+    if (m <= bestM) { best = a; bestM = m; }
+  }
+  return best;
+}
+
+const roundAnchor = (p) => ({ lat: Math.round(p.lat * 1000) / 1000, lng: Math.round(p.lng * 1000) / 1000 });
+
+/** First 31 bits of HMAC-SHA256(key: salt as decimal text, msg: "lat,lng" to 3 dp). */
+function seedForAnchor(salt, anchor) {
+  const mac = crypto.createHmac('sha256', String(salt)).update(`${anchor.lat.toFixed(3)},${anchor.lng.toFixed(3)}`).digest();
+  return mac.readUInt32BE(0) & 0x7fffffff;
+}
+
+/** [startSeed, endSeed]; appends an anchor to `anchors` for a place not seen before. */
+function seedsWith(salt, anchors, start, end) {
+  const seedAt = (p) => {
+    let a = nearestAnchor(anchors, p);
+    if (!a) { a = roundAnchor(p); anchors.push(a); }
+    return seedForAnchor(salt, a);
+  };
+  return [seedAt(start), seedAt(end)];
+}
+
+/** Anchors from the stored list of {lat, lng}; malformed rows dropped. */
+const readAnchors = (raw) => (Array.isArray(raw) ? raw : [])
+  .filter((m) => m && typeof m.lat === 'number' && typeof m.lng === 'number')
+  .map((m) => ({ lat: m.lat, lng: m.lng }));
 
 // ── Firestore shapes ─────────────────────────────────────────────────────────
 
@@ -177,11 +224,15 @@ function decodeTrack(chunkDocs) {
 /**
  * The new polyline for one doc. `track` is the full trail (rides only, may be
  * empty); `stored` is what the doc holds now. Prefers the trail, since the
- * stored line has already lost its true ends.
+ * stored line has already lost its true ends. `salt` and `anchors` are the
+ * rider's; a new anchor is appended to `anchors`.
  */
-function reclip({ stored, track = [], seed, random = secureRandom }) {
-  if (track.length >= 3) return { polyline: clipForSharing(track, seed, random), source: 'track' };
-  return { polyline: clipForSharing(stored, seed, random), source: 'stored' };
+function reclip({ stored, track = [], salt, anchors, random = secureRandom }) {
+  const source = track.length >= 3 ? 'track' : 'stored';
+  const line = source === 'track' ? track : stored;
+  if (line.length < 3) return { polyline: [], source };
+  const [startSeed, endSeed] = seedsWith(salt, anchors, line[0], line[line.length - 1]);
+  return { polyline: clipForSharing(line, startSeed, random, endSeed), source };
 }
 
 /** Millis of a Firestore Timestamp / Date / ISO string, or null. */
@@ -254,17 +305,21 @@ async function main() {
   if (opts.backup && fs.existsSync(opts.backup)) fail(`${opts.backup} already exists; pick a new backup file.`);
 
   const { cert, initializeApp } = require('firebase-admin/app');
-  const { getFirestore, FieldPath } = require('firebase-admin/firestore');
+  const { getFirestore, FieldPath, FieldValue } = require('firebase-admin/firestore');
   const db = getFirestore(initializeApp({ credential: cert(key), projectId: EXPECTED_PROJECT_ID }));
 
-  const salts = new Map(); // uid -> { seed, created }
-  async function saltFor(uid) {
+  const salts = new Map(); // uid -> { salt, created, anchors, known }
+  async function privacyFor(uid) {
     if (!salts.has(uid)) {
       const snap = await db.doc(`users/${uid}/private/privacy`).get();
       const v = snap.exists ? snap.get('zoneSalt') : undefined;
-      salts.set(uid, Number.isInteger(v) ? { seed: v, created: false } : { seed: crypto.randomInt(0, 2 ** 31), created: true });
+      const anchors = readAnchors(snap.exists ? snap.get('anchors') : undefined);
+      salts.set(uid, Number.isInteger(v)
+        ? { salt: v, created: false, anchors, known: anchors.length }
+        : { salt: crypto.randomInt(0, 2 ** 31), created: true, anchors, known: anchors.length });
     }
-    return salts.get(uid).seed;
+    const s = salts.get(uid);
+    return { salt: s.salt, anchors: s.anchors };
   }
 
   const todo = []; // { ref, kind, old, polyline, source }
@@ -283,7 +338,7 @@ async function main() {
       if (!data.userId || stored.length === 0 || !inScope(data.createdAt, opts.before)) continue;
       counts.ridesInScope++;
       const chunks = await db.collection(`users/${data.userId}/rides/${doc.id}/track`).get();
-      const plan = reclip({ stored, track: decodeTrack(chunks.docs.map((c) => c.data())), seed: await saltFor(data.userId) });
+      const plan = reclip({ stored, track: decodeTrack(chunks.docs.map((c) => c.data())), ...(await privacyFor(data.userId)) });
       counts[plan.source]++;
       todo.push({ ref: doc.ref, kind: 'ride', createdAt: millisOf(data.createdAt), old: data.polyline, ...plan });
     }
@@ -304,7 +359,7 @@ async function main() {
       const stored = readPolyline(data.polyline);
       if (!uid || stored.length === 0 || !inScope(data.createdAt, opts.before)) continue;
       counts.routesInScope++;
-      todo.push({ ref: doc.ref, kind: 'route', createdAt: millisOf(data.createdAt), old: data.polyline, ...reclip({ stored, seed: await saltFor(uid) }) });
+      todo.push({ ref: doc.ref, kind: 'route', createdAt: millisOf(data.createdAt), old: data.polyline, ...reclip({ stored, ...(await privacyFor(uid)) }) });
     }
     last = snap.docs[snap.docs.length - 1];
     if (snap.size < PAGE) break;
@@ -313,11 +368,13 @@ async function main() {
   todo.sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0)); // oldest shares first
   const oldCutoff = Date.parse('2026-09-20T00:00:00+06:00');
   const newSalts = [...salts.values()].filter((s) => s.created).length;
+  const withNewAnchors = [...salts.entries()].filter(([, s]) => s.anchors.length > s.known);
   console.log(`  Shared rides: ${counts.rides} scanned, ${counts.ridesInScope} to re-clip (${counts.track} from the full track, ${counts.stored} from the stored line).`);
   console.log(`  Public routes: ${counts.routes} scanned, ${counts.routesInScope} to re-clip.`);
   console.log(`  Of those, ${todo.filter((t) => (t.createdAt ?? 0) < oldCutoff).length} were shared before 2026-09-20.`);
   console.log(`  ${todo.filter((t) => t.polyline.length === 0).length} lines would clip away entirely (the doc keeps its stats, no map line).`);
   console.log(`  Riders without a salt yet: ${newSalts} (one would be created for each).`);
+  console.log(`  Riders who get new place anchors: ${withNewAnchors.length}.`);
   if (!opts.apply) {
     console.log('  Dry run: nothing changed. Re-run with --apply --before=<date> --backup=<file> to write.');
     return;
@@ -330,15 +387,22 @@ async function main() {
     takenAt: new Date().toISOString(),
     docs: todo.map((t) => ({ path: t.ref.path, polyline: t.old })),
     createdSaltsFor: [...salts.entries()].filter(([, s]) => s.created).map(([uid]) => uid),
+    addedAnchorsFor: withNewAnchors.map(([uid]) => uid),
   }), { mode: 0o600 });
   console.log(`  Backup written to ${opts.backup}.`);
 
-  // Salts before lines, so no line is ever written with a decoy that is not stored.
-  // create() fails if the rider's device made one meanwhile; then re-run.
-  const created = [...salts.entries()].filter(([, s]) => s.created);
-  for (let i = 0; i < created.length; i += BATCH) {
+  // Salts and anchors before lines, so no line is ever written with a decoy
+  // that is not stored. create() fails if the rider's device made a salt
+  // meanwhile; then re-run. New anchors are appended (arrayUnion), never
+  // replacing ones a device added meanwhile.
+  const writes = withNewAnchors.concat([...salts.entries()].filter(([, s]) => s.created && s.anchors.length === s.known));
+  for (let i = 0; i < writes.length; i += BATCH) {
     const batch = db.batch();
-    for (const [uid, s] of created.slice(i, i + BATCH)) batch.create(db.doc(`users/${uid}/private/privacy`), { zoneSalt: s.seed });
+    for (const [uid, s] of writes.slice(i, i + BATCH)) {
+      const ref = db.doc(`users/${uid}/private/privacy`);
+      if (s.created) batch.create(ref, { zoneSalt: s.salt, anchors: s.anchors });
+      else batch.set(ref, { anchors: FieldValue.arrayUnion(...s.anchors.slice(s.known)) }, { merge: true });
+    }
     await batch.commit();
   }
 
@@ -357,5 +421,6 @@ if (require.main === module) {
 
 module.exports = {
   offsetMetersFor, bearingFor, radiusFor, haversine, hiddenCentre, clipPolyline,
-  simplifyPolyline, clipForSharing, readPolyline, decodeTrack, reclip, inScope, parseArgs,
+  simplifyPolyline, clipForSharing, nearestAnchor, roundAnchor, seedForAnchor, seedsWith, readAnchors,
+  readPolyline, decodeTrack, reclip, inScope, parseArgs,
 };

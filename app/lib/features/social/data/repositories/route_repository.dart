@@ -139,9 +139,12 @@ class RouteRepository {
         ? const <LatLng>[]
         : RouteModel.fromFirestore(data, routeId).polyline;
     // Clipped, then thinned to the same 1,000-point cap as a shared ride.
+    final (startSeed, endSeed) =
+        await _privacySalt.seedsFor(userId, rawPolyline);
     final clipped = PrivacyZoneClipper.clipForSharing(
       rawPolyline,
-      seed: await _privacySalt.forUid(userId),
+      seed: startSeed,
+      endSeed: endSeed,
     );
 
     await ackOrQueued(docRef.update({

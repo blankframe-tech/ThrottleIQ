@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:throttleiq/core/utils/geo_math.dart';
 import 'package:throttleiq/features/social/domain/utilities/privacy_zone_clipper.dart';
+import 'package:throttleiq/features/social/domain/utilities/privacy_zone_salt.dart';
 
 void main() {
   group('PrivacyZoneClipper', () {
@@ -66,8 +67,8 @@ void main() {
       final ride = <LatLng>[
         home,
         ...drift,
-        // Then 3 km due north, a point every ~50 m.
-        for (var k = 1; k <= 60; k++)
+        // Then 6 km due north, a point every ~50 m.
+        for (var k = 1; k <= 120; k++)
           LatLng(home.latitude + 0.00045 * k, home.longitude),
       ];
       var drifted = 0.0;
@@ -96,7 +97,7 @@ void main() {
       }
     });
 
-    test('(b) a straight 5 km ride loses 200-750 m at each end', () {
+    test('(b) a straight 5 km ride loses 200-1600 m at each end', () {
       // ~5 km due north at ~11 m spacing.
       final ride = <LatLng>[
         for (var k = 0; k <= 450; k++) LatLng(0.0001 * k, 0.0),
@@ -129,13 +130,13 @@ void main() {
       };
       expect(radii.length, greaterThan(50)); // actually varies across riders
       for (final r in radii) {
-        expect(r, inInclusiveRange(330, 549));
+        expect(r, inInclusiveRange(330, 949));
       }
       final bearings = <double>{};
       for (var i = 0; i < 200; i++) {
         final seed = PrivacyZoneClipper.seedForUid('uid$i');
         final offset = PrivacyZoneClipper.offsetMetersFor(seed);
-        expect(offset, inInclusiveRange(130, 200));
+        expect(offset, inInclusiveRange(130, 600));
         // The true endpoint always sits at least 200 m inside the circle.
         expect(PrivacyZoneClipper.radiusFor(seed) - offset,
             greaterThanOrEqualTo(200));
@@ -203,13 +204,11 @@ void main() {
           23.70 + rng.nextDouble() * 0.2,
           90.35 + rng.nextDouble() * 0.2,
         );
+        final anchors = <LatLng>[];
         final firsts = <LatLng>[];
         for (var s = 0; s < sharesPerRider; s++) {
-          final shared = PrivacyZoneClipper.clipForSharing(
-            _rideFrom(home, rng),
-            seed: salt,
-          );
-          firsts.add(shared.first);
+          firsts.add(
+              _share(_rideFrom(_jitter(home, rng), rng), salt, anchors).first);
         }
         if (haversineMetersLatLng(_fitCircleCentre(firsts), home) > 100) {
           far++;
@@ -219,12 +218,64 @@ void main() {
           reason: 'only $far of $riders fits missed home by >100 m');
     });
 
+    // The attacker also knows one place the rider goes (a workplace), so
+    // can fit the decoy there and work out its offset. With one offset per
+    // rider, that offset applied to the home decoy lands on home. Seeds are
+    // per place, so it must not.
+    test(
+        'an offset learned at a known workplace does not find home '
+        '(>=95% of riders)', () {
+      final rng = math.Random.secure();
+      const riders = 1000;
+      var far = 0, farIfOneSeed = 0;
+      for (var rider = 0; rider < riders; rider++) {
+        final salt = rng.nextInt(1 << 31);
+        final home = LatLng(
+          23.70 + rng.nextDouble() * 0.2,
+          90.35 + rng.nextDouble() * 0.2,
+        );
+        final work = const Distance(calculator: Haversine()).offset(
+            home, 3000 + rng.nextDouble() * 7000, rng.nextDouble() * 360 - 180);
+        final outOfHome = [
+          for (var s = 0; s < 6; s++) _rideFrom(_jitter(home, rng), rng),
+        ];
+        final intoWork = [
+          for (var s = 0; s < 6; s++)
+            _rideFrom(_jitter(work, rng), rng).reversed.toList(),
+        ];
+        double attack(List<LatLng> Function(List<LatLng>) share) {
+          final decoyAtWork =
+              _fitCircleCentre([for (final t in intoWork) share(t).last]);
+          final decoyAtHome =
+              _fitCircleCentre([for (final t in outOfHome) share(t).first]);
+          final guess = LatLng(
+            decoyAtHome.latitude - (decoyAtWork.latitude - work.latitude),
+            decoyAtHome.longitude - (decoyAtWork.longitude - work.longitude),
+          );
+          return haversineMetersLatLng(guess, home);
+        }
+
+        final anchors = <LatLng>[];
+        if (attack((t) => _share(t, salt, anchors)) > 100) far++;
+        // Control: the same attack against one seed per rider must work,
+        // or this test proves nothing.
+        if (attack((t) => PrivacyZoneClipper.clipForSharing(t, seed: salt)) >
+            100) {
+          farIfOneSeed++;
+        }
+      }
+      expect(farIfOneSeed / riders, lessThan(0.2),
+          reason: 'control: $farIfOneSeed of $riders missed with one seed');
+      expect(far / riders, greaterThanOrEqualTo(0.95),
+          reason: 'only $far of $riders guesses missed home by >100 m');
+    });
+
     test('no shared point is within 200 m of the true start or end', () {
       final rng = math.Random(1);
       for (var k = 0; k < 200; k++) {
         final salt = rng.nextInt(1 << 31);
         final ride = _rideFrom(const LatLng(23.8, 90.4), rng);
-        for (final p in PrivacyZoneClipper.clipForSharing(ride, seed: salt)) {
+        for (final p in _share(ride, salt, [])) {
           expect(haversineMetersLatLng(p, ride.first), greaterThan(200));
           expect(haversineMetersLatLng(p, ride.last), greaterThan(200));
         }
@@ -235,14 +286,27 @@ void main() {
 
 const _mPerDegLat = 111320.0;
 
-/// A ~3 km ride out of [home] on a random heading, a point every ~15 m,
+/// What the app writes for [track]: per-place seeds, as
+/// `RideShareRepository` gets them from `PrivacyZoneSalt.seedsFor`.
+List<LatLng> _share(List<LatLng> track, int salt, List<LatLng> anchors) {
+  final (start, end) =
+      PrivacyZoneSalt.seedsWith(salt, anchors, track.first, track.last);
+  return PrivacyZoneClipper.clipForSharing(track, seed: start, endSeed: end);
+}
+
+/// [p] moved up to ~15 m, like a GPS fix at the same parking spot.
+LatLng _jitter(LatLng p, math.Random rng) => LatLng(
+    p.latitude + (rng.nextDouble() - 0.5) * 0.00027,
+    p.longitude + (rng.nextDouble() - 0.5) * 0.00027);
+
+/// A ~6 km ride out of [home] on a random heading, a point every ~15 m,
 /// with a gentle random wander so it is not a ruler-straight line.
 List<LatLng> _rideFrom(LatLng home, math.Random rng) {
   final mPerDegLng = _mPerDegLat * math.cos(home.latitude * math.pi / 180);
   var heading = rng.nextDouble() * 2 * math.pi;
   var x = 0.0, y = 0.0;
   final pts = <LatLng>[home];
-  for (var k = 0; k < 200; k++) {
+  for (var k = 0; k < 400; k++) {
     heading += (rng.nextDouble() - 0.5) * 0.15;
     x += 15 * math.sin(heading);
     y += 15 * math.cos(heading);
