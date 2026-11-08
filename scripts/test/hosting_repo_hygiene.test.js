@@ -50,8 +50,10 @@ test('install page has no links to files public/ does not have', () => {
 
 test('live viewer loads every CDN script and stylesheet with SRI (security sweep D4)', () => {
   const tags = read('public/live-viewer.html').match(/<(?:script|link)\b[^>]*(?:src|href)="https?:[^>]*>/g) || [];
-  assert.equal(tags.filter((t) => t.includes('unpkg.com')).length, 2, 'expected the Leaflet css and js tags');
-  assert.equal(tags.filter((t) => t.includes('www.gstatic.com/firebasejs/')).length, 4, 'expected the four Firebase SDK tags');
+  const urlOf = (t) => new URL(t.match(/(?:src|href)="(https?:[^"]+)"/)[1]);
+  assert.equal(tags.filter((t) => urlOf(t).host === 'unpkg.com').length, 2, 'expected the Leaflet css and js tags');
+  assert.equal(tags.filter((t) => urlOf(t).host === 'www.gstatic.com' && urlOf(t).pathname.startsWith('/firebasejs/')).length,
+    4, 'expected the four Firebase SDK tags');
   for (const tag of tags) {
     assert.match(tag, /integrity="sha384-[A-Za-z0-9+/=]+"/, tag);
     assert.match(tag, /crossorigin="anonymous"/, tag);
@@ -92,8 +94,9 @@ test('live viewer paths get a script/connect CSP that still lets the page run (W
       assert.ok(csp['connect-src'].includes(src), `connect-src needs ${src}`);
     }
     // The tile URL the viewer actually uses (live-viewer.js).
-    assert.ok(csp['img-src'].includes('https://tile.openstreetmap.org'));
-    assert.ok(csp['style-src'].includes('https://unpkg.com'));
+    for (const [dir, src] of [['img-src', 'https://tile.openstreetmap.org'], ['style-src', 'https://unpkg.com']]) {
+      assert.ok(csp[dir].includes(src), `${dir} needs ${src}`);
+    }
   }
   assert.equal(cspFor('/privacy.html').length, 0, 'the viewer CSP is scoped to the viewer');
   assert.equal(cspFor('/install').length, 0);
@@ -101,7 +104,7 @@ test('live viewer paths get a script/connect CSP that still lets the page run (W
 
 test('live viewer has no inline script or inline event handler the CSP would block', () => {
   const html = read('public/live-viewer.html');
-  for (const [, attrs, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)) {
+  for (const [, attrs, body] of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\s*>/gi)) {
     assert.match(attrs, /\bsrc="/, 'inline <script> blocks are blocked by script-src');
     assert.equal(body.trim(), '');
   }
