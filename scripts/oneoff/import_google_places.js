@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { applicationDefault, initializeApp } = require('firebase-admin/app');
+const { getFirestore, Timestamp } = require('firebase-admin/firestore');
 
 /**
  * import_google_places.js — fills gaps in the Dhaka places directory from an
@@ -200,13 +202,12 @@ async function main() {
   }
   if (!Array.isArray(rows)) fail(`${from} is not a JSON array (export the dataset as JSON).`);
 
-  const admin = require('firebase-admin');
-  const app = admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+    const app = initializeApp({
+    credential: applicationDefault(),
     projectId: EXPECTED_PROJECT_ID,
   });
   if (app.options.projectId !== EXPECTED_PROJECT_ID) fail('Credentials resolve to the wrong project.');
-  const db = admin.firestore();
+  const db = getFirestore();
 
   const snap = await db.collection(COLLECTION).get();
   const existing = snap.docs.map((d) => ({ id: d.id, data: d.data() }));
@@ -223,7 +224,7 @@ async function main() {
     return;
   }
 
-  const createdAt = admin.firestore.Timestamp.now();
+  const createdAt = Timestamp.now();
   const ops = [
     ...plan.resetRatings.map((id) => (b) =>
       b.update(db.collection(COLLECTION).doc(id), { googleRating: 0, googleRatingCount: 0 })),

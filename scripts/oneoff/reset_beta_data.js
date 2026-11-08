@@ -43,7 +43,9 @@
 // project guard have had their say. That way `--help` and a mis-set
 // FIREBASE_PROJECT_ID both give a useful message on a machine where
 // `npm install` has not been run yet, instead of a module-not-found stack.
-let admin;
+let adminApp;
+let adminFirestore;
+let adminAuth;
 
 // ---------------------------------------------------------------------------
 // Configuration
@@ -469,7 +471,9 @@ async function main() {
   const projectId = assertProjectEnv();
 
   try {
-    admin = require('firebase-admin');
+    adminApp = require('firebase-admin/app');
+    adminFirestore = require('firebase-admin/firestore');
+    adminAuth = require('firebase-admin/auth');
   } catch (err) {
     fail(
       "Cannot load 'firebase-admin'.\n" +
@@ -477,14 +481,14 @@ async function main() {
     );
   }
 
-  const app = admin.initializeApp({
-    credential: admin.credential.applicationDefault(),
+  const app = adminApp.initializeApp({
+    credential: adminApp.applicationDefault(),
     projectId,
   });
   assertResolvedProject(app);
 
-  const db = admin.firestore();
-  const auth = admin.auth();
+  const db = adminFirestore.getFirestore();
+  const auth = adminAuth.getAuth();
 
   const deleting = opts.confirmed;
 

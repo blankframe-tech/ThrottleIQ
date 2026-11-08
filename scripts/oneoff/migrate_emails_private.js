@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 'use strict';
+const { cert, initializeApp } = require('firebase-admin/app');
+const { getAuth } = require('firebase-admin/auth');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * migrate_emails_private.js — one-off B2 migration (CrtiQue_Oct14.md).
@@ -126,10 +129,9 @@ async function main() {
     fail(`The key is for project '${key.project_id}', not '${EXPECTED_PROJECT_ID}'. Refusing to run.`);
   }
 
-  const admin = require('firebase-admin');
-  const app = admin.initializeApp({ credential: admin.credential.cert(key), projectId: EXPECTED_PROJECT_ID });
-  const db = admin.firestore(app);
-  const { FieldValue, FieldPath } = admin.firestore;
+    const app = initializeApp({ credential: cert(key), projectId: EXPECTED_PROJECT_ID });
+  const db = getFirestore(app);
+  const { FieldValue, FieldPath } = require('firebase-admin/firestore');
 
   const plans = [];
   let scanned = 0;
@@ -140,7 +142,7 @@ async function main() {
     const snap = await q.get();
     if (snap.empty) break;
     scanned += snap.size;
-    const verified = await verifiedEmails(admin.auth(app), snap.docs.map((d) => d.id));
+    const verified = await verifiedEmails(getAuth(app), snap.docs.map((d) => d.id));
     for (const doc of snap.docs) {
       const plan = planForProfile(doc.id, doc.data(), verified.get(doc.id));
       if (plan) plans.push(plan);

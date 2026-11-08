@@ -39,7 +39,9 @@
  *   FIREBASE_PROJECT_ID=throttleiqfb node oneoff/cleanup_qa_test_riders.js --yes-i-really-mean-it
  */
 
-let admin;
+let adminApp;
+let adminFirestore;
+let adminAuth;
 
 const { QA_EMAIL_DOMAIN, allSeedableForumIds } = require('./qa_seed_catalog');
 
@@ -175,14 +177,16 @@ async function main() {
 
   const projectId = assertProjectEnv();
   try {
-    admin = require('firebase-admin');
+    adminApp = require('firebase-admin/app');
+    adminFirestore = require('firebase-admin/firestore');
+    adminAuth = require('firebase-admin/auth');
   } catch (err) {
     fail("Cannot load 'firebase-admin'.\n         Run `npm install` in the scripts/ directory first.");
   }
-  const app = admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+  const app = adminApp.initializeApp({ credential: adminApp.applicationDefault(), projectId });
   assertResolvedProject(app);
-  const db = admin.firestore();
-  const auth = admin.auth();
+  const db = adminFirestore.getFirestore();
+  const auth = adminAuth.getAuth();
 
   const deleting = opts.confirmed;
 
@@ -241,7 +245,7 @@ async function main() {
   if (deleting && forumDecrements.size > 0) {
     const forumBatch = db.batch();
     for (const [path, count] of forumDecrements) {
-      forumBatch.update(db.doc(path), { postCount: admin.firestore.FieldValue.increment(-count) });
+      forumBatch.update(db.doc(path), { postCount: adminFirestore.FieldValue.increment(-count) });
     }
     await forumBatch.commit();
   }

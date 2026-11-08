@@ -1,4 +1,6 @@
 'use strict';
+const { initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * backfill_users_visibility.js against the Firestore emulator (Admin SDK, no
@@ -10,11 +12,10 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const admin = require('firebase-admin');
 const { backfill } = require('../../oneoff/backfill_users_visibility.js');
 
-const app = admin.initializeApp({ projectId: 'demo-throttleiq-backfill' }, 'backfill-test');
-const db = admin.firestore(app);
+const app = initializeApp({ projectId: 'demo-throttleiq-backfill' }, 'backfill-test');
+const db = getFirestore(app);
 
 test.before(async () => {
   const batch = db.batch();

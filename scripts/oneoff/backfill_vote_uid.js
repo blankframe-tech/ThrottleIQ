@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 'use strict';
+const { cert, initializeApp } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 /**
  * backfill_vote_uid.js — one-off: add `uid` to old vote docs.
@@ -85,10 +87,9 @@ async function main() {
     fail(`The key is for project '${key.project_id}', not '${EXPECTED_PROJECT_ID}'. Refusing to run.`);
   }
 
-  const admin = require('firebase-admin');
-  const app = admin.initializeApp({ credential: admin.credential.cert(key), projectId: EXPECTED_PROJECT_ID });
-  const db = admin.firestore(app);
-  const { FieldPath } = admin.firestore;
+    const app = initializeApp({ credential: cert(key), projectId: EXPECTED_PROJECT_ID });
+  const db = getFirestore(app);
+  const { FieldPath } = require('firebase-admin/firestore');
 
   const todo = [];
   let scanned = 0;

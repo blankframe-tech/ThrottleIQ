@@ -55,7 +55,9 @@
  *   --help
  */
 
-let admin;
+let adminApp;
+let adminFirestore;
+let adminAuth;
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -455,7 +457,7 @@ async function confirmRealWrite({ nonInteractive }) {
 // Firestore writer for one rider
 // ---------------------------------------------------------------------------
 
-async function writeRider(db, auth, admin, rider) {
+async function writeRider(db, auth, adminFirestore, rider) {
   const userRecord = await auth.createUser({
     email: rider.email,
     password: rider.password,
@@ -466,7 +468,7 @@ async function writeRider(db, auth, admin, rider) {
   await auth.setCustomUserClaims(uid, { qaSeed: true });
 
   const batch = db.batch();
-  const Timestamp = admin.firestore.Timestamp;
+  const Timestamp = adminFirestore.Timestamp;
 
   batch.set(db.collection('usernames').doc(rider.handle), { uid, qaSeed: true });
 
@@ -610,7 +612,7 @@ async function writeRider(db, auth, admin, rider) {
       downvotes: randomInt(0, 2),
       qaSeed: true,
     });
-    batch.update(forumRef, { postCount: admin.firestore.FieldValue.increment(1) });
+    batch.update(forumRef, { postCount: adminFirestore.FieldValue.increment(1) });
     forumPostRefs.push(postRef);
   }
 
@@ -677,14 +679,16 @@ async function main() {
 
   const projectId = assertProjectEnv();
   try {
-    admin = require('firebase-admin');
+    adminApp = require('firebase-admin/app');
+    adminFirestore = require('firebase-admin/firestore');
+    adminAuth = require('firebase-admin/auth');
   } catch (err) {
     fail("Cannot load 'firebase-admin'.\n         Run `npm install` in the scripts/ directory first.");
   }
-  const app = admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+  const app = adminApp.initializeApp({ credential: adminApp.applicationDefault(), projectId });
   assertResolvedProject(app);
-  const db = admin.firestore();
-  const auth = admin.auth();
+  const db = adminFirestore.getFirestore();
+  const auth = adminAuth.getAuth();
 
   await confirmRealWrite({ nonInteractive: opts.nonInteractive });
   log('  Starting in 5 seconds. Ctrl-C now if this is not what you meant.');
@@ -697,7 +701,7 @@ async function main() {
   for (const rider of riders) {
     process.stdout.write(`  ${rider.handle} (${rider.bike.brand} ${rider.bike.model}) … `);
     try {
-      const result = await writeRider(db, auth, admin, rider);
+      const result = await writeRider(db, auth, adminFirestore, rider);
       created += 1;
       createdRiders.push(rider);
       log(`created (${rider.rides.length} rides, ${rider.sharedRides.length} shared, ${result.postCount} posts)`);
