@@ -41,11 +41,13 @@ Retire this runbook once the trigger is live on Blaze with the three
    single-use code (`openssl rand -hex 4`), the account's username, and
    "Reply with this code to confirm the deletion. If you did not ask for
    this, ignore this email and nothing will be deleted." Log the code.
-4. Act only on a reply that carries that exact code. The code is the proof,
-   since only the account's mailbox received it. A reply without the code
-   is not a confirmation, whatever its From address says: send a new code
-   to the stored address. If no valid reply arrives within 14 days,
-   close the request without deleting anything.
+4. Act only on a reply written from the stored address that carries that
+   exact code: only that mailbox received the code. A bounce, delivery
+   notice or auto-reply that quotes the code is not a confirmation; neither
+   is a reply without the code, whatever its From address says, nor a reply
+   with the code from any other address. In those cases send a new code to
+   the stored address. If no valid reply arrives within 14 days, close the
+   request without deleting anything.
 5. Before deleting anything, note the profile's `username` and open
    `users/{uid}/cloudinaryAssets`: copy every `publicId`. Both are gone once
    the profile is deleted.
