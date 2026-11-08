@@ -310,3 +310,11 @@ test('.gitignore covers worktrees, .env variants and .p12 keys', () => {
   const r = spawnSync('git', ['check-ignore', '-q', '--no-index', '.env.example'], { cwd: ROOT });
   assert.equal(r.status, 1, '.env.example must stay committable');
 });
+
+test('every literal key in public/live-viewer.js is allow-listed in .gitleaks.toml', () => {
+  // Google API keys and reCAPTCHA site keys; the config lists exact keys only.
+  const keys = read('public/live-viewer.js').match(/AIza[\w-]{35}|6L[\w-]{38}/g) || [];
+  assert.ok(keys.length >= 2, 'expected the web API key and the reCAPTCHA site key');
+  const allow = read('.gitleaks.toml');
+  for (const k of keys) assert.ok(allow.includes(`'''${k}'''`), `${k.slice(0, 6)}... missing from .gitleaks.toml`);
+});
