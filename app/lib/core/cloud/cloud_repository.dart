@@ -971,17 +971,18 @@ class CloudRepository {
 
   /// Historical speed samples (km/h) for a road segment (a geohash cell —
   /// see `domain/calculators/segment_speed_aggregator.dart`), most recent
-  /// first, capped at [limit] so this stays a bounded read as the pool
-  /// grows. Read-only: the write side lives in
-  /// `ride_recording_provider.dart`'s `_publishSegmentBaselines`, alongside
-  /// this app's other fire-and-forget post-ride writes.
+  /// day first (random order within a day), capped at [limit] so this stays
+  /// a bounded read as the pool grows. Read-only: the write side is
+  /// `RidePersistenceCoordinator.publishSegmentBaselines`, alongside this
+  /// app's other fire-and-forget post-ride writes. Samples without `day`
+  /// (written before 2026-11) are skipped by the ordering.
   Future<List<double>> fetchRoadSpeedSamples(String segmentId,
       {int limit = 200}) async {
     final snapshot = await _firestore
         .collection('roadSpeedSamples')
         .doc(segmentId)
         .collection('samples')
-        .orderBy('createdAt', descending: true)
+        .orderBy('day', descending: true)
         .limit(limit)
         .get();
     return snapshot.docs

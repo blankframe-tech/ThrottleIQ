@@ -2495,9 +2495,10 @@ service cloud.firestore {
     // segment_speed_aggregator.dart`), so a rider's own ride summary can
     // compare their speed on a stretch against everyone else's historical
     // speed there. A sample deliberately carries no uid, no rideId, and no
-    // exact lat/lng — only the coarse geohash cell (the collection key
-    // itself, ~150m at precision 7) and the sample's speed/weekday/hour/
-    // weather. It's an anonymous contribution to a shared pool, not owned by
+    // exact lat/lng and no exact time — only the coarse geohash cell (the
+    // collection key itself, ~150m at precision 7) and the sample's speed/
+    // weekday/hour/weather plus a UTC day number. The app writes a ride's
+    // cells in shuffled order. It's an anonymous contribution to a shared pool, not owned by
     // anyone, so there is no per-doc owner check — only a tight shape check,
     // mirroring groupRides/voiceNotes' bounded create-only pattern above.
     match /roadSpeedSamples/{segmentId} {
@@ -2506,7 +2507,7 @@ service cloud.firestore {
 
         allow create: if request.auth != null &&
           request.resource.data.keys().hasOnly([
-            'speedKmh', 'weekday', 'hour', 'weatherCode', 'createdAt'
+            'speedKmh', 'weekday', 'hour', 'weatherCode', 'day'
           ]) &&
           request.resource.data.speedKmh is number &&
           request.resource.data.speedKmh >= 0 &&
@@ -2517,7 +2518,11 @@ service cloud.firestore {
           request.resource.data.hour >= 0 && request.resource.data.hour <= 23 &&
           (request.resource.data.weatherCode == null ||
             request.resource.data.weatherCode is int) &&
-          request.resource.data.createdAt == request.time;
+          // UTC day number, today or yesterday. Never an exact timestamp:
+          // one ride's samples, sorted by it, gave back its ordered path.
+          request.resource.data.day is int &&
+          request.resource.data.day <= int(request.time.toMillis() / 86400000) &&
+          request.resource.data.day >= int(request.time.toMillis() / 86400000) - 1;
 
         allow update, delete: if false;
       }

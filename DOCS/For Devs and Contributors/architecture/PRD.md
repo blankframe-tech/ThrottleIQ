@@ -217,7 +217,7 @@ flowchart LR
 | TNS-4 | Firebase Auth stores passwords. The app does not store them. | ✅ |
 | TNS-5 | Firestore rules enforce who can read and write each record. | ✅ |
 | TNS-6 | The app must not share location without a rider action. | ✅ |
-| TNS-7 | Pooled road-speed data has no user ID and no exact coordinates. | ✅ |
+| TNS-7 | Pooled road-speed data has no user ID, no exact coordinates and no exact time (UTC day only, shuffled write order). | ✅ |
 
 ### 6.9 Settings and display
 
