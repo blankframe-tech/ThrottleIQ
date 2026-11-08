@@ -12,7 +12,9 @@ import '../../domain/utilities/privacy_zone_clipper.dart';
 import '../models/ride_share_model.dart';
 import 'follow_repository.dart';
 import '../../domain/utilities/privacy_zone_salt.dart';
+import 'package:throttleiq/core/cloud/parse_docs.dart';
 import 'package:throttleiq/core/cloud/vote_batch.dart';
+import 'package:throttleiq/core/utils/num_cast.dart';
 import 'package:throttleiq/core/cloud/write_ack.dart';
 
 /// Comments fetched per page by [RideShareRepository.getComments].
@@ -338,10 +340,9 @@ class RideShareRepository {
   }
 
   List<SharedRideEntity> _toEntities(QuerySnapshot<Map<String, dynamic>> snap) {
-    return snap.docs
-        .map((doc) =>
-            RideShareModel.fromFirestore(doc.data(), doc.id).toEntity())
-        .toList();
+    return parseEachDoc(snap.docs,
+        (doc) => RideShareModel.fromFirestore(doc.data(), doc.id).toEntity(),
+        where: 'social.parseSharedRide');
   }
 
   /// Hydrates the signed-in rider's vote state onto each ride — an
@@ -517,9 +518,9 @@ class RideShareRepository {
     final querySnapshot = await q.limit(limit).get(const GetOptions(
         serverTimestampBehavior: ServerTimestampBehavior.estimate));
 
-    return querySnapshot.docs
-        .map((doc) => commentFromDoc(rideId, doc))
-        .toList();
+    return parseEachDoc(
+        querySnapshot.docs, (doc) => commentFromDoc(rideId, doc),
+        where: 'social.parseComment');
   }
 
   /// One comment doc as an entity. A `get()` overlays this phone's queued
@@ -532,13 +533,14 @@ class RideShareRepository {
     return RideCommentEntity(
       id: doc.id,
       rideId: rideId,
-      userId: data['userId'],
-      userName: data['userName'],
-      userPhotoUrl: data['userPhotoUrl'],
-      text: data['text'],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
-      writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
+      userId: data['userId'] as String,
+      userName: asOrNull<String>(data['userName']) ?? '',
+      userPhotoUrl: asOrNull<String>(data['userPhotoUrl']) ?? '',
+      text: asOrNull<String>(data['text']) ?? '',
+      createdAt:
+          asOrNull<Timestamp>(data['createdAt'])?.toDate() ?? DateTime.now(),
+      updatedAt: asOrNull<Timestamp>(data['updatedAt'])?.toDate(),
+      writtenAt: asOrNull<Timestamp>(data['writtenAt'])?.toDate(),
       hasPendingWrites: doc.metadata.hasPendingWrites,
     );
   }

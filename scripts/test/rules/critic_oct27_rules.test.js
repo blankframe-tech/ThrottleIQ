@@ -197,16 +197,17 @@ test('F1 ride comments: deleteSharedRide (list, delete the ride, then its commen
   await assertSucceeds(Promise.all(comments.docs.map((d) => deleteDoc(d.ref))));
 });
 
-test('F1 ride comments: build 29\'s deleteSharedRide order (comments first, then the ride) still works', async () => {
+test('F1 ride comments: the ride owner can no longer bare-delete a comment while the ride exists', async () => {
+  // Builds up to 32 deleted comments before the ride; config/app.minBuild is
+  // 35 now, so the owner's bare delete (a self-bump loop) is gone.
   await seed({
     'rides/r1': { ...RIDE, comments: 2 },
     'rides/r1/comments/c1': { userId: BOB, text: 'hi' },
     'rides/r1/comments/c2': { userId: ALICE, text: 'thanks' },
   });
   const f = db(ALICE);
-  const comments = await getDocs(collection(f, 'rides/r1/comments'));
-  await assertSucceeds(Promise.all(comments.docs.map((d) => deleteDoc(d.ref))));
-  await assertSucceeds(deleteDoc(doc(f, 'rides/r1')));
+  await assertFails(deleteDoc(doc(f, 'rides/r1/comments/c1')));
+  await assertFails(deleteDoc(doc(f, 'rides/r1/comments/c2')));
 });
 
 test('F1 forum replies: addReply / deleteReply still work; bare create and bare delete are denied', async () => {

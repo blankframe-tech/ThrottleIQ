@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../../core/utils/num_cast.dart';
 import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 
@@ -10,46 +11,40 @@ import '../../domain/entities/user_profile_entity.dart';
 class UserProfileModel {
   static UserProfileEntity fromFirestore(
       Map<String, dynamic> data, String uid) {
+    // The public rider list parses every public profile, and each is written
+    // by its own rider, so a wrong-typed field falls back instead of throwing.
+    final stats = asOrNull<Map>(data['publicStats']);
+    num? stat(String key) => asOrNull<num>(stats?[key]);
     return UserProfileEntity(
       uid: uid,
-      displayName: (data['displayName'] as String?) ?? '',
-      username: data['username'] as String?,
-      nickname: data['nickname'] as String?,
-      bio: data['bio'] as String?,
-      photoUrl: data['photoUrl'] as String?,
-      email: data['email'] as String?,
-      followerCount: (data['followerCount'] as num?)?.toInt() ?? 0,
-      followingCount: (data['followingCount'] as num?)?.toInt() ?? 0,
+      displayName: asOrNull<String>(data['displayName']) ?? '',
+      username: asOrNull<String>(data['username']),
+      nickname: asOrNull<String>(data['nickname']),
+      bio: asOrNull<String>(data['bio']),
+      photoUrl: asOrNull<String>(data['photoUrl']),
+      email: asOrNull<String>(data['email']),
+      followerCount: asOrNull<num>(data['followerCount'])?.toInt() ?? 0,
+      followingCount: asOrNull<num>(data['followingCount'])?.toInt() ?? 0,
       ownedPlaceIds:
-          (data['ownedPlaceIds'] as List?)?.whereType<String>().toList() ??
+          asOrNull<List>(data['ownedPlaceIds'])?.whereType<String>().toList() ??
               const [],
-      visibility: (data['visibility'] as String?) ?? 'public',
+      visibility: asOrNull<String>(data['visibility']) ?? 'public',
       // Absent on every account created before the garage-visibility setting
       // shipped — those must keep behaving exactly as they did, i.e. public.
       bikesVisibility:
-          (data['bikesVisibility'] as String?) ?? kBikesVisibilityPublic,
-      totalDistanceKm:
-          ((data['publicStats'] as Map?)?['totalDistanceKm'] as num?)
-                  ?.toDouble() ??
-              0,
-      totalRides:
-          ((data['publicStats'] as Map?)?['totalRides'] as num?)?.toInt() ?? 0,
-      badgeIds: ((data['publicStats'] as Map?)?['badgeIds'] as List?)
-              ?.whereType<String>()
-              .toList() ??
-          const [],
-      longestRideKm: ((data['publicStats'] as Map?)?['longestRideKm'] as num?)
-              ?.toDouble() ??
-          0,
-      longestDayStreak:
-          ((data['publicStats'] as Map?)?['longestDayStreak'] as num?)
-                  ?.toInt() ??
-              0,
-      pinnedRideIds:
-          (data['pinnedRideIds'] as List?)?.whereType<String>().toList() ??
+          asOrNull<String>(data['bikesVisibility']) ?? kBikesVisibilityPublic,
+      totalDistanceKm: stat('totalDistanceKm')?.toDouble() ?? 0,
+      totalRides: stat('totalRides')?.toInt() ?? 0,
+      badgeIds:
+          asOrNull<List>(stats?['badgeIds'])?.whereType<String>().toList() ??
               const [],
-      createdAt: (data['createdAt'] as Timestamp?)?.toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp?)?.toDate(),
+      longestRideKm: stat('longestRideKm')?.toDouble() ?? 0,
+      longestDayStreak: stat('longestDayStreak')?.toInt() ?? 0,
+      pinnedRideIds:
+          asOrNull<List>(data['pinnedRideIds'])?.whereType<String>().toList() ??
+              const [],
+      createdAt: asOrNull<Timestamp>(data['createdAt'])?.toDate(),
+      updatedAt: asOrNull<Timestamp>(data['updatedAt'])?.toDate(),
     );
   }
 

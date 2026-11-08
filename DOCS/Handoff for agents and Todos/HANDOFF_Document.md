@@ -187,6 +187,10 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 
 ## Recent sessions (newest first)
 
+### 2026-11-08
+
+- **Shared-list field checks, group-ride notifications tied to a real ride, legacy comment-delete clause dropped** (branch `agent/sec-throttleiq-2`, not merged or deployed): rules plus app hardening, details in `issues_fixed.md` (top entry). Owner: merge, then deploy rules (`needs_attention.md`) before any +38-or-later upload; the app parts ship with the next AAB.
+
 ### 2026-11-01
 
 - **App Check enforced on Firestore; bounty published** (commits `ef3fab79`..`aabd4c92`, release `1.0.0-beta.4.15.0+38`):

@@ -139,7 +139,7 @@ test('comment bump succeeds when the comment is created in the same transaction'
   // Exactly the shape RideShareRepository.addComment() now writes.
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'nice ride', rideId: RIDE_ID, createdAt: serverTimestamp() });
+      tx.set(commentRef, { userId: MALLORY, userName: 'Mallory', userPhotoUrl: '', text: 'nice ride', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -189,7 +189,7 @@ test('comment bump larger than +1 is denied even with a real comment', async () 
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
+      tx.set(commentRef, { userId: MALLORY, userName: 'Mallory', userPhotoUrl: '', text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(50), lastCommentId: commentRef.id });
     })
   );
@@ -202,7 +202,7 @@ test('comment bump cannot smuggle another field along with it', async () => {
 
   await assertFails(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
+      tx.set(commentRef, { userId: MALLORY, userName: 'Mallory', userPhotoUrl: '', text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, {
         comments: increment(1),
         lastCommentId: commentRef.id,
@@ -219,7 +219,7 @@ test('a second bump reusing the first transaction id is denied', async () => {
 
   await assertSucceeds(
     runTransaction(db, async (tx) => {
-      tx.set(commentRef, { userId: MALLORY, text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
+      tx.set(commentRef, { userId: MALLORY, userName: 'Mallory', userPhotoUrl: '', text: 'hi', rideId: RIDE_ID, createdAt: serverTimestamp() });
       tx.update(rideRef, { comments: increment(1), lastCommentId: commentRef.id });
     })
   );
@@ -523,14 +523,15 @@ test('a valid follow notification with an allowlisted Cloudinary photo is allowe
 });
 
 test('a valid groupRideInvite notification with a groupRideId is allowed', async () => {
-  const db = dbFor(MALLORY);
+  // The creator inviting a rider on the ride's invitedIds.
+  const db = dbFor(ALICE);
   await assertSucceeds(
-    setDoc(notificationRef(db), {
+    setDoc(notificationRef(db, MALLORY), {
       type: 'groupRideInvite',
-      fromUid: MALLORY,
-      fromName: 'Mallory',
+      fromUid: ALICE,
+      fromName: 'Alice',
       fromPhotoUrl: '',
-      groupRideId: 'ride-123',
+      groupRideId: GROUP_RIDE_ID,
       createdAt: serverTimestamp(),
       read: false,
     })
@@ -538,6 +539,11 @@ test('a valid groupRideInvite notification with a groupRideId is allowed', async
 });
 
 test('a valid groupRideJoined notification with a groupRideId is allowed', async () => {
+  // A member telling the ride's creator they joined.
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await updateDoc(doc(ctx.firestore(), 'groupRides', GROUP_RIDE_ID),
+      { memberIds: [ALICE, MALLORY], invitedIds: [] });
+  });
   const db = dbFor(MALLORY);
   await assertSucceeds(
     setDoc(notificationRef(db), {
@@ -545,7 +551,7 @@ test('a valid groupRideJoined notification with a groupRideId is allowed', async
       fromUid: MALLORY,
       fromName: 'Mallory',
       fromPhotoUrl: '',
-      groupRideId: 'ride-123',
+      groupRideId: GROUP_RIDE_ID,
       createdAt: serverTimestamp(),
       read: false,
     })

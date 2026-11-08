@@ -13,3 +13,7 @@ double asDouble(Object? v) => (v as num).toDouble();
 
 /// Nullable [asDouble]: null stays null.
 double? asDoubleOrNull(Object? v) => (v as num?)?.toDouble();
+
+/// [v] if it is a [T], else null: for a Firestore field another client may
+/// have written with a different type, where a raw `as` would throw.
+T? asOrNull<T>(Object? v) => v is T ? v : null;

@@ -21,7 +21,7 @@ Severity: H high, M medium, L low. Status: `[x]` done (issue, commit), `[-]` ski
 | # | Sev | Commit | Where |
 |---|---|---|---|
 | [x] B1 #70 `c2d8ff3e` | M | `fix(rules): ride comment create must bump the counter` — today a bare create then counted delete drives `comments` below zero. Confirm every build ≥ `config/app.minBuild` writes comments transactionally first | `firestore.rules:1190-1206`; test in `critic_oct27_rules.test.js` |
-| [x] B2 #71 `eeeac20b` | M | `fix(rules): notification shape — hasOnly, createdAt == request.time, read false, groupRideId ≤128, follow id = follow_{uid}` — stops inbox flooding and pinning | `firestore.rules:792-818`; `audit90_rules.test.js` |
+| [x] B2 #71 `eeeac20b` | M | `fix(rules): notification shape — hasOnly, createdAt == request.time, read false, groupRideId ≤128, follow id = follow_{uid}` — stops follow-row flooding and row pinning (group-ride rows were tied to a real ride on 2026-11-08, `issues_fixed.md`) | `firestore.rules:792-818`; `audit90_rules.test.js` |
 | [x] B3 #72 `69c1c9fa` | M | `fix(rules): validate public routes` — hasOnly, name ≤100, description ≤2000, `timesRidden` int and +1 only, `photoUrlAllowed(mapSnapshotUrl)` | `firestore.rules:713-716`; `access_matrix_rules.test.js` |
 | [x] B4 #73 `fdb9a1a0` | L | `fix(rules): profile keys allow-list` — hasOnly on create, affectedKeys on update | `firestore.rules:588-596` |
 | [x] B5 #74 `0d0c4077` | L | `fix(rules): cap place tags and type-check place fields` | `firestore.rules:1609-1612`; `places_rules.test.js` |

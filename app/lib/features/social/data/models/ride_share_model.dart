@@ -132,25 +132,23 @@ class RideShareModel {
     Map<String, dynamic> data,
     String docId,
   ) {
-    final polylineList = (data['polyline'] as List<dynamic>?)
-            ?.cast<Map<String, dynamic>>()
-            .map(
-              (point) => LatLng(
-                asDouble(point['lat']),
-                asDouble(point['lng']),
-              ),
-            )
-            .toList() ??
-        [];
+    // Every rider's feed parses every public share, and any account can
+    // write one, so a wrong-typed field falls back instead of throwing.
+    final polylineList = [
+      for (final point in asOrNull<List>(data['polyline']) ?? const [])
+        if (point is Map && point['lat'] is num && point['lng'] is num)
+          LatLng(asDouble(point['lat']), asDouble(point['lng'])),
+    ];
+    String str(String key) => asOrNull<String>(data[key]) ?? '';
 
     return RideShareModel(
       id: docId,
       userId: data['userId'] as String,
-      userName: data['userName'] as String,
-      userPhotoUrl: data['userPhotoUrl'] as String,
-      bikeId: data['bikeId'] as String,
-      bikeName: data['bikeName'] as String,
-      bikeType: data['bikeType'] as String,
+      userName: str('userName'),
+      userPhotoUrl: str('userPhotoUrl'),
+      bikeId: str('bikeId'),
+      bikeName: str('bikeName'),
+      bikeType: str('bikeType'),
       rideDate: _parseDate(data['rideDate']),
       distanceKm: (data['distanceKm'] as num?)?.toDouble() ?? 0,
       durationSeconds: (data['durationSeconds'] as num?)?.toInt() ?? 0,
@@ -158,24 +156,25 @@ class RideShareModel {
       // just needs to hand it the raw stored value.
       maxSpeedKmh: (data['maxSpeedKmh'] as num?)?.toDouble() ?? 0,
       polyline: polylineList,
-      mapSnapshotUrl: data['mapSnapshotUrl'] as String?,
+      mapSnapshotUrl: asOrNull<String>(data['mapSnapshotUrl']),
       comments: (data['comments'] as num?)?.toInt() ?? 0,
       createdAt: _parseDate(data['createdAt']),
-      audience: data['audience'] as String? ?? 'public',
-      allowedUserIds:
-          (data['allowedUserIds'] as List<dynamic>?)?.cast<String>() ?? [],
-      routeId: data['routeId'] as String?,
+      audience: asOrNull<String>(data['audience']) ?? 'public',
+      allowedUserIds: asOrNull<List>(data['allowedUserIds'])
+              ?.whereType<String>()
+              .toList() ??
+          [],
+      routeId: asOrNull<String>(data['routeId']),
       // Multi-photo rides carry `photoUrls`; anything shared before that has
       // only the single `photoUrl`, which is folded in as the lead photo so
       // existing shared rides keep rendering. Elements are checked rather than
       // cast so one malformed entry can't blow up the whole feed.
       photoUrls: normalizeRidePhotoUrls(
-        (data['photoUrls'] as List<dynamic>?)
-            ?.map((e) => e is String ? e : null),
-        legacyPhotoUrl: data['photoUrl'] as String?,
+        asOrNull<List>(data['photoUrls'])?.map((e) => e is String ? e : null),
+        legacyPhotoUrl: asOrNull<String>(data['photoUrl']),
       ),
       // Absent on every ride shared before captions shipped.
-      caption: data['caption'] as String?,
+      caption: asOrNull<String>(data['caption']),
       upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
       downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
       // Absent on every ride shared before riding-score sharing existed —

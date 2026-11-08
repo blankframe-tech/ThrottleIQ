@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/utils/num_cast.dart';
 import '../../../../core/utils/photo_url_policy.dart';
 import '../../domain/entities/forum_post_entity.dart';
 
@@ -9,19 +10,24 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data,
     {bool hasPendingWrites = false}) {
   final solutionReplyId = data['solutionReplyId'];
   final authorBike = data['authorBike'];
+  // The All Riders feed parses every post in every group, and any rider can
+  // write one, so a wrong-typed field falls back instead of throwing.
+  String str(String key) => asOrNull<String>(data[key]) ?? '';
+  int count(String key) => asOrNull<num>(data[key])?.toInt() ?? 0;
   return ForumPostEntity(
     id: id,
-    forumId: data['forumId'] ?? '',
-    userId: data['userId'] ?? '',
-    userName: data['userName'] ?? '',
-    userPhotoUrl: data['userPhotoUrl'] ?? '',
-    title: data['title'] ?? '',
-    body: data['body'] ?? '',
-    createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-    replyCount: (data['replyCount'] as num?)?.toInt() ?? 0,
-    upvotes: (data['upvotes'] as num?)?.toInt() ?? 0,
-    downvotes: (data['downvotes'] as num?)?.toInt() ?? 0,
-    postType: ForumPostType.fromString(data['postType'] as String?),
+    forumId: str('forumId'),
+    userId: str('userId'),
+    userName: str('userName'),
+    userPhotoUrl: str('userPhotoUrl'),
+    title: str('title'),
+    body: str('body'),
+    createdAt:
+        asOrNull<Timestamp>(data['createdAt'])?.toDate() ?? DateTime.now(),
+    replyCount: count('replyCount'),
+    upvotes: count('upvotes'),
+    downvotes: count('downvotes'),
+    postType: ForumPostType.fromString(asOrNull<String>(data['postType'])),
     isSolved: data['isSolved'] == true,
     solutionReplyId: solutionReplyId is String && solutionReplyId.isNotEmpty
         ? solutionReplyId
@@ -31,7 +37,7 @@ ForumPostEntity forumPostFromMap(String id, Map<String, dynamic> data,
         : null,
     attachment: ForumAttachment.fromMap(data['attachment']),
     imageUrls: forumImageUrlsFromRaw(data['imageUrls']),
-    writtenAt: (data['writtenAt'] as Timestamp?)?.toDate(),
+    writtenAt: asOrNull<Timestamp>(data['writtenAt'])?.toDate(),
     hasPendingWrites: hasPendingWrites,
   );
 }
