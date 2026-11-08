@@ -34,13 +34,22 @@ dependencies:
   battery_plus: ^6.0.0 # optional, for the battery % on the live link
 ```
 
-```dart
-import 'package:throttleiq_mayabi/throttleiq_mayabi.dart';
+ThrottleIQ issues Maya an API key. It lives **only on Maya's server**, never in the app (§8). When a rider signs in, Maya's server mints her a 24 h rider token and hands it to her app:
 
-final tiq = ThrottleIqClient(apiKey: const String.fromEnvironment('TIQ_API_KEY'));
+```dart
+// Maya's server (or call POST v1/riders/{riderRef}/token directly, see API.md)
+final server = ThrottleIqClient(apiKey: Platform.environment['TIQ_API_KEY']!);
+final riderToken = await server.mintRiderToken(rider.id); // .token, .expiresAt
 ```
 
-ThrottleIQ issues the API key. Never commit it: pass it with `--dart-define=TIQ_API_KEY=...` at build time. See §8 for where it should live.
+```dart
+// The rider's app
+import 'package:throttleiq_mayabi/throttleiq_mayabi.dart';
+
+final tiq = ThrottleIqClient.forRider(riderToken: tokenFromMayaServer);
+```
+
+A rider token only reaches that rider's own score, rides, live links and alerts. Re-mint before `expiresAt`; a `401` in the app means fetch a fresh one.
 
 **Recording during a trip needs background location**, because riders lock the phone. On Android that means a foreground service with `ACCESS_BACKGROUND_LOCATION`, using geolocator's `AndroidSettings(foregroundNotificationConfig: ...)`. On iOS it means `UIBackgroundModes: location` and "Always" permission. Ask for it the first time a rider goes online, with the consent text in PRIVACY.md.
 
@@ -90,7 +99,7 @@ Create one `RideRecorder` per hired trip, from accept to arriving home (or the n
 ```dart
 final recorder = RideRecorder(
   rideId: booking.id,          // your id, 1-64 of A-Z a-z 0-9 _ -
-  riderRef: rider.id,          // your rider id; ThrottleIQ stores only a hash
+  riderRef: rider.id,          // your rider id; ThrottleIQ stores only a keyed hash
   overspeedKmh: 60,            // city limit you want to coach to (default 100)
   onSafetyEvent: safety.raise, // see §5
 );
@@ -157,10 +166,10 @@ positions.listen((p) {
   }
 });
 
-await tiq.endLive(live.token); // when she's home; the page then says "completed"
+await tiq.endLive(live.token); // when she's home: the link stops working at once
 ```
 
-The link works in any browser, with no login and no app, until it ends or expires after 12 hours. Keep `live.token` with the ride: SOS uses it.
+The link works in any browser, with no login and no app, until `endLive` (which revokes it and drops her last position) or 12 hours. Keep `live.token` with the ride: SOS uses it.
 
 ---
 
@@ -245,15 +254,17 @@ const ok = crypto.timingSafeEqual(
   crypto.createHmac('sha256', process.env.TIQ_WEBHOOK_SECRET).update(req.rawBody).digest());
 ```
 
-Respond `2xx` within 5 s. Then call the rider, and the contacts if she doesn't answer. There is one attempt per alert; if it fails, `delivery` in the API response says so.
+Respond `2xx` within 5 s. Then call the rider, and the contacts if she doesn't answer. There is one attempt per alert; if it fails, `delivery` in the API response says so. Redirects are not followed (a `3xx` counts as failed), and the URL must be HTTPS on a public address each time ThrottleIQ sends, so give the final URL.
 
 ---
 
 ## 8. Security and keys
 
-- **The key identifies Maya,** not a rider. Anyone holding it can upload rides and raise alerts in Maya's name. Best: call `uploadRide`, `riderScore` and `sendAlert` from Maya's own server, with the key there. Calling from the app is supported, but treat the key as extractable from the APK. Tell ThrottleIQ to rotate it if a build leaks.
+- **The API key identifies Maya** and reaches every Maya rider, so it stays on Maya's server and never ships in an app. Tell ThrottleIQ to rotate it if it leaks.
+- **The app uses a rider token** (`ThrottleIqClient.forRider`), minted by Maya's server with `mintRiderToken`. It is signed by ThrottleIQ, lasts 24 h, and only reaches its own rider: another rider's id gets `403`, another rider's live link `404`. Mint only for the rider who is signed in.
+- **Rate limits:** about 1200 calls a minute per partner and 60 per rider; over that the API answers `429` (retry after a minute).
 - The server checks every upload: road cells must be in Bangladesh, speeds plausible, times sane, and counts bounded. Every sample is tagged with its source, so bad data can be removed later.
-- ThrottleIQ never stores Maya's rider ids (only a hash), names, phone numbers, emergency contacts or fares.
+- ThrottleIQ never stores Maya's rider ids (only an HMAC keyed with a server-only secret, so the id can't be recovered by guessing), names, phone numbers, emergency contacts or fares. Live links don't carry the rider key at all.
 
 ---
 
@@ -263,6 +274,6 @@ Respond `2xx` within 5 s. Then call the rider, and the contacts if she doesn't a
 cd mayabi && dart pub get && dart test
 ```
 
-There are 30 tests: cost maths, the full recorder pipeline (including ThrottleIQ's tier-2 crash scenario), safety prompts, SOS links, the HTTP client against a local server, and a contract fixture that the server's own tests also check.
+There are 32 tests: cost maths, the full recorder pipeline (including ThrottleIQ's tier-2 crash scenario), safety prompts, SOS links, the HTTP client against a local server, and a contract fixture that the server's own tests also check.
 
 **Not yet checked on a real phone:** sensor rates, background recording on OEM Android builds, battery cost of 50 Hz sensors, and the iOS multi-recipient SMS link. Pilot with a few riders first.

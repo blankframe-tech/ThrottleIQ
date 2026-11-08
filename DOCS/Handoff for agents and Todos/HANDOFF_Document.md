@@ -22,20 +22,22 @@ _Last updated: 2026-10-25._
   - `RideRecorder`: ThrottleIQ's sensor pipeline, plus leg distances and crash/unusual-stop events.
   - `SafetyCheck` ("Are you OK?" countdown), SOS links (SMS, 999), and `ThrottleIqClient` (rides, rider score, delete rider, live share, alerts).
   - `lib/src/vendor/` holds **byte-identical copies** of app files (`event_detector`, `impact_detector`, `fix_kinematics`, calibrator, estimator, geohash, riding score…). `test/vendor_sync_test.dart` fails if they drift: fix in `app/lib`, then copy again (`mayabi/lib/src/vendor/README.md`). Never `dart format lib` in `mayabi/`.
-  - `scripts/check.sh` runs the kit (`mayabi kit` step: format, analyze `--fatal-infos`, 31 tests).
+  - `scripts/check.sh` runs the kit (`mayabi kit` step: format, analyze `--fatal-infos`, 32 tests).
 - **Our side, not handed over (`functions/src/partner-api/`):** HTTPS function `partnerApi`, behind the Hosting rewrite `/api/partner/**`.
   - Maya's segment speeds are written into the shared **`roadSpeedSamples`** pool in the app's shape plus `source: <partnerId>`. That is the "their data syncs with ours" part.
   - Trigger `onRoadSpeedSampleCreated` keeps **`roadSegmentStats/{cell}`** (count/sum/sumSq overall, per Dhaka time band, and wet), so scoring reads one doc per cell.
   - Score v1 = the app's event score − road-outlier penalty − overspeed penalty (`scoring.ts`, parity with `riding_score.dart`/`speed_baseline.dart`).
-  - Server-only collections: `partnerKeys`, `partners`, `partnerRides`, `partnerRiders`, `partnerAlerts`. The rules' final catch-all denies clients. Rider ids are stored only as a hash.
-  - Tests: `functions/test/partner-scoring.test.js` (pure, includes a contract check on `mayabi/test/fixtures/ride_upload.json`) and `functions/test/emulator/partner-api.test.js`.
+  - Auth: Maya's server uses the API key (`x-api-key`) and mints 24 h rider tokens (`POST v1/riders/{riderRef}/token`, HMAC-signed, stateless); the rider app sends `authorization: Bearer <token>` and reaches only that rider (`403` for another `riderRef`, `404` for another rider's live link). Per-instance rate limits: 1200/min per partner, 60/min per rider (`429`).
+  - Server-only collections: `partnerKeys`, `partners`, `partnerRides`, `partnerRiders`, `partnerAlerts`, `partnerLive` (owner of each partner live link; the client-readable `liveSessions` doc carries no rider key). The rules' final catch-all denies clients. Rider keys, pool-sample ids and rider tokens are HMACs keyed with the Functions secret `PARTNER_RIDER_SECRET`; without it the API fails closed (`500`).
+  - `endLive` sets `shareable:false` and clears `lastLat`/`lastLng`, as the app's own teardown does. Webhook sends use `redirect:'manual'` (a `3xx` is `failed_http_3xx`) and re-check that the host is HTTPS on public addresses each time (`failed_unsafe_webhook`).
+  - Tests: `functions/test/partner-scoring.test.js` (pure, includes a contract check on `mayabi/test/fixtures/ride_upload.json`), `functions/test/partner-auth.test.js` (pure: keys, tokens, address check, rate limiter) and `functions/test/emulator/partner-api.test.js`.
   - The live viewer (`public/live-viewer.html`) shows the new `sos` status in red.
 - **Owner, to go live (in order):**
   1. Firebase **Blaze** (Cloud Functions and outbound webhooks need it).
-  2. From the `mayabi` checkout: `cd functions && npm run build && firebase deploy --only functions:partnerApi,functions:onRoadSpeedSampleCreated,hosting`. Hosting from this branch also ships the viewer change and the rewrite; `public/` is otherwise the same as `main` at the last rebase.
+  2. `openssl rand -base64 48 | npx firebase-tools@15 functions:secrets:set PARTNER_RIDER_SECRET --project throttleiqfb --data-file=-` (once; the partner API refuses every call without it, and changing it later orphans existing rider records and live links). Then from the `mayabi` checkout: `cd functions && npm run build && firebase deploy --only functions:partnerApi,functions:onRoadSpeedSampleCreated,hosting`. Hosting from this branch also ships the viewer change and the rewrite; `public/` is otherwise the same as `main` at the last rebase.
   3. `node scripts/rebuild-road-segment-stats.js --project=throttleiqfb` (dry run), then add `--yes-i-really-mean-it`. Run it once, in a quiet hour, so pre-existing samples are counted.
   4. `node scripts/create-partner.js --project=throttleiqfb --id=maya --name="Maya Ride" --webhook=<Maya's https URL> --yes-i-really-mean-it`. Send the printed key and webhook secret to Maya privately; they're not stored.
-  5. Revoke a key: `partnerKeys/{sha256}.active = false` (takes effect within 5 min, the per-instance cache).
+  5. Revoke a key: `partnerKeys/{sha256}.active = false` (takes effect within 5 min, the per-instance cache). Rider tokens are stateless: to cut them all off, set `partners/{id}.active = false`.
 - **Keeping it current:** `git rebase main`, then `scripts/check.sh`, then `git push --force-with-lease origin mayabi`. Conflicts are likely in `app_en.arb`/`app_bn.arb`, `active_ride_screen.dart`, `firebase.json`, `functions/src/index.ts`, `scripts/check.sh`. After a rebase that touches a vendored app file, re-copy it into `mayabi/lib/src/vendor/`.
 - **Also on the branch:** the trip quote (Running costs sheet) and the in-ride SOS sheet in the ThrottleIQ app itself (see features.md).
 - **Releasing the ThrottleIQ app from this branch:** off `main`, `scripts/deploy.sh` tags `<tag>-<branch>` and makes a `--prerelease --latest=false` release, so the public `releases/latest` stays a `main` build.
@@ -44,7 +46,7 @@ _Last updated: 2026-10-25._
 - **Unchecked / open:**
   - Nothing has run on a real phone: sensor rates, background recording, battery at 50 Hz, the iOS multi-recipient `sms:` link.
   - Score weights are a v1 heuristic.
-  - No per-key rate limit (`shortcut:` in `partner-api/index.ts`).
+  - Rate limits are per instance, not global (`shortcut:` in `core.ts` `checkRate`).
   - The stats trigger can double-count on a rare retry (`shortcut:` in `core.ts`).
   - The function runs in the default region (us-central1), like the others; latency from Dhaka is untested.
   - Bangla strings need native review.
