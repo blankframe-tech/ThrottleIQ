@@ -63,6 +63,12 @@ service cloud.firestore {
       return name == null || (name is string && name.size() <= 100);
     }
 
+    // A name the app reads as a non-null String: present, maybe empty (a
+    // Firebase displayName can be ''), never null or another type.
+    function storedNameValid(name) {
+      return name is string && name.size() <= 100;
+    }
+
     // Whether the requester may read a users/{uid} profile doc, given its
     // data. 'public' (the default — including legacy docs written before
     // `visibility` existed, so this never regresses pre-existing behavior)
@@ -370,14 +376,51 @@ service cloud.firestore {
     // unrelated edit), or allow-listed and capped. The composer caps the
     // caption at 280; the polyline is the clipped raw track, bounded only by
     // the 1 MiB document limit, so it is type-checked here, not capped.
+    //
+    // RideShareModel.fromFirestore reads userName, userPhotoUrl and the three
+    // bike fields as non-null strings, and every rider's feed parses every
+    // public share, so a changed value must be one (a create must send them:
+    // see sharedRideRequiredValid). createdAt orders the feed: a timestamp,
+    // never ahead of the server by more than an hour of clock skew (the app
+    // writes the phone's clock), so a share can't pin itself on top.
     function sharedRideFieldsValid(before, after) {
       return (keeps(before, after, 'photoUrls') || ridePhotosValid(after.get('photoUrls', null))) &&
         (keeps(before, after, 'photoUrl') || photoUrlAllowed(after.get('photoUrl', null))) &&
-        (keeps(before, after, 'userPhotoUrl') || photoUrlAllowed(after.get('userPhotoUrl', null))) &&
+        (keeps(before, after, 'userPhotoUrl') ||
+          (after.get('userPhotoUrl', null) is string && photoUrlAllowed(after.userPhotoUrl))) &&
         (keeps(before, after, 'mapSnapshotUrl') || photoUrlAllowed(after.get('mapSnapshotUrl', null))) &&
-        (keeps(before, after, 'userName') || optionalNameValid(after.get('userName', null))) &&
+        (keeps(before, after, 'userName') || storedNameValid(after.get('userName', null))) &&
+        (keeps(before, after, 'bikeId') || after.get('bikeId', null) is string) &&
+        (keeps(before, after, 'bikeName') || after.get('bikeName', null) is string) &&
+        (keeps(before, after, 'bikeType') || after.get('bikeType', null) is string) &&
         (keeps(before, after, 'caption') || optionalText(after, 'caption', 2000)) &&
-        after.get('polyline', []) is list;
+        (keeps(before, after, 'createdAt') ||
+          (after.get('createdAt', null) is timestamp &&
+           after.createdAt <= request.time + duration.value(1, 'h'))) &&
+        after.get('polyline', []) is list &&
+        (keeps(before, after, 'polyline') || polylineEndsValid(after.get('polyline', [])));
+    }
+
+    // A shared polyline point, as RideShareModel.toFirestore writes it.
+    function latLngValid(p) {
+      return p is map && p.get('lat', null) is number && p.get('lng', null) is number;
+    }
+
+    // shortcut: rules can't loop over a list, so only the first and last points are checked (that catches a list of junk); the app's parser skips any other bad point. Check every point if a Cloud Function ever validates shares.
+    function polylineEndsValid(points) {
+      return points.size() == 0 ||
+        (latLngValid(points[0]) && latLngValid(points[points.size() - 1]));
+    }
+
+    // A fresh share must carry the fields the feed parser hard-casts
+    // (`keeps` in sharedRideFieldsValid lets an absent or null field by).
+    function sharedRideRequiredValid(d) {
+      return storedNameValid(d.get('userName', null)) &&
+        d.get('userPhotoUrl', null) is string &&
+        d.get('bikeId', null) is string &&
+        d.get('bikeName', null) is string &&
+        d.get('bikeType', null) is string &&
+        d.get('createdAt', null) is timestamp;
     }
 
     // The riding-score event counts (optional — null/absent on a ride shared
@@ -522,6 +565,13 @@ service cloud.firestore {
         (keeps(before, after, 'bio') || optionalText(after, 'bio', 2000)) &&
         (keeps(before, after, 'visibility') ||
           after.get('visibility', null) in ['public', 'mutual', 'private']) &&
+        // UserProfileModel reads these as Timestamp / String; the public
+        // rider list orders by createdAt, so a non-timestamp would also sort
+        // to the top of it (kBikesVisibilityLevels in bike_visibility.dart).
+        (keeps(before, after, 'createdAt') || after.get('createdAt', null) is timestamp) &&
+        (keeps(before, after, 'updatedAt') || after.get('updatedAt', null) is timestamp) &&
+        (keeps(before, after, 'bikesVisibility') ||
+          after.get('bikesVisibility', null) in ['public', 'followers', 'private']) &&
         // Rides pinned to the profile: kMaxPinnedRides (profile_rides.dart).
         (keeps(before, after, 'pinnedRideIds') ||
           (after.pinnedRideIds is list && after.pinnedRideIds.size() <= 5)) &&
@@ -846,8 +896,15 @@ service cloud.firestore {
       // unconditional device-fetch/beacon vector this fix closes.
       match /notifications/{notificationId} {
         // Security sweep B2: exactly NotificationRepository's keys, a server
-        // timestamp, unread, and a follow only at its one `follow_{uid}` id —
-        // else a sender could flood an inbox or pin a row on top of it.
+        // timestamp (no row pinned on top), unread, and a follow only at its
+        // one `follow_{uid}` id (no stack of follow rows). B2 left the two
+        // group-ride kinds open to any sender; they are now tied to a real
+        // group ride (groupRideNotificationBacked). Rules can't count, so a
+        // creator can still re-ping riders they invited; App Check bounds
+        // the volume.
+        //
+        // groupRideId must be a document-id-shaped string: the phone turns
+        // it into the /group-ride/<id> route (notifications_screen.dart).
         function notificationShapeValid(data) {
           return data.keys().hasOnly(['type', 'fromUid', 'fromName',
               'fromPhotoUrl', 'groupRideId', 'createdAt', 'read']) &&
@@ -856,7 +913,8 @@ service cloud.firestore {
             (data.get('type', '') != 'follow' ||
              notificationId == 'follow_' + request.auth.uid) &&
             (!('groupRideId' in data) ||
-             (data.groupRideId is string && data.groupRideId.size() <= 128)) &&
+             (data.groupRideId is string &&
+              data.groupRideId.matches('^[A-Za-z0-9_-]{1,128}$'))) &&
             data.fromUid == request.auth.uid &&
             data.get('type', '') in
               ['follow', 'groupRideInvite', 'groupRideJoined'] &&
@@ -870,7 +928,24 @@ service cloud.firestore {
             (!(data.get('type', '') in
                ['groupRideInvite', 'groupRideJoined']) ||
              (data.get('groupRideId', '') is string &&
-              data.get('groupRideId', '') != ''));
+              data.get('groupRideId', '') != '' &&
+              groupRideNotificationBacked(data)));
+        }
+        // An invite comes from the ride's creator to a rider on its
+        // invitedIds (GroupRideRepository.createGroupRide / inviteUsers put
+        // them there before the notification is sent); a "joined" comes
+        // from a member to the ride's creator. getAfter, so a batch that
+        // invites and notifies together also passes.
+        function groupRideNotificationBacked(data) {
+          let ridePath = /databases/$(database)/documents/groupRides/$(data.groupRideId);
+          let ride = getAfter(ridePath).data;
+          return existsAfter(ridePath) &&
+            (data.type != 'groupRideInvite' ||
+             (ride.get('creatorId', '') == request.auth.uid &&
+              uid in ride.get('invitedIds', []))) &&
+            (data.type != 'groupRideJoined' ||
+             (request.auth.uid in ride.get('memberIds', []) &&
+              uid == ride.get('creatorId', '')));
         }
         // B3 (critique 2026-10-14): neither side of a block may notify the
         // other, the same pair of checks as chats and follows.
@@ -1121,6 +1196,7 @@ service cloud.firestore {
           'allowedUserIds', 'routeId', 'photoUrls', 'photoUrl', 'caption',
           'upvotes', 'downvotes', 'hardBrakeCount', 'rapidAccelCount',
           'highJerkCount']) &&
+        sharedRideRequiredValid(request.resource.data) &&
         sharedRideFieldsValid({}, request.resource.data);
       // Owner can update/delete the ride freely, but may not reassign
       // authorship (userId is immutable on this branch), and — same fix as
@@ -1268,8 +1344,10 @@ service cloud.firestore {
           request.resource.data.text is string &&
           request.resource.data.text.size() > 0 &&
           request.resource.data.text.size() <= 2000 &&
-          optionalNameValid(request.resource.data.get('userName', null)) &&
-          photoUrlAllowed(request.resource.data.get('userPhotoUrl', null)) &&
+          // RideCommentEntity's userName and userPhotoUrl are non-null.
+          storedNameValid(request.resource.data.get('userName', null)) &&
+          request.resource.data.get('userPhotoUrl', null) is string &&
+          photoUrlAllowed(request.resource.data.userPhotoUrl) &&
           request.resource.data.get('updatedAt', null) == null &&
           request.resource.data.createdAt == request.time &&
           // Security sweep B1: the +1 for this comment in the same commit
@@ -1282,12 +1360,7 @@ service cloud.firestore {
            ((resource.data.userId == request.auth.uid ||
              get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid) &&
             counterMovedFor(/databases/$(database)/documents/rides/$(rideId),
-              'comments', -1, 'lastCommentId', commentId)) ||
-           // shortcut: builds up to 32 delete the comments one by one BEFORE
-           // the ride, so the owner keeps a bare delete (and with it a
-           // self-bump loop on their own ride). Drop this line once
-           // config/app.minBuild passes the build that deletes the ride first.
-           get(/databases/$(database)/documents/rides/$(rideId)).data.userId == request.auth.uid);
+              'comments', -1, 'lastCommentId', commentId)));
       }
     }
 
@@ -1431,6 +1504,8 @@ service cloud.firestore {
         // own-folder Cloudinary `imageUrls` (forumImagesValid).
         allow create: if request.auth != null && request.resource.data.userId == request.auth.uid &&
           forumWritable(forumId) &&
+          // forumPostFromMap reads it as a String, and feeds group posts by it.
+          request.resource.data.get('forumId', null) == forumId &&
           request.resource.data.replyCount == 0 &&
           request.resource.data.upvotes == 0 && request.resource.data.downvotes == 0 &&
           request.resource.data.keys().hasOnly([

@@ -205,17 +205,18 @@ async function seedComments() {
   });
 }
 
-test('D1: the ride owner can delete anyone\'s comment, then the ride (deleteSharedRide)', async () => {
+test('D1: the ride owner can delete the ride, then anyone\'s comment on it (deleteSharedRide)', async () => {
   await seedComments();
   const db = dbFor(ALICE);
   const rideRef = doc(db, 'rides', 'r-public');
   const comments = await getDocs(collection(rideRef, 'comments'));
   const likes = await getDocs(collection(rideRef, 'likes'));
-  await assertSucceeds(Promise.all([
-    ...comments.docs.map((d) => deleteDoc(d.ref)),
-    ...likes.docs.map((d) => deleteDoc(d.ref)),
-  ]));
+  // Legacy likes go while the ride exists (their rule reads it). Builds from
+  // 35 (config/app.minBuild) delete the ride before its comments; the old
+  // comments-first order has no bare owner delete any more.
+  await assertSucceeds(Promise.all(likes.docs.map((d) => deleteDoc(d.ref))));
   await assertSucceeds(deleteDoc(rideRef));
+  await assertSucceeds(Promise.all(comments.docs.map((d) => deleteDoc(d.ref))));
 });
 
 // Critique 2026-10-27 #1: the delete carries the ride's `comments` -1 for
@@ -630,17 +631,22 @@ test('A9: a re-set cannot change shape, and nobody else can rewrite it', async (
 test('B2: notifications outside the app\'s shape are denied', async () => {
   const m = dbFor(MALLORY);
   const inbox = collection(m, 'users', ALICE, 'notifications');
+  // Bob is a member of Alice's gr1, so his "joined" row is a real one.
+  const bobInbox = collection(dbFor(BOB), 'users', ALICE, 'notifications');
   const invite = (o = {}) => ({
-    type: 'groupRideInvite', fromUid: MALLORY, fromName: 'M', fromPhotoUrl: null,
+    type: 'groupRideJoined', fromUid: BOB, fromName: 'B', fromPhotoUrl: null,
     groupRideId: 'gr1', createdAt: serverTimestamp(), read: false, ...o,
   });
   // The app's own writes pass.
   await assertSucceeds(setDoc(doc(inbox, `follow_${MALLORY}`), followNotif(MALLORY)));
-  await assertSucceeds(addDoc(inbox, invite()));
+  await assertSucceeds(addDoc(bobInbox, invite()));
+  // Group-ride rows from a sender with no part in the ride (see
+  // notifications_pin_rules.test.js for the full set).
+  await assertFails(addDoc(inbox, invite({ fromUid: MALLORY })));
   // A follow row anywhere but follow_{fromUid}.
   await assertFails(addDoc(inbox, followNotif(MALLORY)));
-  await assertFails(addDoc(inbox, invite({ createdAt: Timestamp.fromDate(new Date(Date.now() + 864e8)) })));
-  await assertFails(addDoc(inbox, invite({ read: true })));
-  await assertFails(addDoc(inbox, invite({ groupRideId: 'g'.repeat(129) })));
-  await assertFails(addDoc(inbox, invite({ pinned: true })));
+  await assertFails(addDoc(bobInbox, invite({ createdAt: Timestamp.fromDate(new Date(Date.now() + 864e8)) })));
+  await assertFails(addDoc(bobInbox, invite({ read: true })));
+  await assertFails(addDoc(bobInbox, invite({ groupRideId: 'g'.repeat(129) })));
+  await assertFails(addDoc(bobInbox, invite({ pinned: true })));
 });
