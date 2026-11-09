@@ -1595,6 +1595,10 @@
   "@peopleWhoFollow": {
     "description": "Text in ride_share_screen."
   },
+  "routeEndsHiddenNote": "The map hides the area around where your ride starts and ends, but the hidden area is approximate, not an exact boundary.",
+  "@routeEndsHiddenNote": {
+    "description": "One-line caveat on the ride share screen: start/end hiding on the shared route map is approximate."
+  },
   "ridersFollowEachOther": "Riders you follow each other",
   "@ridersFollowEachOther": {
     "description": "Text in ride_share_screen."

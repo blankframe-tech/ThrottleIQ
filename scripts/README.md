@@ -18,6 +18,8 @@ Flutter app build and are not deployed with the Cloud Functions.
 | [`cleanup_qa_test_riders.js`](#seed_qa_test_ridersjs--fabricate-qa-test-riders) | Removes everything `seed_qa_test_riders.js` created | **No** (but scoped only to tagged QA data) |
 | [`migrate_emails_private.js`](#migrate_emails_privatejs--move-emails-off-public-profiles) | One-off B2 migration: copies each profile's `email` to `users/{uid}/private/account` and `emailLookup/{sha256}`, then strips it from the public doc. Takes `--service-account=<key.json>` instead of `FIREBASE_PROJECT_ID`; the key must be for `throttleiqfb` | Mostly — the copies keep the email; it is not put back on the public doc |
 | [`backfill_users_visibility.js`](#backfill_users_visibilityjs--stamp-visibility-public-on-legacy-profiles) | One-off: sets `visibility: 'public'` on `users` docs that lack it, so legacy riders show up in search again. Takes a required `--project=<id>` | Yes — the field can be deleted again; single-doc reads already treated a missing field as public |
+| [`reclip_shared_routes.js`](#reclip_shared_routesjs--re-clip-old-shared-route-lines) | One-off: re-clips `rides/*.polyline` and public `users/*/routes` with the current privacy-zone clipper (from the full track where it was backed up). `--apply` needs `--before` and `--backup` | Yes — `--backup` writes every old polyline to a local file first |
+| [`strip_cloudinary_exif.js`](#strip_cloudinary_exifjs--strip-metadata-from-uploaded-photos) | One-off: strips EXIF/XMP/IPTC (GPS, camera, time) from images already on Cloudinary, avatars first, in place | No (metadata is gone; the pixels are kept) |
 | [`crash_stats.js`](crash_stats.js) | Read-only: the honest crash-detection numbers (detected crashes, missed falls, recall, false questions, breakdowns) from the opt-in `crashEvents` | n/a — read-only |
 | [`export_impact_events.js`](export_impact_events.js) | Read-only: every rider's `impactEvents` to CSV (riders as salted hashes), plus sensor windows with `--windows`, for calibration | n/a — read-only. **Keep the output off git** |
 | [`monitoring/firestore-quota-alert.yaml`](#monitoringfirestore-quota-alertyaml--the-quota-email-alert) | Cloud Monitoring alert: emails the owner at 80% of a daily Firestore limit and when requests start being refused (§104) | Yes — `gcloud monitoring policies delete` |
@@ -156,6 +158,68 @@ npm run loadtest:rehearsal -- --project=$LAB --api-key=<apiKey> --app-id=<appId>
 # Record the tables under "DOCS/Handoff for agents and Todos/load_test/", then:
 gcloud projects delete $LAB --account=$OWNER   # can be undone for 30 days
 ```
+
+---
+
+# `reclip_shared_routes.js` — re-clip old shared route lines
+
+One-off, for lines shared before the build whose clipper centres the hidden
+circle on a secret decoy point per rider and place. Run it once, by hand, **after** that build
+is on Play; pass `--before=<the date it shipped>` so lines the new build
+clipped are skipped.
+
+```bash
+cd scripts && npm install
+node oneoff/reclip_shared_routes.js --service-account=/path/outside/the/repo/key.json --before=2026-11-10   # dry run: counts
+node oneoff/reclip_shared_routes.js --service-account=/path/outside/the/repo/key.json --before=2026-11-10 \
+  --apply --backup=$HOME/.secrets/throttleiq/reclip-backup.json                                            # writes, after typing RECLIP ROUTES
+```
+
+A shared ride is re-clipped from `users/{uid}/rides/{id}/track` when it was
+backed up, else from its stored line. Public routes always use their stored
+line. A rider with no `zoneSalt` gets one, and a place with no anchor gets
+one (appended to `anchors` in `users/{uid}/private/privacy`). The JS mirrors
+`privacy_zone_clipper.dart` and `privacy_zone_salt.dart` (a shared test vector
+checks the per-place seed); keep them in step. Tests: `npm test`
+(`test/reclip_shared_routes.test.js`).
+
+---
+
+# `strip_cloudinary_exif.js` — strip metadata from uploaded photos
+
+One-off, for photos uploaded before the app stripped metadata on the phone.
+Lists `avatars/`, `rideShares/`, `forumPhotos/`, `bikes/` and `places/`,
+downloads each original and re-uploads the ones that still carry metadata in
+place (same public_id, `fl_force_strip`, CDN invalidated). Voice notes are not
+touched.
+
+```bash
+cd scripts
+export CLOUDINARY_API_KEY=... CLOUDINARY_API_SECRET=...      # console > Settings > API Keys
+node oneoff/strip_cloudinary_exif.js                          # dry run: counts per folder
+node oneoff/strip_cloudinary_exif.js --folder=avatars --apply # writes, after typing STRIP EXIF
+node oneoff/strip_cloudinary_exif.js --apply                  # the rest
+```
+
+Before `--apply`:
+
+- **A dry-run count of 0 is suspicious, not good news.** It most likely means
+  the folder or `public_id` prefix the script lists (`avatars/`, ...) does not
+  match what the preset actually writes. Open a few assets in the console
+  (Media Library) and compare their `public_id` with the folders above before
+  trusting it.
+- **Old URLs may still serve the old file.** The re-upload invalidates the CDN
+  copy, but a `secure_url` stored in Firestore carries a version (`/v1712.../`),
+  and Cloudinary only purges versioned URLs when *Invalidate versioned URLs*
+  is on (console > Settings > Upload, or ask Cloudinary support if the plan
+  hides it). Turn it on first.
+
+After the run, check an **old** versioned `secure_url` (copy one from a
+Firestore doc written before the run, not a fresh URL from the console):
+`curl -s <url> -o old.jpg && exiftool old.jpg` must show no GPS tags. If it
+still does, the versioned URL was not invalidated: turn the setting on and
+re-run, or wait out the CDN cache. Tests: `npm test`
+(`test/strip_cloudinary_exif.test.js`).
 
 ---
 

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/constants/app_dimensions.dart';
+import '../../../../core/services/cloudinary_upload_service.dart'
+    show kMaxUploadImageEdge;
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -49,8 +51,11 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
   Future<void> _pick() async {
     final remaining = kMaxRidePhotos - _photos.length;
     if (remaining <= 0) return;
-    final picked =
-        await ImagePicker().pickMultiImage(imageQuality: 80, limit: remaining);
+    final picked = await ImagePicker().pickMultiImage(
+        imageQuality: 80,
+        maxWidth: kMaxUploadImageEdge.toDouble(),
+        maxHeight: kMaxUploadImageEdge.toDouble(),
+        limit: remaining);
     if (picked.isEmpty || !mounted) return;
     setState(() => _photos.addAll(picked.take(remaining).map((x) => x.path)));
   }

@@ -5,7 +5,7 @@ Every issue that's still unresolved, in its original numbered section.
 Section numbers (`§N`) never change. When something here gets fixed, move
 its section or subsection to `issues_fixed.md` and keep the number.
 
-New issues go at the end of this file with the next free number: **§129**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
+New issues go at the end of this file with the next free number: **§130**. (§103–§106 are in use. §107–§110 were reserved on 2026-10-22 for leftovers from retired working notes. §97 names two different writeups: the Places/Forums first-iPhone-run findings, and the forum photos / paddock counts fix in `issues_fixed.md`. §85's open stub was folded into its `issues_fixed.md` writeup on 2026-10-22, so §85 now lives only there. §102 heads two different sections, and §79 is used twice (both now in `issues_fixed.md`); `issues_fixed.md` §83 also labels two items 81.29/81.30. §78 sub-items run to 78.30; §83 to 83.31. Check BOTH this file and `issues_fixed.md` before claiming a number.)
 
 ---
 
@@ -914,3 +914,10 @@ Code done on `agent/sec-throttleiq-11`; waits on the next AAB and iOS build.
 - **Delete account** now also clears Firestore's offline cache (`terminate()` then `clearPersistence()`) and the live-link key on the phone, best effort after the Auth account is gone (`afterDeleteAccount` in `authNotifierProvider`).
 - **Decision recorded:** open reads of places, reviews and forum posts by signed-in riders are accepted as public content. Firestore App Check has been enforced since 2026-11-01 (`HANDOFF_Document.md`). The remaining gap is that there are no per-rider volume or rate limits (§62.12).
 - **Open: device checks.** On an iPhone release build, the app's size under Settings > iCloud > Manage Storage > Backups should drop; on Android 12+, the merged manifest shows `dataExtractionRules`. After Delete account, sign in with another account and confirm Firestore still loads.
+
+## 129. Shared route ends: what trimming still leaves (2026-11-08, branch `agent/sec-throttleiq-1`)
+Shared rides and public routes now hide each end inside a circle around a secret decoy point, different per rider and per place (`privacy_zone_clipper.dart`, `privacy_zone_salt.dart`). That stops the start or end being recovered as a point. It is still approximate:
+- **Residual area.** Someone who sees many of a rider's shares can still narrow an end down to an area several hundred metres across. The share sheet says the hiding is approximate, and new shares default to followers. A real fix is a rider-set privacy zone (pick home on a map, hide everything inside it), or no route line on public shares. Owner decision.
+- **Place anchors.** Each place's decoy is tied to an anchor stored in `users/{uid}/private/privacy` (`anchors`, rounded to ~100 m, owner-only). A rider who first shares from a spot ~1 km from home can get a second anchor near home later, so a handful of early shares use the other decoy. Offline shares with no cached privacy doc use a one-off random decoy.
+- **Loop rides** keep a middle section that passes near home (only the leading and trailing runs are trimmed).
+- **Old shares** keep the old clip until the owner runs `scripts/oneoff/reclip_shared_routes.js` (see `scripts/README.md`).

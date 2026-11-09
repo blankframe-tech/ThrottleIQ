@@ -59,6 +59,12 @@ class OutboxKind {
 /// "not delivered yet", not as failure.
 const Duration kOutboxAttemptTimeout = Duration(seconds: 8);
 
+/// The bound for one photo upload in a queued share. Longer than
+/// [kOutboxAttemptTimeout] because it covers re-encoding the photo without
+/// its metadata on the device as well as the upload; at 8 s a slow phone on
+/// a slow link timed out on every attempt and the share never posted.
+const Duration kOutboxPhotoUploadTimeout = Duration(seconds: 45);
+
 /// Backoff before retrying a failed queue entry: 30s, 1m, 2m, 4m … capped at
 /// 30 minutes.
 ///
@@ -588,27 +594,31 @@ class OutboxService {
       ...?(p['uploadedPhotoUrls'] as List?)?.cast<String>(),
     ];
 
-    if (uploaded.length < localPaths.length) {
-      for (var i = uploaded.length; i < localPaths.length; i++) {
-        final file = File(localPaths[i]);
+    // Where a retry resumes. Not uploaded.length: a skipped photo would
+    // otherwise shift the index back and re-upload one that already landed.
+    final next = (p['nextPhotoIndex'] as num?)?.toInt() ?? uploaded.length;
+    for (var i = next; i < localPaths.length; i++) {
+      final file = File(localPaths[i]);
+      try {
         // A photo the rider has since deleted off the device must not wedge
         // the whole share — post it without that image.
-        if (!file.existsSync()) continue;
-        try {
-          final url = await _shareRepository
+        if (file.existsSync()) {
+          uploaded.add(await _shareRepository
               .uploadRidePhoto(userId, rideId, file)
-              .timeout(kOutboxAttemptTimeout);
-          uploaded.add(url);
-          await _dao.updatePayload(
-            id: entry.id,
-            payload: {...p, 'uploadedPhotoUrls': uploaded},
-          );
-        } on TimeoutException {
-          return OutboxDeliveryResult.deferred;
-        } on SocketException {
-          return OutboxDeliveryResult.deferred;
+              .timeout(kOutboxPhotoUploadTimeout));
         }
+      } on TimeoutException {
+        return OutboxDeliveryResult.deferred;
+      } on SocketException {
+        return OutboxDeliveryResult.deferred;
+      } on FormatException {
+        // A photo the device cannot re-encode (e.g. HEIC) is never uploaded
+        // with its metadata, and retrying won't change that: post without it.
       }
+      await _dao.updatePayload(
+        id: entry.id,
+        payload: {...p, 'uploadedPhotoUrls': uploaded, 'nextPhotoIndex': i + 1},
+      );
     }
 
     final polyline = decodePolylinePayload(p['polyline']);

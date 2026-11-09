@@ -199,6 +199,11 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
   - `.claude/settings.json` no longer enables the ponytail marketplace; install it at user scope (`.agents/rules/efficiency-tools.md`).
   - `deploy.sh` on `main` pushes `release/<tag>` and opens a PR instead of pushing `main`.
   - `crash_stats.js` and `export_impact_events.js` CSVs prefix cells that start with `= + - @`, tab or CR with `'` (`scripts/csv_cell.js`).
+- **Shared-route and photo location privacy** (branch `agent/sec-throttleiq-1`, not merged or released):
+  - `PrivacyZoneClipper` centres the hidden circle on a secret decoy point 130-600 m from the start/end, not on the start/end, and trims a random 0-50 m extra per share. The decoy differs per place: `PrivacyZoneSalt.seedsFor` derives each end's seed as HMAC(zoneSalt, anchor), with place anchors (1 km reuse radius) appended to `users/{uid}/private/privacy`. Tests: a circle fit through 6 shares misses the start by >100 m for >=95% of 500 simulated riders, and an offset learned at a known workplace misses home by >100 m for >=95% of 1000 (the same attack with one seed per rider succeeds ~97% of the time). Offline: one-off random seeds, not 0. Residual risk: issues_open §129.
+  - The share screen defaults to followers and says the end hiding is approximate (`routeEndsHiddenNote`, BN pending review).
+  - `CloudinaryUploadService.upload` re-encodes every photo without EXIF/XMP/IPTC (orientation baked in, long edge capped at 2048 px, JPEG q85) and refuses formats package:image cannot decode (HEIC). Every uploading image picker asks for maxWidth/maxHeight 2048. The outbox gives each queued photo upload 45 s (`kOutboxPhotoUploadTimeout`) instead of 8 s, skips a photo that cannot be re-encoded instead of failing the share, and resumes by `nextPhotoIndex` so a skipped photo cannot cause a re-upload. Weather lookups round lat/lng to 2 decimals.
+  - Owner, after the build is on Play: `scripts/oneoff/reclip_shared_routes.js` (re-clips old shared rides and public routes; dry run by default) and `scripts/oneoff/strip_cloudinary_exif.js` (strips metadata from images already on Cloudinary; dry run by default). Then deploy `public/privacy.html` (photo rows, Open-Meteo row, route trimming).
 
 ### 2026-11-01
 

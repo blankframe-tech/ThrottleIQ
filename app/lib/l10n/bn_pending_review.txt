@@ -1815,3 +1815,6 @@ groupRideNotSharingLocation
 followLinkConfirmTitle
 followLinkConfirmBody
 followLinkUnavailable
+
+# batch: shared route end hiding note (2026-11-08)
+routeEndsHiddenNote

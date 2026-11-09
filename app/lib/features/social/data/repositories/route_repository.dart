@@ -108,7 +108,7 @@ class RouteRepository {
   /// (owner-only).
   ///
   /// Going public permanently clips the stored polyline (the issues log
-  /// §24.3) — strips ~200m off each end, same as
+  /// §24.3) — hides at least 200 m around each end, same as
   /// [RideShareRepository.shareRide] does for shared rides. Route *sharing*
   /// always did this; route *publishing* stored the raw trail verbatim, so
   /// flipping this switch used to hand every authenticated rider (via the
@@ -139,9 +139,12 @@ class RouteRepository {
         ? const <LatLng>[]
         : RouteModel.fromFirestore(data, routeId).polyline;
     // Clipped, then thinned to the same 1,000-point cap as a shared ride.
+    final (startSeed, endSeed) =
+        await _privacySalt.seedsFor(userId, rawPolyline);
     final clipped = PrivacyZoneClipper.clipForSharing(
       rawPolyline,
-      seed: await _privacySalt.forUid(userId),
+      seed: startSeed,
+      endSeed: endSeed,
     );
 
     await ackOrQueued(docRef.update({

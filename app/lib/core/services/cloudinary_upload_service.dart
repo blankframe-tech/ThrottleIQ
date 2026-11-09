@@ -1,10 +1,51 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image/image.dart' as img;
 import 'package:throttleiq/core/utils/error_reporter.dart';
+
+/// Re-encodes an image with no metadata: no EXIF (so no GPS position, camera
+/// serial or timestamp), no XMP/IPTC. The EXIF orientation is baked into the
+/// pixels first, so a portrait phone photo does not come out sideways.
+///
+/// Every photo the app uploads is public at its `secure_url`, and the image
+/// pickers and the app's own crop/compress steps all keep the camera's GPS
+/// tags. Cloudinary serves the original file as uploaded, so they must be
+/// gone before the bytes leave the device.
+///
+/// The long edge is capped at [kMaxUploadImageEdge] px (the pickers already
+/// ask for that, but a platform may ignore it), which also keeps the encode
+/// short. PNG stays PNG (transparency); everything else becomes JPEG at
+/// quality 85. Throws [FormatException] for bytes package:image cannot
+/// decode, rather than uploading them unstripped.
+Uint8List stripImageMetadata(Uint8List bytes) {
+  final decoder = img.findDecoderForData(bytes);
+  final image = decoder?.decode(bytes);
+  if (decoder == null || image == null) {
+    throw const FormatException('Unsupported image format; not uploading.');
+  }
+  var clean = img.bakeOrientation(image);
+  if (clean.width > kMaxUploadImageEdge || clean.height > kMaxUploadImageEdge) {
+    clean = clean.width >= clean.height
+        ? img.copyResize(clean, width: kMaxUploadImageEdge)
+        : img.copyResize(clean, height: kMaxUploadImageEdge);
+  }
+  clean.exif = img.ExifData();
+  // A PNG's text chunks can carry metadata too.
+  clean.textData = null;
+  return decoder is img.PngDecoder
+      ? img.encodePng(clean)
+      : img.encodeJpg(clean, quality: 85);
+}
+
+/// Longest edge, in px, of any photo the app uploads. Every image picker
+/// whose result is uploaded passes it as maxWidth/maxHeight.
+const int kMaxUploadImageEdge = 2048;
 
 /// Uploads images to Cloudinary via an unsigned upload preset.
 ///
@@ -75,9 +116,18 @@ class CloudinaryUploadService {
 
   /// Uploads [file] under the given [folder] (organizational only, e.g.
   /// `avatars` or `rideShares/$uid`) and returns its public `secure_url`.
+  ///
+  /// The image is re-encoded without metadata first ([stripImageMetadata]),
+  /// off the UI isolate since a full-size photo takes a while to decode.
   Future<String> upload(File file, {required String folder}) async {
-    final url = await _post(_endpoint, file, folder: folder);
-    return url;
+    final raw = await file.readAsBytes();
+    final clean = await Isolate.run(() => stripImageMetadata(raw));
+    final name = file.uri.pathSegments.last;
+    return _post(
+      _endpoint,
+      MultipartFile.fromBytes(clean, filename: name),
+      folder: folder,
+    );
   }
 
   /// Uploads a short audio clip (e.g. a push-to-talk voice note) and
@@ -85,13 +135,14 @@ class CloudinaryUploadService {
   /// than adding a resource-type parameter to it, so the avatar/ride-photo
   /// upload path is untouched by this addition.
   Future<String> uploadAudio(File file, {required String folder}) async {
-    return _post(_videoEndpoint, file, folder: folder);
+    return _post(_videoEndpoint, await MultipartFile.fromFile(file.path),
+        folder: folder);
   }
 
-  Future<String> _post(String endpoint, File file,
+  Future<String> _post(String endpoint, MultipartFile file,
       {required String folder}) async {
     final formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(file.path),
+      'file': file,
       'upload_preset': _uploadPreset,
       'folder': folder,
     });
