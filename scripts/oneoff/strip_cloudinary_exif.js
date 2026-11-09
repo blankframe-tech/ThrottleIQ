@@ -40,10 +40,10 @@ const FOLDERS = ['avatars', 'rideShares', 'forumPhotos', 'bikes', 'places'];
 
 function fail(msg) { console.error(`\n  ERROR  ${msg}\n`); process.exit(1); }
 
-/** Cloudinary signature: sorted `k=v` pairs joined by `&`, secret appended, SHA-1. */
+/** Cloudinary signature: sorted `k=v` pairs joined by `&`, secret appended, SHA-256 (Cloudinary accepts it alongside SHA-1 by default, no account setting needed). */
 function sign(params, secret) {
   const base = Object.keys(params).sort().map((k) => `${k}=${params[k]}`).join('&');
-  return crypto.createHash('sha1').update(base + secret).digest('hex');
+  return crypto.createHash('sha256').update(base + secret).digest('hex');
 }
 
 /**

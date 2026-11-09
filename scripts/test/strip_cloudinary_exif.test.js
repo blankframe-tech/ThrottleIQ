@@ -47,7 +47,7 @@ test('the re-upload is signed over its params, not over file or api_key', () => 
   assert.equal(form.overwrite, 'true');
   assert.equal(form.invalidate, 'true');
   assert.equal(form.public_id, 'avatars/u1/abc');
-  const expected = crypto.createHash('sha1')
+  const expected = crypto.createHash('sha256')
     .update('invalidate=true&overwrite=true&public_id=avatars/u1/abc&timestamp=1700000000&transformation=fl_force_strip' + 's')
     .digest('hex');
   assert.equal(form.signature, expected);
