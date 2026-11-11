@@ -24,6 +24,7 @@ import '../../../../core/utils/error_reporter.dart';
 import '../../domain/place_tags.dart';
 import '../place_category_l10n.dart';
 import '../place_tag_l10n.dart';
+import '../../../../core/utils/image_pick.dart';
 
 /// Same Dhaka fallback center used by `ride_summary_screen.dart` when no
 /// real fix is available yet. Only ever the map's *initial camera* — never a
@@ -123,11 +124,11 @@ class _AddPlaceScreenState extends ConsumerState<AddPlaceScreen> {
     if (source == null) return;
 
     try {
-      final xfile = await ImagePicker().pickImage(
+      final xfile = await ignoreActivePicker(ImagePicker().pickImage(
           source: source,
           imageQuality: 80,
           maxWidth: kMaxUploadImageEdge.toDouble(),
-          maxHeight: kMaxUploadImageEdge.toDouble());
+          maxHeight: kMaxUploadImageEdge.toDouble()));
       if (xfile == null || !mounted) return;
       setState(() => _photoPath = xfile.path);
     } catch (e, st) {

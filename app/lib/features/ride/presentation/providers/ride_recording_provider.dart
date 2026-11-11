@@ -1324,7 +1324,9 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       await _stopMachinery();
       _persistenceCoordinator.dispose();
       _crashCoordinator.dispose();
-      await NotificationService.instance.cancelCrashAlert();
+      // Not awaited, as in stopRide(): a notification plugin failure must not
+      // skip the delete and the marker clear below (Crashlytics 2026-11-11).
+      unawaited(NotificationService.instance.cancelCrashAlert());
       WidgetsBinding.instance.removeObserver(this);
 
       await _tearDownLiveShare();

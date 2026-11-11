@@ -16,6 +16,7 @@ import '../../domain/bike_visibility.dart';
 import '../../domain/entities/user_profile_entity.dart';
 import '../providers/profile_providers.dart';
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/utils/image_pick.dart';
 
 /// Edit the signed-in rider's public profile: display name, nickname, bio,
 /// @username, and avatar. Reached from the garage header's user menu.
@@ -83,11 +84,11 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile = await picker.pickImage(
+    final xfile = await ignoreActivePicker(picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
         maxWidth: kMaxUploadImageEdge.toDouble(),
-        maxHeight: kMaxUploadImageEdge.toDouble());
+        maxHeight: kMaxUploadImageEdge.toDouble()));
     if (xfile != null) setState(() => _localImagePath = xfile.path);
   }
 

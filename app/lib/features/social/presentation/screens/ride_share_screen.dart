@@ -21,6 +21,7 @@ import '../widgets/ride_media_collage.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/utils/image_pick.dart';
 
 const _captionMaxLength = 280;
 
@@ -97,11 +98,12 @@ class _RideShareScreenState extends ConsumerState<RideShareScreen> {
     }
 
     final picker = ImagePicker();
-    final picked = await picker.pickMultiImage(
-        imageQuality: 80,
-        maxWidth: kMaxUploadImageEdge.toDouble(),
-        maxHeight: kMaxUploadImageEdge.toDouble(),
-        limit: remaining);
+    final picked = (await ignoreActivePicker(picker.pickMultiImage(
+            imageQuality: 80,
+            maxWidth: kMaxUploadImageEdge.toDouble(),
+            maxHeight: kMaxUploadImageEdge.toDouble(),
+            limit: remaining)) ??
+        const []);
     if (picked.isEmpty || !mounted) return;
 
     final accepted = picked.take(remaining).map((x) => x.path).toList();

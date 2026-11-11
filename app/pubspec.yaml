@@ -213,6 +213,11 @@ flutter:
     - assets/icons/
     # Year in Review story music: an original loop, see scripts/year_in_review_music.py.
     - assets/audio/
+    # The IBM Plex / Space Grotesk variants the app asks google_fonts for, named
+    # `<Family>-<Weight>.ttf` so google_fonts loads them from here instead of
+    # fetching fonts.gstatic.com (offline that fetch threw on every launch).
+    # A new weight needs its file here too; test/key_screens.dart fails without it.
+    - assets/google_fonts/
   fonts:
     # Bundled (not fetched via google_fonts at runtime) so Bangla glyphs are
     # available offline from first launch — the app's Bangla-speaking riders

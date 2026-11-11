@@ -45,6 +45,14 @@
 
 # flutter_local_notifications
 -keep class com.dexterous.flutterlocalnotifications.** { *; }
+# It caches scheduled notifications with Gson (2.8.9, no bundled R8 rules),
+# which reads the generic type off `new TypeToken<...>() {}`. R8 full mode
+# drops that Signature, so every cancel()/zonedSchedule() threw "TypeToken must
+# be created with a type argument" in release (Crashlytics 2026-11-11:
+# cancelRide, scheduleDailySummary).
+-keepattributes Signature
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
 
 # io.flutter.plugins.GeneratedPluginRegistrant and any first-party plugin
 # actually registered under this namespace (e.g. image_picker above also

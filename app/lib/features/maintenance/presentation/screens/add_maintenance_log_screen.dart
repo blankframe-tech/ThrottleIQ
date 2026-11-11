@@ -25,6 +25,7 @@ import '../service_type_l10n.dart';
 import '../widgets/edit_maintenance_check_sheet.dart' show iconForServiceType;
 import '../widgets/forecast_text.dart';
 import '../../../../core/utils/parse_localized_number.dart';
+import '../../../../core/utils/image_pick.dart';
 
 /// "Log a visit": one entry per trip to the mechanic, however many jobs were
 /// done (proposal: "the visit is the unit, not the item"). Everything is
@@ -222,8 +223,8 @@ class _AddMaintenanceLogScreenState
 
   Future<void> _pickReceipt(ImageSource source) async {
     try {
-      final picked = await ImagePicker()
-          .pickImage(source: source, imageQuality: 70, maxWidth: 1600);
+      final picked = await ignoreActivePicker(ImagePicker()
+          .pickImage(source: source, imageQuality: 70, maxWidth: 1600));
       if (picked == null) return;
       final dir = await getApplicationDocumentsDirectory();
       final folder = Directory(p.join(dir.path, 'receipts'));
