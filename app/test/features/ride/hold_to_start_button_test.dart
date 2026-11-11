@@ -18,10 +18,10 @@ import 'package:throttleiq/l10n/app_localizations.dart';
 /// - Never `pumpAndSettle()` while `busy: true`. The spinner it renders is an
 ///   indeterminate, permanently-running animation, so settling never happens
 ///   and the test times out rather than failing usefully.
-Widget _host(Widget child) =>
-    MaterialApp(
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,home: Scaffold(body: Center(child: child)));
+Widget _host(Widget child) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: Scaffold(body: Center(child: child)));
 
 const _hold = Duration(milliseconds: 500);
 
@@ -213,6 +213,27 @@ void main() {
       await tester.pump();
 
       expect(starts, 2);
+    });
+
+    testWidgets('a finger lifted after the button left the screen is ignored',
+        (tester) async {
+      // Crashlytics 2026-11-11: the ride started, the Record screen swapped
+      // the button out, and the pointer-up still reached _release on the
+      // disposed controller ("Null check operator used on a null value").
+      await tester.pumpWidget(_host(HoldToStartButton(
+        onStart: () {},
+        holdDuration: _hold,
+      )));
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(HoldToStartButton)),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+
+      await tester.pumpWidget(_host(const SizedBox()));
+      await gesture.up();
+
+      expect(tester.takeException(), isNull);
     });
 
     testWidgets('exposes a hold hint to screen readers', (tester) async {

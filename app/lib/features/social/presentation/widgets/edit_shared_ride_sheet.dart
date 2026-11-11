@@ -11,6 +11,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../data/repositories/ride_share_repository.dart';
 import '../../domain/entities/shared_ride_entity.dart';
+import '../../../../core/utils/image_pick.dart';
 
 const _captionMaxLength = 280;
 
@@ -51,11 +52,12 @@ class _EditSharedRideSheetState extends State<EditSharedRideSheet> {
   Future<void> _pick() async {
     final remaining = kMaxRidePhotos - _photos.length;
     if (remaining <= 0) return;
-    final picked = await ImagePicker().pickMultiImage(
-        imageQuality: 80,
-        maxWidth: kMaxUploadImageEdge.toDouble(),
-        maxHeight: kMaxUploadImageEdge.toDouble(),
-        limit: remaining);
+    final picked = (await ignoreActivePicker(ImagePicker().pickMultiImage(
+            imageQuality: 80,
+            maxWidth: kMaxUploadImageEdge.toDouble(),
+            maxHeight: kMaxUploadImageEdge.toDouble(),
+            limit: remaining)) ??
+        const []);
     if (picked.isEmpty || !mounted) return;
     setState(() => _photos.addAll(picked.take(remaining).map((x) => x.path)));
   }

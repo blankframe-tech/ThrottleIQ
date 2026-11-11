@@ -21,6 +21,7 @@ import '../../../../core/utils/parse_localized_number.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/analytics/analytics_service.dart';
+import '../../../../core/utils/image_pick.dart';
 
 class AddEditBikeScreen extends ConsumerStatefulWidget {
   final String? bikeId;
@@ -95,11 +96,11 @@ class _AddEditBikeScreenState extends ConsumerState<AddEditBikeScreen> {
   /// receives, so cropping doesn't compound the loss much.
   Future<void> _pickImage() async {
     final picker = ImagePicker();
-    final xfile = await picker.pickImage(
+    final xfile = await ignoreActivePicker(picker.pickImage(
         source: ImageSource.gallery,
         imageQuality: 80,
         maxWidth: kMaxUploadImageEdge.toDouble(),
-        maxHeight: kMaxUploadImageEdge.toDouble());
+        maxHeight: kMaxUploadImageEdge.toDouble()));
     if (xfile == null || !mounted) return;
 
     final cropped = await ImageCropScreen.open(

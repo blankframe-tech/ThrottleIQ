@@ -22,7 +22,7 @@ The following files are present in this directory:
 
 ## Fonts and goldens
 
-`fonts/` holds the exact IBM Plex and Space Grotesk files google_fonts downloads at runtime, named the way google_fonts caches them (`<family>_<variant>_<sha256>.ttf`); `loadKeyScreenFonts()` points google_fonts at that folder. A screen that asks for a variant not in the folder fails `setUpAll` with "unable to load font X": copy that file in from `https://fonts.gstatic.com/s/a/<sha256>.ttf` (the hash is in the google_fonts package source). Licence: `fonts/OFL.txt`.
+IBM Plex and Space Grotesk ship in `app/assets/google_fonts/` (named `<Family>-<Weight>.ttf`, the names google_fonts looks for in the asset bundle), so the app never downloads them. `loadKeyScreenFonts()` turns runtime fetching off, so a variant the app asks for that isn't bundled fails `setUpAll` with "unable to load font X": add that file from `https://fonts.gstatic.com/s/a/<sha256>.ttf` (the hash is in the google_fonts package source; check it with `shasum -a 256`). Licence: `assets/google_fonts/OFL.txt`.
 
 Goldens run on macOS only (`@TestOn('mac-os')`): text antialiasing differs on Linux, so CI (ubuntu) skips them and `scripts/check.sh` on the Mac checks them. After an intended visual change, regenerate on the Mac and review the PNG diff before committing:
 

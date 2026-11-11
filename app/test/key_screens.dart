@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -196,19 +195,23 @@ Future<void> loadKeyScreenFonts() async {
     }
     await loader.load();
   }
-  // IBM Plex and Space Grotesk come from google_fonts, which downloads them
-  // at runtime but first looks for `<family>_<variant>_<sha256>.ttf` in the
-  // app support directory. `test/fonts/` holds those exact files, so
-  // google_fonts loads them itself, and a variant missing there fails here.
+  // IBM Plex and Space Grotesk come from google_fonts, which loads them from
+  // `assets/google_fonts/` (bundled so the app never fetches them). With
+  // fetching off, a variant the theme or `display()` asks for that isn't
+  // bundled fails here instead of throwing on an offline phone.
   GoogleFonts.config.allowRuntimeFetching = false;
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(
-          const MethodChannel('plugins.flutter.io/path_provider'),
-          (_) async => Directory('test/fonts').absolute.path);
   for (final brightness in Brightness.values) {
     AppTheme.build(AppAppearance(brightness: brightness));
   }
-  GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700);
+  // Every weight passed to display()/cockpitValue() (w800 resolves to w700).
+  for (final weight in const [
+    FontWeight.w500,
+    FontWeight.w600,
+    FontWeight.w700,
+    FontWeight.w800,
+  ]) {
+    GoogleFonts.spaceGrotesk(fontWeight: weight);
+  }
   await GoogleFonts.pendingFonts();
 }
 

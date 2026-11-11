@@ -21,6 +21,7 @@ import '../providers/forum_providers.dart';
 import '../widgets/forum_post_badges.dart';
 import '../widgets/forum_post_images.dart';
 import '../widgets/forum_topic_style.dart';
+import '../../../../core/utils/image_pick.dart';
 
 /// Opens the new-post page. [group] starts ticked in the share step ("Ask
 /// owners", a forum's own "New post"); [attachment] is a shared ride or
@@ -105,14 +106,15 @@ class _NewForumPostScreenState extends ConsumerState<NewForumPostScreen> {
       final remaining = kForumPostMaxImages - _photoPaths.length;
       final List<XFile> picked;
       if (source == ImageSource.gallery && remaining > 1) {
-        picked = await picker.pickMultiImage(
-            imageQuality: 80,
-            maxWidth: 2048,
-            maxHeight: 2048,
-            limit: remaining);
+        picked = (await ignoreActivePicker(picker.pickMultiImage(
+                imageQuality: 80,
+                maxWidth: 2048,
+                maxHeight: 2048,
+                limit: remaining)) ??
+            const []);
       } else {
-        final one = await picker.pickImage(
-            source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048);
+        final one = await ignoreActivePicker(picker.pickImage(
+            source: source, imageQuality: 80, maxWidth: 2048, maxHeight: 2048));
         picked = [if (one != null) one];
       }
       if (picked.isEmpty || !mounted) return;

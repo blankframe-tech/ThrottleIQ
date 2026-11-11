@@ -107,7 +107,9 @@ class _HoldToStartButtonState extends State<HoldToStartButton>
   /// rewinding it would animate the ring back to empty underneath the spinner
   /// that is about to replace it.
   void _release() {
-    if (_ctrl.status == AnimationStatus.completed) return;
+    // The pointer-up still arrives after the widget is gone (the screen swapped
+    // it out mid-hold), and reverse() on a disposed controller throws.
+    if (!mounted || _ctrl.status == AnimationStatus.completed) return;
     // Unconditional: a release in the same frame as the press leaves the value
     // at 0 with the controller still running forward, and a `value > 0` guard
     // would let that quick tap carry on to completion and start a ride (issues
