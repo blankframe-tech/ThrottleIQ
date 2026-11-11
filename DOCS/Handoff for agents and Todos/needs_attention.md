@@ -26,7 +26,7 @@ number. Done items are deleted, not ticked; git history keeps them._
       of 1,000 points, remove the vote scan), deploy the rules, and run the vote backfill once
       more. `minBuild` is 35 since 2026-11-01; the legacy comment-delete clause was dropped
       2026-11-08 (branch `agent/sec-throttleiq-2`, ships with the rules deploy below).
-- [ ] **Rules deploy for shared-list field checks and group-ride notifications (new 2026-11-08,
+- [x] **Rules deploy for shared-list field checks and group-ride notifications: DONE 2026-11-09 from `main` at `629cd4ab` (still open: delete non-admin posts in `forums/throttleiq_notice_board/posts`) (new 2026-11-08,
       branch `agent/sec-throttleiq-2`, `issues_fixed.md`):** after merging, from a pushed `main`
       commit run `npx firebase-tools@15 deploy --only firestore:rules --project throttleiqfb` (never
       a bare `firebase deploy`). Do it before uploading any build of +38 or later: it also ships the
