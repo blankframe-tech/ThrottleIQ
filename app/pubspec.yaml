@@ -97,7 +97,7 @@ dependencies:
   # not zero. See auto_tracking_service.dart's doc comment.
   wakelock_plus: ^1.2.8
   flutter_activity_recognition: ^4.0.0
-  flutter_foreground_task: ^11.0.1
+  flutter_foreground_task: ^11.0.3
 
   # Sharing
   share_plus: ^10.0.0
