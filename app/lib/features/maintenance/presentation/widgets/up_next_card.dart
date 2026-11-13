@@ -9,6 +9,7 @@ import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../../shared/widgets/editorial.dart';
+import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../domain/calculators/maintenance_forecast.dart';
 import '../../domain/entities/maintenance_entity.dart';
 import '../maintenance_l10n.dart';
@@ -16,6 +17,7 @@ import '../providers/maintenance_provider.dart';
 import 'edit_maintenance_check_sheet.dart' show iconForServiceType;
 import 'forecast_text.dart';
 import 'maintenance_format.dart';
+import 'quick_service_sheet.dart';
 
 /// "Remind me later" on the hero: hides that item from the headline for
 /// [snoozeDays], keyed to its last service so logging it clears the snooze.
@@ -108,7 +110,8 @@ class UpNextCard extends ConsumerWidget {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            Icon(Icons.verified_outlined, color: context.palette.success, size: 26),
+            Icon(Icons.verified_outlined,
+                color: context.palette.success, size: 26),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -137,7 +140,8 @@ class UpNextCard extends ConsumerWidget {
     final lastLine = last == null
         ? null
         : [
-            if ((last.partBrand ?? '').isNotEmpty || (last.partGrade ?? '').isNotEmpty)
+            if ((last.partBrand ?? '').isNotEmpty ||
+                (last.partGrade ?? '').isNotEmpty)
               [last.partBrand, last.partGrade]
                   .whereType<String>()
                   .where((s) => s.isNotEmpty)
@@ -199,13 +203,28 @@ class UpNextCard extends ConsumerWidget {
               Expanded(
                 child: ElevatedButton.icon(
                   key: const Key('heroDoneIt'),
-                  onPressed: () => context.push(
-                      '/home/maintenance/add?bikeId=$bikeId&serviceType=${Uri.encodeComponent(f.key)}'),
-                  icon: const Icon(Icons.check, size: 18),
+                  onPressed: () {
+                    final bikes = ref.read(garageProvider).valueOrNull ?? [];
+                    final bike = bikes.where((b) => b.id == bikeId).firstOrNull;
+                    if (bike != null) {
+                      QuickServiceSheet.show(
+                        context,
+                        bike: bike,
+                        initialForecast: f,
+                        initialTitle: forecastLabel(f, l10n),
+                        initialServiceType: f.serviceType,
+                      );
+                    } else {
+                      context.push(
+                          '/home/maintenance/add?bikeId=$bikeId&serviceType=${Uri.encodeComponent(f.key)}');
+                    }
+                  },
+                  icon: const Icon(Icons.bolt, size: 18),
                   label: Text(l10n.doneIt,
                       style: const TextStyle(fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.palette.primary,
+                    foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius:

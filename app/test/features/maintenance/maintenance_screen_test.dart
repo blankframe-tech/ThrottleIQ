@@ -136,13 +136,21 @@ void main() {
     expect(find.textContaining('NEEDS ATTENTION'),
         findsOneWidget); // labels are upper-cased
     expect(find.text('Chain'), findsWidgets); // quick-check issue row
-    expect(find.text('Service visit'), findsOneWidget); // 3-item visit
-    expect(find.text('Rahim Motors', findRichText: true), findsNothing);
-    expect(find.textContaining('Tax token'), findsOneWidget);
     expect(find.byKey(const Key('logVisitFab')), findsOneWidget);
     expect(find.byKey(const Key('maintenanceSetupCard')), findsNothing);
     // Severe roads shortened the air filter, and the row says so.
     expect(find.textContaining('Dusty or wet roads'), findsWidgets);
+
+    // Switch to Pillar 2 (Records & Costs)
+    await tester.tap(find.textContaining('RECORDS & COSTS'));
+    await tester.pumpAndSettle();
+    expect(find.text('Service visit'), findsOneWidget); // 3-item visit
+    expect(find.text('Rahim Motors', findRichText: true), findsNothing);
+
+    // Switch to Pillar 3 (Docs & Safety)
+    await tester.tap(find.textContaining('DOCS & SAFETY'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Tax token'), findsOneWidget);
   });
 
   testWidgets('log a visit: due items pre-ticked, bundles, oil details',
