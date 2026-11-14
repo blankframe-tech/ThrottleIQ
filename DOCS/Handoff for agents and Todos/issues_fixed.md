@@ -11,6 +11,15 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 2026-11-11 Crashlytics, build 39: five crashes — FIXED (PRs #224, #226; on `main`, not yet in a shipped build)
+
+- **google_fonts "Network is unreachable" (40 crashes, 1 user):** the app fetched IBM Plex and Space Grotesk at runtime, which threw on a first launch with no network. The 6 font files it uses now ship in `app/assets/google_fonts/` (named `<Family>-<Weight>.ttf`, which google_fonts loads before fetching; the 4 test fonts moved there and Space Grotesk 500/600 were added). `test/key_screens.dart` fails if the app asks for a weight that isn't bundled; a new weight needs its file too. This supersedes the "no font assets" note in the 2026-08-11 section below.
+- **`TypeToken` in `cancelRide` / `scheduleDailySummary`:** R8 stripped the generic signatures flutter_local_notifications reads. Keep rules added to `app/android/app/proguard-rules.pro`. `cancelRide` no longer awaits the notification cancel (as `stopRide` already did), so a throw can't skip deleting the ride or clearing the recording state.
+- **Hold-to-start null check:** a finger lifted after the button was removed ran code on its disposed animation. `mounted` guard added; `end_ride_sheet.dart` had the same pattern and got the same fix. Regression test in `hold_to_start_button_test.dart`.
+- **image_picker `already_active`:** `core/utils/image_pick.dart` treats it as "nothing picked"; all 8 picker calls use it.
+- **Not checked:** the TypeToken fix is verified in the built code only, not by scheduling or cancelling a notification on an Android phone. Re-check Crashlytics a day or two after the next build is live.
+- **Also:** `functions/package-lock.json` bumped `fast-xml-parser` to 5.12.0 (PR #226) to clear the osv advisory that failed the `dependencies` check.
+
 ## 2026-11-08 Hosting: live viewer CSP and SRI, root redirect, Hosting deploys only from main, privacy §6 — FIXED IN CODE (branch `agent/sec-throttleiq-9`, not deployed)
 
 - **101.S7.** The four gstatic Firebase SDK tags in `public/live-viewer.html` now carry `integrity` (sha384) and `crossorigin="anonymous"`, like Leaflet. The page script moved out of the HTML into `public/live-viewer.js` (same code; the Copy button uses `addEventListener` instead of `onclick=`), so `firebase.json` can send a CSP for `/live-viewer.html`, `/live/**` and `/r/**` with no `'unsafe-inline'` for scripts. It allows scripts from this site, gstatic, unpkg and reCAPTCHA (App Check loads reCAPTCHA Enterprise at runtime), frames from reCAPTCHA, connections to `*.googleapis.com` and the RTDB hosts, and images from `tile.openstreetmap.org`. Every other path keeps `frame-ancestors 'none'` only.

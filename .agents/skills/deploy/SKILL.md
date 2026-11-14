@@ -48,10 +48,10 @@ bash scripts/deploy.sh
 
 3. **Deploy to connected iPhone**:
    ```bash
-   cd app && flutter run --release -d 00008120-001E5D190A85A01E
+   cd app && flutter run --release --dart-define=APP_CHECK_DEBUG=true -d 00008120-001E5D190A85A01E   # the flag is required: without it App Attest fails on the personal team and every Firestore read is permission-denied. Never use it for the AAB.
    ```
 
-4. **Android AAB only (no APK).** Android installs come only from Google Play; the upload is manual.
+4. **Android AAB only (no APK), for Play Console, built WITHOUT `APP_CHECK_DEBUG`** (Play Integrity; `deploy.sh` aborts if the define is present). Only the iPhone run in step 3 uses the debug token. Android installs come only from Google Play; the upload is manual.
    ```bash
    cd app && flutter build appbundle --release
    ```

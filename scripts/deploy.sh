@@ -218,6 +218,11 @@ fi
 if [ "$SKIP_ANDROID" = false ]; then
   echo ""
   echo "==> [3/5] Building Android App Bundle (AAB)..."
+  # The AAB goes to Play Console: it must use Play Integrity, never the App Check debug provider.
+  if [[ "${TILE_DEFINES[*]-}" == *APP_CHECK_DEBUG* ]]; then
+    echo "❌ APP_CHECK_DEBUG must never reach the AAB (anyone with the binary could mint App Check tokens)."
+    exit 1
+  fi
   cd "${APP_DIR}"
   flutter build appbundle --release ${TILE_DEFINES[@]+"${TILE_DEFINES[@]}"}
   cd "${REPO_ROOT}"
