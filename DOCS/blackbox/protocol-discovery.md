@@ -86,6 +86,34 @@ Standard SAE J1979 diagnostic queries over CAN ID `0x7DF`:
 
 ---
 
+## Right to Repair: Diagnostic Trouble Code (DTC) Modes
+
+To support the Right to Repair initiative (`labs/bd-moto-right-to-repair`), the diagnostic interface supports reading and resetting engine fault codes:
+
+* **Mode 03 (Request Confirmed DTCs):** Query `0x7DF [0x01, 0x03, 0xAA...]` $\rightarrow$ ECU responds on `0x7E8` with active fault codes (e.g. `P0115` for Engine Oil/Coolant Temp sensor circuit fault, `P0122` for TPS low input).
+* **Mode 07 (Request Pending DTCs):** Reads intermittent faults detected during the current driving cycle before the MIL lamp illuminates.
+* **Mode 04 (Clear DTCs / Reset MIL):** Query `0x7DF [0x01, 0x04, 0xAA...]` $\rightarrow$ clears stored fault codes and turns off the Malfunction Indicator Lamp after mechanical repair.
+
+---
+
+## Phase 1 ELM327 Terminal Verification Commands
+
+When testing with a generic ELM327 Bluetooth dongle connected via the Euro 5 adapter cable, send these standard AT commands over serial:
+
+```text
+AT Z         -> Reset ELM327
+AT E0        -> Echo Off
+AT SP 6      -> Force Protocol: ISO 15765-4 CAN (11 bit ID, 500 kbaud)
+AT SH 7DF    -> Set Header to 0x7DF (Broadcast Request)
+01 00        -> Query Supported PIDs (Expect: 41 00 [4 bytes bitmask])
+01 0C        -> Query RPM (Expect: 41 0C [A] [B])
+01 05        -> Query Engine Oil Temp (Expect: 41 05 [A])
+03           -> Read Confirmed Fault Codes (Expect: 43 [DTC count] [DTC bytes])
+04           -> Clear Fault Codes (Expect: 44)
+```
+
+---
+
 ## Answers log
 
 | Date | Source | Protocol | Pinout | Cable | Notes |

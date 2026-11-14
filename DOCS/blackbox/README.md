@@ -1,49 +1,54 @@
 # Black box: motorcycle data logger for ThrottleIQ
 
-An ESP32-based telemetry and diagnostic logger for the **Hero XPulse 200 4V Pro** (BS6 / BS6 Phase 2 / OBD-2 / E20). It taps into the factory under-seat diagnostic port, acquires real-time engine telemetry (RPM, speed, throttle position, engine oil temperature), logs rides locally to a MicroSD card, and streams live data over Bluetooth Low Energy (BLE) to the **ThrottleIQ** mobile app on the rider's phone. ThrottleIQ combines OBD metrics with phone GPS/IMU data and batches ride sessions to Supabase.
+Telemetry and diagnostic logger for the **Hero XPulse 200 4V Pro** (BS6 / BS6 Phase 2 / OBD-2 / E20). 
 
 ---
 
-## 1. Verified Specifications & Pinout
+## 0. Strategic Reality Check & Product Freeze
+
+> [!WARNING]
+> **Product Freeze Compliance:** Under the repository rules in `AGENTS.md` (Decision 2026-11-02), ThrottleIQ is frozen until 12 Play Store testers are opted in. Development is restricted to security, store/GTM, tester-reported bugs, and growth-loop fixes. No new production database collections or custom hardware development can block release milestones.
+
+### The ৳500 "Off-The-Shelf" Recommendation (Phase 1)
+Before spending weeks sourcing discrete diodes, designing custom PCBs, and soldering perfboards:
+1. A standard **mini OBD-II ELM327 v1.5 Bluetooth scanner** costs **৳400 – ৳600 on Daraz BD**.
+2. Paired with a **Euro 5 6-pin to 16-pin adapter cable** (**৳650 on Daraz BD**), it plugs directly into the XPulse diagnostic port with zero custom soldering.
+3. The ELM327 already includes wide-range automotive voltage regulation, ISO 15765-4 protocol negotiation, and connects to mobile phones over standard BLE / Bluetooth serial (SPP).
+4. Running **Car Scanner ELM OBD2** on an Android phone validates the entire system in 5 minutes:
+   - Verifies whether the Keihin ECU responds to Mode 01 queries over 500k CAN without proprietary security handshakes.
+   - Confirms whether PID `0x05` (Engine Oil Temp) returns valid data on the 4V head.
+   - Tests read/clear DTC capabilities (Modes 03/04/07) for the Right to Repair campaign.
+
+**Only proceed to Phase 2 (Custom ESP32 Hardware)** if continuous autonomous SD logging without a phone is strictly required.
+
+---
+
+## 1. Verified Diagnostic Port & Pinout
 
 Research across Hero MotoCorp technical service manuals, workshop diagnostic guides, and Keihin ECU specifications confirms:
 
-- **Protocol:** **ISO 15765-4 CAN** (500 kbps, 11-bit standard ID, 29-bit extended compatible).
+- **Protocol:** **ISO 15765-4 CAN** (500 kbps, 11-bit standard ID `0x7DF` / `0x7E8`, 29-bit compatible).
 - **Engine Control Unit (ECU):** **Keihin** 32-bit FI ECU.
 - **Physical Connector:** Standard **Euro 5 / ISO 19689** 6-pin waterproof connector (**Sumitomo TS 025 Sealed Series**, female housing part no. **6189-7963**, Red shell located under the seat).
 - **Harness Wire Colors & Signal Mapping (4 wires active):**
   - **Orange / White (O/W):** CAN High (`CAN-H`) $\rightarrow$ Connects to **OBD-II Pin 6**. Idles at ~2.5 V; pulses 2.0 V – 3.3 V with key ON.
   - **Blue / White (L/W):** CAN Low (`CAN-L`) $\rightarrow$ Connects to **OBD-II Pin 14**. Idles at ~2.5 V; pulses 1.5 V – 2.5 V with key ON.
-  - **Red / Black (R/B):** +12V Battery Power $\rightarrow$ Connects to **OBD-II Pin 16**. **Unswitched constant 12 V power** directly from main fuse.
+  - **Red / Black (R/B):** Battery +12 V $\rightarrow$ Connects to **OBD-II Pin 16**. **Unswitched constant 12 V power** directly from main fuse.
   - **Green (G):** Chassis / ECU Ground $\rightarrow$ Connects to **OBD-II Pin 4 & Pin 5**.
 
 > [!IMPORTANT]
-> **Remove 120 Ω Termination on CAN Board:** The motorcycle's wiring harness is already terminated with two 120 Ω resistors at the ECU and cluster endpoints (measured ~60 Ω total across CAN-H and CAN-L). You **must desolder or cut the 120 Ω jumper/resistor (R2)** on the SN65HVD230 breakout module before plugging into the bike, otherwise the bus resistance drops to ~40 Ω, causing transmission errors.
+> **Remove 120 Ω Termination on CAN Board:** The motorcycle's wiring harness is already terminated with two 120 Ω resistors at the ECU and cluster endpoints (~60 Ω total across CAN-H and CAN-L). You **must desolder or cut the 120 Ω jumper/resistor (R2)** on the SN65HVD230 breakout module before plugging into the bike, otherwise the bus resistance drops to ~40 Ω, causing transmission errors.
 
 ---
 
-## 2. Bill of Materials (BD Market & Availability)
+## 2. Hardware Architecture & Electrical Hardening (Phase 2)
 
-| Part | Specification / Notes | Est. Cost (BDT) | Source in Bangladesh |
-|---|---|---|---|
-| **ESP32 NodeMCU (30 or 38-pin)** | ESP32-WROOM-32 (Dual Core, Wi-Fi + BLE, native TWAI) | ৳550 – ৳650 | [TechShopBD](https://techshopbd.com) / [RoboticsBD](https://roboticsbd.com) / Daraz |
-| **SN65HVD230 CAN Module** | 3.3 V CAN transceiver, supports low-power Standby via `Rs` pin | ৳350 – ৳790 | [RoboticsBD](https://store.roboticsbd.com/i2c-spi-can-interface-module/2292-sn65hvd230-can-board-network-transceiver-evaluation-development-module-robotics-bangladesh.html) / Daraz |
-| **MP1584EN Mini Buck Module** | DC-DC Step-Down (4.5V–28V In $\rightarrow$ 5.0V Out @ 3A, 1.5MHz, tiny footprint) | ৳80 – ৳120 | [RoboticsBD](https://roboticsbd.com) / Daraz |
-| **Euro 5 6-pin to 16-pin Cable** | Sumitomo 6-pin male to OBD-II 16-pin female adapter | ৳650 – ৳1,100 | Daraz BD (search: *"Euro 5 6 pin motorcycle OBD cable"*) |
-| **TVS Diode (1.5KE20CA or 1.5KE18CA)** | Bidirectional 1500W transient voltage suppressor (clamps load dumps) | ৳25 – ৳40 | Local electronics market (Stadium / Patuatuly) / Daraz |
-| **Schottky Diode (SS34 or 1N5822)** | 3A–4A reverse polarity protection diode | ৳10 – ৳20 | Local electronics market / Daraz |
-| **Fast-blow Fuse + Inline Holder** | 1.0 A or 1.5 A mini blade fuse | ৳40 – ৳60 | Local automotive / motorbike electrical shop |
-| **Electrolytic & Ceramic Caps** | 220 µF 35V low-ESR electrolytic + 100 nF 50V ceramic | ৳15 – ৳30 | Local electronics market |
-| **MicroSD SPI Module** | 3.3V/5V compatible SPI MicroSD card breakout | ৳120 – ৳180 | TechShopBD / Daraz |
-| **Weatherproof Box (IP65)** | Small ABS plastic project enclosure (~80x50x25mm) | ৳120 – ৳180 | TechShopBD / Daraz |
-
----
-
-## 3. Power Architecture & Transient Protection
-
-Motorcycle electrical systems are notoriously noisy: single-cylinder inductive ignition coils, starter motor crank dips (down to 6V), and alternator load dump spikes (up to 40V+). Feeding unconditioned power directly into a cheap buck module will eventually destroy it.
-
-### Front-End Power Conditioning Circuit
+### A. The Input Voltage & TVS Clamping Hazard (Resolved)
+- **The MP1584 Flaw:** Generic MP1584EN modules have an Absolute Maximum Input Rating of **28.0 V**. A standard 1.5KE20CA TVS diode has a maximum clamping voltage of **27.7 V** (which surges above 28 V under peak automotive transient currents). A 0.3 V safety margin is fatal on a single-cylinder motorcycle where stator load dumps can reach 35 V–45 V.
+- **The Trimpot Flaw:** Cheap buck modules use SMD trimpots that drift or shake loose under the intense single-cylinder vibrations of the XPulse 200, spiking output voltage to 8–10 V and instantly frying the ESP32.
+- **The Correct Architecture:**
+  - Use an **automotive-rated buck regulator rated for $\ge 40\text{ V} - 60\text{ V}$ input** (e.g., **LM2596HV**, **LM5008**, or **TPS54302**) configured with **fixed precision feedback resistors** (1% metal film), never an adjustable potentiometer.
+  - Pair with a **1.5A fast-acting fuse**, an **SS34 Schottky diode** (reverse-polarity protection), and a **1.5KE36CA / SMAJ33A TVS diode** (standoff 33V, clamps transients safely below 50V).
 
 ```text
 Bike Diagnostic Port (Red/Black +12V Constant)
@@ -54,115 +59,127 @@ Bike Diagnostic Port (Red/Black +12V Constant)
           |
           +-----------------------+---------------------+
           |                       |                     |
-   [ 1.5KE20CA TVS ]      [ 220µF 35V Cap ]      [ 100nF Ceramic ]
-   (clamps spikes >20V)   (buffers cold cranks)  (high-freq filtering)
+   [ 1.5KE36CA TVS ]      [ 220µF 50V Cap ]      [ 100nF 50V Ceramic ]
+   (clamps spikes <50V)   (buffers cold cranks)  (high-freq filtering)
           |                       |                     |
           +-----------------------+---------------------+
           |
-     [ MP1584EN IN+ ]  (Pre-adjusted to exactly 5.00V)
-     [ MP1584EN IN- ] -----------------+
+     [ High-Voltage Buck IN+ (>=40V-60V Rated) ]
+     [ High-Voltage Buck IN- ] --------+
           |                            |
-     [ MP1584EN OUT+ (5.0V) ]          |
+     [ Fixed 5.0V Output (No Trimpots) ]
           |                            |
      [ ESP32 VIN ]              [ ESP32 GND ] <--- Bike Port (Green Ground)
 ```
 
-### Power Management & Battery Protection (No Flat Battery)
+### B. Pin Allocations (Avoiding Strapping Pin Hazards)
+Strapping pins control ESP32 bootloader modes and will hang the microcontroller if held in unexpected logic states during startup:
+- **GPIO 2** controls flash download mode. Tying CAN_TX to GPIO 2 risks bootloader deadlocks if the transceiver floats or pulls the line high during power-up.
+- **GPIO 5** controls SDIO timing and MTDO boot strapping.
 
-Because Pin 4 (+12V) on the Euro 5 port is **always live**, an ESP32 drawing 150 mA continuously will drain the bike's 4 Ah battery in 2–3 days.
+**Safe, Non-Conflicting Pinout:**
 
-- **Engine Running / Key ON:** CAN bus traffic is active. ESP32 is awake, polling PIDs, logging to SD, and streaming BLE.
-- **Key OFF / Bike Parked:** CAN traffic stops. After **30 seconds of bus silence**, the ESP32:
-  1. Flushes and safely closes the open file on the MicroSD card.
-  2. Pulls the SN65HVD230 `Rs` pin HIGH to put the CAN transceiver into low-power Standby mode (~370 µA).
-  3. Enters ESP32 **Deep Sleep** (drawing <15 µA).
-- **Wakeup:** When the rider turns the key ON, the ECU initializes and drives the CAN bus lines. The transceiver detects dominant bus activity, bringing its RX pin LOW. This falling edge triggers an external RTC interrupt (`esp_sleep_enable_ext0_wakeup` on GPIO 4) to wake the ESP32 instantly.
-
----
-
-## 4. Hardware Wiring & Pin Allocations
-
-To avoid peripheral conflicts (e.g. keeping I2C on GPIO 21/22 open for DS3231 RTC or OLED display):
-
-| Module | Pin Name | Connected To ESP32 Pin | Notes |
+| Peripheral | Signal | ESP32 GPIO | Description / Notes |
 |---|---|---|---|
 | **SN65HVD230 (CAN)** | 3V3 / GND | 3.3V / GND | Power transceiver from ESP32 3.3V rail |
-| | CTX (TXD) | **GPIO 2** (or GPIO 4) | TWAI TX |
-| | CRX (RXD) | **GPIO 4** (or GPIO 5) | TWAI RX (RTC GPIO capable for wake-up) |
-| | CAN_H | Euro 5 Pin 2 (Orange/White) | To bike harness CAN-High |
-| | CAN_L | Euro 5 Pin 5 (Blue/White) | To bike harness CAN-Low |
-| | Rs | **GPIO 13** (optional) | Pull HIGH for standby, LOW for high-speed |
-| **MicroSD Module (SPI)** | VCC / GND | 5V (or 3.3V) / GND | |
-| | CS | **GPIO 5** | Chip Select |
-| | MOSI | **GPIO 23** | Hardware VSPI MOSI |
-| | MISO | **GPIO 19** | Hardware VSPI MISO |
-| | SCK | **GPIO 18** | Hardware VSPI CLK |
-| **I2C Bus (Reserved)** | SDA / SCL | **GPIO 21 / GPIO 22** | Reserved for DS3231 RTC or I2C sensors |
+| | CTX (TXD) | **GPIO 25** | Clean DAC/GPIO, no boot strapping |
+| | CRX (RXD) | **GPIO 4** | RTC-capable GPIO for CAN RX |
+| | Rs (Standby) | **GPIO 26** | HIGH = low-power standby (~370 µA), LOW = normal |
+| **MicroSD Module (SPI)** | CS | **GPIO 33** | Clean GPIO, no boot strapping |
+| | MOSI | **GPIO 23** | VSPI MOSI |
+| | MISO | **GPIO 19** | VSPI MISO |
+| | SCK | **GPIO 18** | VSPI SCK |
+| **Ignition / Voltage Sense** | V_SENSE | **GPIO 34** | ADC1 input via 100k / 22k voltage divider |
+| **I2C Bus (Optional)** | SDA / SCL | **GPIO 21 / GPIO 22** | Reserved for DS3231 RTC or OLED display |
 
 ---
 
-## 5. Software Architecture: BLE-First Telemetry
+## 3. Firmware & Protocol Architecture
 
-Instead of relying on Wi-Fi batch uploads that conflict with key-off power, the system uses a **BLE-First Streaming Architecture**:
+### A. Deadlock-Free Wakeup & Power Management
+Standard OBD-II is strictly request-response; the Keihin ECU will **not** transmit unsolicited diagnostic frames when the key is turned on. Relying on a CAN RX falling edge to wake from deep sleep creates a permanent deadlock (bus stays recessive $\rightarrow$ ESP32 never wakes up).
 
-```mermaid
-flowchart LR
-    A["Keihin ECU (CAN 500k)"] -->|ISO 15765-4 Mode 01| B["ESP32 Black Box"]
-    B -->|Local Flight Log| C["MicroSD Card (FAT32 CSV)"]
-    B -->|BLE GATT Notify (20 Hz)| D["ThrottleIQ Flutter App (Handlebar)"]
-    D -->|Fused Telemetry GPS + OBD| E["Supabase Cloud"]
+**Dual Wakeup Strategy:**
+1. **Option A (Alternator Charging Detection - Zero Extra Wires):**
+   - The ESP32 stays in Deep Sleep on the unswitched 12V line.
+   - An ultra-low-power RTC timer wakes the ESP32 for 5 ms every 2.0 seconds.
+   - The ADC reads battery voltage via the GPIO 34 divider:
+     - Engine OFF: $V_{bat} \le 12.8\text{ V} \rightarrow$ resume Deep Sleep immediately (average draw $<25\ \mu\text{A}$).
+     - Engine Running: Stator charges battery to $V_{bat} \ge 13.6\text{ V} \rightarrow$ full system boot and start logging.
+2. **Option B (Switched Accessory Sense Line):**
+   - Tap a switched 12V line (tail light or USB port) through a voltage divider to RTC GPIO 34.
+   - Configure `esp_sleep_enable_ext0_wakeup(GPIO_NUM_34, 1)` to wake instantly on ignition HIGH.
+
+### B. Safe Polling Rate vs. Passive Sniffing
+- **Diagnostic Polling Rate:** Querying PIDs at 40 Hz overwhelms small single-cylinder ECUs. Active queries are capped at **2 Hz – 5 Hz** (200 ms – 500 ms cycle).
+- **Passive Sniffing (Listen-Only):** The XPulse 200 4V digital LCD cluster continuously receives RPM, wheel speed, and gear indicator data from the ECU over CAN. In `TWAI_MODE_LISTEN_ONLY`, the ESP32 sniffs these broadcast frames at 20–50 Hz with **zero ECU CPU load** and zero risk of bus-off errors.
+
+### C. BLE Telemetry Packet Format (Jitter & Sequence Proof)
+To survive Bluetooth connection interval jitter (30–100 ms) and allow the mobile app to compute acceleration derivatives:
+
+```text
+Offset | Field           | Type       | Description
+-------+-----------------+------------+-------------------------------------------
+0x00   | Session Millis  | uint32_t   | Milliseconds elapsed since ride session start
+0x04   | Sequence ID     | uint16_t   | Monotonic packet counter (detects drops)
+0x06   | Engine RPM      | uint16_t   | Live RPM (0 - 16,383)
+0x08   | Speed km/h      | uint8_t    | Vehicle speed (0 - 255 km/h)
+0x09   | Throttle %      | uint8_t    | Throttle opening (0 - 100%)
+0x0A   | Engine Temp     | int8_t     | Engine Oil Temp in °C (-40 to +215)
+0x0B   | Status Flags    | uint8_t    | Bit 0: MIL active, Bit 1: SD log active
 ```
 
-1. **Live Riding Mode:** 
-   - ESP32 acts as a BLE GATT Server broadcasting custom service `0x181E` (ThrottleIQ Telemetry).
-   - The ThrottleIQ Flutter app connects automatically when the rider mounts the bike.
-   - Real-time engine parameters (RPM, Speed, Throttle %, Engine Oil Temp) stream to the mobile dashboard at 10–20 Hz.
-   - The ThrottleIQ app already manages ride tracking, GPS location, lean angles, and cellular data. It fuses the OBD stream directly into the ride session.
-2. **Key-Off & Upload:**
-   - When the ride ends and the key is switched off, ThrottleIQ automatically closes the ride and uploads the enriched ride log to Supabase via 4G/5G/Wi-Fi. No bike-side Wi-Fi credentials or hotspot tethering required!
-3. **Offline Black Box Mode:**
-   - If the rider travels without their phone, the ESP32 still logs all frames locally to the MicroSD card. Files can be retrieved via USB or synced when the app connects next.
-
 ---
 
-## 6. Production Firmware Sketch
-
-Tested ESP-IDF / Arduino ESP32 implementation using native TWAI driver, non-blocking PID polling, and response decoding:
+## 4. Production Firmware Sketch (With SD Logging & BLE Sequencing)
 
 ```cpp
 #include <Arduino.h>
+#include <SPI.h>
+#include <SD.h>
 #include "driver/twai.h"
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
-#define CAN_TX_PIN   GPIO_NUM_2
-#define CAN_RX_PIN   GPIO_NUM_4
-#define CAN_RS_PIN   GPIO_NUM_13
+// Safe Pin Definitions
+#define CAN_TX_PIN       GPIO_NUM_25
+#define CAN_RX_PIN       GPIO_NUM_4
+#define CAN_RS_PIN       GPIO_NUM_26
+#define SD_CS_PIN        GPIO_NUM_33
+#define BATTERY_SENSE_PIN GPIO_NUM_34
 
-#define OBD_REQ_ID   0x7DF
-#define OBD_RESP_ID  0x7E8
+#define OBD_REQ_ID       0x7DF
+#define OBD_RESP_ID      0x7E8
 
 // Mode 01 PIDs
-#define PID_RPM      0x0C
-#define PID_SPEED    0x0D
-#define PID_THROTTLE 0x11
-#define PID_EOT      0x05 // Engine Oil Temperature (Cylinder Head)
+#define PID_RPM          0x0C
+#define PID_SPEED        0x0D
+#define PID_THROTTLE     0x11
+#define PID_EOT          0x05
 
-struct VehicleTelemetry {
-  uint16_t rpm = 0;
-  uint8_t speed_kmh = 0;
-  float throttle_pct = 0.0f;
-  int16_t engine_temp_c = 0;
-  uint32_t last_bus_activity = 0;
-} telemetry;
+#pragma pack(push, 1)
+struct TelemetryPacket {
+  uint32_t session_millis;
+  uint16_t sequence_id;
+  uint16_t rpm;
+  uint8_t  speed_kmh;
+  uint8_t  throttle_pct;
+  int8_t   engine_temp_c;
+  uint8_t  status_flags;
+} packet;
+#pragma pack(pop)
 
-// BLE Telemetry Service
+// BLE Service UUIDs
 #define SERVICE_UUID        "91bad492-b950-4226-aa2b-4ede9fa42f59"
 #define CHARACTERISTIC_UUID "cba1d466-344c-4be3-ab3f-189f80dd7518"
+
 BLECharacteristic *pTelemetryChar = nullptr;
 bool bleConnected = false;
+File logFile;
+bool sdActive = false;
+uint32_t lastBusActivity = 0;
 
 class ServerCallbacks : public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) { bleConnected = true; }
@@ -174,7 +191,7 @@ class ServerCallbacks : public BLEServerCallbacks {
 
 void setup_twai() {
   pinMode(CAN_RS_PIN, OUTPUT);
-  digitalWrite(CAN_RS_PIN, LOW); // High-speed normal mode
+  digitalWrite(CAN_RS_PIN, LOW); // High-speed mode
 
   twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(CAN_TX_PIN, CAN_RX_PIN, TWAI_MODE_NORMAL);
   twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();
@@ -184,39 +201,46 @@ void setup_twai() {
   ESP_ERROR_CHECK(twai_start());
 }
 
+void setup_sd() {
+  if (SD.begin(SD_CS_PIN)) {
+    sdActive = true;
+    logFile = SD.open("/ride_log.csv", FILE_APPEND);
+    if (logFile) {
+      logFile.println("millis,seq,rpm,speed,throttle,eot");
+      logFile.flush();
+    }
+  }
+}
+
 void send_pid_query(uint8_t pid) {
-  twai_message_t msg;
+  twai_message_t msg = {};
   msg.identifier = OBD_REQ_ID;
-  msg.extd = 0;
-  msg.rtr = 0;
   msg.data_length_code = 8;
-  msg.data[0] = 0x02; // Number of additional bytes
-  msg.data[1] = 0x01; // Mode 01 (Live Data)
-  msg.data[2] = pid;  // PID requested
-  msg.data[3] = 0xAA; msg.data[4] = 0xAA; msg.data[5] = 0xAA; msg.data[6] = 0xAA; msg.data[7] = 0xAA;
-  twai_transmit(&msg, pdMS_TO_TICKS(50));
+  msg.data[0] = 0x02; // Bytes to follow
+  msg.data[1] = 0x01; // Mode 01
+  msg.data[2] = pid;
+  for (int i = 3; i < 8; i++) msg.data[i] = 0xAA;
+  twai_transmit(&msg, pdMS_TO_TICKS(20));
 }
 
 void read_can_responses() {
   twai_message_t rx_msg;
   while (twai_receive(&rx_msg, 0) == ESP_OK) {
-    telemetry.last_bus_activity = millis();
-
-    // Standard OBD response check: ID 0x7E8, Mode 01 response (0x41)
+    lastBusActivity = millis();
     if (rx_msg.identifier == OBD_RESP_ID && rx_msg.data[1] == 0x41) {
       uint8_t pid = rx_msg.data[2];
       switch (pid) {
         case PID_RPM:
-          telemetry.rpm = ((rx_msg.data[3] * 256) + rx_msg.data[4]) / 4;
+          packet.rpm = ((rx_msg.data[3] * 256) + rx_msg.data[4]) / 4;
           break;
         case PID_SPEED:
-          telemetry.speed_kmh = rx_msg.data[3];
+          packet.speed_kmh = rx_msg.data[3];
           break;
         case PID_THROTTLE:
-          telemetry.throttle_pct = (rx_msg.data[3] * 100.0f) / 255.0f;
+          packet.throttle_pct = (rx_msg.data[3] * 100) / 255;
           break;
         case PID_EOT:
-          telemetry.engine_temp_c = (int16_t)rx_msg.data[3] - 40;
+          packet.engine_temp_c = (int8_t)rx_msg.data[3] - 40;
           break;
       }
     }
@@ -224,20 +248,24 @@ void read_can_responses() {
 }
 
 void enter_deep_sleep() {
+  if (logFile) {
+    logFile.flush();
+    logFile.close();
+  }
   twai_stop();
   twai_driver_uninstall();
-  digitalWrite(CAN_RS_PIN, HIGH); // Set transceiver to standby mode
+  digitalWrite(CAN_RS_PIN, HIGH); // Standby mode
 
-  // Configure CAN RX pin (GPIO 4) as wake-up trigger on LOW edge (CAN bus activity)
-  esp_sleep_enable_ext0_wakeup(CAN_RX_PIN, 0);
+  // Wake up every 2 seconds to sample battery voltage
+  esp_sleep_enable_timer_wakeup(2000000);
   esp_deep_sleep_start();
 }
 
 void setup() {
   Serial.begin(115200);
   setup_twai();
+  setup_sd();
 
-  // BLE Setup
   BLEDevice::init("ThrottleIQ-BlackBox");
   BLEServer *pServer = BLEDevice::createServer();
   pServer->setCallbacks(new ServerCallbacks());
@@ -251,15 +279,16 @@ void setup() {
   pService->start();
   BLEDevice::startAdvertising();
 
-  telemetry.last_bus_activity = millis();
+  lastBusActivity = millis();
+  packet.sequence_id = 0;
 }
 
 void loop() {
   static uint8_t pid_cycle = 0;
   static uint32_t last_poll = 0;
 
-  // Poll 10 times a second (cycle through PIDs)
-  if (millis() - last_poll >= 25) {
+  // Safe 5 Hz polling rate (every 200 ms)
+  if (millis() - last_poll >= 200) {
     last_poll = millis();
     switch (pid_cycle % 4) {
       case 0: send_pid_query(PID_RPM); break;
@@ -272,22 +301,34 @@ void loop() {
 
   read_can_responses();
 
-  // Broadcast telemetry via BLE at 10 Hz
-  static uint32_t last_ble = 0;
-  if (bleConnected && millis() - last_ble >= 100) {
-    last_ble = millis();
-    uint8_t payload[8];
-    payload[0] = (telemetry.rpm >> 8) & 0xFF;
-    payload[1] = telemetry.rpm & 0xFF;
-    payload[2] = telemetry.speed_kmh;
-    payload[3] = (uint8_t)telemetry.throttle_pct;
-    payload[4] = (uint8_t)(telemetry.engine_temp_c + 40);
-    pTelemetryChar->setValue(payload, 5);
-    pTelemetryChar->notify();
+  // 5 Hz BLE broadcast & local SD buffer
+  static uint32_t last_broadcast = 0;
+  if (millis() - last_broadcast >= 200) {
+    last_broadcast = millis();
+    packet.session_millis = millis();
+    packet.sequence_id++;
+    packet.status_flags = (sdActive ? 0x02 : 0x00);
+
+    if (bleConnected && pTelemetryChar) {
+      pTelemetryChar->setValue((uint8_t*)&packet, sizeof(packet));
+      pTelemetryChar->notify();
+    }
+
+    if (logFile) {
+      logFile.printf("%lu,%u,%u,%u,%u,%d\n",
+                     packet.session_millis, packet.sequence_id,
+                     packet.rpm, packet.speed_kmh,
+                     packet.throttle_pct, packet.engine_temp_c);
+      static uint8_t flushCount = 0;
+      if (++flushCount >= 25) { // Flush every 5 seconds
+        logFile.flush();
+        flushCount = 0;
+      }
+    }
   }
 
-  // If bike ignition is turned off, enter deep sleep after 30 seconds of inactivity
-  if (millis() - telemetry.last_bus_activity > 30000) {
+  // 30 seconds of silence indicates engine shutoff
+  if (millis() - lastBusActivity > 30000) {
     enter_deep_sleep();
   }
 }
@@ -295,74 +336,35 @@ void loop() {
 
 ---
 
-## 7. Supabase Database Schema
+## 5. Data Architecture Alignment (ThrottleIQ Firebase Stack)
 
-Enriched ride telemetries uploaded by the ThrottleIQ app:
+> [!CAUTION]
+> **No Relational Row Firehose:** Streaming 10–20 Hz telemetry directly as individual database rows yields `36,000 writes/hour`. A regular rider logging 1.5 hours/day produces **>1.6 million writes/month**, instantly demolishing Firebase quotas. Furthermore, ThrottleIQ uses **Cloud Firestore** and **Firebase Auth**, not Supabase.
 
-```sql
--- Main Ride Sessions
-CREATE TABLE public.rides (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  vehicle_id VARCHAR(64) NOT NULL,
-  start_time TIMESTAMPTZ NOT NULL,
-  end_time TIMESTAMPTZ,
-  total_distance_km NUMERIC(6, 2) DEFAULT 0,
-  max_rpm INTEGER DEFAULT 0,
-  max_speed_kmh INTEGER DEFAULT 0,
-  max_engine_temp_c INTEGER DEFAULT 0,
-  created_at TIMESTAMPTZ DEFAULT now() NOT NULL
-);
-
--- High-Frequency Telemetry Points (batched from mobile app)
-CREATE TABLE public.ride_telemetry (
-  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  ride_id UUID REFERENCES public.rides(id) ON DELETE CASCADE NOT NULL,
-  timestamp TIMESTAMPTZ NOT NULL,
-  latitude NUMERIC(10, 7),
-  longitude NUMERIC(10, 7),
-  engine_rpm INTEGER,
-  speed_kmh INTEGER,
-  throttle_position NUMERIC(5, 2),
-  engine_temp_c INTEGER,
-  lean_angle NUMERIC(5, 2)
-);
-
-CREATE INDEX idx_ride_telemetry_ride_time ON public.ride_telemetry (ride_id, timestamp);
-CREATE INDEX idx_rides_user_time ON public.rides (user_id, start_time DESC);
-
--- Enable RLS
-ALTER TABLE public.rides ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.ride_telemetry ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users access own rides" ON public.rides
-  FOR ALL USING (auth.uid() = user_id);
-
-CREATE POLICY "Users access own ride telemetry" ON public.ride_telemetry
-  FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.rides WHERE id = ride_telemetry.ride_id AND user_id = auth.uid())
-  );
-```
+### Clean Dual-Tier Cloud Architecture
+1. **Live Cockpit (In-Memory / Local SQLite):**
+   - High-frequency BLE notifications (5–10 Hz) drive the live speedometer, gear ratio indicator, and tachometer in the Flutter UI.
+   - Downsampled data (1 Hz) records locally to SQLite on the phone via ThrottleIQ's existing `RideDao`.
+2. **Cloud Sync (1 Write Per Ride Session):**
+   - **Firestore:** When a ride finishes, ThrottleIQ writes **one single document** to `users/{uid}/rides/{rideId}` with ride totals (distance, top speed, max RPM, duration, start/end timestamps, BRTA fuel economy metrics).
+   - **Cloud Storage (Optional High-Res Log):** The full 5 Hz CSV/binary telemetry log is gzipped on the phone and uploaded to Firebase Storage (`rides/{uid}/{rideId}.csv.gz`) as an analytical artifact, costing **1 single upload**.
 
 ---
 
-## 8. Implementation Steps & Verification Plan
+## 6. Right to Repair Capabilities
 
-1. **Bench Assembly (No bike needed):**
-   - Wire ESP32 to SN65HVD230 transceiver and MP1584EN buck module on a breadboard.
-   - Adjust MP1584 output potentiometer to exactly **5.00 V** using a 12V bench power supply.
-   - Desolder the 120 Ω surface-mount resistor (`R2`) on the SN65HVD230 module.
-2. **On-Bike Port Verification:**
-   - Locate the Red 6-pin connector under the rider seat.
-   - Follow the 4-step multimeter verification in [protocol-discovery.md](file:///Users/blackbird/Everything/dev/products/ThrottleIQ/DOCS/blackbox/protocol-discovery.md) (check Ground continuity, 12V constant power, 2.5V CAN bias, and 60 Ω bus impedance).
-3. **Listen-Only Validation:**
-   - Plug the Euro 5 adapter cable into the diagnostic port.
-   - Flash the ESP32 in `TWAI_MODE_LISTEN_ONLY` and log received raw CAN frames over serial. Blip throttle and observe frame IDs changing.
-4. **Active Mode 01 PID Polling:**
-   - Switch to `TWAI_MODE_NORMAL`. Poll PID `0x0C` (RPM) and `0x11` (Throttle) and verify ECU responses on `0x7E8`.
-5. **ThrottleIQ Mobile BLE Integration:**
-   - Connect the ThrottleIQ Flutter app via BLE.
-   - Confirm real-time tachometer and throttle graphs animate on the handlebar screen.
-6. **Enclosure & Under-Seat Weatherproofing:**
-   - Transfer circuit to a compact perfboard. Apply conformal coating to prevent water and vibration damage. Place in IP65 enclosure under the seat.
+To support the Right to Repair campaign (`labs/bd-moto-right-to-repair`), the diagnostic interface must support fault code management, not just live Mode 01 streaming:
 
+- **Mode 03 (Request Confirmed DTCs):** `0x7DF [0x01, 0x03, 0xAA...]` $\rightarrow$ reads stored error codes (e.g. `P0115` Engine Coolant/Oil Temp Sensor circuit malfunction).
+- **Mode 07 (Request Pending DTCs):** Reads intermittent faults detected during the current driving cycle.
+- **Mode 04 (Clear DTCs & Reset MIL):** `0x7DF [0x01, 0x04, 0xAA...]` $\rightarrow$ extinguishes the Check Engine Malfunction Indicator Lamp after servicing.
+
+---
+
+## 7. Pragmatic Implementation Roadmap
+
+| Milestone | Action | Risk Gate |
+|---|---|---|
+| **Phase 1 (Immediate)** | Buy Euro 5 adapter (৳650) + mini ELM327 v1.5 (৳450). Plug into XPulse with *Car Scanner ELM OBD2*. | Confirm CAN 500k negotiation, PID `0x05` EOT support, and Mode 03/04 DTC reading. Zero custom hardware built. |
+| **Phase 2 (Post-Freeze)** | If autonomous SD logging is required: build custom ESP32 board using $\ge 40\text{ V}$ buck IC, fixed resistors, and unstrapped GPIOs (25/4/33). | Bench test with 12V supply; verify alternator charging wake threshold ($\ge 13.6\text{ V}$). |
+| **Phase 3 (App Hookup)** | Add Bluetooth serial/BLE scanner to ThrottleIQ to ingest the verified telemetry stream. | Validate 1 write/ride Firestore schema with compressed Storage artifact. |
