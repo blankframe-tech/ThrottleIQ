@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="DOCS/General/Files%20for%20Stores/store_listing/throttleiq_playstore_icon_512.png" width="112" alt="ThrottleIQ app icon" />
+<img src="DOCS/General/github_cover_1280x640.png" width="100%" alt="ThrottleIQ: rides, routes and repairs from the streets of Dhaka" />
 
 # ThrottleIQ
 
