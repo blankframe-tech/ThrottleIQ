@@ -14,6 +14,7 @@ number. Done items are deleted, not ticked; git history keeps them._
       media upload limits; check the Firebase API key restrictions; decide on `secret/`. Details in
       the owner's private notes (`DOCS/private/`, git-ignored). Before functions go live on Blaze, confirm the crash-alert caps (5 contacts, 3 alerts
       an hour). Details: `security_sweep_2026-10-30.md` "Before you deploy".
+- [ ] **Play production access (new 2026-11-12):** Google declined on 2026-11-11 ("more testing required"). Needs 12+ testers opted in continuously for 14 days from that review date, so reapply on or after **2026-11-25** (Play Console → Dashboard → Apply for production). Until then: keep 15–20 testers opted in (a dropout can restart its clock), get them using the app and sending feedback through Play (Testing feedback; keep a summary, the form asks for it), and cite build +40 (fixes the five build-39 crashes) as the act-on-feedback update. Build +40 is in closed testing (Alpha), in review on 2026-11-12. Once it is live, ask a few testers to schedule a daily summary, cancel a ride and launch offline: that is the Android check the TypeToken fix still lacks. Don't restart the closed test.
 - [ ] **Deploy (#30, #31):** rules, indexes and Hosting last went out 2026-10-27 (critique fixes
       included). Left: Cloud Functions once on Blaze (deletion, retention, chat moderation).
 - [x] **Vote `uid` (`SECURITY.md` step 11):** rules and indexes deployed 2026-10-29 (`4a16cc37`);
