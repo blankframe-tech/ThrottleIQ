@@ -13,7 +13,7 @@ const { getFirestore } = require('firebase-admin/firestore');
  *   - detected crashes: tier 1+ events the rider confirmed (crash or fall)
  *   - missed falls:     falls riders reported that the detector never flagged
  *   - recall:           detected / (detected + missed)
- *   - false questions:  tier 1+ events answered "phone fell", "bump" or
+ *   - false questions:  tier 1+ events answered "phone fell", "bump", "jump" or
  *                       "hard stop"
  *   - breakdowns by placement, surface, bike class, speed band, district
  *
@@ -37,7 +37,7 @@ const { csvCell } = require('./csv_cell');
 
 const EXPECTED_PROJECT_ID = 'throttleiqfb';
 const FALL_LABELS = new Set(['crash', 'fall']);
-const FALSE_LABELS = new Set(['phone_fell', 'bump', 'hard_stop']);
+const FALSE_LABELS = new Set(['phone_fell', 'bump', 'jump', 'hard_stop']);
 const BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
 
 /** Centre of a geohash cell, or null for anything that isn't one. */

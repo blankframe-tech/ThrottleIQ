@@ -225,8 +225,8 @@ service cloud.firestore {
     // Shadow-mode crash detection (crash-detection plan §8), shared with
     // impact_event_payload.dart: the field lists must match it.
     function impactLabelValid(label) {
-      return label in ['crash', 'fall', 'phone_fell', 'bump', 'hard_stop',
-          'unsure', 'missed'];
+      return label in ['crash', 'fall', 'phone_fell', 'bump', 'jump',
+          'hard_stop', 'unsure', 'missed'];
     }
 
     // A rider's own impact (impactEventCloudPayload + syncedAt). `imu` is the

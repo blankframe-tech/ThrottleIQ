@@ -126,6 +126,15 @@ test('a rider writes, reads and deletes their own impact', async () => {
   await assertSucceeds(deleteDoc(mine(alice)));
 });
 
+test('the jump answer is accepted, on the rider copy and the research copy', async () => {
+  const alice = testEnv.authenticatedContext(ALICE);
+  await assertSucceeds(
+    setDoc(mine(alice), impact({ label: 'jump', labelSource: 'rider',
+      labeledAt: '2026-10-14T16:10:00.000Z' }))
+  );
+  await assertSucceeds(setDoc(central(alice), crashEvent({ label: 'jump' })));
+});
+
 test('a reported miss (tier -1, no sensor data) is accepted', async () => {
   const alice = testEnv.authenticatedContext(ALICE);
   await assertSucceeds(
