@@ -21,6 +21,7 @@ import '../../domain/entities/maintenance_entity.dart';
 import '../../domain/entities/service_visit.dart';
 import '../providers/maintenance_provider.dart';
 import '../service_type_l10n.dart';
+import 'maintenance_format.dart';
 
 /// 1-Tap Quick Service Sheet: pre-filled odometer with tactile delta chips,
 /// date selector, service bundles, workshop memory, quick cost chips, optional
@@ -84,27 +85,26 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
   String? _receiptPath;
   bool _saving = false;
 
-  final List<String> _rememberedWorkshops = [
-    'Yamaha Authorized Service, Tejgaon',
-    'Apex Moto Garage, Mirpur',
-    'Universal Motors, Dhanmondi',
-    'DIY Self Maintenance',
-  ];
+  late final bool _imperial;
+
+  double _toDisplay(double km) => _imperial ? km * kmToMi : km;
+  double _toKm(double shown) => _imperial ? shown / kmToMi : shown;
 
   @override
   void initState() {
     super.initState();
-    _baseOdometer = widget.bike.currentOdometerKm;
+    _imperial = ref.read(maintenanceImperialProvider);
+    _baseOdometer = _toDisplay(widget.bike.currentOdometerKm);
     _odometerCtrl = TextEditingController(
       text: _baseOdometer.toStringAsFixed(0),
     );
     _costCtrl = TextEditingController(
       text: widget.initialCost != null
           ? widget.initialCost!.toStringAsFixed(0)
-          : '650',
+          : '',
     );
-    _workshopCtrl = TextEditingController(text: _rememberedWorkshops.first);
-    _oilBrandCtrl = TextEditingController(text: 'Motul 7100 10W-40');
+    _workshopCtrl = TextEditingController();
+    _oilBrandCtrl = TextEditingController();
 
     // Initialize selected service types
     if (widget.initialServiceType != null) {
@@ -126,13 +126,11 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
     super.dispose();
   }
 
-  void _applyBundle(
-      String id, String label, double defaultCost, List<ServiceType> types) {
+  void _applyBundle(String id, String label, List<ServiceType> types) {
     setState(() {
       _selectedBundleId = id;
       _selectedTypes.clear();
       _selectedTypes.addAll(types);
-      _costCtrl.text = defaultCost.toStringAsFixed(0);
       _customLabel = label;
     });
   }
@@ -165,18 +163,6 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
       initialDate: _date,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: context.palette.primary,
-              surface: context.palette.surface,
-              onSurface: context.palette.textPrimary,
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
     if (picked != null && mounted) {
       setState(() {
@@ -241,19 +227,16 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
 
     final draft = VisitDraft(
       date: _date,
-      odometerKm: odo,
+      odometerKm: _toKm(odo),
       items: items,
       totalCost: cost,
       shopName: workshop.isNotEmpty ? workshop : null,
-      shopKind: workshop.toLowerCase().contains('authorized') ||
-              workshop.toLowerCase().contains('service')
+      // Only what the rider's own words say; the full Log a visit screen
+      // has the real picker.
+      shopKind: workshop.toLowerCase().contains('authorized')
           ? ShopKind.authorized
-          : (workshop.toLowerCase().contains('diy') ||
-                  workshop.toLowerCase().contains('self')
-              ? ShopKind.self
-              : ShopKind.local),
+          : (workshop.toLowerCase().contains('diy') ? ShopKind.self : null),
       receiptPath: _receiptPath,
-      visitLabel: _selectedBundleId == 'bundle_free_1' ? 'free:1' : null,
     );
 
     final messenger = ScaffoldMessenger.of(context);
@@ -265,10 +248,11 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
       await notifier.saveVisit(draft);
 
       // If entered odometer is higher than bike's known current odometer, sync it
-      if (odo > widget.bike.currentOdometerKm) {
+      final odoKm = _toKm(odo);
+      if (odoKm > widget.bike.currentOdometerKm) {
         await ref.read(garageProvider.notifier).syncOdometer(
               bikeId: widget.bike.id,
-              newOdometerKm: odo,
+              newOdometerKm: odoKm,
             );
       }
 
@@ -294,7 +278,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  '✓ Service visit logged at ${odo.toStringAsFixed(0)} km! Wear interval reset.',
+                  '✓ Service visit logged at ${odo.toStringAsFixed(0)} ${_imperial ? 'mi' : 'km'}. Wear interval reset.',
                   style: TextStyle(color: context.palette.textPrimary),
                 ),
               ),
@@ -315,6 +299,14 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
     final shape = context.shape;
     final l10n = context.l10n;
     final hasOil = _selectedTypes.contains(ServiceType.oilChange);
+    final shopNames = groupVisits(
+            ref.watch(maintenanceProvider(widget.bike.id)).valueOrNull ??
+                const [])
+        .map((v) => v.shopName)
+        .whereType<String>()
+        .where((s) => s.isNotEmpty)
+        .toSet()
+        .toList();
 
     final displayTitle = widget.initialTitle ??
         (_customLabel ??
@@ -400,7 +392,6 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                       onTap: () => _applyBundle(
                         'bundle_oil',
                         'Oil + Filter',
-                        650,
                         [ServiceType.oilChange, ServiceType.oilFilter],
                       ),
                     ),
@@ -411,24 +402,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                       onTap: () => _applyBundle(
                         'bundle_chain',
                         'Chain Service',
-                        250,
                         [ServiceType.chain],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    _SelectableChip(
-                      label: '1st Free Service',
-                      selected: _selectedBundleId == 'bundle_free_1',
-                      onTap: () => _applyBundle(
-                        'bundle_free_1',
-                        '1st Free Service',
-                        0,
-                        [
-                          ServiceType.oilChange,
-                          ServiceType.oilFilter,
-                          ServiceType.chain,
-                          ServiceType.chainTension,
-                        ],
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -438,7 +412,6 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                       onTap: () => _applyBundle(
                         'bundle_overhaul',
                         'Full Overhaul',
-                        1200,
                         [
                           ServiceType.oilChange,
                           ServiceType.oilFilter,
@@ -454,7 +427,10 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
               const SizedBox(height: 16),
 
               // Service Odometer Field & Delta Chips
-              const _SectionLabel(label: 'Service Odometer (KM)'),
+              _SectionLabel(
+                  label: _imperial
+                      ? 'Service Odometer (MI)'
+                      : 'Service Odometer (KM)'),
               const SizedBox(height: 6),
               TextFormField(
                 key: const Key('quickServiceOdometerField'),
@@ -482,7 +458,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  suffixText: 'KM',
+                  suffixText: _imperial ? 'MI' : 'KM',
                   suffixStyle: GoogleFonts.ibmPlexMono(
                       color: palette.textTertiary, fontSize: 13),
                 ),
@@ -493,10 +469,12 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                 child: Row(
                   children: [
                     _ActionChip(
-                        label: '-100 km', onTap: () => _adjustOdometer(-100)),
+                        label: '-100 ${_imperial ? 'mi' : 'km'}',
+                        onTap: () => _adjustOdometer(-100)),
                     const SizedBox(width: 6),
                     _ActionChip(
-                        label: '-50 km', onTap: () => _adjustOdometer(-50)),
+                        label: '-50 ${_imperial ? 'mi' : 'km'}',
+                        onTap: () => _adjustOdometer(-50)),
                     const SizedBox(width: 6),
                     _ActionChip(
                       label: 'Current (${_baseOdometer.toStringAsFixed(0)})',
@@ -508,10 +486,12 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                     ),
                     const SizedBox(width: 6),
                     _ActionChip(
-                        label: '+50 km', onTap: () => _adjustOdometer(50)),
+                        label: '+50 ${_imperial ? 'mi' : 'km'}',
+                        onTap: () => _adjustOdometer(50)),
                     const SizedBox(width: 6),
                     _ActionChip(
-                        label: '+100 km', onTap: () => _adjustOdometer(100)),
+                        label: '+100 ${_imperial ? 'mi' : 'km'}',
+                        onTap: () => _adjustOdometer(100)),
                   ],
                 ),
               ),
@@ -641,7 +621,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                         color: palette.textSecondary),
                     onSelected: (val) =>
                         setState(() => _workshopCtrl.text = val),
-                    itemBuilder: (ctx) => _rememberedWorkshops
+                    itemBuilder: (ctx) => shopNames
                         .map((w) => PopupMenuItem(
                             value: w,
                             child:
