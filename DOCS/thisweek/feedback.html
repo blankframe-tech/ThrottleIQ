@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maintenance work critique (2026-11-19)</title>
+<style>
+  :root { color-scheme: light dark; --bad:#c62828; --warn:#b26a00; --ok:#2e7d32; --mut:#777; }
+  body { font: 15px/1.55 -apple-system, system-ui, sans-serif; max-width: 860px; margin: 2rem auto; padding: 0 1rem; }
+  h1 { margin-bottom: .2rem; } .sub { color: var(--mut); margin-top: 0; }
+  h2 { margin-top: 2.2rem; border-bottom: 1px solid #8884; padding-bottom: .3rem; }
+  .f { border-left: 4px solid var(--mut); padding: .4rem .9rem; margin: 1rem 0; background: #8881; border-radius: 4px; }
+  .f.bad { border-color: var(--bad); } .f.warn { border-color: var(--warn); } .f.ok { border-color: var(--ok); }
+  .tag { font: 600 11px/1 ui-monospace, monospace; text-transform: uppercase; padding: 2px 6px; border-radius: 3px; color: #fff; }
+  .bad .tag { background: var(--bad); } .warn .tag { background: var(--warn); } .ok .tag { background: var(--ok); }
+  code { font: 13px ui-monospace, monospace; background: #8882; padding: 1px 4px; border-radius: 3px; }
+  table { border-collapse: collapse; width: 100%; } td, th { border: 1px solid #8884; padding: .35rem .6rem; text-align: left; vertical-align: top; }
+</style>
+</head>
+<body>
+<h1>Maintenance work critique</h1>
+<p class="sub">2026-11-19. Covers merged PR #238 (<code>9f06c62e</code> quick service + check details sheets, <code>7a55a851</code> 3-pillar cockpit) and the uncommitted follow-up on <code>main</code> (Records screen split, forecast strip removed).</p>
+
+<h2>Verdict</h2>
+<p>The uncommitted follow-up is a good correction: it drops about 970 lines, the main screen answers "what's next" again, and history, costs and papers move to <code>/home/maintenance/records</code>. The real problems came in with PR #238. Its two new sheets, which are now the main way to log a service and to open a check, look like a demo mock-up that was merged as production code: fake default data, invented wear claims, English-only text, km only. The redesign also made several settings unreachable. Fix these before the next release, because they write wrong data into riders' service records.</p>
+
+<h2>Must fix (wrong data or false claims)</h2>
+
+<div class="f bad"><span class="tag">data</span>
+<p><b>Quick Service sheet saves made-up defaults.</b> <code>widgets/quick_service_sheet.dart:101-107</code> pre-fills cost <code>650</code>, workshop <code>"Yamaha Authorized Service, Tejgaon"</code> and oil brand <code>"Motul 7100 10W-40"</code>. The "remembered" workshops are a hardcoded list (lines 87-92), not the rider's real remembered shops. If a rider taps Save without editing, all three are written to the visit, and from there they feed ৳/km, 12-month spend, service history and the exported PDF. The FAB and every row's ✓ button open this sheet, so this is now the default logging path.<br>
+<b>Fix:</b> start with these fields empty and use the shop memory that <code>AddMaintenanceLogScreen</code> already uses.</p></div>
+
+<div class="f bad"><span class="tag">data</span>
+<p><b>Odometer is km-only.</b> The label is "Service Odometer (KM)", the chips are ±50/±100 km and the snackbar says "km" (lines 457-514, 297), with no imperial conversion. A rider using miles types miles and they are saved as km, and <code>syncOdometer</code> then also moves the bike's odometer (line 268).<br>
+<b>Fix:</b> convert the way <code>AddMaintenanceLogScreen</code> does, or reuse its field.</p></div>
+
+<div class="f bad"><span class="tag">false claim</span>
+<p><b>Check Details sheet invents wear factors.</b> <code>widgets/check_details_sheet.dart:304-395</code>: when a check is <i>not</i> adapted, it shows hardcoded "+15% Wear: Dhaka metropolitan road dust", "+10% Wear: Aggressive acceleration profile <i>detected</i> on commute" and "−5% highway cruising". None of this is computed. Riders are told the app detected their riding style when it didn't, which goes against the feature's own rule (<code>features.md</code>: "never overdue by guesswork").<br>
+<b>Fix:</b> delete the else branch, or show "No adjustment for your riding".</p></div>
+
+<div class="f bad"><span class="tag">regression</span>
+<p><b>Settings were dropped and are now unreachable.</b> <code>7a55a851</code> removed <code>MaintenanceSettingsSection</code> from the screen. The ⋮ menu brought back only Export, Schedule, Custom checks and Units. These have no entry point left:</p>
+<ul>
+<li><b>Maintenance reminders on/off</b> (<code>maintenanceAlertsEnabledProvider</code>). Riders can no longer turn off maintenance notifications.</li>
+<li><b>Adapt to my riding</b> switch (<code>setAdaptIntervals</code>).</li>
+<li><b>Reset service log</b> (<code>ResetMaintenanceLogSheet</code>).</li>
+<li><b>Running costs</b> settings (<code>RunningCostsSheet</code>, still reachable only from the ride summary cost card).</li>
+</ul>
+<p>The uncommitted <code>features.md</code> edit doesn't list them anywhere either.<br>
+<b>Fix:</b> add them to the ⋮ menu, or render <code>MaintenanceSettingsSection</code> at the bottom of the Records screen. The second is one line and keeps the existing tested widget.</p></div>
+
+<h2>Should fix</h2>
+
+<div class="f warn"><span class="tag">l10n</span>
+<p><b>English-only text in a bilingual app.</b> In <code>quick_service_sheet.dart</code>, every section label, bundle name, date chip, oil chip, cost chip, "SNAP INVOICE"/"GALLERY" and the success snackbar is a literal. <code>check_details_sheet.dart</code> has the same problem ("ADAPTIVE WEAR MULTIPLIERS (THROTTLEIQ ENGINE)", "⚡ LOG THIS SERVICE", "CALIBRATE", subtitle). <code>maintenance_screen.dart:322</code> has <code>'Units: Imperial (mi)'</code>, even though <code>l10n.maintDistanceUnits</code> already exists. Bangla users get a mixed-language screen.</p></div>
+
+<div class="f warn"><span class="tag">parity</span>
+<p><b>Quick Service sheet skips safeguards the full Log Visit screen has.</b></p>
+<ul>
+<li>No warning when the odometer is below an earlier log (<code>77d457e7</code>).</li>
+<li>No Undo after saving (<code>features.md</code> promises it).</li>
+<li>"1st Free Service" is hardcoded <code>free:1</code> instead of the next free service #n.</li>
+<li><code>ShopKind</code> is guessed from the shop name: any name containing "service" counts as authorized (lines 248-254).</li>
+<li>For a multi-item visit no per-item cost is stored, so the per-part cost trends get nothing.</li>
+</ul>
+<p>There are now two 800-900 line logging UIs that drift apart. Pick one: make the sheet a thin pre-filled entry into the existing screen, or move the screen's validation into a shared place.</p></div>
+
+<div class="f warn"><span class="tag">ui</span>
+<p><b>The date picker forces a dark theme</b> (<code>ColorScheme.dark</code>, <code>quick_service_sheet.dart:171</code>), so in light mode you get a dark dialog. Buttons hardcode <code>Colors.black</code> on <code>palette.primary</code>.</p></div>
+
+<div class="f warn"><span class="tag">ux</span>
+<p><b>The CALIBRATE button can silently do nothing.</b> In <code>check_details_sheet.dart:460-466</code>, when <code>config == null</code> it closes the sheet and opens nothing. Both buttons also call <code>Navigator.pop()</code> and then <code>show(context, …)</code> with the context of the sheet that is closing. That works only while the closing animation keeps the element mounted; capture the parent navigator or context before popping.</p></div>
+
+<div class="f warn"><span class="tag">duplication</span>
+<p><b>Two detail UIs for one check.</b> The row opens <code>CheckDetailsSheet</code> (498 lines), and <code>CheckDetailScreen</code> (278 lines, route <code>/home/maintenance/check</code>) is now only a fallback for when the bike isn't loaded yet. The two show different information. Keep one of them.</p></div>
+
+<h2>Uncommitted follow-up (Records split): small notes</h2>
+<div class="f ok"><span class="tag">good</span>
+<p>The direction is right. Tests and docs were updated with it, and the new key went into both ARBs plus <code>bn_pending_review.txt</code>. <code>flutter analyze</code> is clean and the 175 maintenance tests pass.</p></div>
+<table>
+<tr><th>Where</th><th>Note</th></tr>
+<tr><td><code>app_router.dart</code> records route</td><td><code>bikeId ?? ''</code>: a deep link without <code>bikeId</code> opens an empty records page for bike <code>''</code>. Fall back to the active bike, as <code>MaintenanceScreen</code> does.</td></tr>
+<tr><td><code>maintenance_records_screen.dart</code></td><td>The title doesn't name the bike. With 2+ bikes the rider can't tell whose costs they're looking at.</td></tr>
+<tr><td>Dead code</td><td><code>consumables_health_card.dart</code> is referenced only by its own test. After the strip deletion, check for other widgets with no callers.</td></tr>
+<tr><td><code>app/test/failures/</code></td><td>Untracked golden-diff PNGs. Don't commit them; add the folder to <code>.gitignore</code>. All 6 key-screen goldens (login, cockpit, advancedSettings) fail locally with a ~0.4% pixel diff. These screens aren't maintenance, so it's probably font or SDK drift, but check on clean <code>HEAD</code> before regenerating.</td></tr>
+</table>
+
+<h2>Process</h2>
+<ul>
+<li>PR #238 combined a 3,000-line UI rewrite with blackbox hardware docs and deploy-script edits. Separate PRs would have made the fake data and the missing settings easy to spot in review.</li>
+<li>The sheet tests check that widgets render, not what gets saved. One test that taps Save without editing and asserts that cost, shop and brand are null would have caught the worst bug here.</li>
+<li>The redesign shipped and was simplified again within about a week. Before merging the next layout change, a short "what does each setting move to" list would have caught the dropped toggles.</li>
+</ul>
+
+<h2>Suggested order</h2>
+<ol>
+<li>Remove the fake defaults and the invented wear text (small change, highest harm).</li>
+<li>Restore the settings section (one line on the Records screen).</li>
+<li>Fix imperial in the quick sheet.</li>
+<li>Localize both sheets.</li>
+<li>Decide on one logging flow and one detail UI.</li>
+</ol>
+</body>
+</html>
