@@ -81,6 +81,7 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
   - Route navigation records the ride (§78.21): turn banner at real corners, off-route at 100 m, closing the banner leaves recording on.
   - GPS-speed fallback (§49), gyro heading (§78.12), and the jam buttons "I'm in a jam" / "Jam released".
 - **Crash detection (shadow mode):** `ImpactDetector` at 50 Hz on a mount and in a pocket, the battery cost of 50 Hz (§78.1), and the "Did you fall?" card.
+- **Off-road mode (2026-11-20, #239):** cockpit icon chip (`rideTerrainProvider`, session-only, reset each ride start) sets `ImpactDetector.offRoad`: ask bar 5 g (`impactAskThresholdOffRoad`, uncalibrated), a landing after free fall needs the bike lying down (`_rotationHeld`) to reach tier 1, tier 2 needs `_rotationHeld`. Stamped as `features.terrain = offRoad`. New answer "No, a jump or landing" = label `jump` (needs the `firestore.rules` deploy). Open: tune the 5 g bar from jump-ride labels (`crash_stats.js` counts `jump` as a false question).
 - **Offline:** in airplane mode, end a ride (must finish at once), share with a photo (must return quickly and post once when back online), and kill and reopen mid-ride (§25, §26). The quota strip has only been seen in tests.
 - **Auto-tracking (§93.3, §37):** stands down after a manual Start; a jam-split commute counts as one ride; the 9 pm digest; the active-hours window. Note battery % over a day (101.C6).
 - **Live share:** in traffic the viewer must never show "updates delayed"; teardown after a kill.

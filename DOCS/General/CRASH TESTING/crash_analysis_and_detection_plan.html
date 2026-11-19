@@ -1270,6 +1270,8 @@ match /crashEvents/{id} {
 <li>Rewrite <code>test/calculators/impact_detector_test.dart</code>. Its helpers assume one GPS fix per second, but real slow riding produces fixes every 2–9 s.</li>
 </ul>
 
+<p><strong>Off-road mode (2026-11-20).</strong> Jump landings are not falls. With the cockpit Off-road chip on, the impact bar is 5 g, a landing after free fall only becomes a possible fall when the bike is lying down, and tier 2 needs the bike down. Recall off-road is lower by design (a rider thrown clear of an upright bike is not asked about); impacts are still logged as tier 0 with <code>terrain: offRoad</code> so the bar can be tuned from labels.</p>
+
 <h2 id="s11">11. Honest demo statistics</h2>
 <ul>
 <li><strong>Detected crash:</strong> a tier-1 or tier-2 event the rider confirmed with "Yes". Unconfirmed candidates are never counted as crashes.</li>
