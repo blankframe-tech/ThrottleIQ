@@ -7317,4 +7317,7 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String get followLinkUnavailable =>
       'এই রাইডারের প্রোফাইল লোড করা যায়নি, তাই কাউকে ফলো করা হয়নি। ইন্টারনেট দেখুন, অথবা সার্চে খুঁজুন।';
+
+  @override
+  String get maintRecordsTitle => 'ইতিহাস, খরচ ও কাগজপত্র';
 }

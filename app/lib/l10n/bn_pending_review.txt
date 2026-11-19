@@ -1818,3 +1818,6 @@ followLinkUnavailable
 
 # batch: shared route end hiding note (2026-11-08)
 routeEndsHiddenNote
+
+# batch: maintenance records link (2026-11-19)
+maintRecordsTitle

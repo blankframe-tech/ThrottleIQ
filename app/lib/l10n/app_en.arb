@@ -10102,5 +10102,7 @@
   "followLinkConfirmBody": "Only follow riders you know. If they follow you back, they can see the rides and profile details you share with mutual followers.",
   "@followLinkConfirmBody": {"description": "Body of the follow-link confirm dialog: explains what following can expose."},
   "followLinkUnavailable": "Couldn't load this rider's profile, so nobody was followed. Check your connection, or find them in Search.",
-  "@followLinkUnavailable": {"description": "Shown when a follow link's rider profile can't be read (private or offline), so no follow was written."}
+  "@followLinkUnavailable": {"description": "Shown when a follow link's rider profile can't be read (private or offline), so no follow was written."},
+  "maintRecordsTitle": "History, costs & papers",
+  "@maintRecordsTitle": {"description": "Link on the maintenance screen to service history, running costs, fuel log and paperwork."}
 }

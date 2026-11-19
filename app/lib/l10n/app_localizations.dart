@@ -12503,6 +12503,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Couldn\'t load this rider\'s profile, so nobody was followed. Check your connection, or find them in Search.'**
   String get followLinkUnavailable;
+
+  /// Link on the maintenance screen to service history, running costs, fuel log and paperwork.
+  ///
+  /// In en, this message translates to:
+  /// **'History, costs & papers'**
+  String get maintRecordsTitle;
 }
 
 class _AppLocalizationsDelegate

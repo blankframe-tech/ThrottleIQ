@@ -7338,4 +7338,7 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get followLinkUnavailable =>
       'Couldn\'t load this rider\'s profile, so nobody was followed. Check your connection, or find them in Search.';
+
+  @override
+  String get maintRecordsTitle => 'History, costs & papers';
 }
