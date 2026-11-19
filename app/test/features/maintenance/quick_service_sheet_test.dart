@@ -145,6 +145,58 @@ void main() {
     // Sheet should be dismissed
     expect(find.byKey(const Key('quickServiceConfirmButton')), findsNothing);
   });
+
+  testWidgets('starts empty, saves nothing invented, warns on a low odometer',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    tester.view.physicalSize = const Size(430, 920);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final logs = _FakeLogs([
+      MaintenanceEntity(
+        id: 'l1',
+        bikeId: 'b1',
+        serviceType: ServiceType.oilChange,
+        date: DateTime(2025, 6, 1),
+        odometerKm: 20000,
+        createdAt: DateTime(2025, 6, 1),
+      ),
+    ]);
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          garageProvider.overrideWith(() => _FakeGarage([bike])),
+          maintenanceProvider.overrideWith(() => logs),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: const [
+            AppLocalizations.delegate,
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+          supportedLocales: const [Locale('en')],
+          home: Scaffold(
+            body: Builder(
+              builder: (ctx) => ElevatedButton(
+                onPressed: () => QuickServiceSheet.show(ctx, bike: bike),
+                child: const Text('Open Sheet'),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open Sheet'));
+    await tester.pumpAndSettle();
+
+    String text(String key) =>
+        tester.widget<TextFormField>(find.byKey(Key(key))).controller!.text;
+    expect(text('quickServiceCostField'), isEmpty);
+    expect(find.text('Yamaha Authorized Service, Tejgaon'), findsNothing);
+    // The bike reads 14,250 but an earlier visit says 20,000.
+    expect(find.textContaining('Lower than an earlier visit'), findsOneWidget);
+  });
 }
 
 class _FakeGarage extends GarageNotifier {
