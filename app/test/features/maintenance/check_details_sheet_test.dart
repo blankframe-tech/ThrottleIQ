@@ -96,12 +96,10 @@ void main() {
     expect(find.textContaining('280 KM'), findsOneWidget);
     expect(find.textContaining('Interval: Every 3,000 km'), findsOneWidget);
 
-    // Verify adaptive wear multipliers breakdown
-    expect(find.text('ADAPTIVE WEAR MULTIPLIERS (THROTTLEIQ ENGINE)'),
-        findsOneWidget);
-    expect(find.textContaining('Dhaka metropolitan road dust'), findsOneWidget);
-    expect(
-        find.textContaining('Aggressive acceleration profile'), findsOneWidget);
+    // A check that isn't adapted shows no wear factors: none are computed.
+    expect(find.textContaining('ADAPTIVE WEAR'), findsNothing);
+    expect(find.textContaining('Dhaka'), findsNothing);
+    expect(find.textContaining('Aggressive acceleration'), findsNothing);
 
     // Verify action buttons
     expect(find.text('⚡ LOG THIS SERVICE'), findsOneWidget);
