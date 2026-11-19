@@ -56,11 +56,14 @@ class PhonePlacementSelector extends ConsumerWidget {
           Icon(current?.$3 ?? Icons.phone_android,
               size: 18, color: palette.textPrimary),
           const SizedBox(width: 6),
-          Text(current?.$2 ?? l10n.phonePlacementLabel,
-              style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: palette.textPrimary)),
+          Flexible(
+              child: Text(current?.$2 ?? l10n.phonePlacementLabel,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: palette.textPrimary))),
         ]),
       ),
     );

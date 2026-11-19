@@ -111,6 +111,7 @@ class _ImpactQuestionCardState extends ConsumerState<ImpactQuestionCard> {
       (ImpactLabel.crash, l10n.impactAnswerYes),
       (ImpactLabel.phoneFell, l10n.impactAnswerPhoneFell),
       (ImpactLabel.bump, l10n.impactAnswerBump),
+      (ImpactLabel.jump, l10n.impactAnswerJump),
       (ImpactLabel.hardStop, l10n.impactAnswerHardStop),
       (ImpactLabel.unsure, l10n.impactAnswerUnsure),
     ];

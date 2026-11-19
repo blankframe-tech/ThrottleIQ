@@ -14,6 +14,7 @@ import '../../../../shared/widgets/editorial.dart';
 import '../providers/ride_recording_provider.dart';
 import '../providers/jam_label_provider.dart';
 import '../widgets/phone_placement_selector.dart';
+import '../widgets/ride_terrain_chip.dart';
 import '../providers/live_ride_places_provider.dart';
 import '../widgets/end_ride_sheet.dart';
 import '../../../ride/domain/calculators/event_detector.dart';
@@ -552,7 +553,9 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
               child: Row(
                 children: [
-                  const PhonePlacementSelector(),
+                  const Flexible(child: PhonePlacementSelector()),
+                  const SizedBox(width: 4),
+                  const RideTerrainChip(),
                   const SizedBox(width: 8),
                   // The way back to the group map (push-to-talk) while on a
                   // live group ride. Before this the cockpit had no link to

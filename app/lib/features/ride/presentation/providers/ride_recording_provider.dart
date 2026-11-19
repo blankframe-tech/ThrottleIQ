@@ -264,6 +264,11 @@ final rideRecordingProvider =
 /// coarser GPS. Session-only on purpose; each ride start resets it (on at 15% battery or less).
 final batterySaverProvider = StateProvider<bool>((ref) => false);
 
+/// Off-road mode for the ride in progress. Session-only on purpose: every ride
+/// start resets it, so a forgotten switch can't weaken a commute's detection.
+final rideTerrainProvider =
+    StateProvider<RideTerrain>((ref) => RideTerrain.road);
+
 class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     with WidgetsBindingObserver {
   /// Collaborators default to the real ones; tests override
@@ -522,6 +527,7 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       final level = await BatteryService.getBatteryLevel()
           .timeout(const Duration(seconds: 2), onTimeout: () => 100);
       _ref.read(batterySaverProvider.notifier).state = level <= 15;
+      _ref.read(rideTerrainProvider.notifier).state = RideTerrain.road;
 
       final ride = RideEntity(
         id: _uuid.v4(),
@@ -715,6 +721,12 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
   /// Opens the GPS + IMU subscriptions, replacing any already open
   /// (§90.C1/C5 — see [RecordingSubscriptions]).
   bool get _batterySaver => _ref.read(batterySaverProvider);
+
+  /// Flips off-road mode mid-ride; the detector reads it at impact time.
+  void setTerrain(RideTerrain terrain) {
+    _ref.read(rideTerrainProvider.notifier).state = terrain;
+    _sensorCoordinator.impactDetector.offRoad = terrain == RideTerrain.offRoad;
+  }
 
   /// Flips battery saver mid-ride: re-opens GPS with the new settings and
   /// drops/restores the screen wakelock. Only an active ride has either.
