@@ -18,6 +18,10 @@ enum PhonePlacement {
       .firstWhere((p) => p.wire == s, orElse: () => PhonePlacement.unknown);
 }
 
+/// Rider-chosen for the ride in progress; never remembered. Off-road makes
+/// the detector read jump landings as jumps (see ImpactDetector.offRoad).
+enum RideTerrain { road, offRoad }
+
 /// The rider's answer to "Did you fall?" — or a fall they reported that the
 /// detector missed ([missed]).
 enum ImpactLabel {
@@ -25,6 +29,7 @@ enum ImpactLabel {
   fall('fall'),
   phoneFell('phone_fell'),
   bump('bump'),
+  jump('jump'),
   hardStop('hard_stop'),
   unsure('unsure'),
   missed('missed');

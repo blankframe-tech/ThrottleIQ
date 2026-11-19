@@ -60,6 +60,10 @@ class ImpactCandidate {
   /// how hard the phone was being shaken (mount vibration vs pocket).
   final double vibrationRmsMs2;
 
+  /// Off-road terrain was on when this impact resolved (stamped into
+  /// `features.terrain`, so labels from jump rides can be told apart).
+  final bool offRoad;
+
   const ImpactCandidate({
     required this.spikeAt,
     required this.tier,
@@ -76,6 +80,7 @@ class ImpactCandidate {
     required this.saturated,
     required this.lastFixAgeS,
     required this.vibrationRmsMs2,
+    this.offRoad = false,
   });
 
   /// Tier 2: the only tier allowed to raise the live alarm.
@@ -102,6 +107,7 @@ class ImpactCandidate {
         'saturated': saturated,
         'lastFixAgeS': lastFixAgeS == null ? null : _round(lastFixAgeS!, 1),
         'vibrationRmsMs2': _round(vibrationRmsMs2),
+        if (offRoad) 'terrain': 'offRoad',
       };
 
   static double _round(double v, [int digits = 2]) {
@@ -139,6 +145,12 @@ class ImpactCandidate {
 /// [alertMinSpeedMs] before the impact, a peak of [impactThreshold] or a
 /// clipped run, and the phone either still for [alertStillFor] or held
 /// rotated (the tip-over hold).
+///
+/// **Off-road ([offRoad]).** Jumps and whoops are not falls. The impact bar
+/// rises to [SensorConstants.impactAskThresholdOffRoad]; an impact that follows
+/// a free fall (a landing) only becomes a possible fall once the bike is lying
+/// down ([_rotationHeld]); and tier 2 needs the bike down, since "still for
+/// 10 s" is just a rider resting between jumps. Everything is still logged.
 ///
 /// All inputs carry explicit timestamps, so the detector is deterministic
 /// under test and replay.
@@ -190,6 +202,16 @@ class ImpactDetector {
   /// How long an impact stays open. Long enough for [noResumeAfter] and
   /// [alertStillFor] to play out.
   final Duration pendingWindow;
+
+  /// Rider is on a jump or trail ride (see the class doc). Set by the ride
+  /// recorder; cleared by [reset].
+  bool offRoad = false;
+
+  double get _ask => offRoad
+      ? math.max(askThreshold, SensorConstants.impactAskThresholdOffRoad)
+      : askThreshold;
+  double get _satFloor =>
+      offRoad ? math.max(saturationFloor, _ask) : saturationFloor;
 
   /// Called once per impact when it resolves (at tier 2, or when
   /// [pendingWindow] runs out). Settable so a coordinator can attach to an
@@ -282,11 +304,11 @@ class ImpactDetector {
 
     if (mag > _rideMaxMagnitude) _rideMaxMagnitude = mag;
     final nearMax =
-        mag >= saturationFloor && mag >= _saturationBand * _rideMaxMagnitude;
+        mag >= _satFloor && mag >= _saturationBand * _rideMaxMagnitude;
     _nearMaxRun = nearMax ? _nearMaxRun + 1 : 0;
     final clipped = _nearMaxRun >= _saturationRun;
 
-    if (mag >= askThreshold || clipped) {
+    if (mag >= _ask || clipped) {
       if (_spikeAt == null) _openSpike(t);
       // Max, not average — the same rule as the jerk fix in §78.2.
       _peak = math.max(_peak, mag);
@@ -351,7 +373,7 @@ class ImpactDetector {
     }
 
     final rawExcess = mag - _g;
-    if (rawExcess >= askThreshold && _spikeAt == null) _openSpike(t);
+    if (rawExcess >= _ask && _spikeAt == null) _openSpike(t);
 
     if (_spikeAt == null) return null;
     _peakRaw = math.max(_peakRaw, rawExcess);
@@ -510,7 +532,10 @@ class ImpactDetector {
     final noResume = !_resumed && sinceSpike >= noResumeAfter;
     final settled =
         _everStill || _maxOrientationDeg >= settleRotationDeg || noResume;
-    final speedRule = _speedBefore >= minSpeedDropMs && stopped && settled;
+    // Off-road, a landing that left the bike upright is a jump, not a fall.
+    final jumpLanding = offRoad && _freefallMs > 0 && !_rotationHeld;
+    final speedRule =
+        _speedBefore >= minSpeedDropMs && stopped && settled && !jumpLanding;
 
     if (_tier < 1 && speedRule) {
       _tier = 1;
@@ -526,7 +551,7 @@ class ImpactDetector {
     if (speedRule &&
         _speedBefore >= alertMinSpeedMs &&
         hardEnough &&
-        (_maxStillFor >= alertStillFor || _rotationHeld)) {
+        ((!offRoad && _maxStillFor >= alertStillFor) || _rotationHeld)) {
       _tier = 2;
       _reason = ImpactReason.speedDrop;
       final signal = CrashSignal(
@@ -570,6 +595,7 @@ class ImpactDetector {
       saturated: _saturated,
       lastFixAgeS: _lastFixAgeS,
       vibrationRmsMs2: _vibrationRms,
+      offRoad: offRoad,
     );
     _candidates.add(candidate);
     if (_candidates.length > _maxCandidates) _candidates.removeAt(0);
@@ -590,6 +616,7 @@ class ImpactDetector {
   }
 
   void reset() {
+    offRoad = false;
     _speeds.clear();
     _lastFixAt = null;
     _lastFixSpeed = 0;

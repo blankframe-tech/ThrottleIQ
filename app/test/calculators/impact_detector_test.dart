@@ -379,4 +379,81 @@ void main() {
       expect(detector.lastCrashSignal, isNull);
     });
   });
+  group('off-road mode: jumps are not falls', () {
+    const upright = [0.0, g, 0.0];
+    const onItsSide = [g, 0.0, 0.0];
+
+    /// 12 m/s, 200 ms of air (gravity reads ~0), then a 6 g landing.
+    DateTime jump() {
+      rideUpTo(12, gravity: upright);
+      final t = feed(t0, const Duration(milliseconds: 200), (_) => 0.1,
+          gravity: const [0, 0.5, 0]);
+      return feed(t, const Duration(milliseconds: 100), (_) => 60,
+          gravity: upright);
+    }
+
+    test('road: a landing then a stop is a crash (the false alarm)', () {
+      var t = jump();
+      speed(t0.add(const Duration(seconds: 2)), 0.3);
+      feed(t, const Duration(seconds: 11), still, gravity: upright);
+
+      expect(crashes, hasLength(1));
+      expect(detector.candidates.single.freefallMs, 200);
+    });
+
+    test('off-road: the same landing and stop stays tier 0', () {
+      detector.offRoad = true;
+      var t = jump();
+      speed(t0.add(const Duration(seconds: 2)), 0.3);
+      feed(t, const Duration(seconds: 25), still, gravity: upright);
+
+      expect(crashes, isEmpty);
+      final c = detector.candidates.single;
+      expect(c.tier, 0);
+      expect(c.offRoad, isTrue);
+      expect(c.toFeatures()['terrain'], 'offRoad');
+    });
+
+    test('off-road: a landing that leaves the bike on its side still alarms',
+        () {
+      detector.offRoad = true;
+      var t = jump();
+      speed(t0.add(const Duration(seconds: 2)), 0.2);
+      feed(t, const Duration(seconds: 9), (i) => i.isEven ? 2.5 : 0.2,
+          gravity: onItsSide);
+
+      expect(crashes, hasLength(1));
+      expect(detector.candidates.single.tier, 2);
+    });
+
+    test('off-road: tier 2 needs the bike down, not just 10 s of stillness',
+        () {
+      detector.offRoad = true;
+      rideUpTo(15);
+      var t = feed(t0, const Duration(milliseconds: 100), (_) => 60);
+      speed(t0.add(const Duration(seconds: 2)), 0.4);
+      feed(t, const Duration(seconds: 26), still);
+
+      expect(crashes, isEmpty);
+      expect(detector.candidates.single.tier, 1, reason: 'still asked about');
+    });
+
+    test('off-road raises the impact bar; road keeps 2.5 g', () {
+      rideUpTo(12);
+      feed(t0, const Duration(milliseconds: 100), (_) => 40); // ~4 g
+      expect(detector.hasPendingSpike, isTrue);
+
+      detector.reset();
+      detector.offRoad = true;
+      rideUpTo(12);
+      feed(t0, const Duration(milliseconds: 100), (_) => 40);
+      expect(detector.hasPendingSpike, isFalse);
+    });
+
+    test('reset puts the detector back on road', () {
+      detector.offRoad = true;
+      detector.reset();
+      expect(detector.offRoad, isFalse);
+    });
+  });
 }

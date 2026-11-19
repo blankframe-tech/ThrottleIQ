@@ -52,6 +52,11 @@ class SensorConstants {
   // (DOCS/General/CRASH TESTING) may never have reached 4 g. Also uncalibrated.
   static const double impactAskThreshold = 24.5; // m/s² (~2.5 g)
 
+  // Off-road mode (jumps, whoops): the bar for any impact rises to this, so a
+  // landing is not asked about. Uncalibrated: compare tier-1 counts and answers
+  // from rides with terrain=offRoad before trusting it.
+  static const double impactAskThresholdOffRoad = 49.0; // m/s² (~5 g)
+
   // A run of samples pinned near the ride's max only counts as a saturated
   // spike above this floor, so a phone at rest (all samples ≈ 0 = the max)
   // doesn't look saturated. Also uncalibrated.
