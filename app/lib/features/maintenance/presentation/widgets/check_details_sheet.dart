@@ -350,35 +350,36 @@ class CheckDetailsSheet extends ConsumerWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: SizedBox(
-                    height: 44,
-                    child: OutlinedButton.icon(
-                      icon: const Icon(Icons.tune, size: 16),
-                      label: const Text(
-                        'CALIBRATE',
-                        style: TextStyle(
-                            fontSize: 11, fontWeight: FontWeight.w700),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: palette.textPrimary,
-                        side: BorderSide(color: palette.border),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(shape.radiusMd),
+                if (config != null) ...[
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 2,
+                    child: SizedBox(
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        icon: const Icon(Icons.tune, size: 16),
+                        label: const Text(
+                          'CALIBRATE',
+                          style: TextStyle(
+                              fontSize: 11, fontWeight: FontWeight.w700),
                         ),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: palette.textPrimary,
+                          side: BorderSide(color: palette.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(shape.radiusMd),
+                          ),
+                        ),
+                        onPressed: () {
+                          // The sheet's own context dies with the pop.
+                          final host = Navigator.of(context).context;
+                          Navigator.of(context).pop();
+                          EditMaintenanceCheckSheet.show(host, config: config);
+                        },
                       ),
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        if (config != null) {
-                          EditMaintenanceCheckSheet.show(context,
-                              config: config);
-                        }
-                      },
                     ),
                   ),
-                ),
+                ],
                 if (canOrder) ...[
                   const SizedBox(width: 8),
                   SizedBox(
@@ -393,8 +394,9 @@ class CheckDetailsSheet extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                       ),
                       onPressed: () {
+                        final host = Navigator.of(context).context;
                         Navigator.of(context).pop();
-                        OrderPartSheet.show(context, f.serviceType);
+                        OrderPartSheet.show(host, f.serviceType);
                       },
                       child: const Text('🛒'),
                     ),
