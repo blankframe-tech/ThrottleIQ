@@ -74,7 +74,7 @@ void main() {
     // Verify bundles chips
     expect(find.text('Oil + Filter'), findsOneWidget);
     expect(find.text('Chain Service'), findsOneWidget);
-    expect(find.text('1st Free Service'), findsOneWidget);
+    expect(find.text('1st Free Service'), findsNothing); // wrong #n for most
     expect(find.text('Full Overhaul'), findsOneWidget);
 
     // Verify prefilled odometer is 14250
@@ -124,7 +124,7 @@ void main() {
           .widget<TextFormField>(find.byKey(const Key('quickServiceCostField')))
           .controller
           ?.text,
-      '250',
+      '650', // a bundle never invents a price
     );
 
     // Test quick cost chip (৳1,200)
