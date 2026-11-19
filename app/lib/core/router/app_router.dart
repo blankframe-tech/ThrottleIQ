@@ -14,6 +14,7 @@ import '../../features/ride/presentation/screens/active_ride_screen.dart';
 import '../../features/ride/presentation/screens/ride_summary_screen.dart';
 import '../../features/social/presentation/screens/ride_share_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_screen.dart';
+import '../../features/maintenance/presentation/screens/maintenance_records_screen.dart';
 import '../../features/maintenance/presentation/screens/maintenance_config_screen.dart';
 import '../../features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import '../../features/maintenance/presentation/screens/check_detail_screen.dart';
@@ -352,6 +353,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 bikeId: state.uri.queryParameters['bikeId'],
               ),
               routes: [
+                GoRoute(
+                  path: 'records',
+                  builder: (_, state) => MaintenanceRecordsScreen(
+                    bikeId: state.uri.queryParameters['bikeId'] ?? '',
+                  ),
+                ),
                 GoRoute(
                   path: 'configure',
                   // A new bike's first visit here is setup now (schedule,
