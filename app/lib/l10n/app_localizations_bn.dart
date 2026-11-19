@@ -7008,6 +7008,16 @@ class AppLocalizationsBn extends AppLocalizations {
   String get impactAnswerBump => 'না, শুধু ঝাঁকুনি';
 
   @override
+  String get impactAnswerJump => 'না, লাফ বা ল্যান্ডিং';
+
+  @override
+  String get rideTerrainOffRoad => 'অফ-রোড';
+
+  @override
+  String get rideTerrainTooltip =>
+      'অফ-রোড মোড: লাফের পর ল্যান্ডিংকে পড়ে যাওয়া ধরা হবে না';
+
+  @override
   String get impactAnswerHardStop => 'না, জোরে ব্রেক করেছিলাম';
 
   @override

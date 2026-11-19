@@ -9704,6 +9704,18 @@
   "@impactAnswerBump": {
     "description": "Answer: a pothole, rail crossing or bump."
   },
+  "impactAnswerJump": "No, a jump or landing",
+  "@impactAnswerJump": {
+    "description": "Answer: a jump or landing, no fall."
+  },
+  "rideTerrainOffRoad": "Off-road",
+  "@rideTerrainOffRoad": {
+    "description": "Ride cockpit chip: off-road (jumps, trail) mode for crash detection."
+  },
+  "rideTerrainTooltip": "Off-road mode: jump landings aren't flagged as falls",
+  "@rideTerrainTooltip": {
+    "description": "Tooltip on the off-road chip."
+  },
   "impactAnswerHardStop": "No, I braked hard",
   "@impactAnswerHardStop": {
     "description": "Answer: a hard stop, no fall."

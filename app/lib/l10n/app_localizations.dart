@@ -11964,6 +11964,24 @@ abstract class AppLocalizations {
   /// **'No, just a bump'**
   String get impactAnswerBump;
 
+  /// Answer: a jump or landing, no fall.
+  ///
+  /// In en, this message translates to:
+  /// **'No, a jump or landing'**
+  String get impactAnswerJump;
+
+  /// Ride cockpit chip: off-road (jumps, trail) mode for crash detection.
+  ///
+  /// In en, this message translates to:
+  /// **'Off-road'**
+  String get rideTerrainOffRoad;
+
+  /// Tooltip on the off-road chip.
+  ///
+  /// In en, this message translates to:
+  /// **'Off-road mode: jump landings aren\'t flagged as falls'**
+  String get rideTerrainTooltip;
+
   /// Answer: a hard stop, no fall.
   ///
   /// In en, this message translates to:

@@ -1818,3 +1818,8 @@ followLinkUnavailable
 
 # batch: shared route end hiding note (2026-11-08)
 routeEndsHiddenNote
+
+# batch: off-road terrain mode (2026-11-20)
+impactAnswerJump
+rideTerrainOffRoad
+rideTerrainTooltip

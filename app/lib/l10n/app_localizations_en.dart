@@ -7030,6 +7030,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get impactAnswerBump => 'No, just a bump';
 
   @override
+  String get impactAnswerJump => 'No, a jump or landing';
+
+  @override
+  String get rideTerrainOffRoad => 'Off-road';
+
+  @override
+  String get rideTerrainTooltip =>
+      'Off-road mode: jump landings aren\'t flagged as falls';
+
+  @override
   String get impactAnswerHardStop => 'No, I braked hard';
 
   @override
