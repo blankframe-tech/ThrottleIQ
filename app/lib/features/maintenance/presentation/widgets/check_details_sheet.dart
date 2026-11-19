@@ -259,143 +259,55 @@ class CheckDetailsSheet extends ConsumerWidget {
             ),
             const SizedBox(height: 14),
 
-            // Adaptive Wear Multipliers Breakdown (Engine Insights)
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: palette.surface,
-                borderRadius: BorderRadius.circular(shape.radiusMd),
-                border: Border.all(color: palette.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'ADAPTIVE WEAR MULTIPLIERS (THROTTLEIQ ENGINE)',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: palette.textTertiary,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  if (f.isAdapted && f.reasons.isNotEmpty) ...[
-                    for (final r in f.reasons)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text('• ',
-                                style: TextStyle(
-                                    color: palette.attention,
-                                    fontWeight: FontWeight.bold)),
-                            Expanded(
-                              child: Text(
-                                adaptReasonLabel(r, l10n),
-                                style: TextStyle(
-                                    fontSize: 12, color: palette.textSecondary),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ] else ...[
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('• ',
-                              style: TextStyle(
-                                  color: palette.danger,
-                                  fontWeight: FontWeight.bold)),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                style: TextStyle(
-                                    fontSize: 12, color: palette.textSecondary),
-                                children: [
-                                  TextSpan(
-                                    text: '+15% Wear: ',
-                                    style: TextStyle(
-                                        color: palette.danger,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const TextSpan(
-                                      text:
-                                          'Dhaka metropolitan road dust & particle index.'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+            if (f.isAdapted && f.reasons.isNotEmpty) ...[
+              // Adaptive Wear Multipliers Breakdown (Engine Insights)
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  borderRadius: BorderRadius.circular(shape.radiusMd),
+                  border: Border.all(color: palette.border),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ADAPTIVE WEAR MULTIPLIERS (THROTTLEIQ ENGINE)',
+                      style: GoogleFonts.ibmPlexMono(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: palette.textTertiary,
+                        letterSpacing: 0.5,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('• ',
-                              style: TextStyle(
-                                  color: palette.attention,
-                                  fontWeight: FontWeight.bold)),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                style: TextStyle(
-                                    fontSize: 12, color: palette.textSecondary),
-                                children: [
-                                  TextSpan(
-                                    text: '+10% Wear: ',
-                                    style: TextStyle(
-                                        color: palette.attention,
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                  const TextSpan(
-                                      text:
-                                          'Aggressive acceleration profile detected on commute.'),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('• ',
-                            style: TextStyle(
-                                color: palette.success,
-                                fontWeight: FontWeight.bold)),
-                        Expanded(
-                          child: Text.rich(
-                            TextSpan(
-                              style: TextStyle(
-                                  fontSize: 12, color: palette.textSecondary),
-                              children: [
-                                TextSpan(
-                                  text: '-5% Wear: ',
+                    const SizedBox(height: 8),
+                    ...[
+                      for (final r in f.reasons)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('• ',
                                   style: TextStyle(
-                                      color: palette.success,
-                                      fontWeight: FontWeight.bold),
+                                      color: palette.attention,
+                                      fontWeight: FontWeight.bold)),
+                              Expanded(
+                                child: Text(
+                                  adaptReasonLabel(r, l10n),
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: palette.textSecondary),
                                 ),
-                                const TextSpan(
-                                    text:
-                                        'Highway cruising stability factored.'),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+            ],
             const SizedBox(height: 20),
 
             // Actions: [⚡ Log This Service Now], [⚙️ Calibrate Interval], [🛒 Order Part]
