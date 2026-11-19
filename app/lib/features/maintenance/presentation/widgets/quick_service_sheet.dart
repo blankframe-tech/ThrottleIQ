@@ -231,11 +231,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
       items: items,
       totalCost: cost,
       shopName: workshop.isNotEmpty ? workshop : null,
-      // Only what the rider's own words say; the full Log a visit screen
-      // has the real picker.
-      shopKind: workshop.toLowerCase().contains('authorized')
-          ? ShopKind.authorized
-          : (workshop.toLowerCase().contains('diy') ? ShopKind.self : null),
+      // No guessing a shop kind from its name: set it in Log a visit.
       receiptPath: _receiptPath,
     );
 
@@ -299,6 +295,12 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
     final shape = context.shape;
     final l10n = context.l10n;
     final hasOil = _selectedTypes.contains(ServiceType.oilChange);
+    final earlierLogs =
+        ref.watch(maintenanceProvider(widget.bike.id)).valueOrNull ?? const [];
+    final shownOdo = parseLocalizedNumber(_odometerCtrl.text, min: 0);
+    final odoLow = shownOdo != null &&
+        odometerBelowEarlierLog(
+            odometerKm: _toKm(shownOdo), date: _date, logs: earlierLogs);
     final shopNames = groupVisits(
             ref.watch(maintenanceProvider(widget.bike.id)).valueOrNull ??
                 const [])
@@ -435,6 +437,7 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
               TextFormField(
                 key: const Key('quickServiceOdometerField'),
                 controller: _odometerCtrl,
+                onChanged: (_) => setState(() {}),
                 keyboardType: TextInputType.number,
                 style: GoogleFonts.ibmPlexMono(
                   color: palette.textPrimary,
@@ -458,6 +461,8 @@ class _QuickServiceSheetState extends ConsumerState<QuickServiceSheet> {
                   ),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  helperText: odoLow ? l10n.visitOdometerBelowEarlier : null,
+                  helperMaxLines: 3,
                   suffixText: _imperial ? 'MI' : 'KM',
                   suffixStyle: GoogleFonts.ibmPlexMono(
                       color: palette.textTertiary, fontSize: 13),
