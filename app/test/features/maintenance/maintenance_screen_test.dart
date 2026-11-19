@@ -15,6 +15,7 @@ import 'package:throttleiq/features/maintenance/presentation/providers/maintenan
 import 'package:throttleiq/features/maintenance/presentation/screens/add_maintenance_log_screen.dart';
 import 'package:throttleiq/features/maintenance/presentation/screens/check_detail_screen.dart';
 import 'package:throttleiq/features/maintenance/presentation/screens/maintenance_screen.dart';
+import 'package:throttleiq/features/maintenance/presentation/screens/maintenance_records_screen.dart';
 import 'package:throttleiq/features/maintenance/presentation/screens/maintenance_setup_screen.dart';
 import 'package:throttleiq/features/maintenance/presentation/widgets/maintenance_check_row.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
@@ -141,15 +142,13 @@ void main() {
     // Severe roads shortened the air filter, and the row says so.
     expect(find.textContaining('Dusty or wet roads'), findsWidgets);
 
-    // Switch to Pillar 2 (Records & Costs)
-    await tester.tap(find.textContaining('RECORDS & COSTS'));
-    await tester.pumpAndSettle();
-    expect(find.text('Service visit'), findsOneWidget); // 3-item visit
-    expect(find.text('Rahim Motors', findRichText: true), findsNothing);
+    expect(find.byKey(const Key('maintenanceRecordsLink')), findsOneWidget);
 
-    // Switch to Pillar 3 (Docs & Safety)
-    await tester.tap(find.textContaining('DOCS & SAFETY'));
-    await tester.pumpAndSettle();
+    // History, costs and paperwork moved to the records screen.
+    await pump(tester,
+        onboarded: true, screen: const MaintenanceRecordsScreen(bikeId: 'b1'));
+    expect(find.text('Service visit'), findsOneWidget); // 3-item visit
+    expect(find.byKey(const Key('maintenanceFuelLink')), findsOneWidget);
     expect(find.textContaining('Tax token'), findsOneWidget);
   });
 
