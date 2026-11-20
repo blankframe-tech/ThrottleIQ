@@ -1037,7 +1037,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get locationPermissionOffGroup =>
-      'লোকেশন অনুমতি বন্ধ — গ্রুপ আপনাকে দেখতে পাচ্ছে না। আপনি তাদের দেখতে পাচ্ছেন।';
+      'লোকেশনের অনুমতি বন্ধ আছে — গ্রুপ এখন আপনাকে দেখতে পাচ্ছে না। তবে আপনি তাদের দেখতে পাচ্ছেন।';
 
   @override
   String locationUnavailable(Object e) {
@@ -1064,7 +1064,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get microphoneAccessOffCan =>
-      'মাইক্রোফোন বন্ধ আছে — আপনি এখনও গ্রুপের কথা শুনতে পাবেন।';
+      'মাইক্রোফোনের অনুমতি বন্ধ আছে — তবে আপনি এখনও গ্রুপের কথা শুনতে পাবেন।';
 
   @override
   String couldntStartRecording(Object e) {
@@ -1128,7 +1128,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get thisRemovesItFrom =>
-      'এতে সবার ফিড থেকে এটি সরে যাবে। আপনার ফোনের রাইড ইতিহাস অপরিবর্তিত থাকবে।';
+      'এটি সবার ফিড থেকে মুছে যাবে। আপনার ফোনে রাইড ইতিহাস যেমন ছিল তেমনই থাকবে।';
 
   @override
   String get sharedRideDeleteFailed =>
@@ -1279,7 +1279,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get rideDetails => 'রাইডের বিবরণ';
 
   @override
-  String get rideNotFoundRemoved => 'রাইড পাওয়া যায়নি অথবা সরানো হয়েছে';
+  String get rideNotFoundRemoved => 'রাইড পাওয়া যায়নি বা মুছে দেওয়া হয়েছে';
 
   @override
   String get reportRide => 'রাইড রিপোর্ট করুন';
@@ -1294,7 +1294,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get maxSpeed => 'সর্বোচ্চ গতি';
 
   @override
-  String get duration => 'সময়কাল';
+  String get duration => 'সময়';
 
   @override
   String trackPoints(Object polylineCount) {
@@ -1358,7 +1358,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String nothingFoundTryUsername(Object query) {
-    return '\"$query\" এর জন্য কিছু পাওয়া যায়নি।\\n@ইউজারনেম, ইমেইল বা ফোরামের নাম দিয়ে চেষ্টা করুন।';
+    return '\"$query\"-এর জন্য কিছু পাওয়া যায়নি।\n@ইউজারনেম, ইমেইল বা ফোরামের নাম দিয়ে চেষ্টা করুন।';
   }
 
   @override
@@ -1367,7 +1367,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get noRidersMatchThat => 'এমন কোনো রাইডার নেই।';
+  String get noRidersMatchThat => 'এর সাথে মেলে এমন কোনো রাইডার নেই।';
 
   @override
   String couldntSearchForums(Object error) {
@@ -1375,7 +1375,7 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
-  String get noForumsMatchThat => 'এমন কোনো ফোরাম নেই।';
+  String get noForumsMatchThat => 'এর সাথে মেলে এমন কোনো ফোরাম নেই।';
 
   @override
   String followersPosts(Object followerCount, Object postCount) {
@@ -1390,7 +1390,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get searchRidersAboveFollow =>
-      'এটি ভরাতে উপরে রাইডার খুঁজে তাদের ফলো করুন।';
+      'উপরে রাইডার খুঁজে ফলো করুন — তাহলেই এখানে দেখতে পাবেন।';
 
   @override
   String get shareRideFromIts =>
@@ -1419,7 +1419,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String selectedCount(Object selectedCount, Object maxGroupRideFriends) {
-    return '$selectedCount/$maxGroupRideFriends জন নির্বাচিত';
+    return '$selectedCount/$maxGroupRideFriends জন বাছাই হয়েছে';
   }
 
   @override
@@ -1516,7 +1516,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get noPostsYet => 'এখনো কোনো পোস্ট নেই';
 
   @override
-  String get beFirstAskQuestion => 'প্রথম প্রশ্নটি করুন বা কিছু শেয়ার করুন।';
+  String get beFirstAskQuestion =>
+      'প্রথম প্রশ্ন আপনিই করুন বা কিছু শেয়ার করুন।';
 
   @override
   String get title => 'শিরোনাম';
@@ -1554,7 +1555,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String fromUser(Object displayName) {
-    return '$displayName এর কাছ থেকে';
+    return '$displayName-এর কাছ থেকে';
   }
 
   @override
@@ -1595,7 +1596,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get noRiderMadeForums =>
-      'এখনো কোনো রাইডার-তৈরি ফোরাম নেই। প্রথমটি আপনিই তৈরি করুন।';
+      'এখনো রাইডাররা কোনো ফোরাম তৈরি করেনি। প্রথমটি আপনিই তৈরি করুন।';
 
   @override
   String get findForum => 'ফোরাম খুঁজুন';
@@ -1630,7 +1631,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get noMessagesYet => 'এখনো কোনো মেসেজ নেই';
 
   @override
-  String get startConversation => 'কথোপকথন শুরু করুন';
+  String get startConversation => 'কথা শুরু করুন';
 
   @override
   String get loading => 'লোড হচ্ছে...';
@@ -1644,11 +1645,11 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String noRidersFoundFor(Object text) {
-    return '\"$text\" এর জন্য কোনো রাইডার পাওয়া যায়নি';
+    return '\"$text\"-এর জন্য কোনো রাইডার পাওয়া যায়নি';
   }
 
   @override
-  String get retry => 'আবার চেষ্টা';
+  String get retry => 'আবার চেষ্টা করুন';
 
   @override
   String get chat => 'চ্যাট';
@@ -1721,11 +1722,11 @@ class AppLocalizationsBn extends AppLocalizations {
   String get selfHarm => 'নিজের ক্ষতি করা';
 
   @override
-  String get otherReason => 'অন্যান্য';
+  String get otherReason => 'অন্য কারণ';
 
   @override
   String followMyRideLive(String url) {
-    return 'আমার রাইড লাইভ অনুসরণ করুন: $url';
+    return 'আমার রাইড লাইভ ফলো করুন: $url';
   }
 
   @override
