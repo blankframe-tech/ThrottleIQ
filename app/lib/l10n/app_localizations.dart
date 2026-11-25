@@ -11907,7 +11907,7 @@ abstract class AppLocalizations {
   /// Settings → Your ThrottleIQ: Simple mode switch subtitle.
   ///
   /// In en, this message translates to:
-  /// **'Just three tabs: Home, Rides and Bike. Big buttons, plain numbers. Turn it off any time to get everything back.'**
+  /// **'Just the basics: big buttons, plain numbers. Turn it off any time to get everything back.'**
   String get simpleModeSubtitle;
 
   /// Confirm dialog title when turning Simple mode on.
@@ -11919,7 +11919,7 @@ abstract class AppLocalizations {
   /// Confirm dialog body when turning Simple mode on.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
+  /// **'You\'ll see just the basics. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
   String get simpleModeOnBody;
 
   /// Confirm button that turns Simple mode on.

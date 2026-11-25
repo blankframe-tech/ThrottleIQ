@@ -6997,14 +6997,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeSubtitle =>
-      'Just three tabs: Home, Rides and Bike. Big buttons, plain numbers. Turn it off any time to get everything back.';
+      'Just the basics: big buttons, plain numbers. Turn it off any time to get everything back.';
 
   @override
   String get simpleModeOnTitle => 'Switch to Simple mode?';
 
   @override
   String get simpleModeOnBody =>
-      'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
+      'You\'ll see just the basics. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
 
   @override
   String get simpleModeOnAction => 'Switch to Simple';
