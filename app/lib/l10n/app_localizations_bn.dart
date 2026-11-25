@@ -6981,7 +6981,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get simpleModeOnBody =>
-      'আপনি শুধু হোম, রাইড আর বাইক দেখবেন। কমিউনিটি, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। এখান থেকে সহজ মোড বন্ধ করলেই সব ফিরে আসবে।';
+      'আপনি শুধু হোম, রাইড আর বাইক দেখবেন। কমিউনিটি, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। যেকোনো সময় সেটিংস → অ্যাডভান্সড থেকে বন্ধ করলেই সব ফিরে আসবে।';
 
   @override
   String get simpleModeOnAction => 'সহজ মোড চালু করুন';
@@ -6991,6 +6991,12 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get simpleModeNavBike => 'বাইক';
+
+  @override
+  String get simpleModeOffSnack => 'পুরো অ্যাপ আবার চালু হয়েছে।';
+
+  @override
+  String get simpleModeCommunityHidden => 'সহজ মোডে কমিউনিটি লুকানো থাকে।';
 
   @override
   String get manualOdometerHint =>

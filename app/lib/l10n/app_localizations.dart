@@ -11919,7 +11919,7 @@ abstract class AppLocalizations {
   /// Confirm dialog body when turning Simple mode on.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.'**
+  /// **'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
   String get simpleModeOnBody;
 
   /// Confirm button that turns Simple mode on.
@@ -11939,6 +11939,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bike'**
   String get simpleModeNavBike;
+
+  /// Snack after turning Simple mode off.
+  ///
+  /// In en, this message translates to:
+  /// **'Full app is back.'**
+  String get simpleModeOffSnack;
+
+  /// Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Community is hidden in Simple mode.'**
+  String get simpleModeCommunityHidden;
 
   /// Settings → Your ThrottleIQ (app modules).
   ///

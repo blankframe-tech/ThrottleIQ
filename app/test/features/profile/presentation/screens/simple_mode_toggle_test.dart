@@ -99,6 +99,9 @@ void main() {
     SharedPreferences.setMockInitialValues({'module_simple': true});
     final (container, _) = await pump(tester);
     expect(container.read(appModulesProvider).simple, isTrue);
+    // Simple forces community off, so its picker is not offered meanwhile.
+    expect(find.text(en.simpleModeCommunityHidden), findsOneWidget);
+    expect(find.text(en.communityOffLabel), findsNothing);
 
     await tester.tap(simpleSwitch());
     await tester.pumpAndSettle();
@@ -109,5 +112,12 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('module_simple'), isFalse);
     expect(find.text('FULL'), findsOneWidget);
+    expect(find.text(en.simpleModeOffSnack), findsOneWidget);
+  });
+
+  testWidgets('the community picker shows while Simple is off', (tester) async {
+    await pump(tester);
+    expect(find.text(en.communityOffLabel), findsOneWidget);
+    expect(find.text(en.simpleModeCommunityHidden), findsNothing);
   });
 }

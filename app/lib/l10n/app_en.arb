@@ -9667,7 +9667,7 @@
   "@simpleModeOnTitle": {
     "description": "Confirm dialog title when turning Simple mode on."
   },
-  "simpleModeOnBody": "You'll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.",
+  "simpleModeOnBody": "You'll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.",
   "@simpleModeOnBody": {
     "description": "Confirm dialog body when turning Simple mode on."
   },
@@ -9682,6 +9682,14 @@
   "simpleModeNavBike": "Bike",
   "@simpleModeNavBike": {
     "description": "Simple mode bottom-nav label for the Bike tab."
+  },
+  "simpleModeOffSnack": "Full app is back.",
+  "@simpleModeOffSnack": {
+    "description": "Snack after turning Simple mode off."
+  },
+  "simpleModeCommunityHidden": "Community is hidden in Simple mode.",
+  "@simpleModeCommunityHidden": {
+    "description": "Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on."
   },
   "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
   "@manualOdometerHint": {

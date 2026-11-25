@@ -322,32 +322,40 @@ class _AppModulesSection extends ConsumerWidget {
           onChanged: (v) => _setSimple(context, ref, v),
         ),
         const SizedBox(height: 10),
-        Text(l10n.communityFieldLabel,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.palette.textSecondary)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(context.shape.radiusMd),
-            border: Border.all(color: context.palette.border),
+        // Simple mode hides community whatever this says, and _apply's
+        // warnings would read the forced-off getters: no picker until it's off.
+        if (modules.simple)
+          Text(l10n.simpleModeCommunityHidden,
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary))
+        else ...[
+          Text(l10n.communityFieldLabel,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: context.palette.textSecondary)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
+            ),
+            child: Row(
+              children: [
+                community(CommunityMode.full, l10n.communityFullLabel,
+                    l10n.communityFullDescription),
+                const SizedBox(width: 4),
+                community(CommunityMode.forumsOnly, l10n.communityForumsLabel,
+                    l10n.communityForumsDescription),
+                const SizedBox(width: 4),
+                community(CommunityMode.off, l10n.communityOffLabel,
+                    l10n.communityOffDescription),
+              ],
+            ),
           ),
-          child: Row(
-            children: [
-              community(CommunityMode.full, l10n.communityFullLabel,
-                  l10n.communityFullDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.forumsOnly, l10n.communityForumsLabel,
-                  l10n.communityForumsDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.off, l10n.communityOffLabel,
-                  l10n.communityOffDescription),
-            ],
-          ),
-        ),
+        ],
         const SizedBox(height: 10),
         _ModuleSwitchTile(
           icon: Icons.place_outlined,
@@ -410,8 +418,9 @@ class _AppModulesSection extends ConsumerWidget {
     final next = current.copyWith(simple: on);
     await ref.read(appModulesProvider.notifier).set(next);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.modulesUpdatedSnack)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(on ? l10n.modulesUpdatedSnack : l10n.simpleModeOffSnack)));
     context.go(next.home);
   }
 

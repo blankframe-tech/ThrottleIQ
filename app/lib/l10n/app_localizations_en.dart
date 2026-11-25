@@ -7004,7 +7004,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeOnBody =>
-      'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.';
+      'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
 
   @override
   String get simpleModeOnAction => 'Switch to Simple';
@@ -7014,6 +7014,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeNavBike => 'Bike';
+
+  @override
+  String get simpleModeOffSnack => 'Full app is back.';
+
+  @override
+  String get simpleModeCommunityHidden => 'Community is hidden in Simple mode.';
 
   @override
   String get manualOdometerHint =>

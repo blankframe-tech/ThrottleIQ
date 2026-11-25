@@ -54,6 +54,7 @@ import '../../features/simple/presentation/screens/simple_home_screen.dart';
 import '../../features/simple/presentation/screens/simple_rides_screen.dart';
 import '../../features/simple/presentation/screens/simple_ride_detail_screen.dart';
 import '../../features/simple/presentation/screens/simple_bike_screen.dart';
+import '../../features/simple/presentation/providers/simple_bike_provider.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
@@ -114,7 +115,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ThrottleIQ) lands on their home tab instead — deep links, widgets
       // and notifications included.
       final modules = ref.read(appModulesProvider);
-      return modules.redirectFor(authRedirect ?? state.matchedLocation) ??
+      // One rule reads the query: Simple mode's maintenance ?bikeId.
+      final atMaintenance =
+          modules.simple && state.matchedLocation == '/home/maintenance';
+      final location = authRedirect ??
+          (atMaintenance
+              ? '/home/maintenance?${state.uri.query}'
+              : state.matchedLocation);
+      return modules.redirectFor(location,
+              simpleBikeId:
+                  atMaintenance ? ref.read(simpleBikeProvider)?.id : null) ??
           authRedirect;
     },
     routes: [

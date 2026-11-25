@@ -80,11 +80,18 @@ class AppModules {
           : '/home/maintenance';
 
   /// [home] when [location] belongs to a module that is off, else null.
-  String? redirectFor(String location) {
+  ///
+  /// [simpleBikeId] is the bike Simple mode's Bike tab shows. A maintenance
+  /// link for any other bike (a two-bike rider's alert) keeps its own page
+  /// rather than landing on the wrong bike's checklist.
+  String? redirectFor(String location, {String? simpleBikeId}) {
     final path = location.split('?').first;
     bool under(String base) => path == base || path.startsWith('$base/');
 
-    if (simple && path == '/home/maintenance') return '/home/simple-bike';
+    if (simple && path == '/home/maintenance') {
+      final bikeId = Uri.parse(location).queryParameters['bikeId'];
+      if (bikeId == null || bikeId == simpleBikeId) return '/home/simple-bike';
+    }
     final simpleOnly = under('/home/simple') ||
         under('/home/simple-rides') ||
         under('/home/simple-bike');

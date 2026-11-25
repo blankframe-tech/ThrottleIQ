@@ -45,8 +45,18 @@ void main() {
   group('redirectFor in simple mode', () {
     test('the maintenance tab root goes to the Bike tab', () {
       expect(simple.redirectFor('/home/maintenance'), '/home/simple-bike');
-      expect(simple.redirectFor('/home/maintenance?bikeId=b1'),
+      expect(
+          simple.redirectFor('/home/maintenance?bikeId=b1', simpleBikeId: 'b1'),
           '/home/simple-bike');
+    });
+
+    test("another bike's maintenance link keeps its own page", () {
+      // A two-bike rider's alert for bike b2 must not show b1's checklist.
+      expect(
+          simple.redirectFor('/home/maintenance?bikeId=b2', simpleBikeId: 'b1'),
+          isNull);
+      // Garage still loading: show the bike the link asked for.
+      expect(simple.redirectFor('/home/maintenance?bikeId=b2'), isNull);
     });
 
     test('hidden areas land on the simple home', () {
