@@ -6970,6 +6970,29 @@ class AppLocalizationsBn extends AppLocalizations {
       'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
 
   @override
+  String get simpleModeTitle => 'সহজ মোড';
+
+  @override
+  String get simpleModeSubtitle =>
+      'শুধু তিনটি ট্যাব: হোম, রাইড আর বাইক। বড় বাটন, সহজ সংখ্যা। যেকোনো সময় বন্ধ করলে সব আবার ফিরে আসবে।';
+
+  @override
+  String get simpleModeOnTitle => 'সহজ মোড চালু করবেন?';
+
+  @override
+  String get simpleModeOnBody =>
+      'আপনি শুধু হোম, রাইড আর বাইক দেখবেন। কমিউনিটি, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। এখান থেকে সহজ মোড বন্ধ করলেই সব ফিরে আসবে।';
+
+  @override
+  String get simpleModeOnAction => 'সহজ মোড চালু করুন';
+
+  @override
+  String get simpleModeNavHome => 'হোম';
+
+  @override
+  String get simpleModeNavBike => 'বাইক';
+
+  @override
   String get manualOdometerHint =>
       'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
 

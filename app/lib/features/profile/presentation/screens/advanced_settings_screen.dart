@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/services/crash_detection_settings.dart';
@@ -312,6 +313,15 @@ class _AppModulesSection extends ConsumerWidget {
             style:
                 TextStyle(fontSize: 12, color: context.palette.textTertiary)),
         const SizedBox(height: 12),
+        _ModuleSwitchTile(
+          key: const Key('simple_mode_switch'),
+          icon: Icons.auto_awesome_outlined,
+          title: l10n.simpleModeTitle,
+          subtitle: l10n.simpleModeSubtitle,
+          value: modules.simple,
+          onChanged: (v) => _setSimple(context, ref, v),
+        ),
+        const SizedBox(height: 10),
         Text(l10n.communityFieldLabel,
             style: TextStyle(
                 fontSize: 12,
@@ -357,6 +367,52 @@ class _AppModulesSection extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Simple mode (ThrottleEZ) hides whole areas at once, so it skips
+  /// [_apply]'s per-module warnings: turning it on asks once, turning it off
+  /// asks nothing. Then the rider lands on the new home tab.
+  Future<void> _setSimple(BuildContext context, WidgetRef ref, bool on) async {
+    final l10n = context.l10n;
+    final current = ref.read(appModulesProvider);
+    if (current.simple == on) return;
+    if (on) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          backgroundColor: dialogCtx.palette.surface,
+          title: Text(dialogCtx.l10n.simpleModeOnTitle,
+              style: TextStyle(
+                  color: dialogCtx.palette.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          content: Text(dialogCtx.l10n.simpleModeOnBody,
+              style: TextStyle(
+                  color: dialogCtx.palette.textSecondary,
+                  fontSize: 14,
+                  height: 1.4)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              style: TextButton.styleFrom(
+                  foregroundColor: dialogCtx.palette.textSecondary),
+              child: Text(dialogCtx.l10n.cancelAction),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: Text(dialogCtx.l10n.simpleModeOnAction),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+    final next = current.copyWith(simple: on);
+    await ref.read(appModulesProvider.notifier).set(next);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.modulesUpdatedSnack)));
+    context.go(next.home);
   }
 
   /// Confirms anything being turned off, then saves. Turning ride tracking

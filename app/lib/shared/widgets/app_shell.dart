@@ -52,6 +52,12 @@ int shellTabIndexForLocation(String location,
   final idx = tabs.indexWhere(matches);
   if (idx >= 0) return idx;
 
+  // Simple mode's Bike tab owns maintenance and the bike screens.
+  if (modules.simple &&
+      (matches('/home/maintenance') || path.startsWith('/home/profile/'))) {
+    return tabs.indexOf('/home/simple-bike');
+  }
+
   for (final entry in _nonTabShellRoutes.entries) {
     if (matches(entry.key)) return tabs.indexOf(entry.value);
   }
@@ -100,17 +106,30 @@ class AppShell extends ConsumerWidget {
           icon: const Icon(Icons.two_wheeler_outlined),
           activeIcon: const Icon(Icons.two_wheeler),
           label: l10n.navGarageLabel),
+      '/home/simple': BottomNavigationBarItem(
+          icon: const Icon(Icons.home_outlined),
+          activeIcon: const Icon(Icons.home),
+          label: l10n.simpleModeNavHome),
+      '/home/simple-rides': BottomNavigationBarItem(
+          icon: const Icon(Icons.insights_outlined),
+          activeIcon: const Icon(Icons.insights),
+          label: l10n.navRidesLabel),
+      '/home/simple-bike': BottomNavigationBarItem(
+          icon: const Icon(Icons.two_wheeler_outlined),
+          activeIcon: const Icon(Icons.two_wheeler),
+          label: l10n.simpleModeNavBike),
     };
     return Scaffold(
       body: Stack(
         children: [
           child,
-          const Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: TourFloatingBanner(),
-          ),
+          if (!modules.simple)
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: TourFloatingBanner(),
+            ),
         ],
       ),
       bottomNavigationBar: Column(

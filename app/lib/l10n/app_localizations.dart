@@ -11898,6 +11898,48 @@ abstract class AppLocalizations {
   /// **'Done. Your tabs now show only what you use.'**
   String get modulesUpdatedSnack;
 
+  /// Settings → Your ThrottleIQ: Simple mode (ThrottleEZ) switch title.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple mode'**
+  String get simpleModeTitle;
+
+  /// Settings → Your ThrottleIQ: Simple mode switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Just three tabs: Home, Rides and Bike. Big buttons, plain numbers. Turn it off any time to get everything back.'**
+  String get simpleModeSubtitle;
+
+  /// Confirm dialog title when turning Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Simple mode?'**
+  String get simpleModeOnTitle;
+
+  /// Confirm dialog body when turning Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.'**
+  String get simpleModeOnBody;
+
+  /// Confirm button that turns Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Simple'**
+  String get simpleModeOnAction;
+
+  /// Simple mode bottom-nav label for the Home tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get simpleModeNavHome;
+
+  /// Simple mode bottom-nav label for the Bike tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike'**
+  String get simpleModeNavBike;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:

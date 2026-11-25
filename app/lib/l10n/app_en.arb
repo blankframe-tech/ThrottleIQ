@@ -9655,6 +9655,34 @@
   "@modulesUpdatedSnack": {
     "description": "Settings → Your ThrottleIQ (app modules)."
   },
+  "simpleModeTitle": "Simple mode",
+  "@simpleModeTitle": {
+    "description": "Settings → Your ThrottleIQ: Simple mode (ThrottleEZ) switch title."
+  },
+  "simpleModeSubtitle": "Just three tabs: Home, Rides and Bike. Big buttons, plain numbers. Turn it off any time to get everything back.",
+  "@simpleModeSubtitle": {
+    "description": "Settings → Your ThrottleIQ: Simple mode switch subtitle."
+  },
+  "simpleModeOnTitle": "Switch to Simple mode?",
+  "@simpleModeOnTitle": {
+    "description": "Confirm dialog title when turning Simple mode on."
+  },
+  "simpleModeOnBody": "You'll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.",
+  "@simpleModeOnBody": {
+    "description": "Confirm dialog body when turning Simple mode on."
+  },
+  "simpleModeOnAction": "Switch to Simple",
+  "@simpleModeOnAction": {
+    "description": "Confirm button that turns Simple mode on."
+  },
+  "simpleModeNavHome": "Home",
+  "@simpleModeNavHome": {
+    "description": "Simple mode bottom-nav label for the Home tab."
+  },
+  "simpleModeNavBike": "Bike",
+  "@simpleModeNavBike": {
+    "description": "Simple mode bottom-nav label for the Bike tab."
+  },
   "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
   "@manualOdometerHint": {
     "description": "Settings → Your ThrottleIQ (app modules)."
