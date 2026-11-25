@@ -6993,6 +6993,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'Done. Your tabs now show only what you use.';
 
   @override
+  String get simpleModeTitle => 'Simple mode';
+
+  @override
+  String get simpleModeSubtitle =>
+      'Just three tabs: Home, Rides and Bike. Big buttons, plain numbers. Turn it off any time to get everything back.';
+
+  @override
+  String get simpleModeOnTitle => 'Switch to Simple mode?';
+
+  @override
+  String get simpleModeOnBody =>
+      'You\'ll see only Home, Rides and Bike. Community, Places, routes and detailed stats are hidden, not deleted. Turn Simple mode off here to get them back.';
+
+  @override
+  String get simpleModeOnAction => 'Switch to Simple';
+
+  @override
+  String get simpleModeNavHome => 'Home';
+
+  @override
+  String get simpleModeNavBike => 'Bike';
+
+  @override
   String get manualOdometerHint =>
       'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.';
 

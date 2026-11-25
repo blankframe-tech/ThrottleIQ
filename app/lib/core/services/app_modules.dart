@@ -23,6 +23,7 @@ class AppModules {
     this.community = CommunityMode.full,
     this.places = true,
     this.rideTracking = true,
+    this.simple = false,
   });
 
   final CommunityMode community;
@@ -34,37 +35,60 @@ class AppModules {
   /// the rider's location. Off leaves a maintenance-only app.
   final bool rideTracking;
 
-  bool get social => community == CommunityMode.full;
-  bool get forums => community != CommunityMode.off;
+  /// Simple mode (ThrottleEZ): a three-tab app (Home, Rides, Bike) for riders
+  /// who want the basics. Hides community, places, routes and analytics on
+  /// top of whatever the other modules hide; changes no data.
+  final bool simple;
+
+  bool get social => !simple && community == CommunityMode.full;
+  bool get forums => !simple && community != CommunityMode.off;
 
   AppModules copyWith({
     CommunityMode? community,
     bool? places,
     bool? rideTracking,
+    bool? simple,
   }) =>
       AppModules(
         community: community ?? this.community,
         places: places ?? this.places,
         rideTracking: rideTracking ?? this.rideTracking,
+        simple: simple ?? this.simple,
       );
 
   /// The bottom-nav tabs, in display order. Never fewer than two: Garage is
   /// always there, and Maintenance takes Record's place when tracking is off.
-  List<String> get tabs => [
-        if (forums) '/home/social',
-        if (places) '/home/places',
-        if (rideTracking) ...['/home/record', '/home/stats'],
-        if (!rideTracking) '/home/maintenance',
-        '/home/profile',
-      ];
+  List<String> get tabs => simple
+      ? [
+          '/home/simple',
+          if (rideTracking) '/home/simple-rides',
+          '/home/simple-bike',
+        ]
+      : [
+          if (forums) '/home/social',
+          if (places) '/home/places',
+          if (rideTracking) ...['/home/record', '/home/stats'],
+          if (!rideTracking) '/home/maintenance',
+          '/home/profile',
+        ];
 
   /// Where the app opens, and where a turned-off route lands.
-  String get home => rideTracking ? '/home/record' : '/home/maintenance';
+  String get home => simple
+      ? '/home/simple'
+      : rideTracking
+          ? '/home/record'
+          : '/home/maintenance';
 
   /// [home] when [location] belongs to a module that is off, else null.
   String? redirectFor(String location) {
     final path = location.split('?').first;
     bool under(String base) => path == base || path.startsWith('$base/');
+
+    if (simple && path == '/home/maintenance') return '/home/simple-bike';
+    final simpleOnly = under('/home/simple') ||
+        under('/home/simple-rides') ||
+        under('/home/simple-bike');
+    if (!simple && simpleOnly) return home;
 
     final blocked = (!forums && (under('/home/social') || under('/forums'))) ||
         (!social &&
@@ -89,7 +113,17 @@ class AppModules {
                 under('/rides/all') ||
                 under('/group-ride') ||
                 under('/routes/save') ||
-                (under('/routes') && path.endsWith('/navigate'))));
+                (under('/routes') && path.endsWith('/navigate')))) ||
+        (simple &&
+            (under('/home/record') ||
+                under('/home/stats') ||
+                under('/home/social') ||
+                under('/home/places') ||
+                under('/places') ||
+                under('/routes') ||
+                under('/rides/all') ||
+                path == '/home/profile' ||
+                (!rideTracking && under('/home/simple-rides'))));
     return blocked ? home : null;
   }
 }
@@ -106,6 +140,7 @@ class AppModulesNotifier extends StateNotifier<AppModules> {
   static const _communityKey = 'module_community';
   static const _placesKey = 'module_places';
   static const _rideTrackingKey = 'module_ride_tracking';
+  static const _simpleKey = 'module_simple';
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -117,6 +152,7 @@ class AppModulesNotifier extends StateNotifier<AppModules> {
               CommunityMode.full,
       places: prefs.getBool(_placesKey) ?? true,
       rideTracking: prefs.getBool(_rideTrackingKey) ?? true,
+      simple: prefs.getBool(_simpleKey) ?? false,
     );
   }
 
@@ -126,5 +162,6 @@ class AppModulesNotifier extends StateNotifier<AppModules> {
     await prefs.setString(_communityKey, modules.community.name);
     await prefs.setBool(_placesKey, modules.places);
     await prefs.setBool(_rideTrackingKey, modules.rideTracking);
+    await prefs.setBool(_simpleKey, modules.simple);
   }
 }

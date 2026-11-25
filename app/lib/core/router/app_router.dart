@@ -50,6 +50,10 @@ import '../../features/poi_directory/presentation/screens/place_detail_screen.da
 import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
 import '../../features/social/presentation/screens/my_shared_rides_screen.dart';
 import '../../shared/widgets/app_shell.dart';
+import '../../features/simple/presentation/screens/simple_home_screen.dart';
+import '../../features/simple/presentation/screens/simple_rides_screen.dart';
+import '../../features/simple/presentation/screens/simple_ride_detail_screen.dart';
+import '../../features/simple/presentation/screens/simple_bike_screen.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
@@ -440,6 +444,28 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ],
                 ),
               ],
+            ),
+            // Simple mode (ThrottleEZ) tabs: Home, Rides, Bike. Only reachable
+            // with AppModules.simple on; redirectFor sends them home otherwise.
+            GoRoute(
+              path: '/home/simple',
+              builder: (_, __) => const SimpleHomeScreen(),
+            ),
+            GoRoute(
+              path: '/home/simple-rides',
+              builder: (_, __) => const SimpleRidesScreen(),
+              routes: [
+                GoRoute(
+                  path: ':rideId',
+                  builder: (_, state) => SimpleRideDetailScreen(
+                    rideId: state.pathParameters['rideId']!,
+                  ),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: '/home/simple-bike',
+              builder: (_, __) => const SimpleBikeScreen(),
             ),
           ])
             StatefulShellBranch(routes: [route]),

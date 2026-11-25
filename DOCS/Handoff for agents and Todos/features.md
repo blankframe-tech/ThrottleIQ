@@ -24,6 +24,15 @@ Lets minimalist or privacy-minded riders turn parts of the app off. Device-local
 - **Ride tracking:** off makes a maintenance-only app. Record and Rides are replaced by a **Maintenance** tab, auto-tracking is refused, and the odometer is synced by hand.
 - One route gate: `AppModules.redirectFor` inside the router redirect, so deep links, widgets and notifications land on the home tab. The feature tour skips steps for modules that are off.
 
+## Simple mode (ThrottleEZ) (Settings → Advanced → Your ThrottleIQ, issues #240-#242)
+
+A three-tab app for riders who aren't into tech: **Home · Rides · Bike**. A switch at the top of Your ThrottleIQ (`AppModules.simple`, SharedPreferences `module_simple`, device-local, off by default). Turning it on asks once; turning it off asks nothing and restores the full app exactly. Nothing is deleted.
+
+- **Routes:** shell branches `/home/simple` (Home), `/home/simple-rides` (+ `/:rideId`, hidden with ride tracking off) and `/home/simple-bike` (Bike), in `features/simple/`. `simpleBikeProvider` = the active bike, else the first in the garage.
+- **Hidden:** social, forums, chat, group rides and ride sharing (`social`/`forums` return false), the Places hub, My places and routes, the Record and Rides/stats tabs, All rides, the Garage tab (`/home/profile`), the feature-tour banner, and on the ride summary the JSON/GPX/CSV export row and Save as route. The other module switches still apply (ride tracking off removes the Rides tab and START RIDE; places off hides Find nearby on the Bike tab).
+- **Still reachable:** `/ride/active`, `/ride/summary/:id`, `/home/maintenance/*` sub-routes (fuel, add, setup, configure, check, records), `/home/profile/add` and `/home/profile/:bikeId(/edit)`, Settings, Safe QR, sync issues, blocked users, own profile. Hidden routes land on `/home/simple`; `/home/maintenance` lands on the Bike tab; with Simple off the `/home/simple*` routes land on the full home.
+- **No DB change:** no Firestore, rules, index, Cloud Functions or SQLite schema change. Simple mode reads and writes through the same providers as the full app, so data entered in either mode shows in the other, on every device and older app versions.
+
 ## UI hierarchy
 
 ```

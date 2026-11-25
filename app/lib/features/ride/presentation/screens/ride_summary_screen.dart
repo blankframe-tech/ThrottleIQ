@@ -549,40 +549,42 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Telemetry export ─────────────────────────────────────
-                EditorialLabel(l10n.telemetrySectionLabel),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    TextButton.icon(
-                      key: _exportJsonButtonKey,
-                      onPressed: () => _exportRide(ride,
-                          format: _ExportFormat.json,
-                          buttonKey: _exportJsonButtonKey),
-                      icon: const Icon(Icons.data_object, size: 18),
-                      label: Text(l10n.exportJsonAction),
-                    ),
-                    TextButton.icon(
-                      key: _exportGpxButtonKey,
-                      onPressed: () => _exportRide(ride,
-                          format: _ExportFormat.gpx,
-                          buttonKey: _exportGpxButtonKey),
-                      icon: const Icon(Icons.route, size: 18),
-                      label: Text(l10n.exportGpxAction),
-                    ),
-                    TextButton.icon(
-                      key: _exportCsvButtonKey,
-                      onPressed: () => _exportRide(ride,
-                          format: _ExportFormat.csv,
-                          buttonKey: _exportCsvButtonKey),
-                      icon: const Icon(Icons.table_chart_outlined, size: 18),
-                      label: Text(l10n.exportCsvAction),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                // ── Telemetry export (hidden in Simple mode) ─────────────
+                if (!ref.watch(appModulesProvider).simple) ...[
+                  EditorialLabel(l10n.telemetrySectionLabel),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: [
+                      TextButton.icon(
+                        key: _exportJsonButtonKey,
+                        onPressed: () => _exportRide(ride,
+                            format: _ExportFormat.json,
+                            buttonKey: _exportJsonButtonKey),
+                        icon: const Icon(Icons.data_object, size: 18),
+                        label: Text(l10n.exportJsonAction),
+                      ),
+                      TextButton.icon(
+                        key: _exportGpxButtonKey,
+                        onPressed: () => _exportRide(ride,
+                            format: _ExportFormat.gpx,
+                            buttonKey: _exportGpxButtonKey),
+                        icon: const Icon(Icons.route, size: 18),
+                        label: Text(l10n.exportGpxAction),
+                      ),
+                      TextButton.icon(
+                        key: _exportCsvButtonKey,
+                        onPressed: () => _exportRide(ride,
+                            format: _ExportFormat.csv,
+                            buttonKey: _exportCsvButtonKey),
+                        icon: const Icon(Icons.table_chart_outlined, size: 18),
+                        label: Text(l10n.exportCsvAction),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 // A fall the detector missed: the only way to measure recall.
                 Align(
                   alignment: Alignment.centerLeft,
@@ -784,7 +786,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
           // the rider's own ride, so they get the full "My Routes" flow that
           // already exists at /routes/save/:rideId instead of a one-tap
           // stand-in for it.
-          onSaveRoute: ref.read(appModulesProvider).places
+          onSaveRoute: ref.read(appModulesProvider).places &&
+                  !ref.read(appModulesProvider).simple
               ? (ctx) => ctx.push('/routes/save/${ride.id}')
               : null,
         ),
@@ -1021,7 +1024,8 @@ class _RideSummaryScreenState extends ConsumerState<RideSummaryScreen> {
                       onPressed: () => _openFullScreenMap(ride),
                       child: const Icon(Icons.fullscreen, size: 20),
                     ),
-                    if (ref.watch(appModulesProvider).places) ...[
+                    if (ref.watch(appModulesProvider).places &&
+                        !ref.watch(appModulesProvider).simple) ...[
                       const SizedBox(height: 6),
                       FloatingActionButton.small(
                         heroTag: 'ride_summary_save_route',
