@@ -57,6 +57,16 @@ class _Papers extends PaperworkNotifier {
   Future<List<PaperworkEntity>> build(String bikeId) async => const [];
 }
 
+var _fuelFails = false;
+
+class _FlakyFuel extends FuelLogsNotifier {
+  @override
+  Future<List<FuelLogEntity>> build(String bikeId) async {
+    if (_fuelFails) throw StateError('db closed');
+    return [_fill('f1', DateTime(2026, 10, 1), 5, 650)];
+  }
+}
+
 class _Fuel extends FuelLogsNotifier {
   _Fuel(this.logs);
   final List<FuelLogEntity> logs;
@@ -262,7 +272,7 @@ void main() {
   testWidgets('fuel history: date, taka and litres, newest first',
       (tester) async {
     await pump(tester, fuel: [
-      _fill('f1', DateTime(2026, 10, 1), 5, 650),
+      _fill('f1', DateTime(2026, 10, 1), 10, 1250),
       _fill('f2', DateTime(2026, 11, 1), 4.5, 585),
     ]);
     final newest = find.byKey(const Key('simpleBikeFuel_f2'));
@@ -277,6 +287,38 @@ void main() {
             of: newest,
             matching: find.text('৳585 · ${en.simpleBikeFuelLitres('4.5')}')),
         findsOneWidget);
+    // Same thousands grouping as the Home tile.
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('simpleBikeFuel_f1')),
+            matching: find.text('৳1,250 · ${en.simpleBikeFuelLitres('10.0')}')),
+        findsOneWidget);
+  });
+
+  testWidgets('fuel history that fails to load is not shown as none',
+      (tester) async {
+    _fuelFails = true;
+    addTearDown(() => _fuelFails = false);
+    await pumpScope(
+      tester,
+      ProviderScope(
+        overrides: [
+          ...overrides(fakeFuel: false),
+          fuelLogsProvider.overrideWith(_FlakyFuel.new),
+        ],
+        child: app(),
+      ),
+    );
+    expect(find.text(en.simpleBikeFuelEmpty), findsNothing);
+    expect(find.byKey(const Key('simpleBikeFuelFailed')), findsOneWidget);
+    expect(tester.getSize(find.byKey(const Key('simpleBikeFuelRetry'))).height,
+        greaterThanOrEqualTo(48));
+
+    _fuelFails = false;
+    await tester.tap(find.byKey(const Key('simpleBikeFuelRetry')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('simpleBikeFuelFailed')), findsNothing);
+    expect(find.byKey(const Key('simpleBikeFuel_f1')), findsOneWidget);
   });
 
   testWidgets('no fuel yet: Add fuel opens the fill-up form', (tester) async {

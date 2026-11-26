@@ -9,7 +9,6 @@ import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
-import '../../../maintenance/presentation/widgets/maintenance_format.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../ride/presentation/widgets/recording_gate.dart';
@@ -17,6 +16,7 @@ import '../../domain/mileage_verdict.dart';
 import '../providers/simple_bike_provider.dart';
 import '../widgets/simple_home_alert.dart';
 import '../widgets/simple_home_help_sheet.dart';
+import '../widgets/simple_rides_format.dart';
 import '../widgets/simple_settings_button.dart';
 
 /// Simple mode Home tab (#241): one bike, one big button, this month's km
@@ -48,9 +48,6 @@ const _tall = Size(64, 48);
 
 /// A tile whose source is loading or failed: never a made-up 0.
 const _noValue = '—';
-
-/// "8.5", "120", "1,250": one decimal only for small values.
-String _amount(double v) => v < 10 ? v.toStringAsFixed(1) : groupThousands(v);
 
 class _NoBike extends StatelessWidget {
   @override
@@ -122,7 +119,7 @@ class _HomeBody extends ConsumerWidget {
               Expanded(
                 child: _Tile(
                   key: const Key('simple_home_km'),
-                  value: rides == null ? _noValue : _amount(km),
+                  value: rides == null ? _noValue : simpleAmount(km),
                   label: l10n.simpleHomeKmRidden,
                 ),
               ),
@@ -131,7 +128,7 @@ class _HomeBody extends ConsumerWidget {
             Expanded(
               child: _Tile(
                 key: const Key('simple_home_taka'),
-                value: fills == null ? _noValue : '৳${_amount(taka)}',
+                value: fills == null ? _noValue : '৳${simpleAmount(taka)}',
                 label: l10n.simpleHomeFuelSpent,
               ),
             ),

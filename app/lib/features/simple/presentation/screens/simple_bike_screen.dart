@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/theme/app_theme_context.dart';
+import '../../../../core/utils/firebase_error_mapper.dart';
 import '../../../../shared/widgets/editorial.dart';
 import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
@@ -14,12 +15,12 @@ import '../../../maintenance/presentation/maintenance_l10n.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
 import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 import '../../../maintenance/presentation/widgets/forecast_text.dart';
-import '../../../maintenance/presentation/widgets/maintenance_format.dart';
 import '../../../maintenance/presentation/widgets/paperwork_card.dart';
 import '../../../maintenance/presentation/widgets/quick_service_sheet.dart';
 import '../providers/simple_bike_provider.dart';
 import '../widgets/simple_bike_nearby.dart';
 import '../widgets/simple_rides_empty_state.dart';
+import '../widgets/simple_rides_format.dart';
 import '../widgets/simple_settings_button.dart';
 
 /// Simple mode Bike tab: the maintenance checklist with Done, fuel history,
@@ -179,7 +180,8 @@ class _FuelHistory extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final logs = [...?ref.watch(fuelLogsProvider(bikeId)).valueOrNull]
+    final async = ref.watch(fuelLogsProvider(bikeId));
+    final logs = [...?async.valueOrNull]
       ..sort((a, b) => b.filledAt.compareTo(a.filledAt));
 
     return Column(
@@ -187,7 +189,21 @@ class _FuelHistory extends ConsumerWidget {
       children: [
         EditorialLabel(l10n.simpleBikeFuelTitle),
         const SizedBox(height: 8),
-        if (logs.isEmpty)
+        // Loading or failed is not "no fill-ups".
+        if (!async.hasValue && async.hasError) ...[
+          Text(mapFirestoreError(async.error!, l10n),
+              key: const Key('simpleBikeFuelFailed')),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('simpleBikeFuelRetry'),
+            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+            onPressed: () => ref.invalidate(fuelLogsProvider(bikeId)),
+            icon: const Icon(Icons.refresh),
+            label: Text(l10n.retry),
+          ),
+        ] else if (!async.hasValue)
+          const Center(child: CircularProgressIndicator())
+        else if (logs.isEmpty)
           Text(l10n.simpleBikeFuelEmpty,
               style: TextStyle(color: context.palette.textTertiary))
         else
@@ -201,7 +217,7 @@ class _FuelHistory extends ConsumerWidget {
                     key: Key('simpleBikeFuel_${log.id}'),
                     title: Text(longDate(context, log.filledAt)),
                     subtitle: Text(
-                        '৳${formatTaka(log.totalCost)} · ${l10n.simpleBikeFuelLitres(log.liters.toStringAsFixed(1))}'),
+                        '৳${simpleAmount(log.totalCost)} · ${l10n.simpleBikeFuelLitres(log.liters.toStringAsFixed(1))}'),
                   ),
               ],
             ),

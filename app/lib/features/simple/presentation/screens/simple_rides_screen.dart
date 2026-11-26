@@ -10,7 +10,6 @@ import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../maintenance/domain/entities/maintenance_entity.dart';
 import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 import '../../../maintenance/presentation/widgets/forecast_text.dart';
-import '../../../maintenance/presentation/widgets/maintenance_format.dart';
 import '../../../ride/domain/entities/ride_entity.dart';
 import '../../../ride/presentation/providers/ride_recording_provider.dart';
 import '../../../ride/presentation/widgets/recording_gate.dart';
@@ -152,7 +151,7 @@ class _RideCard extends ConsumerWidget {
               Text(simpleRidesDuration(l10n, ride.durationSeconds),
                   style: display(context, 20)),
               if (fuel != null)
-                Text(l10n.simpleRidesFuelCost(formatTaka(fuel)),
+                Text(l10n.simpleRidesFuelCost(simpleAmount(fuel)),
                     style: display(context, 20, color: palette.textSecondary)),
             ],
           ),
