@@ -9655,6 +9655,175 @@
   "@modulesUpdatedSnack": {
     "description": "Settings → Your ThrottleIQ (app modules)."
   },
+  "simpleRidesWeekTitle": "Last 7 days",
+  "@simpleRidesWeekTitle": {
+    "description": "Simple mode Rides tab: title of the km-per-day bar chart."
+  },
+  "simpleRidesWeekSemantics": "Kilometres ridden each day, last 7 days: {days}",
+  "@simpleRidesWeekSemantics": {
+    "description": "Screen-reader label for the Rides tab bar chart. {days} is a list like 'Mon 12 km, Tue 0 km'.",
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleRidesFuelCost": "Fuel about ৳{amount}",
+  "@simpleRidesFuelCost": {
+    "description": "Simple mode ride card: estimated fuel cost of the ride in taka.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleRidesDurationHm": "{hours} h {minutes} min",
+  "@simpleRidesDurationHm": {
+    "description": "Simple mode ride time, an hour or more.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "simpleRidesDurationM": "{minutes} min",
+  "@simpleRidesDurationM": {
+    "description": "Simple mode ride time, under an hour.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "simpleRidesEmptyTitle": "No rides yet",
+  "@simpleRidesEmptyTitle": {
+    "description": "Simple mode Rides tab empty state title."
+  },
+  "simpleRidesEmptyBody": "Start a ride and it shows up here with its distance, time and fuel cost.",
+  "@simpleRidesEmptyBody": {
+    "description": "Simple mode Rides tab empty state body."
+  },
+  "simpleRidesStartRide": "START RIDE",
+  "@simpleRidesStartRide": {
+    "description": "Simple mode Rides tab empty state button: starts recording a ride."
+  },
+  "simpleRidesNoBikeTitle": "Add your bike first",
+  "@simpleRidesNoBikeTitle": {
+    "description": "Simple mode Rides tab when there is no bike."
+  },
+  "simpleRidesNoBikeBody": "Rides are saved to your bike, so add it to start.",
+  "@simpleRidesNoBikeBody": {
+    "description": "Simple mode Rides tab when there is no bike."
+  },
+  "simpleRidesAddBike": "Add bike",
+  "@simpleRidesAddBike": {
+    "description": "Simple mode Rides tab button that opens the add-bike form."
+  },
+  "simpleRidesDistance": "Distance",
+  "@simpleRidesDistance": {
+    "description": "Simple mode ride detail: distance label."
+  },
+  "simpleRidesTime": "Time",
+  "@simpleRidesTime": {
+    "description": "Simple mode ride detail: ride time label."
+  },
+  "simpleRidesTopSpeed": "Top speed",
+  "@simpleRidesTopSpeed": {
+    "description": "Simple mode ride detail: top speed label."
+  },
+  "simpleRidesAvgSpeed": "Average speed",
+  "@simpleRidesAvgSpeed": {
+    "description": "Simple mode ride detail: average speed label."
+  },
+  "simpleRidesNotFound": "This ride isn't on this phone.",
+  "@simpleRidesNotFound": {
+    "description": "Simple mode ride detail when the ride can't be found."
+  },
+  "simpleBikeChecksTitle": "Maintenance",
+  "@simpleBikeChecksTitle": {
+    "description": "Simple mode Bike tab: maintenance checklist title."
+  },
+  "simpleBikeCheckOk": "OK",
+  "@simpleBikeCheckOk": {
+    "description": "Simple mode Bike tab: a check that isn't due yet."
+  },
+  "simpleBikeCheckDone": "Done",
+  "@simpleBikeCheckDone": {
+    "description": "Simple mode Bike tab: button that logs a service as done."
+  },
+  "simpleBikeSetupBody": "No checks set up yet. Tell us when each was last done and we'll remind you.",
+  "@simpleBikeSetupBody": {
+    "description": "Simple mode Bike tab when no maintenance checks are tracked."
+  },
+  "simpleBikeSetupAction": "Set up maintenance",
+  "@simpleBikeSetupAction": {
+    "description": "Simple mode Bike tab button that opens maintenance setup."
+  },
+  "simpleBikeFuelTitle": "Fuel history",
+  "@simpleBikeFuelTitle": {
+    "description": "Simple mode Bike tab: fuel fill-ups title."
+  },
+  "simpleBikeFuelEmpty": "No fill-ups yet.",
+  "@simpleBikeFuelEmpty": {
+    "description": "Simple mode Bike tab when no fuel is logged."
+  },
+  "simpleBikeAddFuel": "Add fuel",
+  "@simpleBikeAddFuel": {
+    "description": "Simple mode Bike tab button that opens the fuel fill-up form."
+  },
+  "simpleBikeFuelLitres": "{litres} L",
+  "@simpleBikeFuelLitres": {
+    "description": "Simple mode Bike tab: litres in one fill-up.",
+    "placeholders": {
+      "litres": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleBikeNearbyTitle": "Find nearby",
+  "@simpleBikeNearbyTitle": {
+    "description": "Simple mode Bike tab: nearby fuel stations and mechanics title."
+  },
+  "simpleBikeNearbyAction": "Find fuel and mechanics near me",
+  "@simpleBikeNearbyAction": {
+    "description": "Simple mode Bike tab button; uses location only when tapped."
+  },
+  "simpleBikeNearbyFuel": "Fuel stations",
+  "@simpleBikeNearbyFuel": {
+    "description": "Simple mode Bike tab: nearby fuel stations heading."
+  },
+  "simpleBikeNearbyGarage": "Mechanics",
+  "@simpleBikeNearbyGarage": {
+    "description": "Simple mode Bike tab: nearby mechanics heading."
+  },
+  "simpleBikeNearbyNone": "None found within 15 km.",
+  "@simpleBikeNearbyNone": {
+    "description": "Simple mode Bike tab when no place of that kind is nearby."
+  },
+  "simpleBikeNearbyDistance": "{km} km away",
+  "@simpleBikeNearbyDistance": {
+    "description": "Simple mode Bike tab: distance to a nearby place.",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleBikeNoBikeTitle": "Add your bike first",
+  "@simpleBikeNoBikeTitle": {
+    "description": "Simple mode Bike tab when there is no bike."
+  },
+  "simpleBikeNoBikeBody": "Its service checks, fuel and papers show up here.",
+  "@simpleBikeNoBikeBody": {
+    "description": "Simple mode Bike tab when there is no bike."
+  },
+  "simpleBikeAddBike": "Add bike",
+  "@simpleBikeAddBike": {
+    "description": "Simple mode Bike tab button that opens the add-bike form."
+  },
   "simpleModeTitle": "Simple mode",
   "@simpleModeTitle": {
     "description": "Settings → Your ThrottleIQ: Simple mode (ThrottleEZ) switch title."

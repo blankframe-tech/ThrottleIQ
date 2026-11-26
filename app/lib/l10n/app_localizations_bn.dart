@@ -6970,6 +6970,124 @@ class AppLocalizationsBn extends AppLocalizations {
       'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
 
   @override
+  String get simpleRidesWeekTitle => 'গত 7 দিন';
+
+  @override
+  String simpleRidesWeekSemantics(String days) {
+    return 'গত 7 দিনে প্রতিদিন কত কিমি চালিয়েছেন: $days';
+  }
+
+  @override
+  String simpleRidesFuelCost(String amount) {
+    return 'জ্বালানি প্রায় ৳$amount';
+  }
+
+  @override
+  String simpleRidesDurationHm(int hours, int minutes) {
+    return '$hours ঘণ্টা $minutes মিনিট';
+  }
+
+  @override
+  String simpleRidesDurationM(int minutes) {
+    return '$minutes মিনিট';
+  }
+
+  @override
+  String get simpleRidesEmptyTitle => 'এখনো কোনো রাইড নেই';
+
+  @override
+  String get simpleRidesEmptyBody =>
+      'রাইড শুরু করুন, এখানে তার দূরত্ব, সময় আর জ্বালানি খরচ দেখাবে।';
+
+  @override
+  String get simpleRidesStartRide => 'রাইড শুরু করুন';
+
+  @override
+  String get simpleRidesNoBikeTitle => 'আগে আপনার বাইক যোগ করুন';
+
+  @override
+  String get simpleRidesNoBikeBody =>
+      'রাইড আপনার বাইকের সাথে সেভ হয়, তাই শুরু করতে বাইকটি যোগ করুন।';
+
+  @override
+  String get simpleRidesAddBike => 'বাইক যোগ করুন';
+
+  @override
+  String get simpleRidesDistance => 'দূরত্ব';
+
+  @override
+  String get simpleRidesTime => 'সময়';
+
+  @override
+  String get simpleRidesTopSpeed => 'সর্বোচ্চ গতি';
+
+  @override
+  String get simpleRidesAvgSpeed => 'গড় গতি';
+
+  @override
+  String get simpleRidesNotFound => 'এই রাইডটি এই ফোনে নেই।';
+
+  @override
+  String get simpleBikeChecksTitle => 'রক্ষণাবেক্ষণ';
+
+  @override
+  String get simpleBikeCheckOk => 'ঠিক আছে';
+
+  @override
+  String get simpleBikeCheckDone => 'করা হয়েছে';
+
+  @override
+  String get simpleBikeSetupBody =>
+      'এখনো কোনো চেক সেট করা হয়নি। কোনটা শেষ কবে করেছেন জানান, আমরা মনে করিয়ে দেব।';
+
+  @override
+  String get simpleBikeSetupAction => 'রক্ষণাবেক্ষণ সেট আপ করুন';
+
+  @override
+  String get simpleBikeFuelTitle => 'জ্বালানির হিসাব';
+
+  @override
+  String get simpleBikeFuelEmpty => 'এখনো কোনো জ্বালানি নেওয়ার হিসাব নেই।';
+
+  @override
+  String get simpleBikeAddFuel => 'জ্বালানি যোগ করুন';
+
+  @override
+  String simpleBikeFuelLitres(String litres) {
+    return '$litres লিটার';
+  }
+
+  @override
+  String get simpleBikeNearbyTitle => 'কাছাকাছি খুঁজুন';
+
+  @override
+  String get simpleBikeNearbyAction => 'কাছের পেট্রোল পাম্প ও মেকানিক খুঁজুন';
+
+  @override
+  String get simpleBikeNearbyFuel => 'পেট্রোল পাম্প';
+
+  @override
+  String get simpleBikeNearbyGarage => 'মেকানিক';
+
+  @override
+  String get simpleBikeNearbyNone => '15 কিমির মধ্যে কিছু পাওয়া যায়নি।';
+
+  @override
+  String simpleBikeNearbyDistance(String km) {
+    return '$km কিমি দূরে';
+  }
+
+  @override
+  String get simpleBikeNoBikeTitle => 'আগে আপনার বাইক যোগ করুন';
+
+  @override
+  String get simpleBikeNoBikeBody =>
+      'এর সার্ভিস, জ্বালানি আর কাগজপত্র এখানে দেখাবে।';
+
+  @override
+  String get simpleBikeAddBike => 'বাইক যোগ করুন';
+
+  @override
   String get simpleModeTitle => 'সহজ মোড';
 
   @override
