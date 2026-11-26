@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/features/ride/presentation/widgets/ride_actions_menu.dart';
+import 'package:throttleiq/features/ride/presentation/widgets/phone_placement_selector.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
@@ -246,6 +248,28 @@ void main() {
       await pump(tester, braking, prefs: {'settings_alert_flash': false});
       expect(overlay, findsNothing);
       expect(find.text('Pause'), findsOneWidget);
+    });
+  });
+
+  group('the top bar', () {
+    // Indriyo on, so its mirror button would show in the full app.
+    const prefs = {'indriyo_enabled': true};
+
+    testWidgets('full app: phone placement, Share, Indriyo and the ⋮ menu',
+        (tester) async {
+      await pump(tester, active, prefs: prefs);
+      expect(find.byType(PhonePlacementSelector), findsOneWidget);
+      expect(find.byTooltip('Turn on & share live location'), findsOneWidget);
+      expect(find.byTooltip('Toggle Indriyo ADAS Mirror'), findsOneWidget);
+      expect(find.byType(RideActionsMenu), findsOneWidget);
+    });
+
+    testWidgets('Simple mode: only Share (and the ride timer)', (tester) async {
+      await pump(tester, active, prefs: {...prefs, 'module_simple': true});
+      expect(find.byTooltip('Turn on & share live location'), findsOneWidget);
+      expect(find.byType(PhonePlacementSelector), findsNothing);
+      expect(find.byTooltip('Toggle Indriyo ADAS Mirror'), findsNothing);
+      expect(find.byType(RideActionsMenu), findsNothing);
     });
   });
 }

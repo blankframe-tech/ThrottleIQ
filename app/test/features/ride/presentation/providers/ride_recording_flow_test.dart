@@ -6,6 +6,7 @@ import 'package:firebase_core_platform_interface/test.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/core/services/app_modules.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:mockito/mockito.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -234,4 +235,33 @@ void main() {
       await n.stopRide();
     });
   });
+
+  test('Simple mode rides on battery saver; its toggle is hidden there',
+      () async {
+    final c = ProviderContainer(overrides: [
+      syncManagerProvider.overrideWithValue(_Sync()),
+      currentUserProvider.overrideWithValue(_User()),
+      realtimeServicesProvider
+          .overrideWith((ref) => RealtimeServices.disabled()),
+      appModulesProvider
+          .overrideWith((ref) => _Modules(const AppModules(simple: true))),
+    ]);
+    addTearDown(c.dispose);
+    // The default a ride restored after a kill starts from.
+    expect(c.read(batterySaverProvider), isTrue);
+    final n = c.read(rideRecordingProvider.notifier);
+
+    await quietly(() async {
+      await n.startRide(bikeId: 'b1');
+      expect(c.read(batterySaverProvider), isTrue,
+          reason: 'on at any battery level in Simple');
+      await n.stopRide();
+    });
+  });
+}
+
+class _Modules extends StateNotifier<AppModules> implements AppModulesNotifier {
+  _Modules(super.state);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
