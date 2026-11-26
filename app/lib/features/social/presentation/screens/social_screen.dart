@@ -199,7 +199,7 @@ class _SocialScreenState extends State<SocialScreen> {
         body: TabBarView(
           children: [
             const _FeedTab(),
-            const _PeopleTab(),
+            const SocialPeopleTab(),
             // The Hubs lens's search shortcut opens this same AppBar search
             // rather than carrying a second, forum-only search box.
             ForumsHomeScreen(

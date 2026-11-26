@@ -231,9 +231,9 @@ class _ProfileBody extends ConsumerWidget {
               ],
             ),
           ),
-          // Follows and the follow QR are social; a rider with social off
-          // sees their own profile without them.
-          if (ref.watch(appModulesProvider).social) ...[
+          // Follows and the follow QR are People; a rider with Community
+          // off sees their own profile without them.
+          if (ref.watch(appModulesProvider).people) ...[
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -279,38 +279,42 @@ class _ProfileBody extends ConsumerWidget {
                     variant: FollowButtonVariant.prominent,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () async {
-                      try {
-                        final chatId = await ref
-                            .read(chatRepositoryProvider)
-                            .getOrCreateChat(myUid!, profile.uid);
-                        if (context.mounted) {
-                          context.push('/chats/$chatId', extra: profile);
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(mapFirestoreError(e, context.l10n)),
-                              action: SnackBarAction(
-                                label: context.l10n.report,
-                                onPressed: () => BugReportSheet.show(context),
+                // Chat is social: Simple mode keeps People without it.
+                if (ref.watch(appModulesProvider).social) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () async {
+                        try {
+                          final chatId = await ref
+                              .read(chatRepositoryProvider)
+                              .getOrCreateChat(myUid!, profile.uid);
+                          if (context.mounted) {
+                            context.push('/chats/$chatId', extra: profile);
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content:
+                                    Text(mapFirestoreError(e, context.l10n)),
+                                action: SnackBarAction(
+                                  label: context.l10n.report,
+                                  onPressed: () => BugReportSheet.show(context),
+                                ),
                               ),
-                            ),
-                          );
+                            );
+                          }
                         }
-                      }
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: context.palette.primary,
-                      side: BorderSide(color: context.palette.primary),
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: context.palette.primary,
+                        side: BorderSide(color: context.palette.primary),
+                      ),
+                      child: Text(context.l10n.message),
                     ),
-                    child: Text(context.l10n.message),
                   ),
-                ),
+                ],
               ],
             ),
           ],

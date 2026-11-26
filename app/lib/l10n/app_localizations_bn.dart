@@ -6970,6 +6970,259 @@ class AppLocalizationsBn extends AppLocalizations {
       'হয়ে গেছে। আপনার ট্যাবে এখন শুধু যা ব্যবহার করেন তা-ই আছে।';
 
   @override
+  String get simpleRidesWeekTitle => 'গত 7 দিন';
+
+  @override
+  String get simpleRidesListTitle => 'আপনার রাইড';
+
+  @override
+  String get simpleRidesFuel => 'জ্বালানি খরচ (আনুমানিক)';
+
+  @override
+  String simpleRidesWeekSemantics(String days) {
+    return 'গত 7 দিনে প্রতিদিন কত কিমি চালিয়েছেন: $days';
+  }
+
+  @override
+  String simpleRidesFuelCost(String amount) {
+    return 'জ্বালানি প্রায় ৳$amount';
+  }
+
+  @override
+  String simpleRidesDurationHm(int hours, int minutes) {
+    return '$hours ঘণ্টা $minutes মিনিট';
+  }
+
+  @override
+  String simpleRidesDurationM(int minutes) {
+    return '$minutes মিনিট';
+  }
+
+  @override
+  String get simpleRidesEmptyTitle => 'এখনো কোনো রাইড নেই';
+
+  @override
+  String get simpleRidesEmptyBody =>
+      'রাইড শুরু করুন, এখানে তার দূরত্ব, সময় আর জ্বালানি খরচ দেখাবে।';
+
+  @override
+  String get simpleRidesStartRide => 'রাইড শুরু করুন';
+
+  @override
+  String get simpleRidesNoBikeTitle => 'আগে আপনার বাইক যোগ করুন';
+
+  @override
+  String get simpleRidesNoBikeBody =>
+      'রাইড আপনার বাইকের সাথে সেভ হয়, তাই শুরু করতে বাইকটি যোগ করুন।';
+
+  @override
+  String get simpleRidesAddBike => 'বাইক যোগ করুন';
+
+  @override
+  String get simpleRidesDistance => 'দূরত্ব';
+
+  @override
+  String get simpleRidesTime => 'সময়';
+
+  @override
+  String get simpleRidesTopSpeed => 'সর্বোচ্চ গতি';
+
+  @override
+  String get simpleRidesAvgSpeed => 'গড় গতি';
+
+  @override
+  String get simpleRidesNotFound => 'এই রাইডটি এই ফোনে নেই।';
+
+  @override
+  String get simpleBikeChecksTitle => 'রক্ষণাবেক্ষণ';
+
+  @override
+  String get simpleBikeCheckOk => 'ঠিক আছে';
+
+  @override
+  String get simpleBikeCheckDone => 'করা হয়েছে';
+
+  @override
+  String simpleBikeChecksFine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি চেক ঠিক আছে',
+      one: '1টি চেক ঠিক আছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get simpleBikeSetupBody =>
+      'এখনো কোনো চেক সেট করা হয়নি। কোনটা শেষ কবে করেছেন জানান, আমরা মনে করিয়ে দেব।';
+
+  @override
+  String get simpleBikeSetupAction => 'রক্ষণাবেক্ষণ সেট আপ করুন';
+
+  @override
+  String get simpleBikeFuelTitle => 'জ্বালানির হিসাব';
+
+  @override
+  String get simpleBikeFuelEmpty => 'এখনো কোনো জ্বালানি নেওয়ার হিসাব নেই।';
+
+  @override
+  String get simpleBikeAddFuel => 'জ্বালানি যোগ করুন';
+
+  @override
+  String simpleBikeFuelLitres(String litres) {
+    return '$litres লিটার';
+  }
+
+  @override
+  String get simpleBikeNearbyTitle => 'কাছাকাছি খুঁজুন';
+
+  @override
+  String get simpleBikeNearbyAction => 'কাছের পেট্রোল পাম্প ও মেকানিক খুঁজুন';
+
+  @override
+  String get simpleBikeNearbyFuel => 'পেট্রোল পাম্প';
+
+  @override
+  String get simpleBikeNearbyGarage => 'মেকানিক';
+
+  @override
+  String get simpleBikeNearbyNone => '15 কিমির মধ্যে কিছু পাওয়া যায়নি।';
+
+  @override
+  String simpleBikeNearbyDistance(String km) {
+    return '$km কিমি দূরে';
+  }
+
+  @override
+  String get simpleBikeNoBikeTitle => 'আগে আপনার বাইক যোগ করুন';
+
+  @override
+  String get simpleBikeNoBikeBody =>
+      'এর সার্ভিস, জ্বালানি আর কাগজপত্র এখানে দেখাবে।';
+
+  @override
+  String get simpleBikeAddBike => 'বাইক যোগ করুন';
+
+  @override
+  String get simpleModeTitle => 'সহজ মোড';
+
+  @override
+  String get simpleModeSubtitle =>
+      'শুধু দরকারি জিনিস: বড় বাটন, সহজ সংখ্যা। যেকোনো সময় বন্ধ করলে সব আবার ফিরে আসবে।';
+
+  @override
+  String get simpleModeOnTitle => 'সহজ মোড চালু করবেন?';
+
+  @override
+  String get simpleModeOnBody =>
+      'আপনি শুধু দরকারি জিনিস দেখবেন। ফোরাম, চ্যাট, রাইড ফিড, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। যেকোনো সময় সেটিংস → অ্যাডভান্সড থেকে বন্ধ করলেই সব ফিরে আসবে।';
+
+  @override
+  String get simpleModeOnAction => 'সহজ মোড চালু করুন';
+
+  @override
+  String get simpleModeNavHome => 'হোম';
+
+  @override
+  String get simpleModeNavBike => 'বাইক';
+
+  @override
+  String get simpleModeOffSnack => 'পুরো অ্যাপ আবার চালু হয়েছে।';
+
+  @override
+  String get simpleModeCommunityPeople =>
+      'সহজ মোডে মানুষ থাকে: রাইডার খুঁজুন ও ফলো করুন। ফোরাম, চ্যাট আর রাইড ফিড লুকানো থাকে।';
+
+  @override
+  String get simpleModeCommunityHidden => 'সহজ মোডে কমিউনিটি লুকানো থাকে।';
+
+  @override
+  String get simpleHomeOpenRide => 'রাইড চলছে: খুলুন';
+
+  @override
+  String get simpleHomeNoBike =>
+      'আপনার বাইক যোগ করুন, তাহলে রাইড, জ্বালানি আর সার্ভিস এক জায়গায় দেখবেন।';
+
+  @override
+  String get simpleHomeNoFuel =>
+      'এখনও জ্বালানি যোগ করা হয়নি। খরচ আর মাইলেজ দেখতে পরের বার তেল নিয়ে যোগ করুন।';
+
+  @override
+  String get simpleHomeThisMonth => 'এই মাসে';
+
+  @override
+  String get simpleHomeKmRidden => 'কিমি চালিয়েছেন';
+
+  @override
+  String get simpleHomeFuelSpent => 'জ্বালানিতে খরচ';
+
+  @override
+  String simpleHomeMileageGood(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · ভালো';
+  }
+
+  @override
+  String simpleHomeMileageOkay(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · মোটামুটি';
+  }
+
+  @override
+  String simpleHomeMileageLow(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · স্বাভাবিকের চেয়ে কম';
+  }
+
+  @override
+  String simpleHomeMileageAverage(String kmpl) {
+    return 'আপনার স্বাভাবিক: $kmpl km/L';
+  }
+
+  @override
+  String get simpleHomeMileageNotEnough =>
+      'মাইলেজ: এখনও যথেষ্ট তথ্য নেই। দেখতে দুইবার ফুল ট্যাংক তেল নিন।';
+
+  @override
+  String simpleHomeMileageFirst(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · যাচাই করতে আরও একবার ফুল ট্যাংক তেল নিন';
+  }
+
+  @override
+  String get simpleHomeHelp => 'জরুরি';
+
+  @override
+  String get simpleHomeHelpTitle => 'জরুরি সাহায্য';
+
+  @override
+  String get simpleHomeHelpBody =>
+      'পরিবারের কাউকে কল করুন, অথবা আপনি কোথায় আছেন তা মেসেজে পাঠান। মেসেজ অ্যাপে পাঠান না চাপা পর্যন্ত কিছুই যায় না।';
+
+  @override
+  String get simpleHomeSendLocation => 'আমার লোকেশন পাঠান';
+
+  @override
+  String simpleHomeLocationSms(String link) {
+    return 'আমার সাহায্য দরকার। আমি এখানে আছি: $link';
+  }
+
+  @override
+  String get simpleHomeLocationFailed =>
+      'আপনার লোকেশন পাওয়া যায়নি। লোকেশন চালু আছে কিনা দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get simpleHomeSmsFailed => 'মেসেজ অ্যাপ খোলা যায়নি।';
+
+  @override
+  String get simpleHomeNoContacts =>
+      'আপনি এখনও পরিবারের কোনো কন্টাক্ট যোগ করেননি।';
+
+  @override
+  String get simpleHomeAddContact => 'পরিবারের কন্টাক্ট যোগ করুন';
+
+  @override
+  String get simpleHomeContactsFailed =>
+      'পরিবারের কন্টাক্টগুলো লোড করা যায়নি। ইন্টারনেট চেক করে আবার চেষ্টা করুন।';
+
+  @override
   String get manualOdometerHint =>
       'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
 

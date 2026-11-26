@@ -11,6 +11,10 @@ Where only part of a section is resolved, the still-open parts are in
 
 ---
 
+## 2026-11-26 `year_story_video_test` failed under the full suite — FIXED (with the Simple mode redesign, ThrottleEZ)
+
+- **"films every page at 1080x1920"** waited a fixed 20,000 event-loop turns for the real frame captures and file writes. On a busy `scripts/check.sh` run the turns ran out before the fake encoder started (`encoder.started!` null), twice in a row, while the test passed alone. `runUntil` now waits by wall-clock time (up to 2 minutes). Test-only; the video feature was not involved.
+
 ## 2026-11-11 Crashlytics, build 39: five crashes — FIXED (PRs #224, #226; on `main`, not yet in a shipped build)
 
 - **google_fonts "Network is unreachable" (40 crashes, 1 user):** the app fetched IBM Plex and Space Grotesk at runtime, which threw on a first launch with no network. The 6 font files it uses now ship in `app/assets/google_fonts/` (named `<Family>-<Weight>.ttf`, which google_fonts loads before fetching; the 4 test fonts moved there and Space Grotesk 500/600 were added). `test/key_screens.dart` fails if the app asks for a weight that isn't bundled; a new weight needs its file too. This supersedes the "no font assets" note in the 2026-08-11 section below.

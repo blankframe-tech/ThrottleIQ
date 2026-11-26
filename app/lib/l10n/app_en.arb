@@ -9655,6 +9655,351 @@
   "@modulesUpdatedSnack": {
     "description": "Settings → Your ThrottleIQ (app modules)."
   },
+  "simpleRidesWeekTitle": "Last 7 days",
+  "@simpleRidesWeekTitle": {
+    "description": "Simple mode Rides tab: title of the km-per-day bar chart."
+  },
+  "simpleRidesListTitle": "Your rides",
+  "@simpleRidesListTitle": {
+    "description": "Simple mode Rides tab: heading above the list of rides."
+  },
+  "simpleRidesFuel": "Fuel cost (estimate)",
+  "@simpleRidesFuel": {
+    "description": "Simple mode ride detail: label under the ride's estimated fuel cost in taka."
+  },
+  "simpleRidesWeekSemantics": "Kilometres ridden each day, last 7 days: {days}",
+  "@simpleRidesWeekSemantics": {
+    "description": "Screen-reader label for the Rides tab bar chart. {days} is a list like 'Mon 12 km, Tue 0 km'.",
+    "placeholders": {
+      "days": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleRidesFuelCost": "Fuel about ৳{amount}",
+  "@simpleRidesFuelCost": {
+    "description": "Simple mode ride card: estimated fuel cost of the ride in taka.",
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleRidesDurationHm": "{hours} h {minutes} min",
+  "@simpleRidesDurationHm": {
+    "description": "Simple mode ride time, an hour or more.",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "simpleRidesDurationM": "{minutes} min",
+  "@simpleRidesDurationM": {
+    "description": "Simple mode ride time, under an hour.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "simpleRidesEmptyTitle": "No rides yet",
+  "@simpleRidesEmptyTitle": {
+    "description": "Simple mode Rides tab empty state title."
+  },
+  "simpleRidesEmptyBody": "Start a ride and it shows up here with its distance, time and fuel cost.",
+  "@simpleRidesEmptyBody": {
+    "description": "Simple mode Rides tab empty state body."
+  },
+  "simpleRidesStartRide": "START RIDE",
+  "@simpleRidesStartRide": {
+    "description": "Simple mode Rides tab empty state button: starts recording a ride."
+  },
+  "simpleRidesNoBikeTitle": "Add your bike first",
+  "@simpleRidesNoBikeTitle": {
+    "description": "Simple mode Rides tab when there is no bike."
+  },
+  "simpleRidesNoBikeBody": "Rides are saved to your bike, so add it to start.",
+  "@simpleRidesNoBikeBody": {
+    "description": "Simple mode Rides tab when there is no bike."
+  },
+  "simpleRidesAddBike": "Add bike",
+  "@simpleRidesAddBike": {
+    "description": "Simple mode Rides tab button that opens the add-bike form."
+  },
+  "simpleRidesDistance": "Distance",
+  "@simpleRidesDistance": {
+    "description": "Simple mode ride detail: distance label."
+  },
+  "simpleRidesTime": "Time",
+  "@simpleRidesTime": {
+    "description": "Simple mode ride detail: ride time label."
+  },
+  "simpleRidesTopSpeed": "Top speed",
+  "@simpleRidesTopSpeed": {
+    "description": "Simple mode ride detail: top speed label."
+  },
+  "simpleRidesAvgSpeed": "Average speed",
+  "@simpleRidesAvgSpeed": {
+    "description": "Simple mode ride detail: average speed label."
+  },
+  "simpleRidesNotFound": "This ride isn't on this phone.",
+  "@simpleRidesNotFound": {
+    "description": "Simple mode ride detail when the ride can't be found."
+  },
+  "simpleBikeChecksTitle": "Maintenance",
+  "@simpleBikeChecksTitle": {
+    "description": "Simple mode Bike tab: maintenance checklist title."
+  },
+  "simpleBikeCheckOk": "OK",
+  "@simpleBikeCheckOk": {
+    "description": "Simple mode Bike tab: a check that isn't due yet."
+  },
+  "simpleBikeCheckDone": "Done",
+  "@simpleBikeCheckDone": {
+    "description": "Simple mode Bike tab: button that logs a service as done."
+  },
+  "simpleBikeChecksFine": "{count, plural, =1{1 check is fine} other{{count} checks are fine}}",
+  "@simpleBikeChecksFine": {
+    "description": "Simple mode Bike tab: the folded row holding the maintenance checks that aren't due yet; tap to show them.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
+  "simpleBikeSetupBody": "No checks set up yet. Tell us when each was last done and we'll remind you.",
+  "@simpleBikeSetupBody": {
+    "description": "Simple mode Bike tab when no maintenance checks are tracked."
+  },
+  "simpleBikeSetupAction": "Set up maintenance",
+  "@simpleBikeSetupAction": {
+    "description": "Simple mode Bike tab button that opens maintenance setup."
+  },
+  "simpleBikeFuelTitle": "Fuel history",
+  "@simpleBikeFuelTitle": {
+    "description": "Simple mode Bike tab: fuel fill-ups title."
+  },
+  "simpleBikeFuelEmpty": "No fill-ups yet.",
+  "@simpleBikeFuelEmpty": {
+    "description": "Simple mode Bike tab when no fuel is logged."
+  },
+  "simpleBikeAddFuel": "Add fuel",
+  "@simpleBikeAddFuel": {
+    "description": "Simple mode Bike tab button that opens the fuel fill-up form."
+  },
+  "simpleBikeFuelLitres": "{litres} L",
+  "@simpleBikeFuelLitres": {
+    "description": "Simple mode Bike tab: litres in one fill-up.",
+    "placeholders": {
+      "litres": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleBikeNearbyTitle": "Find nearby",
+  "@simpleBikeNearbyTitle": {
+    "description": "Simple mode Bike tab: nearby fuel stations and mechanics title."
+  },
+  "simpleBikeNearbyAction": "Find fuel and mechanics near me",
+  "@simpleBikeNearbyAction": {
+    "description": "Simple mode Bike tab button; uses location only when tapped."
+  },
+  "simpleBikeNearbyFuel": "Fuel stations",
+  "@simpleBikeNearbyFuel": {
+    "description": "Simple mode Bike tab: nearby fuel stations heading."
+  },
+  "simpleBikeNearbyGarage": "Mechanics",
+  "@simpleBikeNearbyGarage": {
+    "description": "Simple mode Bike tab: nearby mechanics heading."
+  },
+  "simpleBikeNearbyNone": "None found within 15 km.",
+  "@simpleBikeNearbyNone": {
+    "description": "Simple mode Bike tab when no place of that kind is nearby."
+  },
+  "simpleBikeNearbyDistance": "{km} km away",
+  "@simpleBikeNearbyDistance": {
+    "description": "Simple mode Bike tab: distance to a nearby place.",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleBikeNoBikeTitle": "Add your bike first",
+  "@simpleBikeNoBikeTitle": {
+    "description": "Simple mode Bike tab when there is no bike."
+  },
+  "simpleBikeNoBikeBody": "Its service checks, fuel and papers show up here.",
+  "@simpleBikeNoBikeBody": {
+    "description": "Simple mode Bike tab when there is no bike."
+  },
+  "simpleBikeAddBike": "Add bike",
+  "@simpleBikeAddBike": {
+    "description": "Simple mode Bike tab button that opens the add-bike form."
+  },
+  "simpleModeTitle": "Simple mode",
+  "@simpleModeTitle": {
+    "description": "Settings → Your ThrottleIQ: Simple mode (ThrottleEZ) switch title."
+  },
+  "simpleModeSubtitle": "Just the basics: big buttons, plain numbers. Turn it off any time to get everything back.",
+  "@simpleModeSubtitle": {
+    "description": "Settings → Your ThrottleIQ: Simple mode switch subtitle."
+  },
+  "simpleModeOnTitle": "Switch to Simple mode?",
+  "@simpleModeOnTitle": {
+    "description": "Confirm dialog title when turning Simple mode on."
+  },
+  "simpleModeOnBody": "You'll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.",
+  "@simpleModeOnBody": {
+    "description": "Confirm dialog body when turning Simple mode on."
+  },
+  "simpleModeOnAction": "Switch to Simple",
+  "@simpleModeOnAction": {
+    "description": "Confirm button that turns Simple mode on."
+  },
+  "simpleModeNavHome": "Home",
+  "@simpleModeNavHome": {
+    "description": "Simple mode bottom-nav label for the Home tab."
+  },
+  "simpleModeNavBike": "Bike",
+  "@simpleModeNavBike": {
+    "description": "Simple mode bottom-nav label for the Bike tab."
+  },
+  "simpleModeOffSnack": "Full app is back.",
+  "@simpleModeOffSnack": {
+    "description": "Snack after turning Simple mode off."
+  },
+  "simpleModeCommunityPeople": "Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.",
+  "@simpleModeCommunityPeople": {
+    "description": "Settings → Advanced → Your ThrottleIQ, in Simple mode with Community on: replaces the community picker and says what Simple keeps."
+  },
+  "simpleModeCommunityHidden": "Community is hidden in Simple mode.",
+  "@simpleModeCommunityHidden": {
+    "description": "Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on."
+  },
+  "simpleHomeOpenRide": "Ride running: open it",
+  "@simpleHomeOpenRide": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeNoBike": "Add your bike to see your rides, fuel and service in one place.",
+  "@simpleHomeNoBike": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeNoFuel": "No fuel added yet. Add your next fill to see what you spend and your mileage.",
+  "@simpleHomeNoFuel": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeThisMonth": "This month",
+  "@simpleHomeThisMonth": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeKmRidden": "km ridden",
+  "@simpleHomeKmRidden": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeFuelSpent": "spent on fuel",
+  "@simpleHomeFuelSpent": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeMileageGood": "Mileage {kmpl} km/L · good",
+  "@simpleHomeMileageGood": {
+    "description": "Simple mode Home tab (#241).",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeMileageOkay": "Mileage {kmpl} km/L · okay",
+  "@simpleHomeMileageOkay": {
+    "description": "Simple mode Home tab (#241).",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeMileageLow": "Mileage {kmpl} km/L · lower than usual",
+  "@simpleHomeMileageLow": {
+    "description": "Simple mode Home tab (#241).",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeMileageAverage": "Your usual: {kmpl} km/L",
+  "@simpleHomeMileageAverage": {
+    "description": "Simple mode Home tab (#241).",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeMileageNotEnough": "Mileage: not enough data yet. Fill the tank full twice to see it.",
+  "@simpleHomeMileageNotEnough": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeMileageFirst": "Mileage {kmpl} km/L · one more full tank to judge it",
+  "@simpleHomeMileageFirst": {
+    "description": "Simple mode Home tab (#241): one measured full-to-full stretch, so a km/L but no good/low verdict yet.",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeHelp": "Emergency",
+  "@simpleHomeHelp": {
+    "description": "Simple mode: tooltip and screen-reader label of the red SOS button in every Simple tab's app bar; opens the call-family sheet."
+  },
+  "simpleHomeHelpTitle": "Emergency",
+  "@simpleHomeHelpTitle": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeHelpBody": "Call a family contact, or text them where you are. Nothing is sent until you press send in your messages app.",
+  "@simpleHomeHelpBody": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeSendLocation": "Send my location",
+  "@simpleHomeSendLocation": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeLocationSms": "I need help. I'm here: {link}",
+  "@simpleHomeLocationSms": {
+    "description": "Simple mode Home tab (#241).",
+    "placeholders": {
+      "link": {
+        "type": "String"
+      }
+    }
+  },
+  "simpleHomeLocationFailed": "Couldn't get your location. Check that location is on, then try again.",
+  "@simpleHomeLocationFailed": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeSmsFailed": "Couldn't open your messages app.",
+  "@simpleHomeSmsFailed": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeNoContacts": "You haven't added a family contact yet.",
+  "@simpleHomeNoContacts": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeAddContact": "Add a family contact",
+  "@simpleHomeAddContact": {
+    "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeContactsFailed": "Couldn't load your family contacts. Check your internet, then try again.",
+  "@simpleHomeContactsFailed": {
+    "description": "Simple mode Home tab (#241): Help sheet, the emergency contacts failed to load."
+  },
   "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
   "@manualOdometerHint": {
     "description": "Settings → Your ThrottleIQ (app modules)."

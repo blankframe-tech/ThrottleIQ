@@ -50,6 +50,12 @@ import '../../features/poi_directory/presentation/screens/place_detail_screen.da
 import '../../features/poi_directory/presentation/screens/my_places_list_screen.dart';
 import '../../features/social/presentation/screens/my_shared_rides_screen.dart';
 import '../../shared/widgets/app_shell.dart';
+import '../../features/simple/presentation/screens/simple_home_screen.dart';
+import '../../features/simple/presentation/screens/simple_rides_screen.dart';
+import '../../features/simple/presentation/screens/simple_ride_detail_screen.dart';
+import '../../features/simple/presentation/screens/simple_bike_screen.dart';
+import '../../features/simple/presentation/screens/simple_people_screen.dart';
+import '../../features/simple/presentation/providers/simple_bike_provider.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_room_screen.dart';
 import '../../features/profile/domain/entities/user_profile_entity.dart';
@@ -68,8 +74,17 @@ class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(Ref ref) {
     ref.listen(authStateProvider, (_, __) => notifyListeners());
     ref.listen(appModulesProvider, (_, __) => notifyListeners());
+    ref.listen(_simpleRedirectBikeId, (_, __) => notifyListeners());
   }
 }
+
+/// Simple mode's bike id, for the maintenance-link redirect. A cold-start
+/// notification arrives before the garage loads; this re-runs the redirect
+/// once it does. Null in full mode, which never loads the garage for it.
+final _simpleRedirectBikeId = Provider<String?>((ref) =>
+    ref.watch(appModulesProvider.select((m) => m.simple))
+        ? ref.watch(simpleBikeProvider)?.id
+        : null);
 
 /// Pure redirect decision, extracted for unit testing (see app_router_test.dart).
 /// Returns the path to redirect to, or null to stay put.
@@ -110,7 +125,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       // ThrottleIQ) lands on their home tab instead — deep links, widgets
       // and notifications included.
       final modules = ref.read(appModulesProvider);
-      return modules.redirectFor(authRedirect ?? state.matchedLocation) ??
+      // One rule reads the query: Simple mode's maintenance ?bikeId.
+      final atMaintenance =
+          modules.simple && state.matchedLocation == '/home/maintenance';
+      final location = authRedirect ??
+          (atMaintenance
+              ? '/home/maintenance?${state.uri.query}'
+              : state.matchedLocation);
+      return modules.redirectFor(location,
+              simpleBikeId:
+                  atMaintenance ? ref.read(simpleBikeProvider)?.id : null) ??
           authRedirect;
     },
     routes: [
@@ -440,6 +464,33 @@ final routerProvider = Provider<GoRouter>((ref) {
                   ],
                 ),
               ],
+            ),
+            // Simple mode (ThrottleEZ) tabs: People, Home, Rides, Bike. Only
+            // reachable with AppModules.simple on; redirectFor sends them home
+            // otherwise.
+            GoRoute(
+              path: '/home/simple',
+              builder: (_, __) => const SimpleHomeScreen(),
+            ),
+            GoRoute(
+              path: '/home/simple-rides',
+              builder: (_, __) => const SimpleRidesScreen(),
+              routes: [
+                GoRoute(
+                  path: ':rideId',
+                  builder: (_, state) => SimpleRideDetailScreen(
+                    rideId: state.pathParameters['rideId']!,
+                  ),
+                ),
+              ],
+            ),
+            GoRoute(
+              path: '/home/simple-bike',
+              builder: (_, __) => const SimpleBikeScreen(),
+            ),
+            GoRoute(
+              path: '/home/simple-people',
+              builder: (_, __) => const SimplePeopleScreen(),
             ),
           ])
             StatefulShellBranch(routes: [route]),

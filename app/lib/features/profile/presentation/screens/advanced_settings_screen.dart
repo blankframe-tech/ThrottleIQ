@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/services/app_modules.dart';
 import '../../../../core/services/crash_detection_settings.dart';
@@ -312,32 +313,52 @@ class _AppModulesSection extends ConsumerWidget {
             style:
                 TextStyle(fontSize: 12, color: context.palette.textTertiary)),
         const SizedBox(height: 12),
-        Text(l10n.communityFieldLabel,
-            style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.palette.textSecondary)),
-        const SizedBox(height: 6),
-        Container(
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: context.palette.surface,
-            borderRadius: BorderRadius.circular(context.shape.radiusMd),
-            border: Border.all(color: context.palette.border),
-          ),
-          child: Row(
-            children: [
-              community(CommunityMode.full, l10n.communityFullLabel,
-                  l10n.communityFullDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.forumsOnly, l10n.communityForumsLabel,
-                  l10n.communityForumsDescription),
-              const SizedBox(width: 4),
-              community(CommunityMode.off, l10n.communityOffLabel,
-                  l10n.communityOffDescription),
-            ],
-          ),
+        _ModuleSwitchTile(
+          key: const Key('simple_mode_switch'),
+          icon: Icons.auto_awesome_outlined,
+          title: l10n.simpleModeTitle,
+          subtitle: l10n.simpleModeSubtitle,
+          value: modules.simple,
+          onChanged: (v) => _setSimple(context, ref, v),
         ),
+        const SizedBox(height: 10),
+        // Simple mode keeps at most People whatever this says, and _apply's
+        // warnings would read the forced-off getters: no picker until it's off.
+        if (modules.simple)
+          Text(
+              modules.people
+                  ? l10n.simpleModeCommunityPeople
+                  : l10n.simpleModeCommunityHidden,
+              style:
+                  TextStyle(fontSize: 12, color: context.palette.textTertiary))
+        else ...[
+          Text(l10n.communityFieldLabel,
+              style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: context.palette.textSecondary)),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: context.palette.surface,
+              borderRadius: BorderRadius.circular(context.shape.radiusMd),
+              border: Border.all(color: context.palette.border),
+            ),
+            child: Row(
+              children: [
+                community(CommunityMode.full, l10n.communityFullLabel,
+                    l10n.communityFullDescription),
+                const SizedBox(width: 4),
+                community(CommunityMode.forumsOnly, l10n.communityForumsLabel,
+                    l10n.communityForumsDescription),
+                const SizedBox(width: 4),
+                community(CommunityMode.off, l10n.communityOffLabel,
+                    l10n.communityOffDescription),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 10),
         _ModuleSwitchTile(
           icon: Icons.place_outlined,
@@ -357,6 +378,53 @@ class _AppModulesSection extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Simple mode (ThrottleEZ) hides whole areas at once, so it skips
+  /// [_apply]'s per-module warnings: turning it on asks once, turning it off
+  /// asks nothing. Then the rider lands on the new home tab.
+  Future<void> _setSimple(BuildContext context, WidgetRef ref, bool on) async {
+    final l10n = context.l10n;
+    final current = ref.read(appModulesProvider);
+    if (current.simple == on) return;
+    if (on) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogCtx) => AlertDialog(
+          backgroundColor: dialogCtx.palette.surface,
+          title: Text(dialogCtx.l10n.simpleModeOnTitle,
+              style: TextStyle(
+                  color: dialogCtx.palette.textPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold)),
+          content: Text(dialogCtx.l10n.simpleModeOnBody,
+              style: TextStyle(
+                  color: dialogCtx.palette.textSecondary,
+                  fontSize: 14,
+                  height: 1.4)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(false),
+              style: TextButton.styleFrom(
+                  foregroundColor: dialogCtx.palette.textSecondary),
+              child: Text(dialogCtx.l10n.cancelAction),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(true),
+              child: Text(dialogCtx.l10n.simpleModeOnAction),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !context.mounted) return;
+    }
+    final next = current.copyWith(simple: on);
+    await ref.read(appModulesProvider.notifier).set(next);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content:
+            Text(on ? l10n.modulesUpdatedSnack : l10n.simpleModeOffSnack)));
+    context.go(next.home);
   }
 
   /// Confirms anything being turned off, then saves. Turning ride tracking

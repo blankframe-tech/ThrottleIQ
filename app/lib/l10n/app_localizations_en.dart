@@ -6993,6 +6993,258 @@ class AppLocalizationsEn extends AppLocalizations {
       'Done. Your tabs now show only what you use.';
 
   @override
+  String get simpleRidesWeekTitle => 'Last 7 days';
+
+  @override
+  String get simpleRidesListTitle => 'Your rides';
+
+  @override
+  String get simpleRidesFuel => 'Fuel cost (estimate)';
+
+  @override
+  String simpleRidesWeekSemantics(String days) {
+    return 'Kilometres ridden each day, last 7 days: $days';
+  }
+
+  @override
+  String simpleRidesFuelCost(String amount) {
+    return 'Fuel about ৳$amount';
+  }
+
+  @override
+  String simpleRidesDurationHm(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String simpleRidesDurationM(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get simpleRidesEmptyTitle => 'No rides yet';
+
+  @override
+  String get simpleRidesEmptyBody =>
+      'Start a ride and it shows up here with its distance, time and fuel cost.';
+
+  @override
+  String get simpleRidesStartRide => 'START RIDE';
+
+  @override
+  String get simpleRidesNoBikeTitle => 'Add your bike first';
+
+  @override
+  String get simpleRidesNoBikeBody =>
+      'Rides are saved to your bike, so add it to start.';
+
+  @override
+  String get simpleRidesAddBike => 'Add bike';
+
+  @override
+  String get simpleRidesDistance => 'Distance';
+
+  @override
+  String get simpleRidesTime => 'Time';
+
+  @override
+  String get simpleRidesTopSpeed => 'Top speed';
+
+  @override
+  String get simpleRidesAvgSpeed => 'Average speed';
+
+  @override
+  String get simpleRidesNotFound => 'This ride isn\'t on this phone.';
+
+  @override
+  String get simpleBikeChecksTitle => 'Maintenance';
+
+  @override
+  String get simpleBikeCheckOk => 'OK';
+
+  @override
+  String get simpleBikeCheckDone => 'Done';
+
+  @override
+  String simpleBikeChecksFine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checks are fine',
+      one: '1 check is fine',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get simpleBikeSetupBody =>
+      'No checks set up yet. Tell us when each was last done and we\'ll remind you.';
+
+  @override
+  String get simpleBikeSetupAction => 'Set up maintenance';
+
+  @override
+  String get simpleBikeFuelTitle => 'Fuel history';
+
+  @override
+  String get simpleBikeFuelEmpty => 'No fill-ups yet.';
+
+  @override
+  String get simpleBikeAddFuel => 'Add fuel';
+
+  @override
+  String simpleBikeFuelLitres(String litres) {
+    return '$litres L';
+  }
+
+  @override
+  String get simpleBikeNearbyTitle => 'Find nearby';
+
+  @override
+  String get simpleBikeNearbyAction => 'Find fuel and mechanics near me';
+
+  @override
+  String get simpleBikeNearbyFuel => 'Fuel stations';
+
+  @override
+  String get simpleBikeNearbyGarage => 'Mechanics';
+
+  @override
+  String get simpleBikeNearbyNone => 'None found within 15 km.';
+
+  @override
+  String simpleBikeNearbyDistance(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String get simpleBikeNoBikeTitle => 'Add your bike first';
+
+  @override
+  String get simpleBikeNoBikeBody =>
+      'Its service checks, fuel and papers show up here.';
+
+  @override
+  String get simpleBikeAddBike => 'Add bike';
+
+  @override
+  String get simpleModeTitle => 'Simple mode';
+
+  @override
+  String get simpleModeSubtitle =>
+      'Just the basics: big buttons, plain numbers. Turn it off any time to get everything back.';
+
+  @override
+  String get simpleModeOnTitle => 'Switch to Simple mode?';
+
+  @override
+  String get simpleModeOnBody =>
+      'You\'ll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
+
+  @override
+  String get simpleModeOnAction => 'Switch to Simple';
+
+  @override
+  String get simpleModeNavHome => 'Home';
+
+  @override
+  String get simpleModeNavBike => 'Bike';
+
+  @override
+  String get simpleModeOffSnack => 'Full app is back.';
+
+  @override
+  String get simpleModeCommunityPeople =>
+      'Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.';
+
+  @override
+  String get simpleModeCommunityHidden => 'Community is hidden in Simple mode.';
+
+  @override
+  String get simpleHomeOpenRide => 'Ride running: open it';
+
+  @override
+  String get simpleHomeNoBike =>
+      'Add your bike to see your rides, fuel and service in one place.';
+
+  @override
+  String get simpleHomeNoFuel =>
+      'No fuel added yet. Add your next fill to see what you spend and your mileage.';
+
+  @override
+  String get simpleHomeThisMonth => 'This month';
+
+  @override
+  String get simpleHomeKmRidden => 'km ridden';
+
+  @override
+  String get simpleHomeFuelSpent => 'spent on fuel';
+
+  @override
+  String simpleHomeMileageGood(String kmpl) {
+    return 'Mileage $kmpl km/L · good';
+  }
+
+  @override
+  String simpleHomeMileageOkay(String kmpl) {
+    return 'Mileage $kmpl km/L · okay';
+  }
+
+  @override
+  String simpleHomeMileageLow(String kmpl) {
+    return 'Mileage $kmpl km/L · lower than usual';
+  }
+
+  @override
+  String simpleHomeMileageAverage(String kmpl) {
+    return 'Your usual: $kmpl km/L';
+  }
+
+  @override
+  String get simpleHomeMileageNotEnough =>
+      'Mileage: not enough data yet. Fill the tank full twice to see it.';
+
+  @override
+  String simpleHomeMileageFirst(String kmpl) {
+    return 'Mileage $kmpl km/L · one more full tank to judge it';
+  }
+
+  @override
+  String get simpleHomeHelp => 'Emergency';
+
+  @override
+  String get simpleHomeHelpTitle => 'Emergency';
+
+  @override
+  String get simpleHomeHelpBody =>
+      'Call a family contact, or text them where you are. Nothing is sent until you press send in your messages app.';
+
+  @override
+  String get simpleHomeSendLocation => 'Send my location';
+
+  @override
+  String simpleHomeLocationSms(String link) {
+    return 'I need help. I\'m here: $link';
+  }
+
+  @override
+  String get simpleHomeLocationFailed =>
+      'Couldn\'t get your location. Check that location is on, then try again.';
+
+  @override
+  String get simpleHomeSmsFailed => 'Couldn\'t open your messages app.';
+
+  @override
+  String get simpleHomeNoContacts => 'You haven\'t added a family contact yet.';
+
+  @override
+  String get simpleHomeAddContact => 'Add a family contact';
+
+  @override
+  String get simpleHomeContactsFailed =>
+      'Couldn\'t load your family contacts. Check your internet, then try again.';
+
+  @override
   String get manualOdometerHint =>
       'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.';
 

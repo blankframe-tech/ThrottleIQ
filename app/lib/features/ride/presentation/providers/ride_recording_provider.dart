@@ -262,7 +262,10 @@ final rideRecordingProvider =
 /// - [SensorFusionCoordinator]: IMU streams, axis calibration, complementary filtering
 /// Rider-chosen battery saver for the ride in progress: no screen wakelock and
 /// coarser GPS. Session-only on purpose; each ride start resets it (on at 15% battery or less).
-final batterySaverProvider = StateProvider<bool>((ref) => false);
+/// Always on in Simple mode, which hides the toggle; a ride restored after
+/// the app was killed starts from this default too.
+final batterySaverProvider =
+    StateProvider<bool>((ref) => ref.read(appModulesProvider).simple);
 
 class RideRecordingNotifier extends StateNotifier<RideRecordingState>
     with WidgetsBindingObserver {
@@ -521,7 +524,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
       // a battery stream if riders report dying mid-ride.
       final level = await BatteryService.getBatteryLevel()
           .timeout(const Duration(seconds: 2), onTimeout: () => 100);
-      _ref.read(batterySaverProvider.notifier).state = level <= 15;
+      _ref.read(batterySaverProvider.notifier).state =
+          _ref.read(appModulesProvider).simple || level <= 15;
 
       final ride = RideEntity(
         id: _uuid.v4(),
@@ -1423,6 +1427,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     try {
       _ref.invalidate(garageProvider);
+      // Simple Home's km tile and Rides tab read this; it isn't autoDispose.
+      _ref.invalidate(rideHistoryProvider(ride.bikeId));
       unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
       unawaited(GpsDropLog.record(ride.id, kept: _gpsKept, dropped: _gpsDropped)
           .catchError((Object e) => debugPrint('[RideRecording] gps log: $e')));

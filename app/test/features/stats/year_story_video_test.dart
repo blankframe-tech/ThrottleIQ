@@ -92,8 +92,12 @@ void main() {
   }
 
   /// Image capture and file writes finish outside fake time.
+  /// The real frame captures and file writes run between pumps. A fixed
+  /// number of turns ran out under a busy full-suite run (the encoder never
+  /// started), so wait by time instead.
   Future<void> runUntil(WidgetTester tester, bool Function() done) async {
-    for (var i = 0; i < 20000 && !done(); i++) {
+    final clock = Stopwatch()..start();
+    while (!done() && clock.elapsed < const Duration(minutes: 2)) {
       await tester.runAsync(() => Future<void>.delayed(Duration.zero));
       await tester.pump();
     }

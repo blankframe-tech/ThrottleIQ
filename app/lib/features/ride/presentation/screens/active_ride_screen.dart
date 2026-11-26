@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../../core/services/app_modules.dart';
 import '../../../../core/constants/sensor_constants.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/theme/app_typography.dart';
@@ -458,6 +459,11 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
     // flips at most twice a ride, so rebuilding the frame for it is free.
     final sharingLive = ref
         .watch(rideRecordingProvider.select((s) => s.liveSessionToken != null));
+    // Simple mode's cockpit: the timer and Share up top, nothing else
+    // (no phone placement, Indriyo, or the ⋮ menu: checkpoint, parking pin,
+    // battery saver, minimize). Anything new on this bar should be hidden
+    // there too unless it is safety-critical.
+    final simple = ref.watch(appModulesProvider.select((m) => m.simple));
 
     return Scaffold(
       body: Stack(
@@ -552,8 +558,10 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
               ),
               child: Row(
                 children: [
-                  const PhonePlacementSelector(),
-                  const SizedBox(width: 8),
+                  if (!simple) ...[
+                    const PhonePlacementSelector(),
+                    const SizedBox(width: 8),
+                  ],
                   // The way back to the group map (push-to-talk) while on a
                   // live group ride. Before this the cockpit had no link to
                   // it at all — the Social "Riding Now" card was the only
@@ -587,7 +595,8 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                         ? context.l10n.liveSharing
                         : context.l10n.turnShareLiveLocation,
                   ),
-                  if (ref.watch(indriyoSettingsProvider).enabled) ...[
+                  if (!simple &&
+                      ref.watch(indriyoSettingsProvider).enabled) ...[
                     const SizedBox(width: 4),
                     IconButton(
                       onPressed: () =>
@@ -601,14 +610,15 @@ class _ActiveRideScreenState extends ConsumerState<ActiveRideScreen>
                       tooltip: 'Toggle Indriyo ADAS Mirror',
                     ),
                   ],
-                  const RideActionsMenu(),
+                  if (!simple) const RideActionsMenu(),
                 ],
               ),
             ),
           ),
 
           // ── Indriyo Digital Rearview Mirror HUD ───────────────────────────
-          if (ref.watch(indriyoSettingsProvider).enabled &&
+          if (!simple &&
+              ref.watch(indriyoSettingsProvider).enabled &&
               ref.watch(indriyoSettingsProvider).isHudVisible)
             Positioned(
               top: MediaQuery.of(context).padding.top + 54,

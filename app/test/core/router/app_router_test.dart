@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/router/app_router.dart';
+import 'package:throttleiq/core/services/app_modules.dart';
 import 'package:throttleiq/features/auth/presentation/providers/auth_provider.dart';
 import 'package:throttleiq/shared/widgets/app_shell.dart';
 
@@ -150,7 +151,11 @@ void main() {
     final roots = [
       for (final b in shell.branches) (b.routes.single as GoRoute).path,
     ];
-    expect(roots.toSet(), {...shellTabs, '/home/maintenance'});
+    expect(roots.toSet(), {
+      ...shellTabs,
+      '/home/maintenance',
+      ...const AppModules(simple: true).tabs,
+    });
     expect(roots.length, roots.toSet().length);
   });
 }

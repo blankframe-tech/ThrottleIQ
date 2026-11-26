@@ -81,8 +81,9 @@ class FollowLinkListener {
     final uid = parseFollowUri(uri);
     // Not a follow link (e.g. a home-widget throttleiq://startride, which
     // home_widget handles) — leave it alone. Follow links are ignored while
-    // the rider has social turned off (Settings → Your ThrottleIQ).
-    if (uid == null || !_ref.read(appModulesProvider).social) return;
+    // the rider has People off (Settings → Your ThrottleIQ); Simple mode
+    // keeps People, so they still work there.
+    if (uid == null || !_ref.read(appModulesProvider).people) return;
     _pendingUid = uid;
     try {
       await _ref.read(followLinkStoreProvider).savePendingFollow(uid);

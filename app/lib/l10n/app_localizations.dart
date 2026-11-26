@@ -11898,6 +11898,420 @@ abstract class AppLocalizations {
   /// **'Done. Your tabs now show only what you use.'**
   String get modulesUpdatedSnack;
 
+  /// Simple mode Rides tab: title of the km-per-day bar chart.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get simpleRidesWeekTitle;
+
+  /// Simple mode Rides tab: heading above the list of rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rides'**
+  String get simpleRidesListTitle;
+
+  /// Simple mode ride detail: label under the ride's estimated fuel cost in taka.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost (estimate)'**
+  String get simpleRidesFuel;
+
+  /// Screen-reader label for the Rides tab bar chart. {days} is a list like 'Mon 12 km, Tue 0 km'.
+  ///
+  /// In en, this message translates to:
+  /// **'Kilometres ridden each day, last 7 days: {days}'**
+  String simpleRidesWeekSemantics(String days);
+
+  /// Simple mode ride card: estimated fuel cost of the ride in taka.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel about ৳{amount}'**
+  String simpleRidesFuelCost(String amount);
+
+  /// Simple mode ride time, an hour or more.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} h {minutes} min'**
+  String simpleRidesDurationHm(int hours, int minutes);
+
+  /// Simple mode ride time, under an hour.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String simpleRidesDurationM(int minutes);
+
+  /// Simple mode Rides tab empty state title.
+  ///
+  /// In en, this message translates to:
+  /// **'No rides yet'**
+  String get simpleRidesEmptyTitle;
+
+  /// Simple mode Rides tab empty state body.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a ride and it shows up here with its distance, time and fuel cost.'**
+  String get simpleRidesEmptyBody;
+
+  /// Simple mode Rides tab empty state button: starts recording a ride.
+  ///
+  /// In en, this message translates to:
+  /// **'START RIDE'**
+  String get simpleRidesStartRide;
+
+  /// Simple mode Rides tab when there is no bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your bike first'**
+  String get simpleRidesNoBikeTitle;
+
+  /// Simple mode Rides tab when there is no bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Rides are saved to your bike, so add it to start.'**
+  String get simpleRidesNoBikeBody;
+
+  /// Simple mode Rides tab button that opens the add-bike form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add bike'**
+  String get simpleRidesAddBike;
+
+  /// Simple mode ride detail: distance label.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get simpleRidesDistance;
+
+  /// Simple mode ride detail: ride time label.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get simpleRidesTime;
+
+  /// Simple mode ride detail: top speed label.
+  ///
+  /// In en, this message translates to:
+  /// **'Top speed'**
+  String get simpleRidesTopSpeed;
+
+  /// Simple mode ride detail: average speed label.
+  ///
+  /// In en, this message translates to:
+  /// **'Average speed'**
+  String get simpleRidesAvgSpeed;
+
+  /// Simple mode ride detail when the ride can't be found.
+  ///
+  /// In en, this message translates to:
+  /// **'This ride isn\'t on this phone.'**
+  String get simpleRidesNotFound;
+
+  /// Simple mode Bike tab: maintenance checklist title.
+  ///
+  /// In en, this message translates to:
+  /// **'Maintenance'**
+  String get simpleBikeChecksTitle;
+
+  /// Simple mode Bike tab: a check that isn't due yet.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get simpleBikeCheckOk;
+
+  /// Simple mode Bike tab: button that logs a service as done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get simpleBikeCheckDone;
+
+  /// Simple mode Bike tab: the folded row holding the maintenance checks that aren't due yet; tap to show them.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 check is fine} other{{count} checks are fine}}'**
+  String simpleBikeChecksFine(int count);
+
+  /// Simple mode Bike tab when no maintenance checks are tracked.
+  ///
+  /// In en, this message translates to:
+  /// **'No checks set up yet. Tell us when each was last done and we\'ll remind you.'**
+  String get simpleBikeSetupBody;
+
+  /// Simple mode Bike tab button that opens maintenance setup.
+  ///
+  /// In en, this message translates to:
+  /// **'Set up maintenance'**
+  String get simpleBikeSetupAction;
+
+  /// Simple mode Bike tab: fuel fill-ups title.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel history'**
+  String get simpleBikeFuelTitle;
+
+  /// Simple mode Bike tab when no fuel is logged.
+  ///
+  /// In en, this message translates to:
+  /// **'No fill-ups yet.'**
+  String get simpleBikeFuelEmpty;
+
+  /// Simple mode Bike tab button that opens the fuel fill-up form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add fuel'**
+  String get simpleBikeAddFuel;
+
+  /// Simple mode Bike tab: litres in one fill-up.
+  ///
+  /// In en, this message translates to:
+  /// **'{litres} L'**
+  String simpleBikeFuelLitres(String litres);
+
+  /// Simple mode Bike tab: nearby fuel stations and mechanics title.
+  ///
+  /// In en, this message translates to:
+  /// **'Find nearby'**
+  String get simpleBikeNearbyTitle;
+
+  /// Simple mode Bike tab button; uses location only when tapped.
+  ///
+  /// In en, this message translates to:
+  /// **'Find fuel and mechanics near me'**
+  String get simpleBikeNearbyAction;
+
+  /// Simple mode Bike tab: nearby fuel stations heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel stations'**
+  String get simpleBikeNearbyFuel;
+
+  /// Simple mode Bike tab: nearby mechanics heading.
+  ///
+  /// In en, this message translates to:
+  /// **'Mechanics'**
+  String get simpleBikeNearbyGarage;
+
+  /// Simple mode Bike tab when no place of that kind is nearby.
+  ///
+  /// In en, this message translates to:
+  /// **'None found within 15 km.'**
+  String get simpleBikeNearbyNone;
+
+  /// Simple mode Bike tab: distance to a nearby place.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km away'**
+  String simpleBikeNearbyDistance(String km);
+
+  /// Simple mode Bike tab when there is no bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your bike first'**
+  String get simpleBikeNoBikeTitle;
+
+  /// Simple mode Bike tab when there is no bike.
+  ///
+  /// In en, this message translates to:
+  /// **'Its service checks, fuel and papers show up here.'**
+  String get simpleBikeNoBikeBody;
+
+  /// Simple mode Bike tab button that opens the add-bike form.
+  ///
+  /// In en, this message translates to:
+  /// **'Add bike'**
+  String get simpleBikeAddBike;
+
+  /// Settings → Your ThrottleIQ: Simple mode (ThrottleEZ) switch title.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple mode'**
+  String get simpleModeTitle;
+
+  /// Settings → Your ThrottleIQ: Simple mode switch subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Just the basics: big buttons, plain numbers. Turn it off any time to get everything back.'**
+  String get simpleModeSubtitle;
+
+  /// Confirm dialog title when turning Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Simple mode?'**
+  String get simpleModeOnTitle;
+
+  /// Confirm dialog body when turning Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
+  String get simpleModeOnBody;
+
+  /// Confirm button that turns Simple mode on.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch to Simple'**
+  String get simpleModeOnAction;
+
+  /// Simple mode bottom-nav label for the Home tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get simpleModeNavHome;
+
+  /// Simple mode bottom-nav label for the Bike tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Bike'**
+  String get simpleModeNavBike;
+
+  /// Snack after turning Simple mode off.
+  ///
+  /// In en, this message translates to:
+  /// **'Full app is back.'**
+  String get simpleModeOffSnack;
+
+  /// Settings → Advanced → Your ThrottleIQ, in Simple mode with Community on: replaces the community picker and says what Simple keeps.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.'**
+  String get simpleModeCommunityPeople;
+
+  /// Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on.
+  ///
+  /// In en, this message translates to:
+  /// **'Community is hidden in Simple mode.'**
+  String get simpleModeCommunityHidden;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride running: open it'**
+  String get simpleHomeOpenRide;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Add your bike to see your rides, fuel and service in one place.'**
+  String get simpleHomeNoBike;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'No fuel added yet. Add your next fill to see what you spend and your mileage.'**
+  String get simpleHomeNoFuel;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get simpleHomeThisMonth;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'km ridden'**
+  String get simpleHomeKmRidden;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'spent on fuel'**
+  String get simpleHomeFuelSpent;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · good'**
+  String simpleHomeMileageGood(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · okay'**
+  String simpleHomeMileageOkay(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · lower than usual'**
+  String simpleHomeMileageLow(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Your usual: {kmpl} km/L'**
+  String simpleHomeMileageAverage(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage: not enough data yet. Fill the tank full twice to see it.'**
+  String get simpleHomeMileageNotEnough;
+
+  /// Simple mode Home tab (#241): one measured full-to-full stretch, so a km/L but no good/low verdict yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · one more full tank to judge it'**
+  String simpleHomeMileageFirst(String kmpl);
+
+  /// Simple mode: tooltip and screen-reader label of the red SOS button in every Simple tab's app bar; opens the call-family sheet.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency'**
+  String get simpleHomeHelp;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency'**
+  String get simpleHomeHelpTitle;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Call a family contact, or text them where you are. Nothing is sent until you press send in your messages app.'**
+  String get simpleHomeHelpBody;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Send my location'**
+  String get simpleHomeSendLocation;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'I need help. I\'m here: {link}'**
+  String simpleHomeLocationSms(String link);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location. Check that location is on, then try again.'**
+  String get simpleHomeLocationFailed;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your messages app.'**
+  String get simpleHomeSmsFailed;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t added a family contact yet.'**
+  String get simpleHomeNoContacts;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Add a family contact'**
+  String get simpleHomeAddContact;
+
+  /// Simple mode Home tab (#241): Help sheet, the emergency contacts failed to load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your family contacts. Check your internet, then try again.'**
+  String get simpleHomeContactsFailed;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:
