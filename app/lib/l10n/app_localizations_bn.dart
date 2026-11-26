@@ -7138,18 +7138,11 @@ class AppLocalizationsBn extends AppLocalizations {
   String get simpleModeCommunityHidden => 'সহজ মোডে কমিউনিটি লুকানো থাকে।';
 
   @override
-  String get simpleHomeStartRide => 'রাইড শুরু করুন';
-
-  @override
   String get simpleHomeOpenRide => 'রাইড চলছে: খুলুন';
 
   @override
   String get simpleHomeNoBike =>
       'আপনার বাইক যোগ করুন, তাহলে রাইড, জ্বালানি আর সার্ভিস এক জায়গায় দেখবেন।';
-
-  @override
-  String get simpleHomeNoRides =>
-      'এখনও কোনো রাইড নেই। প্রথম রাইড রেকর্ড করতে \"রাইড শুরু করুন\" চাপুন।';
 
   @override
   String get simpleHomeNoFuel =>
@@ -7192,15 +7185,6 @@ class AppLocalizationsBn extends AppLocalizations {
   String simpleHomeMileageFirst(String kmpl) {
     return 'মাইলেজ $kmpl km/L · যাচাই করতে আরও একবার ফুল ট্যাংক তেল নিন';
   }
-
-  @override
-  String get simpleHomeFindMechanic => 'মেকানিক খুঁজুন';
-
-  @override
-  String get simpleHomeRenew => 'নবায়ন করুন';
-
-  @override
-  String get simpleHomeAddFuel => 'জ্বালানি যোগ করুন';
 
   @override
   String get simpleHomeHelp => 'জরুরি';

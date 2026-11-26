@@ -16,14 +16,14 @@ import 'package:throttleiq/features/maintenance/domain/entities/maintenance_enti
 import 'package:throttleiq/features/maintenance/domain/entities/maintenance_profile.dart';
 import 'package:throttleiq/features/maintenance/presentation/providers/fuel_provider.dart';
 import 'package:throttleiq/features/maintenance/presentation/providers/maintenance_provider.dart';
-import 'package:throttleiq/features/maintenance/presentation/service_type_l10n.dart';
-import 'package:throttleiq/features/maintenance/presentation/widgets/quick_service_sheet.dart';
 import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
 import 'package:throttleiq/features/poi_directory/presentation/providers/places_provider.dart';
 import 'package:throttleiq/features/profile/domain/entities/emergency_contact_entity.dart';
 import 'package:throttleiq/features/profile/presentation/providers/emergency_contacts_provider.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
+import 'package:throttleiq/features/ride/presentation/widgets/bike_picker_card.dart';
+import 'package:throttleiq/features/ride/presentation/widgets/hold_to_start_button.dart';
 import 'package:throttleiq/features/simple/presentation/screens/simple_home_screen.dart';
 import 'package:throttleiq/features/simple/presentation/widgets/simple_home_help_sheet.dart';
 import 'package:throttleiq/l10n/app_localizations.dart';
@@ -252,28 +252,51 @@ Finder _key(String k) => find.byKey(Key(k));
 void main() {
   setUpAll(loadKeyScreenFonts);
 
-  group('empty states, one fixing button each', () {
-    testWidgets('no bike → Add bike', (tester) async {
-      await _pump(tester, bikes: []);
-      expect(find.text(_en.simpleHomeNoBike), findsOneWidget);
-      expect(_key('simple_home_start_ride'), findsNothing);
-      await tester.tap(_key('simple_home_add_bike'));
-      await tester.pumpAndSettle();
-      expect(find.text('at /home/profile/add'), findsOneWidget);
-    });
+  /// Holds the round start ring past its 900 ms, as a rider would.
+  Future<void> holdToStart(WidgetTester tester) async {
+    final g = await tester
+        .startGesture(tester.getCenter(_key('simple_home_start_ride')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1000));
+    await g.up();
+    await tester.pumpAndSettle();
+  }
 
-    testWidgets('no rides → the one START RIDE button', (tester) async {
-      await _pump(tester);
-      expect(_key('simple_home_no_rides'), findsOneWidget);
-      expect(find.text(_en.simpleHomeStartRide), findsOneWidget);
-    });
+  testWidgets('laid out like Record: the bike photo, then the ring',
+      (tester) async {
+    await _pump(tester);
+    expect(find.byType(BikePickerCard), findsOneWidget);
+    expect(find.byType(HoldToStartButton), findsOneWidget);
+    // This month sits just below the photo.
+    expect(tester.getTopLeft(find.text(_en.simpleHomeThisMonth)).dy,
+        greaterThan(tester.getBottomLeft(find.byType(BikePickerCard)).dy - 1));
+  });
 
-    testWidgets('no fuel → Add fuel', (tester) async {
-      await _pump(tester);
-      expect(_key('simple_home_no_fuel'), findsOneWidget);
-      expect(_key('simple_home_mileage'), findsNothing);
-      expect(find.text(_en.simpleHomeAddFuel), findsOneWidget);
-    });
+  testWidgets('no bike → Add bike', (tester) async {
+    await _pump(tester, bikes: []);
+    expect(find.text(_en.simpleHomeNoBike), findsOneWidget);
+    expect(_key('simple_home_start_ride'), findsNothing);
+    await tester.tap(find.text(_en.addBike));
+    await tester.pumpAndSettle();
+    expect(find.text('at /home/profile/add'), findsOneWidget);
+  });
+
+  testWidgets('no fuel → says so; adding fuel lives on the Bike tab',
+      (tester) async {
+    await _pump(tester);
+    expect(_key('simple_home_no_fuel'), findsOneWidget);
+    expect(_key('simple_home_mileage'), findsNothing);
+    expect(_key('simple_home_add_fuel'), findsNothing);
+  });
+
+  testWidgets('no service or paper alert on Home (the Bike tab has them)',
+      (tester) async {
+    await _pump(tester,
+        forecasts: [_forecast(ServiceType.oilChange, ReminderStatus.overdue)],
+        papers: [_paper(PaperworkKind.insurance, -3)]);
+    expect(_key('simple_home_alert'), findsNothing);
+    expect(_key('simple_home_done'), findsNothing);
+    expect(find.textContaining(_en.paperworkInsurance), findsNothing);
   });
 
   testWidgets('tiles sum only this calendar month', (tester) async {
@@ -294,7 +317,6 @@ void main() {
         find.descendant(
             of: _key('simple_home_taka'), matching: find.text('৳800')),
         findsOneWidget);
-    expect(_key('simple_home_no_rides'), findsNothing);
     expect(_key('simple_home_no_fuel'), findsNothing);
   });
 
@@ -319,7 +341,6 @@ void main() {
     expect(
         find.descendant(of: _key('simple_home_km'), matching: find.text('—')),
         findsOneWidget);
-    expect(_key('simple_home_no_rides'), findsNothing);
   });
 
   testWidgets('thousands are grouped in both tiles', (tester) async {
@@ -344,92 +365,6 @@ void main() {
     ]);
     // 100 km on 2 L, twice: 50 km/L, same as usual.
     expect(find.text(_en.simpleHomeMileageGood('50')), findsOneWidget);
-  });
-
-  group('one alert, most urgent first', () {
-    final overdue = _forecast(ServiceType.oilChange, ReminderStatus.overdue);
-    final soon = _forecast(ServiceType.chain, ReminderStatus.dueSoon);
-    final expired = _paper(PaperworkKind.insurance, -3);
-    final expiring = _paper(PaperworkKind.taxToken, 12);
-    final oil = ServiceType.oilChange.localizedLabel(_en);
-    final chain = ServiceType.chain.localizedLabel(_en);
-
-    testWidgets('overdue service beats papers and due-soon', (tester) async {
-      await _pump(tester,
-          forecasts: [soon, overdue], papers: [expiring, expired]);
-      expect(_key('simple_home_alert'), findsOneWidget);
-      expect(find.textContaining(oil), findsOneWidget);
-      expect(find.textContaining(_en.paperworkInsurance), findsNothing);
-    });
-
-    testWidgets('expired paper, then expiring, then due-soon', (tester) async {
-      await _pump(tester, forecasts: [soon], papers: [expiring, expired]);
-      expect(find.textContaining(_en.paperworkInsurance), findsOneWidget);
-      expect(_key('simple_home_renew'), findsOneWidget);
-    });
-
-    testWidgets('expiring paper beats due-soon', (tester) async {
-      await _pump(tester,
-          forecasts: [soon],
-          papers: [_paper(PaperworkKind.insurance, 90), expiring]);
-      expect(find.textContaining(_en.paperworkTaxToken), findsOneWidget);
-      expect(find.textContaining(chain), findsNothing);
-    });
-
-    testWidgets('due-soon, else nothing; low-stakes and unknown skipped',
-        (tester) async {
-      await _pump(tester, forecasts: [
-        _forecast(ServiceType.fuel, ReminderStatus.overdue),
-        _forecast(ServiceType.frontDiscPads, ReminderStatus.unknown),
-        soon,
-      ]);
-      expect(find.textContaining(chain), findsOneWidget);
-      expect(_key('simple_home_alert'), findsOneWidget);
-    });
-
-    testWidgets('an undatable km-only check still says how far',
-        (tester) async {
-      await _pump(tester, forecasts: [
-        _forecast(ServiceType.frontDiscPads, ReminderStatus.dueSoon,
-            kmLeft: 180)
-      ]);
-      expect(find.textContaining(_en.rowLeftKm('180 km')), findsOneWidget);
-    });
-
-    testWidgets('no alert when all is fine', (tester) async {
-      await _pump(tester, papers: [_paper(PaperworkKind.insurance, 90)]);
-      expect(_key('simple_home_alert'), findsNothing);
-    });
-
-    testWidgets('Find mechanic lists nearby mechanics at once', (tester) async {
-      await _pump(tester, forecasts: [overdue]);
-      await tester.tap(_key('simple_home_find_mechanic'));
-      await tester.pumpAndSettle();
-      expect(_key('simpleBikePlace_mech1'), findsOneWidget);
-      expect(_key('simpleBikePlace_fuel1'), findsNothing);
-      expect(_key('simpleBikeFindNearby'), findsNothing);
-    });
-
-    testWidgets('Find mechanic is hidden with Places off', (tester) async {
-      await _pump(tester,
-          forecasts: [overdue],
-          modules: const AppModules(simple: true, places: false));
-      expect(_key('simple_home_find_mechanic'), findsNothing);
-      expect(_key('simple_home_done'), findsOneWidget);
-    });
-
-    testWidgets('Done opens QuickServiceSheet', (tester) async {
-      await _pump(tester, forecasts: [overdue]);
-      await tester.tap(_key('simple_home_done'));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 500));
-      final sheet =
-          tester.widget<QuickServiceSheet>(find.byType(QuickServiceSheet));
-      expect(sheet.bike.id, 'b1');
-      expect(sheet.initialForecast, same(overdue));
-      expect(sheet.initialServiceType, ServiceType.oilChange);
-      expect(sheet.initialTitle, oil);
-    });
   });
 
   group('Help', () {
@@ -495,40 +430,44 @@ void main() {
     });
   });
 
-  group('START RIDE', () {
+  group('the start ring', () {
     testWidgets('hidden when ride tracking is off', (tester) async {
       await _pump(tester,
           modules: const AppModules(simple: true, rideTracking: false));
       expect(_key('simple_home_start_ride'), findsNothing);
-      expect(_key('simple_home_no_rides'), findsNothing);
       // km comes only from recorded rides, so no false "0 km".
       expect(_key('simple_home_km'), findsNothing);
       expect(_key('simple_home_taka'), findsOneWidget);
     });
 
-    testWidgets('starts a ride through the recorder, then opens it',
-        (tester) async {
+    testWidgets('a quick tap does not start a ride', (tester) async {
       final c = await _pump(tester);
       await tester.tap(_key('simple_home_start_ride'));
       await tester.pumpAndSettle();
+      expect((c.read(rideRecordingProvider.notifier) as _Recorder).starts, 0);
+    });
+
+    testWidgets('a hold starts a ride through the recorder, then opens it',
+        (tester) async {
+      final c = await _pump(tester);
+      await holdToStart(tester);
       expect((c.read(rideRecordingProvider.notifier) as _Recorder).starts, 1);
       expect(find.text('at /ride/active'), findsOneWidget);
     });
 
-    testWidgets('a running ride: the button opens it', (tester) async {
+    testWidgets('a running ride: a button back to it instead', (tester) async {
       final c = await _pump(tester,
           recording: const RideRecordingState(status: RecordingStatus.paused));
-      expect(find.text(_en.simpleHomeOpenRide), findsOneWidget);
-      await tester.tap(_key('simple_home_start_ride'));
+      expect(_key('simple_home_start_ride'), findsNothing);
+      await tester.tap(find.text(_en.simpleHomeOpenRide));
       await tester.pumpAndSettle();
       expect((c.read(rideRecordingProvider.notifier) as _Recorder).starts, 0);
       expect(find.text('at /ride/active'), findsOneWidget);
     });
   });
 
-  testWidgets(
-      'same provider: a fill saved through fuelLogsProvider shows up; '
-      'Add fuel opens the shared form', (tester) async {
+  testWidgets('same provider: a fill saved through fuelLogsProvider shows up',
+      (tester) async {
     final c = await _pump(tester);
     expect(
         find.descendant(
@@ -546,21 +485,13 @@ void main() {
         find.descendant(
             of: _key('simple_home_taka'), matching: find.text('৳520')),
         findsOneWidget);
-    await tester.tap(_key('simple_home_add_fuel'));
-    await tester.pumpAndSettle();
-    expect(
-        find.text('at /home/maintenance/fuel/add?bikeId=b1'), findsOneWidget);
   });
 
   testWidgets('touch targets are at least 48dp', (tester) async {
-    await _pump(tester,
-        forecasts: [_forecast(ServiceType.oilChange, ReminderStatus.overdue)]);
+    await _pump(tester);
     for (final k in [
       'simple_home_start_ride',
-      'simple_home_add_fuel',
       'simple_home_help',
-      'simple_home_find_mechanic',
-      'simple_home_done',
       'simple_settings_button',
     ]) {
       expect(tester.getSize(_key(k)).height, greaterThanOrEqualTo(48),
@@ -578,12 +509,9 @@ void main() {
         _fill('1', _lastMonth, 0, 500),
         _fill('2', _lastMonth.add(const Duration(hours: 1)), 100, 250),
         _fill('3', _lastMonth.add(const Duration(hours: 2)), 200, 400),
-      ], forecasts: [
-        _forecast(ServiceType.oilChange, ReminderStatus.overdue)
       ]);
-      expect(_key('simple_home_alert'), findsOneWidget);
       // Scrolling lays out every row on the way down.
-      await tester.scrollUntilVisible(_key('simple_home_help'), 200);
+      await tester.scrollUntilVisible(_key('simple_home_mileage'), 200);
       await tester.tap(_key('simple_home_help'));
       await tester.pumpAndSettle();
       await tester.pumpWidget(const SizedBox());

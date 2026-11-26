@@ -12183,12 +12183,6 @@ abstract class AppLocalizations {
   /// Simple mode Home tab (#241).
   ///
   /// In en, this message translates to:
-  /// **'START RIDE'**
-  String get simpleHomeStartRide;
-
-  /// Simple mode Home tab (#241).
-  ///
-  /// In en, this message translates to:
   /// **'Ride running: open it'**
   String get simpleHomeOpenRide;
 
@@ -12197,12 +12191,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add your bike to see your rides, fuel and service in one place.'**
   String get simpleHomeNoBike;
-
-  /// Simple mode Home tab (#241).
-  ///
-  /// In en, this message translates to:
-  /// **'No rides yet. Tap START RIDE to record your first one.'**
-  String get simpleHomeNoRides;
 
   /// Simple mode Home tab (#241).
   ///
@@ -12263,24 +12251,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Mileage {kmpl} km/L · one more full tank to judge it'**
   String simpleHomeMileageFirst(String kmpl);
-
-  /// Simple mode Home tab (#241).
-  ///
-  /// In en, this message translates to:
-  /// **'Find mechanic'**
-  String get simpleHomeFindMechanic;
-
-  /// Simple mode Home tab (#241).
-  ///
-  /// In en, this message translates to:
-  /// **'Renew'**
-  String get simpleHomeRenew;
-
-  /// Simple mode Home tab (#241).
-  ///
-  /// In en, this message translates to:
-  /// **'Add fuel'**
-  String get simpleHomeAddFuel;
 
   /// Simple mode: tooltip and screen-reader label of the red SOS button in every Simple tab's app bar; opens the call-family sheet.
   ///

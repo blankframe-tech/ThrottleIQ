@@ -7161,18 +7161,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simpleModeCommunityHidden => 'Community is hidden in Simple mode.';
 
   @override
-  String get simpleHomeStartRide => 'START RIDE';
-
-  @override
   String get simpleHomeOpenRide => 'Ride running: open it';
 
   @override
   String get simpleHomeNoBike =>
       'Add your bike to see your rides, fuel and service in one place.';
-
-  @override
-  String get simpleHomeNoRides =>
-      'No rides yet. Tap START RIDE to record your first one.';
 
   @override
   String get simpleHomeNoFuel =>
@@ -7215,15 +7208,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String simpleHomeMileageFirst(String kmpl) {
     return 'Mileage $kmpl km/L · one more full tank to judge it';
   }
-
-  @override
-  String get simpleHomeFindMechanic => 'Find mechanic';
-
-  @override
-  String get simpleHomeRenew => 'Renew';
-
-  @override
-  String get simpleHomeAddFuel => 'Add fuel';
 
   @override
   String get simpleHomeHelp => 'Emergency';

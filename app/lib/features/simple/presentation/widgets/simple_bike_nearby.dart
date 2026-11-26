@@ -20,20 +20,14 @@ const simpleBikeNearbyRadiusKm = 15.0;
 /// Directions. Loads only when tapped, so opening the Bike tab asks for no
 /// location and reads nothing from Firestore.
 class SimpleBikeNearby extends ConsumerStatefulWidget {
-  const SimpleBikeNearby({super.key, this.initiallyOpen = false, this.only});
-
-  /// Search at once (Home's [Find mechanic]) instead of waiting for a tap.
-  final bool initiallyOpen;
-
-  /// Show just this category (mechanics for Home's alert); null: both.
-  final PlaceCategory? only;
+  const SimpleBikeNearby({super.key});
 
   @override
   ConsumerState<SimpleBikeNearby> createState() => _SimpleBikeNearbyState();
 }
 
 class _SimpleBikeNearbyState extends ConsumerState<SimpleBikeNearby> {
-  late bool _open = widget.initiallyOpen;
+  bool _open = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +98,7 @@ class _SimpleBikeNearbyState extends ConsumerState<SimpleBikeNearby> {
         for (final (category, title) in [
           (PlaceCategory.fuel, l10n.simpleBikeNearbyFuel),
           (PlaceCategory.garage, l10n.simpleBikeNearbyGarage),
-        ].where((c) => widget.only == null || c.$1 == widget.only)) ...[
+        ]) ...[
           const SizedBox(height: 8),
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           ..._list(context, l10n, nearest(category)),

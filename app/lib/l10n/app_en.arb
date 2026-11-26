@@ -9882,20 +9882,12 @@
   "@simpleModeCommunityHidden": {
     "description": "Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on."
   },
-  "simpleHomeStartRide": "START RIDE",
-  "@simpleHomeStartRide": {
-    "description": "Simple mode Home tab (#241)."
-  },
   "simpleHomeOpenRide": "Ride running: open it",
   "@simpleHomeOpenRide": {
     "description": "Simple mode Home tab (#241)."
   },
   "simpleHomeNoBike": "Add your bike to see your rides, fuel and service in one place.",
   "@simpleHomeNoBike": {
-    "description": "Simple mode Home tab (#241)."
-  },
-  "simpleHomeNoRides": "No rides yet. Tap START RIDE to record your first one.",
-  "@simpleHomeNoRides": {
     "description": "Simple mode Home tab (#241)."
   },
   "simpleHomeNoFuel": "No fuel added yet. Add your next fill to see what you spend and your mileage.",
@@ -9962,18 +9954,6 @@
         "type": "String"
       }
     }
-  },
-  "simpleHomeFindMechanic": "Find mechanic",
-  "@simpleHomeFindMechanic": {
-    "description": "Simple mode Home tab (#241)."
-  },
-  "simpleHomeRenew": "Renew",
-  "@simpleHomeRenew": {
-    "description": "Simple mode Home tab (#241)."
-  },
-  "simpleHomeAddFuel": "Add fuel",
-  "@simpleHomeAddFuel": {
-    "description": "Simple mode Home tab (#241)."
   },
   "simpleHomeHelp": "Emergency",
   "@simpleHomeHelp": {
