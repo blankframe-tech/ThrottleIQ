@@ -30,9 +30,8 @@ _Last updated: 2026-11-01._
 
 ### Release
 
-- **`deploy.sh` guard (2026-11-12, uncommitted):** the AAB step aborts if `APP_CHECK_DEBUG` is among the build defines; the AAB is for Play Console (Play Integrity) and only the iPhone run uses the debug token. The deploy skill and `.agents/rules/deploy.md` say the same.
-- **Build +40 (2026-11-12, not released):** AAB built locally from `main` (`1.0.0-beta.4.15.0+40`) with the Crashlytics fixes from build 39 (see top of `issues_fixed.md`); notes (EN + BN) in `app/build/app/outputs/bundle/release/release-notes-40.md`. The `+40` bump is an uncommitted edit in the main checkout (`main` still says `+39`), no release PR or GitHub tag yet, and installed on the iPhone with `--dart-define=APP_CHECK_DEBUG=true` (without it App Attest fails on the personal team and Firestore reads are `permission-denied`; Social, Places > Routes show errors). Not yet confirmed on the phone after the reinstall. Upload to Play is manual. +39 crashed on first offline launch; don't reuse its code.
-- **Latest release:** `beta-v4.15.0` (`1.0.0-beta.4.15.0+38`, 2026-11-01) on GitHub, notes only. AAB +38 built for a manual Play upload, notes (EN + BN) in `app/build/app/outputs/bundle/release/release-notes-38.md`; installed on the iPhone (debug provider). Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
+- **`deploy.sh` guard:** the AAB step aborts if `APP_CHECK_DEBUG` is among the build defines; the AAB is for Play Console (Play Integrity) and only the iPhone run uses the debug token (without it App Attest fails on the personal team and Firestore reads are `permission-denied`).
+- **Latest release:** `beta-v4.16.0` (`1.0.0-beta.4.16.0+41`, 2026-11-26) on GitHub, notes only, tagged at the bump commit `0e7d603a` (release PR #244). Ships Simple mode (#240–#243) and the Maintenance Records screen and quick-sheet fixes. AAB +41 signed with the upload key (versionCode 41 checked in the merged manifest), notes (EN + BN) in `app/build/app/outputs/bundle/release/release-notes-41.md`; **not uploaded to Play yet** (manual). Installed on the iPhone (debug provider). +40 (2026-11-12) was built but never released; its Crashlytics fixes ship in +41. Android ships through Google Play only: the install page https://throttleiqfb.web.app/install/ has only the Play invite flow. No release carries an APK or AAB any more (all removed 2026-10-24).
 - **`config/app.minBuild = 35`** (set 2026-11-01 with App Check enforcement). Builds 27–34 see the update screen; builds 26 and older have no gate. From build 38 the gate is live (a snapshot listener), so raising `minBuild` reaches riders with the app open, and its button opens Google Play on Android.
 - **Old update link:** builds 27-29 link `https://blankframe.tech/ThrottleIQ/install`, which reaches the install page only through a redirect page in the landing-page repo (`throttle-iq/old-install-link.html`). Keep that page while those builds exist.
 - **Google Play:** no public listing. `1.0.0-beta.4.12.0+35` uploaded to the Play Console on 2026-10-31 (before it, the last build on record on the internal track was `1.0.0-beta.1+3` from 2026-08-29, which has no update gate). Owner item 4.
@@ -188,6 +187,11 @@ Owner item 5 covers the core ride; the rest stays here until someone checks it. 
 - **No paid tier,** and no revenue model.
 
 ## Recent sessions (newest first)
+
+### 2026-11-26
+
+- **Simple mode redesign merged** (PR #243, `5e5087d7`): People / Home / Rides / Bike tabs, Home like Record (bike photo, this month, hold-to-start), Simple cockpit with timer and Share only and battery saver on. Details in `features.md`. The off-road branch (#239) will conflict in the cockpit top bar; its chip belongs inside `if (!simple)`.
+- **Release `beta-v4.16.0` (+41):** `scripts/deploy.sh --skip-ios`, then `flutter run --release --no-resident` to the iPhone separately (wireless; a USB cable wasn't seen by the Mac). AAB handed to the owner for the Play upload.
 
 ### 2026-11-08
 
