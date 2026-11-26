@@ -6999,6 +6999,98 @@ class AppLocalizationsBn extends AppLocalizations {
   String get simpleModeCommunityHidden => 'সহজ মোডে কমিউনিটি লুকানো থাকে।';
 
   @override
+  String get simpleHomeStartRide => 'রাইড শুরু করুন';
+
+  @override
+  String get simpleHomeOpenRide => 'রাইড চলছে: খুলুন';
+
+  @override
+  String get simpleHomeNoBike =>
+      'আপনার বাইক যোগ করুন, তাহলে রাইড, জ্বালানি আর সার্ভিস এক জায়গায় দেখবেন।';
+
+  @override
+  String get simpleHomeNoRides =>
+      'এখনও কোনো রাইড নেই। প্রথম রাইড রেকর্ড করতে \"রাইড শুরু করুন\" চাপুন।';
+
+  @override
+  String get simpleHomeNoFuel =>
+      'এখনও জ্বালানি যোগ করা হয়নি। খরচ আর মাইলেজ দেখতে পরের বার তেল নিয়ে যোগ করুন।';
+
+  @override
+  String get simpleHomeThisMonth => 'এই মাসে';
+
+  @override
+  String get simpleHomeKmRidden => 'কিমি চালিয়েছেন';
+
+  @override
+  String get simpleHomeFuelSpent => 'জ্বালানিতে খরচ';
+
+  @override
+  String simpleHomeMileageGood(String kmpl) {
+    return 'মাইলেজ $kmpl km/L 👍 ভালো';
+  }
+
+  @override
+  String simpleHomeMileageOkay(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · মোটামুটি';
+  }
+
+  @override
+  String simpleHomeMileageLow(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · স্বাভাবিকের চেয়ে কম';
+  }
+
+  @override
+  String simpleHomeMileageAverage(String kmpl) {
+    return 'আপনার স্বাভাবিক: $kmpl km/L';
+  }
+
+  @override
+  String get simpleHomeMileageNotEnough =>
+      'মাইলেজ: এখনও যথেষ্ট তথ্য নেই। দেখতে দুইবার ফুল ট্যাংক তেল নিন।';
+
+  @override
+  String get simpleHomeFindMechanic => 'মেকানিক খুঁজুন';
+
+  @override
+  String get simpleHomeRenew => 'নবায়ন করুন';
+
+  @override
+  String get simpleHomeAddFuel => 'জ্বালানি যোগ করুন';
+
+  @override
+  String get simpleHomeHelp => 'সাহায্য';
+
+  @override
+  String get simpleHomeHelpTitle => 'সাহায্য নিন';
+
+  @override
+  String get simpleHomeHelpBody =>
+      'পরিবারের কাউকে কল করুন, অথবা আপনি কোথায় আছেন তা মেসেজে পাঠান। মেসেজ অ্যাপে পাঠান না চাপা পর্যন্ত কিছুই যায় না।';
+
+  @override
+  String get simpleHomeSendLocation => 'আমার লোকেশন পাঠান';
+
+  @override
+  String simpleHomeLocationSms(String link) {
+    return 'আমার সাহায্য দরকার। আমি এখানে আছি: $link';
+  }
+
+  @override
+  String get simpleHomeLocationFailed =>
+      'আপনার লোকেশন পাওয়া যায়নি। লোকেশন চালু আছে কিনা দেখে আবার চেষ্টা করুন।';
+
+  @override
+  String get simpleHomeSmsFailed => 'মেসেজ অ্যাপ খোলা যায়নি।';
+
+  @override
+  String get simpleHomeNoContacts =>
+      'আপনি এখনও পরিবারের কোনো কন্টাক্ট যোগ করেননি।';
+
+  @override
+  String get simpleHomeAddContact => 'পরিবারের কন্টাক্ট যোগ করুন';
+
+  @override
   String get manualOdometerHint =>
       'রাইড ট্র্যাক হচ্ছে না, তাই সার্ভিস রিমাইন্ডার ঠিক রাখতে মাঝে মাঝে এটি আপডেট করুন।';
 
