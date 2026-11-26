@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme_context.dart';
 import '../../../../core/utils/error_reporter.dart';
 import '../../../poi_directory/domain/place_directions.dart';
 import '../../../poi_directory/presentation/providers/places_provider.dart';
@@ -25,7 +27,28 @@ Uri locationSmsUri(
   );
 }
 
-/// [Help] on Simple Home: call or text the rider's emergency contacts
+/// The red SOS in every Simple tab's app bar: opens [SimpleHomeHelpSheet].
+/// An icon, so it fits next to the title at any text size; IconButton is 48dp.
+class SimpleEmergencyButton extends StatelessWidget {
+  const SimpleEmergencyButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.palette;
+    return IconButton.filled(
+      key: const Key('simple_home_help'),
+      tooltip: context.l10n.simpleHomeHelp,
+      style: IconButton.styleFrom(
+        backgroundColor: p.danger,
+        foregroundColor: AppTheme.dangerForeground(p),
+      ),
+      onPressed: () => SimpleHomeHelpSheet.show(context),
+      icon: const Icon(Icons.sos),
+    );
+  }
+}
+
+/// [SimpleEmergencyButton]'s sheet: call or text the rider's emergency contacts
 /// (the same ones as Settings), or add the first one right here.
 class SimpleHomeHelpSheet extends ConsumerWidget {
   const SimpleHomeHelpSheet({super.key});
@@ -63,8 +86,6 @@ class SimpleHomeHelpSheet extends ConsumerWidget {
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 key: const Key('simple_home_contacts_retry'),
-                style:
-                    OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
                 onPressed: () => ref.invalidate(myEmergencyContactsProvider),
                 icon: const Icon(Icons.refresh),
                 label: Text(l10n.retry),
@@ -74,7 +95,6 @@ class SimpleHomeHelpSheet extends ConsumerWidget {
               const SizedBox(height: 12),
               FilledButton.icon(
                 key: const Key('simple_home_add_contact'),
-                style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
                 // Settings' own add dialog, same repository; the sheet stays
                 // open and shows Call once the contact is saved.
                 onPressed: () => SettingsEmergencyContactsSection.showAddDialog(
@@ -124,7 +144,6 @@ class _ContactRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
     final tel = telUri(contact.phone);
-    const tall = Size(64, 48);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Column(
@@ -140,14 +159,12 @@ class _ContactRow extends ConsumerWidget {
               if (tel != null)
                 FilledButton.icon(
                   key: Key('simple_home_call_${contact.id}'),
-                  style: FilledButton.styleFrom(minimumSize: tall),
                   onPressed: () => PlaceLaunchActions.call(context, tel),
                   icon: const Icon(Icons.call),
                   label: Text(l10n.call),
                 ),
               OutlinedButton.icon(
                 key: Key('simple_home_send_location_${contact.id}'),
-                style: OutlinedButton.styleFrom(minimumSize: tall),
                 onPressed: () => _sendLocation(context, ref),
                 icon: const Icon(Icons.share_location),
                 label: Text(l10n.simpleHomeSendLocation),
