@@ -28,13 +28,16 @@ void main() {
   setUpAll(loadKeyScreenFonts);
 
   Future<void> pump(WidgetTester tester, RideEntity? ride,
-      {double textScale = 1, Locale locale = const Locale('en')}) async {
+      {Future<RideEntity?> Function()? load,
+      double textScale = 1,
+      Locale locale = const Locale('en')}) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     await tester.pumpWidget(ProviderScope(
       overrides: [
-        rideDetailProvider.overrideWith((ref, id) async => ride),
+        rideDetailProvider
+            .overrideWith((ref, id) => load?.call() ?? Future.value(ride)),
         ridePolylineProvider.overrideWith((ref, id) async => const []),
       ],
       child: MaterialApp(
@@ -82,6 +85,20 @@ void main() {
   testWidgets('a ride that is gone says so', (tester) async {
     await pump(tester, null);
     expect(find.text(en.simpleRidesNotFound), findsOneWidget);
+  });
+
+  testWidgets('a ride that fails to load offers a 48dp Retry that reloads',
+      (tester) async {
+    var calls = 0;
+    await pump(tester, null,
+        load: () async =>
+            calls++ == 0 ? throw Exception('db locked') : _ride());
+    final retry = find.byKey(const Key('simpleRideDetailRetry'));
+    expect(tester.getSize(retry).height, greaterThanOrEqualTo(48));
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+    expect(find.text('12.5 km'), findsOneWidget);
+    expect(retry, findsNothing);
   });
 
   for (final locale in const [Locale('en'), Locale('bn')]) {

@@ -66,6 +66,7 @@ void main() {
     List<BikeEntity>? bikes,
     List<RideEntity> rides = const [],
     RideCostBreakdown? cost = _fuelOnly,
+    Future<List<RideEntity>> Function()? load,
     double textScale = 1,
     Locale locale = const Locale('en'),
   }) async {
@@ -90,7 +91,8 @@ void main() {
     await tester.pumpWidget(ProviderScope(
       overrides: [
         garageProvider.overrideWith(() => _Garage(bikes ?? [_bike])),
-        rideHistoryProvider.overrideWith((ref, id) async => rides),
+        rideHistoryProvider
+            .overrideWith((ref, id) => load?.call() ?? Future.value(rides)),
         ridePolylineProvider.overrideWith((ref, id) async => const []),
         rideCostProvider.overrideWith((ref, key) => cost),
       ],
@@ -170,6 +172,22 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, en.simpleRidesAddBike));
     await tester.pumpAndSettle();
     expect(find.text('ADD BIKE'), findsOneWidget);
+  });
+
+  testWidgets('rides that fail to load offer a 48dp Retry that reloads',
+      (tester) async {
+    var calls = 0;
+    await pump(tester,
+        load: () async =>
+            calls++ == 0 ? throw Exception('db locked') : [newer]);
+    final retry = find.byKey(const Key('simpleRidesRetry'));
+    expect(retry, findsOneWidget);
+    expect(tester.getSize(retry).height, greaterThanOrEqualTo(48));
+    expect(find.text(en.simpleRidesEmptyTitle), findsNothing);
+    await tester.tap(retry);
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('simpleRideCard_r2')), findsOneWidget);
+    expect(retry, findsNothing);
   });
 
   for (final locale in const [Locale('en'), Locale('bn')]) {

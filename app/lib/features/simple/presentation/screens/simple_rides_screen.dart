@@ -52,7 +52,18 @@ class SimpleRidesScreen extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => ListView(
                 padding: const EdgeInsets.all(24),
-                children: [Text(mapFirestoreError(e, l10n))],
+                children: [
+                  Text(mapFirestoreError(e, l10n)),
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    key: const Key('simpleRidesRetry'),
+                    style: OutlinedButton.styleFrom(
+                        minimumSize: const Size(48, 48)),
+                    onPressed: () => ref.invalidate(provider),
+                    icon: const Icon(Icons.refresh),
+                    label: Text(l10n.retry),
+                  ),
+                ],
               ),
               data: (all) {
                 final rides = all

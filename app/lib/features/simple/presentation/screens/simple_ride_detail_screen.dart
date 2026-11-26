@@ -34,7 +34,20 @@ class SimpleRideDetailScreen extends ConsumerWidget {
       ),
       body: ride.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(mapFirestoreError(e, l10n))),
+        error: (e, _) => ListView(
+          padding: const EdgeInsets.all(24),
+          children: [
+            Text(mapFirestoreError(e, l10n)),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              key: const Key('simpleRideDetailRetry'),
+              style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
+              onPressed: () => ref.invalidate(rideDetailProvider(rideId)),
+              icon: const Icon(Icons.refresh),
+              label: Text(l10n.retry),
+            ),
+          ],
+        ),
         data: (r) => r == null
             ? Center(child: Text(l10n.simpleRidesNotFound))
             : ListView(
