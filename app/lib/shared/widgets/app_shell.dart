@@ -118,6 +118,10 @@ class AppShell extends ConsumerWidget {
           icon: const Icon(Icons.two_wheeler_outlined),
           activeIcon: const Icon(Icons.two_wheeler),
           label: l10n.simpleModeNavBike),
+      '/home/simple-people': BottomNavigationBarItem(
+          icon: const Icon(Icons.people_outline),
+          activeIcon: const Icon(Icons.people),
+          label: l10n.peopleTabLabel),
     };
     return Scaffold(
       body: Stack(

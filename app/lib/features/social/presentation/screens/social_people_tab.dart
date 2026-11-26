@@ -4,20 +4,24 @@
 part of 'social_screen.dart';
 
 /// People tab: a rider-only search box, and — when it's empty — the list of
-/// riders the signed-in rider follows.
+/// riders the signed-in rider follows. Also Simple mode's whole People tab.
 ///
 /// No "Discover" section: there is no existing backend query for rider
 /// suggestions (the app has no recommendation/activity system), so this
 /// tab only shows what's real — search results, and who you already follow —
 /// rather than fabricating a discovery feed.
-class _PeopleTab extends ConsumerStatefulWidget {
-  const _PeopleTab();
+class SocialPeopleTab extends ConsumerStatefulWidget {
+  const SocialPeopleTab({super.key, this.heading});
+
+  /// Draws a section heading ("Following"); null: the app's [EditorialLabel].
+  /// Simple mode passes its own heading style.
+  final Widget Function(String title)? heading;
 
   @override
-  ConsumerState<_PeopleTab> createState() => _PeopleTabState();
+  ConsumerState<SocialPeopleTab> createState() => _SocialPeopleTabState();
 }
 
-class _PeopleTabState extends ConsumerState<_PeopleTab> {
+class _SocialPeopleTabState extends ConsumerState<SocialPeopleTab> {
   final _controller = TextEditingController();
   String _query = '';
   Timer? _debounce;
@@ -94,7 +98,7 @@ class _PeopleTabState extends ConsumerState<_PeopleTab> {
         ),
         Expanded(
           child: _query.isEmpty
-              ? const _FollowingList()
+              ? _FollowingList(heading: widget.heading)
               : _RiderSearchList(query: _query),
         ),
       ],
@@ -150,7 +154,12 @@ class _RiderSearchList extends ConsumerWidget {
 }
 
 class _FollowingList extends ConsumerWidget {
-  const _FollowingList();
+  const _FollowingList({this.heading});
+
+  final Widget Function(String title)? heading;
+
+  Widget _heading(String title) =>
+      heading?.call(title) ?? EditorialLabel(title);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -172,7 +181,7 @@ class _FollowingList extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
                   AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
-              child: EditorialLabel(context.l10n.suggestedForYou),
+              child: _heading(context.l10n.suggestedForYou),
             ),
           ),
           SliverToBoxAdapter(child: SuggestedRidersRow(suggestions)),
@@ -182,7 +191,7 @@ class _FollowingList extends ConsumerWidget {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(AppDimensions.paddingMd,
                 AppDimensions.paddingMd, AppDimensions.paddingMd, 10),
-            child: EditorialLabel(context.l10n.following),
+            child: _heading(context.l10n.following),
           ),
         ),
         profilesAsync.when(

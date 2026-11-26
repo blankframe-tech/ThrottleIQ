@@ -322,10 +322,13 @@ class _AppModulesSection extends ConsumerWidget {
           onChanged: (v) => _setSimple(context, ref, v),
         ),
         const SizedBox(height: 10),
-        // Simple mode hides community whatever this says, and _apply's
+        // Simple mode keeps at most People whatever this says, and _apply's
         // warnings would read the forced-off getters: no picker until it's off.
         if (modules.simple)
-          Text(l10n.simpleModeCommunityHidden,
+          Text(
+              modules.people
+                  ? l10n.simpleModeCommunityPeople
+                  : l10n.simpleModeCommunityHidden,
               style:
                   TextStyle(fontSize: 12, color: context.palette.textTertiary))
         else ...[

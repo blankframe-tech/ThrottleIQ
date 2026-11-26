@@ -23,22 +23,47 @@ void main() {
     }
   });
 
+  test('people follows the community choice in both modes', () {
+    for (final simpleOn in [false, true]) {
+      expect(AppModules(simple: simpleOn).people, isTrue);
+      for (final mode in [CommunityMode.forumsOnly, CommunityMode.off]) {
+        expect(AppModules(community: mode, simple: simpleOn).people, isFalse,
+            reason: '${mode.name} simple=$simpleOn');
+      }
+    }
+    // Full mode: people is exactly social, so nothing there changes.
+    for (final mode in CommunityMode.values) {
+      final m = AppModules(community: mode);
+      expect(m.people, m.social, reason: mode.name);
+    }
+  });
+
   group('tabs and home', () {
-    test('three tabs: Home, Rides, Bike', () {
-      expect(simple.tabs,
-          ['/home/simple', '/home/simple-rides', '/home/simple-bike']);
+    test("four tabs in the full bar's order: People, Home, Rides, Bike", () {
+      expect(simple.tabs, [
+        '/home/simple-people',
+        '/home/simple',
+        '/home/simple-rides',
+        '/home/simple-bike',
+      ]);
+      // Social leads the full bar too; Home stays the landing tab.
+      expect(const AppModules().tabs.first, '/home/social');
       expect(simple.home, '/home/simple');
     });
 
     test('no Rides tab with ride tracking off', () {
-      expect(simpleNoTracking.tabs, ['/home/simple', '/home/simple-bike']);
+      expect(simpleNoTracking.tabs,
+          ['/home/simple-people', '/home/simple', '/home/simple-bike']);
       expect(simpleNoTracking.home, '/home/simple');
     });
 
-    test('places and community do not change the simple tabs', () {
-      const m =
-          AppModules(simple: true, places: false, community: CommunityMode.off);
-      expect(m.tabs, simple.tabs);
+    test('no People tab unless community is full; places changes nothing', () {
+      for (final mode in [CommunityMode.forumsOnly, CommunityMode.off]) {
+        expect(AppModules(simple: true, community: mode).tabs,
+            ['/home/simple', '/home/simple-rides', '/home/simple-bike'],
+            reason: mode.name);
+      }
+      expect(const AppModules(simple: true, places: false).tabs, simple.tabs);
     });
   });
 
@@ -63,7 +88,6 @@ void main() {
       for (final loc in [
         '/home/record',
         '/home/stats',
-        '/home/social',
         '/home/places',
         '/home/places/add',
         '/home/places/p1',
@@ -74,10 +98,10 @@ void main() {
         '/routes/r1/navigate',
         '/rides/all',
         '/home/profile',
-        // The existing social and forum rules, through the getters.
+        // The existing social and forum rules, through the getters:
+        // forums, chat, notifications, group rides and the ride feed.
         '/forums/f1',
         '/forums/create',
-        '/people/all',
         '/chats',
         '/chats/c1',
         '/notifications',
@@ -85,11 +109,40 @@ void main() {
         '/rides/shared/r1',
         '/rides/mine',
         '/ride/share/r1',
+      ]) {
+        expect(simple.redirectFor(loc), '/home/simple', reason: loc);
+      }
+    });
+
+    test('People: riders, their profiles and the follow QR stay', () {
+      for (final loc in [
+        '/home/simple-people',
+        '/people/all',
         '/profile/uid1',
         '/profile/qr',
         '/profile/scan',
       ]) {
-        expect(simple.redirectFor(loc), '/home/simple', reason: loc);
+        expect(simple.redirectFor(loc), isNull, reason: loc);
+      }
+      // A follow link lands on Social's People tab: Simple's instead.
+      expect(simple.redirectFor('/home/social'), '/home/simple-people');
+      expect(
+          simple.redirectFor('/home/social?tab=people'), '/home/simple-people');
+    });
+
+    test('with community not full, People is gone too', () {
+      for (final mode in [CommunityMode.forumsOnly, CommunityMode.off]) {
+        final m = AppModules(simple: true, community: mode);
+        for (final loc in [
+          '/home/simple-people',
+          '/home/social',
+          '/people/all',
+          '/profile/uid1',
+          '/profile/qr',
+        ]) {
+          expect(m.redirectFor(loc), '/home/simple',
+              reason: '${mode.name} $loc');
+        }
       }
     });
 
@@ -152,6 +205,7 @@ void main() {
         '/home/simple-rides',
         '/home/simple-rides/r1',
         '/home/simple-bike',
+        '/home/simple-people',
       ]) {
         expect(const AppModules().redirectFor(loc), '/home/record',
             reason: loc);
@@ -168,11 +222,12 @@ void main() {
 
   group('shellTabIndexForLocation in simple mode', () {
     test('each tab highlights itself', () {
-      expect(shellTabIndexForLocation('/home/simple', simple), 0);
-      expect(shellTabIndexForLocation('/home/simple-rides/r1', simple), 1);
-      expect(shellTabIndexForLocation('/home/simple-bike', simple), 2);
+      expect(shellTabIndexForLocation('/home/simple-people', simple), 0);
+      expect(shellTabIndexForLocation('/home/simple', simple), 1);
+      expect(shellTabIndexForLocation('/home/simple-rides/r1', simple), 2);
+      expect(shellTabIndexForLocation('/home/simple-bike', simple), 3);
       expect(
-          shellTabIndexForLocation('/home/simple-bike', simpleNoTracking), 1);
+          shellTabIndexForLocation('/home/simple-bike', simpleNoTracking), 2);
     });
 
     test('maintenance and bike screens highlight the Bike tab', () {
@@ -182,13 +237,13 @@ void main() {
         '/home/profile/add',
         '/home/profile/b1/edit',
       ]) {
-        expect(shellTabIndexForLocation(loc, simple), 2, reason: loc);
-        expect(shellTabIndexForLocation(loc, simpleNoTracking), 1, reason: loc);
+        expect(shellTabIndexForLocation(loc, simple), 3, reason: loc);
+        expect(shellTabIndexForLocation(loc, simpleNoTracking), 2, reason: loc);
       }
     });
 
     test('unknown falls back to the simple home', () {
-      expect(shellTabIndexForLocation('/nowhere', simple), 0);
+      expect(shellTabIndexForLocation('/nowhere', simple), 1);
     });
   });
 

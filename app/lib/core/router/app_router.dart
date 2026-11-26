@@ -54,6 +54,7 @@ import '../../features/simple/presentation/screens/simple_home_screen.dart';
 import '../../features/simple/presentation/screens/simple_rides_screen.dart';
 import '../../features/simple/presentation/screens/simple_ride_detail_screen.dart';
 import '../../features/simple/presentation/screens/simple_bike_screen.dart';
+import '../../features/simple/presentation/screens/simple_people_screen.dart';
 import '../../features/simple/presentation/providers/simple_bike_provider.dart';
 import '../../features/chat/presentation/screens/chat_list_screen.dart';
 import '../../features/chat/presentation/screens/chat_room_screen.dart';
@@ -464,8 +465,9 @@ final routerProvider = Provider<GoRouter>((ref) {
                 ),
               ],
             ),
-            // Simple mode (ThrottleEZ) tabs: Home, Rides, Bike. Only reachable
-            // with AppModules.simple on; redirectFor sends them home otherwise.
+            // Simple mode (ThrottleEZ) tabs: People, Home, Rides, Bike. Only
+            // reachable with AppModules.simple on; redirectFor sends them home
+            // otherwise.
             GoRoute(
               path: '/home/simple',
               builder: (_, __) => const SimpleHomeScreen(),
@@ -485,6 +487,10 @@ final routerProvider = Provider<GoRouter>((ref) {
             GoRoute(
               path: '/home/simple-bike',
               builder: (_, __) => const SimpleBikeScreen(),
+            ),
+            GoRoute(
+              path: '/home/simple-people',
+              builder: (_, __) => const SimplePeopleScreen(),
             ),
           ])
             StatefulShellBranch(routes: [route]),
