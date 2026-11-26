@@ -6993,6 +6993,124 @@ class AppLocalizationsEn extends AppLocalizations {
       'Done. Your tabs now show only what you use.';
 
   @override
+  String get simpleRidesWeekTitle => 'Last 7 days';
+
+  @override
+  String simpleRidesWeekSemantics(String days) {
+    return 'Kilometres ridden each day, last 7 days: $days';
+  }
+
+  @override
+  String simpleRidesFuelCost(String amount) {
+    return 'Fuel about ৳$amount';
+  }
+
+  @override
+  String simpleRidesDurationHm(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String simpleRidesDurationM(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String get simpleRidesEmptyTitle => 'No rides yet';
+
+  @override
+  String get simpleRidesEmptyBody =>
+      'Start a ride and it shows up here with its distance, time and fuel cost.';
+
+  @override
+  String get simpleRidesStartRide => 'START RIDE';
+
+  @override
+  String get simpleRidesNoBikeTitle => 'Add your bike first';
+
+  @override
+  String get simpleRidesNoBikeBody =>
+      'Rides are saved to your bike, so add it to start.';
+
+  @override
+  String get simpleRidesAddBike => 'Add bike';
+
+  @override
+  String get simpleRidesDistance => 'Distance';
+
+  @override
+  String get simpleRidesTime => 'Time';
+
+  @override
+  String get simpleRidesTopSpeed => 'Top speed';
+
+  @override
+  String get simpleRidesAvgSpeed => 'Average speed';
+
+  @override
+  String get simpleRidesNotFound => 'This ride isn\'t on this phone.';
+
+  @override
+  String get simpleBikeChecksTitle => 'Maintenance';
+
+  @override
+  String get simpleBikeCheckOk => 'OK';
+
+  @override
+  String get simpleBikeCheckDone => 'Done';
+
+  @override
+  String get simpleBikeSetupBody =>
+      'No checks set up yet. Tell us when each was last done and we\'ll remind you.';
+
+  @override
+  String get simpleBikeSetupAction => 'Set up maintenance';
+
+  @override
+  String get simpleBikeFuelTitle => 'Fuel history';
+
+  @override
+  String get simpleBikeFuelEmpty => 'No fill-ups yet.';
+
+  @override
+  String get simpleBikeAddFuel => 'Add fuel';
+
+  @override
+  String simpleBikeFuelLitres(String litres) {
+    return '$litres L';
+  }
+
+  @override
+  String get simpleBikeNearbyTitle => 'Find nearby';
+
+  @override
+  String get simpleBikeNearbyAction => 'Find fuel and mechanics near me';
+
+  @override
+  String get simpleBikeNearbyFuel => 'Fuel stations';
+
+  @override
+  String get simpleBikeNearbyGarage => 'Mechanics';
+
+  @override
+  String get simpleBikeNearbyNone => 'None found within 15 km.';
+
+  @override
+  String simpleBikeNearbyDistance(String km) {
+    return '$km km away';
+  }
+
+  @override
+  String get simpleBikeNoBikeTitle => 'Add your bike first';
+
+  @override
+  String get simpleBikeNoBikeBody =>
+      'Its service checks, fuel and papers show up here.';
+
+  @override
+  String get simpleBikeAddBike => 'Add bike';
+
+  @override
   String get simpleModeTitle => 'Simple mode';
 
   @override

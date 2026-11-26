@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
+import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
+import 'package:throttleiq/features/simple/presentation/screens/simple_ride_detail_screen.dart';
+import 'package:throttleiq/features/stats/presentation/providers/ride_polyline_provider.dart';
+import 'package:throttleiq/features/stats/presentation/widgets/ride_route_thumbnail.dart';
+import 'package:throttleiq/l10n/app_localizations.dart';
+import 'package:throttleiq/l10n/app_localizations_en.dart';
+
+import '../../key_screens.dart' show loadKeyScreenFonts;
+
+RideEntity _ride({double? maxMs, double? avgMs, int? seconds}) => RideEntity(
+      id: 'r1',
+      userId: 'u1',
+      bikeId: 'b1',
+      startTime: DateTime(2026, 11, 20, 8),
+      status: RideStatus.completed,
+      distanceM: 12480,
+      maxSpeedMs: maxMs,
+      avgSpeedMs: avgMs,
+      durationSeconds: seconds,
+    );
+
+void main() {
+  final en = AppLocalizationsEn();
+  setUpAll(loadKeyScreenFonts);
+
+  Future<void> pump(WidgetTester tester, RideEntity? ride,
+      {double textScale = 1, Locale locale = const Locale('en')}) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(ProviderScope(
+      overrides: [
+        rideDetailProvider.overrideWith((ref, id) async => ride),
+        ridePolylineProvider.overrideWith((ref, id) async => const []),
+      ],
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: TextScaler.linear(textScale)),
+          child: child!,
+        ),
+        home: const SimpleRideDetailScreen(rideId: 'r1'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('the route and four numbers, each with its unit', (tester) async {
+    await pump(tester, _ride(maxMs: 24.2, avgMs: 7.5, seconds: 3900));
+    // No points here, so it draws nothing (zero height counts as offstage).
+    expect(
+        find.byType(RideRouteThumbnail, skipOffstage: false), findsOneWidget);
+    expect(find.text('12.5 km'), findsOneWidget);
+    expect(find.text(en.simpleRidesDurationHm(1, 5)), findsOneWidget);
+    expect(find.text('87 km/h'), findsOneWidget); // 24.2 m/s
+    expect(find.text('27 km/h'), findsOneWidget); // 7.5 m/s
+    for (final label in [
+      en.simpleRidesDistance,
+      en.simpleRidesTime,
+      en.simpleRidesTopSpeed,
+      en.simpleRidesAvgSpeed,
+    ]) {
+      expect(find.text(label.toUpperCase()), findsOneWidget);
+    }
+  });
+
+  testWidgets('missing speed or time shows a dash, not a made-up number',
+      (tester) async {
+    await pump(tester, _ride());
+    expect(find.text('—'), findsNWidgets(3));
+    expect(find.text('12.5 km'), findsOneWidget);
+    expect(find.textContaining('km/h'), findsNothing);
+  });
+
+  testWidgets('a ride that is gone says so', (tester) async {
+    await pump(tester, null);
+    expect(find.text(en.simpleRidesNotFound), findsOneWidget);
+  });
+
+  for (final locale in const [Locale('en'), Locale('bn')]) {
+    testWidgets('no overflow at 2x text (${locale.languageCode})',
+        (tester) async {
+      await pump(tester, _ride(maxMs: 24.2, avgMs: 7.5, seconds: 3900),
+          textScale: 2, locale: locale);
+    });
+  }
+}
