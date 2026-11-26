@@ -11904,6 +11904,18 @@ abstract class AppLocalizations {
   /// **'Last 7 days'**
   String get simpleRidesWeekTitle;
 
+  /// Simple mode Rides tab: heading above the list of rides.
+  ///
+  /// In en, this message translates to:
+  /// **'Your rides'**
+  String get simpleRidesListTitle;
+
+  /// Simple mode ride detail: label under the ride's estimated fuel cost in taka.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel cost (estimate)'**
+  String get simpleRidesFuel;
+
   /// Screen-reader label for the Rides tab bar chart. {days} is a list like 'Mon 12 km, Tue 0 km'.
   ///
   /// In en, this message translates to:
@@ -12011,6 +12023,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Done'**
   String get simpleBikeCheckDone;
+
+  /// Simple mode Bike tab: the folded row holding the maintenance checks that aren't due yet; tap to show them.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 check is fine} other{{count} checks are fine}}'**
+  String simpleBikeChecksFine(int count);
 
   /// Simple mode Bike tab when no maintenance checks are tracked.
   ///
@@ -12123,7 +12141,7 @@ abstract class AppLocalizations {
   /// Confirm dialog body when turning Simple mode on.
   ///
   /// In en, this message translates to:
-  /// **'You\'ll see just the basics. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
+  /// **'You\'ll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.'**
   String get simpleModeOnBody;
 
   /// Confirm button that turns Simple mode on.
@@ -12149,6 +12167,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full app is back.'**
   String get simpleModeOffSnack;
+
+  /// Settings → Advanced → Your ThrottleIQ, in Simple mode with Community on: replaces the community picker and says what Simple keeps.
+  ///
+  /// In en, this message translates to:
+  /// **'Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.'**
+  String get simpleModeCommunityPeople;
 
   /// Settings → Your ThrottleIQ: replaces the Community picker while Simple mode is on.
   ///
@@ -12207,7 +12231,7 @@ abstract class AppLocalizations {
   /// Simple mode Home tab (#241).
   ///
   /// In en, this message translates to:
-  /// **'Mileage {kmpl} km/L 👍 good'**
+  /// **'Mileage {kmpl} km/L · good'**
   String simpleHomeMileageGood(String kmpl);
 
   /// Simple mode Home tab (#241).
@@ -12258,16 +12282,16 @@ abstract class AppLocalizations {
   /// **'Add fuel'**
   String get simpleHomeAddFuel;
 
-  /// Simple mode Home tab (#241).
+  /// Simple mode: tooltip and screen-reader label of the red SOS button in every Simple tab's app bar; opens the call-family sheet.
   ///
   /// In en, this message translates to:
-  /// **'Help'**
+  /// **'Emergency'**
   String get simpleHomeHelp;
 
   /// Simple mode Home tab (#241).
   ///
   /// In en, this message translates to:
-  /// **'Get help'**
+  /// **'Emergency'**
   String get simpleHomeHelpTitle;
 
   /// Simple mode Home tab (#241).

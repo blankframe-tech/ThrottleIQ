@@ -6973,6 +6973,12 @@ class AppLocalizationsBn extends AppLocalizations {
   String get simpleRidesWeekTitle => 'গত 7 দিন';
 
   @override
+  String get simpleRidesListTitle => 'আপনার রাইড';
+
+  @override
+  String get simpleRidesFuel => 'জ্বালানি খরচ (আনুমানিক)';
+
+  @override
   String simpleRidesWeekSemantics(String days) {
     return 'গত 7 দিনে প্রতিদিন কত কিমি চালিয়েছেন: $days';
   }
@@ -7037,6 +7043,17 @@ class AppLocalizationsBn extends AppLocalizations {
   String get simpleBikeCheckDone => 'করা হয়েছে';
 
   @override
+  String simpleBikeChecksFine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countটি চেক ঠিক আছে',
+      one: '1টি চেক ঠিক আছে',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get simpleBikeSetupBody =>
       'এখনো কোনো চেক সেট করা হয়নি। কোনটা শেষ কবে করেছেন জানান, আমরা মনে করিয়ে দেব।';
 
@@ -7099,7 +7116,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get simpleModeOnBody =>
-      'আপনি শুধু দরকারি জিনিস দেখবেন। কমিউনিটি, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। যেকোনো সময় সেটিংস → অ্যাডভান্সড থেকে বন্ধ করলেই সব ফিরে আসবে।';
+      'আপনি শুধু দরকারি জিনিস দেখবেন। ফোরাম, চ্যাট, রাইড ফিড, প্লেস, রুট আর বিস্তারিত পরিসংখ্যান লুকানো থাকবে, মুছে যাবে না। যেকোনো সময় সেটিংস → অ্যাডভান্সড থেকে বন্ধ করলেই সব ফিরে আসবে।';
 
   @override
   String get simpleModeOnAction => 'সহজ মোড চালু করুন';
@@ -7112,6 +7129,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get simpleModeOffSnack => 'পুরো অ্যাপ আবার চালু হয়েছে।';
+
+  @override
+  String get simpleModeCommunityPeople =>
+      'সহজ মোডে মানুষ থাকে: রাইডার খুঁজুন ও ফলো করুন। ফোরাম, চ্যাট আর রাইড ফিড লুকানো থাকে।';
 
   @override
   String get simpleModeCommunityHidden => 'সহজ মোডে কমিউনিটি লুকানো থাকে।';
@@ -7145,7 +7166,7 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String simpleHomeMileageGood(String kmpl) {
-    return 'মাইলেজ $kmpl km/L 👍 ভালো';
+    return 'মাইলেজ $kmpl km/L · ভালো';
   }
 
   @override
@@ -7182,10 +7203,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get simpleHomeAddFuel => 'জ্বালানি যোগ করুন';
 
   @override
-  String get simpleHomeHelp => 'সাহায্য';
+  String get simpleHomeHelp => 'জরুরি';
 
   @override
-  String get simpleHomeHelpTitle => 'সাহায্য নিন';
+  String get simpleHomeHelpTitle => 'জরুরি সাহায্য';
 
   @override
   String get simpleHomeHelpBody =>

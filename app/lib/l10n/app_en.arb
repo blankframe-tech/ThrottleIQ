@@ -9659,6 +9659,14 @@
   "@simpleRidesWeekTitle": {
     "description": "Simple mode Rides tab: title of the km-per-day bar chart."
   },
+  "simpleRidesListTitle": "Your rides",
+  "@simpleRidesListTitle": {
+    "description": "Simple mode Rides tab: heading above the list of rides."
+  },
+  "simpleRidesFuel": "Fuel cost (estimate)",
+  "@simpleRidesFuel": {
+    "description": "Simple mode ride detail: label under the ride's estimated fuel cost in taka."
+  },
   "simpleRidesWeekSemantics": "Kilometres ridden each day, last 7 days: {days}",
   "@simpleRidesWeekSemantics": {
     "description": "Screen-reader label for the Rides tab bar chart. {days} is a list like 'Mon 12 km, Tue 0 km'.",
@@ -9754,6 +9762,16 @@
   "@simpleBikeCheckDone": {
     "description": "Simple mode Bike tab: button that logs a service as done."
   },
+  "simpleBikeChecksFine": "{count, plural, =1{1 check is fine} other{{count} checks are fine}}",
+  "@simpleBikeChecksFine": {
+    "description": "Simple mode Bike tab: the folded row holding the maintenance checks that aren't due yet; tap to show them.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "example": "3"
+      }
+    }
+  },
   "simpleBikeSetupBody": "No checks set up yet. Tell us when each was last done and we'll remind you.",
   "@simpleBikeSetupBody": {
     "description": "Simple mode Bike tab when no maintenance checks are tracked."
@@ -9836,7 +9854,7 @@
   "@simpleModeOnTitle": {
     "description": "Confirm dialog title when turning Simple mode on."
   },
-  "simpleModeOnBody": "You'll see just the basics. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.",
+  "simpleModeOnBody": "You'll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.",
   "@simpleModeOnBody": {
     "description": "Confirm dialog body when turning Simple mode on."
   },
@@ -9855,6 +9873,10 @@
   "simpleModeOffSnack": "Full app is back.",
   "@simpleModeOffSnack": {
     "description": "Snack after turning Simple mode off."
+  },
+  "simpleModeCommunityPeople": "Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.",
+  "@simpleModeCommunityPeople": {
+    "description": "Settings → Advanced → Your ThrottleIQ, in Simple mode with Community on: replaces the community picker and says what Simple keeps."
   },
   "simpleModeCommunityHidden": "Community is hidden in Simple mode.",
   "@simpleModeCommunityHidden": {
@@ -9892,7 +9914,7 @@
   "@simpleHomeFuelSpent": {
     "description": "Simple mode Home tab (#241)."
   },
-  "simpleHomeMileageGood": "Mileage {kmpl} km/L 👍 good",
+  "simpleHomeMileageGood": "Mileage {kmpl} km/L · good",
   "@simpleHomeMileageGood": {
     "description": "Simple mode Home tab (#241).",
     "placeholders": {
@@ -9953,11 +9975,11 @@
   "@simpleHomeAddFuel": {
     "description": "Simple mode Home tab (#241)."
   },
-  "simpleHomeHelp": "Help",
+  "simpleHomeHelp": "Emergency",
   "@simpleHomeHelp": {
-    "description": "Simple mode Home tab (#241)."
+    "description": "Simple mode: tooltip and screen-reader label of the red SOS button in every Simple tab's app bar; opens the call-family sheet."
   },
-  "simpleHomeHelpTitle": "Get help",
+  "simpleHomeHelpTitle": "Emergency",
   "@simpleHomeHelpTitle": {
     "description": "Simple mode Home tab (#241)."
   },

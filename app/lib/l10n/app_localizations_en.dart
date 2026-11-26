@@ -6996,6 +6996,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simpleRidesWeekTitle => 'Last 7 days';
 
   @override
+  String get simpleRidesListTitle => 'Your rides';
+
+  @override
+  String get simpleRidesFuel => 'Fuel cost (estimate)';
+
+  @override
   String simpleRidesWeekSemantics(String days) {
     return 'Kilometres ridden each day, last 7 days: $days';
   }
@@ -7060,6 +7066,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simpleBikeCheckDone => 'Done';
 
   @override
+  String simpleBikeChecksFine(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count checks are fine',
+      one: '1 check is fine',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get simpleBikeSetupBody =>
       'No checks set up yet. Tell us when each was last done and we\'ll remind you.';
 
@@ -7122,7 +7139,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeOnBody =>
-      'You\'ll see just the basics. Community, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
+      'You\'ll see just the basics. Forums, chat, the ride feed, Places, routes and detailed stats are hidden, not deleted. Turn it off any time in Settings → Advanced to get them back.';
 
   @override
   String get simpleModeOnAction => 'Switch to Simple';
@@ -7135,6 +7152,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleModeOffSnack => 'Full app is back.';
+
+  @override
+  String get simpleModeCommunityPeople =>
+      'Simple mode keeps People: find riders and follow them. Forums, chat and the ride feed are hidden.';
 
   @override
   String get simpleModeCommunityHidden => 'Community is hidden in Simple mode.';
@@ -7168,7 +7189,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String simpleHomeMileageGood(String kmpl) {
-    return 'Mileage $kmpl km/L 👍 good';
+    return 'Mileage $kmpl km/L · good';
   }
 
   @override
@@ -7205,10 +7226,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simpleHomeAddFuel => 'Add fuel';
 
   @override
-  String get simpleHomeHelp => 'Help';
+  String get simpleHomeHelp => 'Emergency';
 
   @override
-  String get simpleHomeHelpTitle => 'Get help';
+  String get simpleHomeHelpTitle => 'Emergency';
 
   @override
   String get simpleHomeHelpBody =>
