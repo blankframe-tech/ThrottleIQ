@@ -127,8 +127,12 @@ void main() {
     final below = tester.getTopLeft(find.byKey(const Key('simpleRideCard_r1')));
     expect(top.dy, lessThan(below.dy));
     expect(find.text('12.5 km'), findsNWidgets(2));
-    expect(find.text(en.simpleRidesDurationM(28)), findsNWidgets(2));
-    expect(find.text(en.simpleRidesFuelCost('62')), findsNWidgets(2));
+    expect(
+        find.text(
+            '${en.simpleRidesDurationM(28)} · ${en.simpleRidesFuelCost('62')}'),
+        findsNWidgets(2));
+    // The emergency button is on this tab too.
+    expect(find.byKey(const Key('simple_home_help')), findsOneWidget);
   });
 
   testWidgets('no running-cost data: the fuel cost is left out',

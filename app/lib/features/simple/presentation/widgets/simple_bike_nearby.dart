@@ -11,6 +11,7 @@ import '../../../poi_directory/domain/place_directions.dart';
 import '../../../poi_directory/domain/places_query.dart';
 import '../../../poi_directory/presentation/providers/places_provider.dart';
 import '../../../poi_directory/presentation/widgets/place_launch_actions.dart';
+import 'simple_section.dart';
 
 /// Search radius for the Bike tab's Find nearby.
 const simpleBikeNearbyRadiusKm = 15.0;
@@ -40,12 +41,10 @@ class _SimpleBikeNearbyState extends ConsumerState<SimpleBikeNearby> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        EditorialLabel(l10n.simpleBikeNearbyTitle),
-        const SizedBox(height: 8),
+        SimpleSectionHeader(l10n.simpleBikeNearbyTitle),
         if (!_open)
           OutlinedButton.icon(
             key: const Key('simpleBikeFindNearby'),
-            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 56)),
             onPressed: () => setState(() => _open = true),
             icon: const Icon(Icons.near_me_outlined),
             label: Text(l10n.simpleBikeNearbyAction),
@@ -71,7 +70,6 @@ class _SimpleBikeNearbyState extends ConsumerState<SimpleBikeNearby> {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             key: const Key('simpleBikeNearbyRetry'),
-            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
             onPressed: () {
               ref.invalidate(currentPositionProvider);
               ref.invalidate(nearbyPlacesProvider(simpleBikeNearbyRadiusKm));
@@ -108,7 +106,7 @@ class _SimpleBikeNearbyState extends ConsumerState<SimpleBikeNearby> {
           (PlaceCategory.garage, l10n.simpleBikeNearbyGarage),
         ].where((c) => widget.only == null || c.$1 == widget.only)) ...[
           const SizedBox(height: 8),
-          Text(title, style: display(context, 16)),
+          Text(title, style: Theme.of(context).textTheme.titleSmall),
           ..._list(context, l10n, nearest(category)),
         ],
       ],

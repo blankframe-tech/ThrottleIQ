@@ -4,7 +4,7 @@ import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
 
 /// An empty Simple tab: what's missing, why, and the one button that fixes it.
-/// Used by the Rides and Bike tabs.
+/// Used by all three Simple tabs.
 class SimpleEmptyState extends StatelessWidget {
   const SimpleEmptyState({
     super.key,
@@ -36,7 +36,7 @@ class SimpleEmptyState extends StatelessWidget {
                 style: TextStyle(color: context.palette.textSecondary)),
             const SizedBox(height: 20),
             FilledButton(
-              style: FilledButton.styleFrom(minimumSize: const Size(200, 56)),
+              style: FilledButton.styleFrom(minimumSize: const Size(200, 52)),
               onPressed: onPressed,
               child: Text(action, textAlign: TextAlign.center),
             ),

@@ -11,6 +11,7 @@ import '../../../garage/domain/entities/bike_entity.dart';
 import '../../../garage/presentation/providers/garage_provider.dart';
 import '../../../maintenance/domain/calculators/maintenance_forecast.dart';
 import '../../../maintenance/domain/entities/maintenance_entity.dart';
+import '../../../maintenance/domain/entities/maintenance_profile.dart';
 import '../../../maintenance/presentation/maintenance_l10n.dart';
 import '../../../maintenance/presentation/providers/fuel_provider.dart';
 import '../../../maintenance/presentation/providers/maintenance_provider.dart';
@@ -19,13 +20,17 @@ import '../../../maintenance/presentation/widgets/paperwork_card.dart';
 import '../../../maintenance/presentation/widgets/quick_service_sheet.dart';
 import '../providers/simple_bike_provider.dart';
 import '../widgets/simple_bike_nearby.dart';
+import '../widgets/simple_home_help_sheet.dart';
 import '../widgets/simple_rides_empty_state.dart';
 import '../widgets/simple_rides_format.dart';
+import '../widgets/simple_section.dart';
 import '../widgets/simple_settings_button.dart';
+import '../widgets/simple_theme.dart';
 
-/// Simple mode Bike tab: the maintenance checklist with Done, fuel history,
-/// Find nearby (when Places is on) and the bike's papers. Everything reads
-/// and writes through the full app's providers.
+/// Simple mode Bike tab: the maintenance checklist (what's due first, the
+/// rest folded away), fuel history, Find nearby (when Places is on) and the
+/// bike's papers. Everything reads and writes through the full app's
+/// providers.
 class SimpleBikeScreen extends ConsumerWidget {
   const SimpleBikeScreen({super.key});
 
@@ -36,41 +41,56 @@ class SimpleBikeScreen extends ConsumerWidget {
     final garageLoading = ref.watch(garageProvider).isLoading;
     final places = ref.watch(appModulesProvider.select((m) => m.places));
 
-    return Scaffold(
-      backgroundColor: context.palette.background,
-      appBar: AppBar(
-        title: Text(bike?.displayName ?? l10n.simpleModeNavBike),
-        actions: const [SimpleSettingsButton()],
-      ),
-      body: bike == null
-          ? garageLoading
-              ? const Center(child: CircularProgressIndicator())
-              : ListView(children: [
-                  SimpleEmptyState(
-                    icon: Icons.two_wheeler,
-                    title: l10n.simpleBikeNoBikeTitle,
-                    body: l10n.simpleBikeNoBikeBody,
-                    action: l10n.simpleBikeAddBike,
-                    onPressed: () => context.push('/home/profile/add'),
-                  ),
-                ])
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                _Checklist(bike: bike),
-                const SizedBox(height: 24),
-                _FuelHistory(bikeId: bike.id),
-                if (places) ...[
-                  const SizedBox(height: 24),
-                  const SimpleBikeNearby(),
+    return SimpleTheme(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(l10n.simpleModeNavBike),
+          actions: const [SimpleEmergencyButton(), SimpleSettingsButton()],
+        ),
+        body: bike == null
+            ? garageLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(children: [
+                    SimpleEmptyState(
+                      icon: Icons.two_wheeler,
+                      title: l10n.simpleBikeNoBikeTitle,
+                      body: l10n.simpleBikeNoBikeBody,
+                      action: l10n.simpleBikeAddBike,
+                      onPressed: () => context.push('/home/profile/add'),
+                    ),
+                  ])
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _Checklist(bike: bike),
+                  const SizedBox(height: 16),
+                  _FuelHistory(bikeId: bike.id),
+                  if (places) ...[
+                    const SizedBox(height: 16),
+                    const SimpleBikeNearby(),
+                  ],
+                  const SizedBox(height: 16),
+                  _Papers(bikeId: bike.id),
                 ],
-                const SizedBox(height: 24),
-                PaperworkCard(bikeId: bike.id),
-              ],
-            ),
+              ),
+      ),
     );
   }
 }
+
+/// Rows in one card, split by hairlines.
+Widget _rows(BuildContext context, List<Widget> rows) => EditorialCard(
+      radius: context.shape.radiusLg,
+      padding: EdgeInsets.zero,
+      child: Column(
+        children: [
+          for (final (i, r) in rows.indexed) ...[
+            if (i > 0) const Divider(height: 1),
+            r,
+          ],
+        ],
+      ),
+    );
 
 class _Checklist extends ConsumerWidget {
   const _Checklist({required this.bike});
@@ -90,80 +110,89 @@ class _Checklist extends ConsumerWidget {
         ref.watch(maintenanceProvider(bike.id)).isLoading;
     final imperial = ref.watch(maintenanceImperialProvider);
     final now = DateTime.now();
+    // Overdue first, then due soon; the fine ones fold away.
+    final due = [
+      ...checks.where((f) => f.status == ReminderStatus.overdue),
+      ...checks.where((f) => f.status == ReminderStatus.dueSoon),
+    ];
+    final fine = checks.where((f) => f.status == ReminderStatus.ok).toList();
 
-    String status(CheckForecast f) {
-      if (f.status == ReminderStatus.ok) return l10n.simpleBikeCheckOk;
+    Widget row(CheckForecast f) {
+      final label = forecastLabel(f, l10n);
+      // An undatable km-only check says the km instead.
       final when = dueWhenText(f, l10n, now);
-      return when.isNotEmpty ? when : rowRemainingText(f, l10n, imperial);
+      final (String status, Color color) = switch (f.status) {
+        ReminderStatus.ok => (l10n.simpleBikeCheckOk, palette.textSecondary),
+        ReminderStatus.overdue => (when, palette.danger),
+        _ => (
+            when.isNotEmpty ? when : rowRemainingText(f, l10n, imperial),
+            palette.attention
+          ),
+      };
+      // The same call UpNextCard makes.
+      void done() => QuickServiceSheet.show(
+            context,
+            bike: bike,
+            initialForecast: f,
+            initialTitle: label,
+            initialServiceType: f.serviceType,
+          );
+      final doneText = Text(l10n.simpleBikeCheckDone);
+      return Padding(
+        key: Key('simpleBikeCheck_${f.key}'),
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label, style: Theme.of(context).textTheme.titleMedium),
+                  Text(status, style: TextStyle(color: color)),
+                ],
+              ),
+            ),
+            // Due: a real button. Fine: a quiet link, for early services.
+            if (f.status == ReminderStatus.ok)
+              TextButton(onPressed: done, child: doneText)
+            else
+              OutlinedButton(onPressed: done, child: doneText),
+          ],
+        ),
+      );
     }
-
-    Color color(ReminderStatus s) => switch (s) {
-          ReminderStatus.overdue => palette.danger,
-          ReminderStatus.dueSoon => palette.attention,
-          _ => palette.success,
-        };
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        EditorialLabel(l10n.simpleBikeChecksTitle),
-        const SizedBox(height: 8),
+        SimpleSectionHeader(l10n.simpleBikeChecksTitle),
         if (checks.isEmpty && loading)
           const SizedBox.shrink()
         else if (checks.isEmpty) ...[
           Text(l10n.simpleBikeSetupBody,
               style: TextStyle(color: palette.textSecondary)),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           FilledButton(
             key: const Key('simpleBikeSetup'),
-            style: FilledButton.styleFrom(minimumSize: const Size(48, 56)),
             onPressed: () => context.push(
                 '/home/maintenance/setup?bikeId=${bike.id}&firstTime=true'),
             child: Text(l10n.simpleBikeSetupAction),
           ),
         ] else
-          EditorialCard(
-            radius: context.shape.radiusLg,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(
-              children: [
-                for (final f in checks)
-                  Padding(
-                    key: Key('simpleBikeCheck_${f.key}'),
-                    padding: const EdgeInsets.fromLTRB(14, 6, 6, 6),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(forecastLabel(f, l10n),
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600)),
-                              Text(status(f),
-                                  style: TextStyle(color: color(f.status))),
-                            ],
-                          ),
-                        ),
-                        TextButton(
-                          style: TextButton.styleFrom(
-                              minimumSize: const Size(48, 48)),
-                          // The same call UpNextCard makes.
-                          onPressed: () => QuickServiceSheet.show(
-                            context,
-                            bike: bike,
-                            initialForecast: f,
-                            initialTitle: forecastLabel(f, l10n),
-                            initialServiceType: f.serviceType,
-                          ),
-                          child: Text(l10n.simpleBikeCheckDone),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          _rows(context, [
+            for (final f in due) row(f),
+            if (fine.isNotEmpty)
+              ExpansionTile(
+                key: const Key('simpleBikeChecksFine'),
+                tilePadding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
+                leading:
+                    Icon(Icons.check_circle_outline, color: palette.success),
+                title: Text(l10n.simpleBikeChecksFine(fine.length)),
+                children: [
+                  for (final f in fine) ...[const Divider(height: 1), row(f)],
+                ],
+              ),
+          ]),
       ],
     );
   }
@@ -174,8 +203,8 @@ class _FuelHistory extends ConsumerWidget {
 
   final String bikeId;
 
-  // shortcut: the latest 10 fills only; the full list stays in the full app.
-  static const _shown = 10;
+  // shortcut: the latest 5 fills only; the full list stays in the full app.
+  static const _shown = 5;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -187,8 +216,16 @@ class _FuelHistory extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        EditorialLabel(l10n.simpleBikeFuelTitle),
-        const SizedBox(height: 8),
+        SimpleSectionHeader(
+          l10n.simpleBikeFuelTitle,
+          action: TextButton.icon(
+            key: const Key('simpleBikeAddFuel'),
+            onPressed: () =>
+                context.push('/home/maintenance/fuel/add?bikeId=$bikeId'),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.simpleBikeAddFuel),
+          ),
+        ),
         // Loading or failed is not "no fill-ups".
         if (!async.hasValue && async.hasError) ...[
           Text(mapFirestoreError(async.error!, l10n),
@@ -196,7 +233,6 @@ class _FuelHistory extends ConsumerWidget {
           const SizedBox(height: 8),
           OutlinedButton.icon(
             key: const Key('simpleBikeFuelRetry'),
-            style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
             onPressed: () => ref.invalidate(fuelLogsProvider(bikeId)),
             icon: const Icon(Icons.refresh),
             label: Text(l10n.retry),
@@ -205,32 +241,80 @@ class _FuelHistory extends ConsumerWidget {
           const Center(child: CircularProgressIndicator())
         else if (logs.isEmpty)
           Text(l10n.simpleBikeFuelEmpty,
-              style: TextStyle(color: context.palette.textTertiary))
+              style: TextStyle(color: context.palette.textSecondary))
         else
-          EditorialCard(
-            radius: context.shape.radiusLg,
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Column(
-              children: [
-                for (final log in logs.take(_shown))
-                  ListTile(
-                    key: Key('simpleBikeFuel_${log.id}'),
-                    title: Text(longDate(context, log.filledAt)),
-                    subtitle: Text(
-                        '৳${simpleAmount(log.totalCost)} · ${l10n.simpleBikeFuelLitres(log.liters.toStringAsFixed(1))}'),
-                  ),
-              ],
-            ),
+          _rows(context, [
+            for (final log in logs.take(_shown))
+              ListTile(
+                key: Key('simpleBikeFuel_${log.id}'),
+                title: Text('৳${simpleAmount(log.totalCost)}',
+                    style: Theme.of(context).textTheme.titleMedium),
+                subtitle: Text(
+                    '${longDate(context, log.filledAt)} · ${l10n.simpleBikeFuelLitres(log.liters.toStringAsFixed(1))}'),
+              ),
+          ]),
+      ],
+    );
+  }
+}
+
+/// The bike's papers, soonest to expire first. Same data and sheet as the
+/// full app's [PaperworkCard], in Simple's section style.
+class _Papers extends ConsumerWidget {
+  const _Papers({required this.bikeId});
+
+  final String bikeId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final palette = context.palette;
+    final now = DateTime.now();
+    final papers = [...?ref.watch(paperworkProvider(bikeId)).valueOrNull]
+      ..sort((a, b) => a.daysLeft(now).compareTo(b.daysLeft(now)));
+
+    Widget paper(PaperworkEntity p) {
+      final days = p.daysLeft(now);
+      final date = longDate(context, p.expiresOn);
+      final color = days < 0
+          ? palette.danger
+          : days <= PaperworkEntity.warnDays
+              ? palette.attention
+              : palette.textSecondary;
+      return ListTile(
+        key: Key('simpleBikePaper_${p.kind.name}'),
+        leading: Icon(Icons.description_outlined, color: color),
+        title: Text(paperworkLabel(p.kind, l10n),
+            style: Theme.of(context).textTheme.titleMedium),
+        subtitle: Text(
+            days < 0
+                ? l10n.paperworkExpiredOn(date)
+                : l10n.paperworkExpiresOn(date, days),
+            style: TextStyle(color: color)),
+        trailing: Icon(Icons.chevron_right, color: palette.textTertiary),
+        onTap: () => PaperworkSheet.show(context, bikeId: bikeId, existing: p),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SimpleSectionHeader(
+          l10n.paperworkTitle,
+          action: TextButton.icon(
+            key: const Key('simpleBikeAddPaper'),
+            onPressed: () => PaperworkSheet.show(context, bikeId: bikeId),
+            icon: const Icon(Icons.add),
+            label: Text(l10n.addAction),
           ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          key: const Key('simpleBikeAddFuel'),
-          style: OutlinedButton.styleFrom(minimumSize: const Size(48, 48)),
-          onPressed: () =>
-              context.push('/home/maintenance/fuel/add?bikeId=$bikeId'),
-          icon: const Icon(Icons.local_gas_station_outlined),
-          label: Text(l10n.simpleBikeAddFuel),
         ),
+        if (papers.isEmpty)
+          Text(l10n.paperworkEmpty,
+              style: TextStyle(color: palette.textSecondary))
+        else
+          _rows(context, [
+            for (final p in papers) paper(p),
+          ]),
       ],
     );
   }

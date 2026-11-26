@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:throttleiq/features/maintenance/presentation/providers/maintenance_provider.dart';
+import 'package:throttleiq/features/maintenance/domain/entities/maintenance_entity.dart';
+import 'package:throttleiq/features/maintenance/domain/calculators/ride_cost_calculator.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
 import 'package:throttleiq/features/ride/presentation/providers/ride_recording_provider.dart';
 import 'package:throttleiq/features/simple/presentation/screens/simple_ride_detail_screen.dart';
@@ -29,6 +32,7 @@ void main() {
 
   Future<void> pump(WidgetTester tester, RideEntity? ride,
       {Future<RideEntity?> Function()? load,
+      RideCostBreakdown? cost,
       double textScale = 1,
       Locale locale = const Locale('en')}) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -39,6 +43,7 @@ void main() {
         rideDetailProvider
             .overrideWith((ref, id) => load?.call() ?? Future.value(ride)),
         ridePolylineProvider.overrideWith((ref, id) async => const []),
+        rideCostProvider.overrideWith((ref, key) => cost),
       ],
       child: MaterialApp(
         locale: locale,
@@ -70,8 +75,30 @@ void main() {
       en.simpleRidesTopSpeed,
       en.simpleRidesAvgSpeed,
     ]) {
-      expect(find.text(label.toUpperCase()), findsOneWidget);
+      expect(find.text(label), findsOneWidget);
     }
+  });
+
+  testWidgets('the fuel cost the ride row shows, only when it is known',
+      (tester) async {
+    await pump(tester, _ride(),
+        cost: const RideCostBreakdown(distanceKm: 12.48, lines: [
+          RideCostLine(
+              serviceType: ServiceType.fuel,
+              costPerKm: 5,
+              cost: 62.4,
+              source: CostSource.fuel),
+        ]));
+    expect(
+        find.descendant(
+            of: find.byKey(const Key('simpleRideDetailFuel')),
+            matching: find.text('৳62')),
+        findsOneWidget);
+    expect(find.text(en.simpleRidesFuel), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox());
+    await pump(tester, _ride());
+    expect(find.byKey(const Key('simpleRideDetailFuel')), findsNothing);
   });
 
   testWidgets('missing speed or time shows a dash, not a made-up number',

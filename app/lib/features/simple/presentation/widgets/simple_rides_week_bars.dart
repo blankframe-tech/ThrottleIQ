@@ -22,8 +22,9 @@ List<double> simpleRidesKmPerDay(List<RideEntity> rides, DateTime now) {
   return km;
 }
 
-/// The Rides tab's one chart: km per day for the last 7 days. Plain bars, not
-/// a stats-registry chart (Simple mode keeps its own widgets).
+/// The Rides tab's one chart: km per day for the last 7 days (its heading is
+/// the tab's). Plain bars, not a stats-registry chart (Simple mode keeps its
+/// own widgets).
 class SimpleRidesWeekBars extends StatelessWidget {
   const SimpleRidesWeekBars({super.key, required this.rides, this.now});
 
@@ -60,8 +61,6 @@ class SimpleRidesWeekBars extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            EditorialLabel(l10n.simpleRidesWeekTitle),
-            const SizedBox(height: 10),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -82,7 +81,10 @@ class SimpleRidesWeekBars extends StatelessWidget {
                               max == 0 ? 2 : 2 + (_barHeight - 2) * km[i] / max,
                           margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: i == 6 ? palette.primary : palette.secondary,
+                            // Only today takes the accent.
+                            color: i == 6
+                                ? palette.primary
+                                : palette.textTertiary.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),

@@ -52,9 +52,11 @@ class _Configs extends MaintenanceConfigNotifier {
   Future<List<MaintenanceConfigEntity>> build(String bikeId) async => const [];
 }
 
+var _paperList = <PaperworkEntity>[];
+
 class _Papers extends PaperworkNotifier {
   @override
-  Future<List<PaperworkEntity>> build(String bikeId) async => const [];
+  Future<List<PaperworkEntity>> build(String bikeId) async => _paperList;
 }
 
 var _fuelFails = false;
@@ -171,6 +173,7 @@ void main() {
   setUp(() {
     positionReads = 0;
     positionError = null;
+    _paperList = [];
     SharedPreferences.setMockInitialValues({});
   });
 
@@ -234,18 +237,64 @@ void main() {
       (tester) async {
     await pump(tester);
     expect(row('air'), findsNothing); // unknown is skipped
-    expect(find.descendant(of: row('chain'), matching: find.text('OK')),
-        findsOneWidget);
     expect(
         find.descendant(of: row('brakes'), matching: find.text(en.dueOverdue)),
         findsOneWidget);
+    // Overdue before due soon.
+    expect(tester.getTopLeft(row('brakes')).dy,
+        lessThan(tester.getTopLeft(row('oil')).dy));
     // No riding pace to date it, so it falls back to the km left.
     expect(
         find.descendant(
             of: row('oil'),
             matching: find.text(rowRemainingText(_checks[0], en, false))),
         findsOneWidget);
-    expect(find.byType(PaperworkCard), findsOneWidget);
+    // The fine one folds away until tapped.
+    expect(row('chain'), findsNothing);
+    await tester.tap(find.text(en.simpleBikeChecksFine(1)));
+    await tester.pumpAndSettle();
+    expect(find.descendant(of: row('chain'), matching: find.text('OK')),
+        findsOneWidget);
+    // An early service is still one tap away.
+    await tester.tap(find.descendant(
+        of: row('chain'), matching: find.text(en.simpleBikeCheckDone)));
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<QuickServiceSheet>(find.byType(QuickServiceSheet))
+            .initialForecast
+            ?.key,
+        'chain');
+  });
+
+  testWidgets('papers: soonest to expire first; tap one to edit it',
+      (tester) async {
+    final now = DateTime.now();
+    _paperList = [
+      PaperworkEntity(
+          bikeId: 'b1',
+          kind: PaperworkKind.insurance,
+          expiresOn: now.add(const Duration(days: 200))),
+      PaperworkEntity(
+          bikeId: 'b1',
+          kind: PaperworkKind.taxToken,
+          expiresOn: now.add(const Duration(days: 20))),
+    ];
+    await pump(tester);
+    final tax = find.byKey(const Key('simpleBikePaper_taxToken'));
+    expect(
+        tester.getTopLeft(tax).dy,
+        lessThan(tester
+            .getTopLeft(find.byKey(const Key('simpleBikePaper_insurance')))
+            .dy));
+    await tester.tap(tax);
+    await tester.pumpAndSettle();
+    expect(
+        tester
+            .widget<PaperworkSheet>(find.byType(PaperworkSheet))
+            .existing
+            ?.kind,
+        PaperworkKind.taxToken);
   });
 
   testWidgets('Done opens the quick service sheet for that check',
@@ -280,18 +329,20 @@ void main() {
         tester.getTopLeft(newest).dy,
         lessThan(
             tester.getTopLeft(find.byKey(const Key('simpleBikeFuel_f1'))).dy));
-    expect(find.descendant(of: newest, matching: find.text('1 Nov 2026')),
+    // The amount first, then when and how much.
+    expect(find.descendant(of: newest, matching: find.text('৳585')),
         findsOneWidget);
     expect(
         find.descendant(
             of: newest,
-            matching: find.text('৳585 · ${en.simpleBikeFuelLitres('4.5')}')),
+            matching:
+                find.text('1 Nov 2026 · ${en.simpleBikeFuelLitres('4.5')}')),
         findsOneWidget);
     // Same thousands grouping as the Home tile.
     expect(
         find.descendant(
             of: find.byKey(const Key('simpleBikeFuel_f1')),
-            matching: find.text('৳1,250 · ${en.simpleBikeFuelLitres('10.0')}')),
+            matching: find.text('৳1,250')),
         findsOneWidget);
   });
 
@@ -340,7 +391,7 @@ void main() {
       (tester) async {
     SharedPreferences.setMockInitialValues({'module_places': false});
     await pump(tester);
-    expect(find.text(en.simpleBikeNearbyTitle.toUpperCase()), findsNothing);
+    expect(find.text(en.simpleBikeNearbyTitle), findsNothing);
     expect(find.byKey(const Key('simpleBikeFindNearby')), findsNothing);
   });
 
@@ -432,9 +483,9 @@ void main() {
 
     await pumpScope(
         tester, UncontrolledProviderScope(container: container, child: app()));
-    expect(find.text('20 Nov 2026'), findsOneWidget);
-    expect(
-        find.text('৳650 · ${en.simpleBikeFuelLitres('5.0')}'), findsOneWidget);
+    expect(find.text('৳650'), findsOneWidget);
+    expect(find.text('20 Nov 2026 · ${en.simpleBikeFuelLitres('5.0')}'),
+        findsOneWidget);
     await tester.runAsync(db.close);
   });
 
