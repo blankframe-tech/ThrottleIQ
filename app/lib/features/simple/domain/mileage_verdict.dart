@@ -6,7 +6,15 @@ library;
 import '../../maintenance/domain/calculators/fuel_economy.dart';
 import '../../maintenance/domain/entities/fuel_log.dart';
 
-enum MileageVerdict { notEnoughData, good, okay, low }
+enum MileageVerdict {
+  notEnoughData,
+
+  /// One measured stretch: a km/L to show, nothing yet to judge it against.
+  firstOnly,
+  good,
+  okay,
+  low,
+}
 
 /// Last stretch at or above this share of the average: good.
 const mileageGoodRatio = 0.95;
@@ -20,11 +28,13 @@ typedef MileageReading = ({
   double? avgKmPerLiter,
 });
 
-/// With fewer than two measured full-to-full stretches there is no "usual"
-/// to compare with, so it says so instead of guessing (no per-model defaults).
+/// No measured full-to-full stretch: nothing to show (two full fills make
+/// one, as in the full app's fuel card). One stretch: its km/L, unjudged,
+/// since there is no "usual" yet (no per-model defaults).
 MileageReading mileageVerdict(Iterable<FuelLogEntity> logs) {
   final list = logs.toList();
-  if (fuelSegments(list).length < 2) {
+  final stretches = fuelSegments(list).length;
+  if (stretches == 0) {
     return (
       verdict: MileageVerdict.notEnoughData,
       lastKmPerLiter: null,
@@ -34,6 +44,13 @@ MileageReading mileageVerdict(Iterable<FuelLogEntity> logs) {
   final s = summarizeFuel(list);
   final last = s.lastKmPerLiter!;
   final avg = s.avgKmPerLiter!;
+  if (stretches == 1) {
+    return (
+      verdict: MileageVerdict.firstOnly,
+      lastKmPerLiter: last,
+      avgKmPerLiter: avg,
+    );
+  }
   final ratio = last / avg;
   return (
     verdict: ratio >= mileageGoodRatio

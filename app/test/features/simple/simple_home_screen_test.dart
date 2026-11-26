@@ -1,7 +1,10 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:throttleiq/core/services/app_modules.dart';
 import 'package:throttleiq/core/theme/app_theme.dart';
 import 'package:throttleiq/core/theme/theme_style_provider.dart';
@@ -15,6 +18,8 @@ import 'package:throttleiq/features/maintenance/presentation/providers/fuel_prov
 import 'package:throttleiq/features/maintenance/presentation/providers/maintenance_provider.dart';
 import 'package:throttleiq/features/maintenance/presentation/service_type_l10n.dart';
 import 'package:throttleiq/features/maintenance/presentation/widgets/quick_service_sheet.dart';
+import 'package:throttleiq/features/poi_directory/domain/entities/place_entity.dart';
+import 'package:throttleiq/features/poi_directory/presentation/providers/places_provider.dart';
 import 'package:throttleiq/features/profile/domain/entities/emergency_contact_entity.dart';
 import 'package:throttleiq/features/profile/presentation/providers/emergency_contacts_provider.dart';
 import 'package:throttleiq/features/ride/domain/entities/ride_entity.dart';
@@ -64,13 +69,43 @@ FuelLogEntity _fill(String id, DateTime at, double odo, double taka) =>
       updatedAt: at,
     );
 
-CheckForecast _forecast(ServiceType t, ReminderStatus s) => CheckForecast(
+CheckForecast _forecast(ServiceType t, ReminderStatus s, {double? kmLeft}) =>
+    CheckForecast(
       key: t.name,
       serviceType: t,
       status: s,
       kmLimit: 3000,
       baseKmLimit: 3000,
+      kmLeft: kmLeft,
     );
+
+PlaceEntity _place(String id, PlaceCategory category) => PlaceEntity(
+      id: id,
+      name: 'Place $id',
+      category: category,
+      latitude: 23.79,
+      longitude: 90.40,
+      geohash: 'wh0r',
+      address: 'Dhaka',
+      createdBy: 'u2',
+      createdAt: DateTime(2026),
+    );
+
+final _position = Position(
+  latitude: 23.78,
+  longitude: 90.40,
+  timestamp: DateTime(2026),
+  accuracy: 5,
+  altitude: 0,
+  altitudeAccuracy: 0,
+  heading: 0,
+  headingAccuracy: 0,
+  speed: 0,
+  speedAccuracy: 0,
+);
+
+/// Where Settings' add-contact dialog writes, per pump.
+late FakeFirebaseFirestore _firestore;
 
 PaperworkEntity _paper(PaperworkKind k, int days) => PaperworkEntity(
     bikeId: 'b1', kind: k, expiresOn: _now.add(Duration(days: days)));
@@ -147,6 +182,8 @@ Future<ProviderContainer> _pump(
   List<CheckForecast> forecasts = const [],
   List<PaperworkEntity> papers = const [],
   List<EmergencyContactEntity> contacts = const [],
+  bool contactsFail = false,
+  bool ridesFail = false,
   AppModules modules = const AppModules(simple: true),
   RideRecordingState recording = const RideRecordingState(),
   Locale locale = const Locale('en'),
@@ -155,15 +192,27 @@ Future<ProviderContainer> _pump(
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.reset);
+  SharedPreferences.setMockInitialValues({});
+  _firestore = FakeFirebaseFirestore();
   final container = ProviderContainer(overrides: [
     garageProvider.overrideWith(() => _Garage(bikes ?? [_bike])),
     appModulesProvider.overrideWith((ref) => _Modules(modules)),
     rideRecordingProvider.overrideWith((ref) => _Recorder(recording)),
-    rideHistoryProvider.overrideWith((ref, id) async => rides),
+    rideHistoryProvider.overrideWith(
+        (ref, id) async => ridesFail ? throw StateError('db') : rides),
     fuelLogsProvider.overrideWith(() => _Fuel(fills)),
     maintenanceForecastProvider.overrideWith((ref, id) => forecasts),
     paperworkProvider.overrideWith(() => _Papers(papers)),
-    myEmergencyContactsProvider.overrideWith((ref) => Stream.value(contacts)),
+    myEmergencyContactsProvider.overrideWith((ref) => contactsFail
+        ? Stream.error(StateError('permission-denied'))
+        : Stream.value(contacts)),
+    emergencyContactsNotifierProvider
+        .overrideWith((ref) => EmergencyContactsNotifier('u1', _firestore)),
+    currentPositionProvider.overrideWith((ref) async => _position),
+    nearbyPlacesProvider.overrideWith((ref, radius) async => [
+          _place('fuel1', PlaceCategory.fuel),
+          _place('mech1', PlaceCategory.garage),
+        ]),
   ]);
   addTearDown(container.dispose);
   Widget at(GoRouterState s) => Scaffold(body: Text('at ${s.uri}'));
@@ -249,13 +298,42 @@ void main() {
     expect(_key('simple_home_no_fuel'), findsNothing);
   });
 
-  testWidgets('one measured stretch: mileage says not enough data yet',
+  testWidgets('one fill: mileage says not enough data yet', (tester) async {
+    await _pump(tester, fills: [_fill('1', _lastMonth, 0, 500)]);
+    expect(find.text(_en.simpleHomeMileageNotEnough), findsOneWidget);
+  });
+
+  testWidgets('two full fills: the km/L, as in the full app, not judged yet',
       (tester) async {
     await _pump(tester, fills: [
       _fill('1', _lastMonth, 0, 500),
       _fill('2', _lastMonth.add(const Duration(hours: 1)), 100, 250),
     ]);
-    expect(find.text(_en.simpleHomeMileageNotEnough), findsOneWidget);
+    // 100 km on 2 L.
+    expect(find.text(_en.simpleHomeMileageFirst('50')), findsOneWidget);
+    expect(find.text(_en.simpleHomeMileageNotEnough), findsNothing);
+  });
+
+  testWidgets('a failed ride load shows a dash, not 0 km', (tester) async {
+    await _pump(tester, ridesFail: true);
+    expect(
+        find.descendant(of: _key('simple_home_km'), matching: find.text('—')),
+        findsOneWidget);
+    expect(_key('simple_home_no_rides'), findsNothing);
+  });
+
+  testWidgets('thousands are grouped in both tiles', (tester) async {
+    await _pump(tester,
+        rides: [_ride('a', _thisMonth, 1234)],
+        fills: [_fill('x', _thisMonth, 1200, 1250)]);
+    expect(
+        find.descendant(
+            of: _key('simple_home_km'), matching: find.text('1,234')),
+        findsOneWidget);
+    expect(
+        find.descendant(
+            of: _key('simple_home_taka'), matching: find.text('৳1,250')),
+        findsOneWidget);
   });
 
   testWidgets('mileage line shows the verdict', (tester) async {
@@ -309,16 +387,27 @@ void main() {
       expect(_key('simple_home_alert'), findsOneWidget);
     });
 
+    testWidgets('an undatable km-only check still says how far',
+        (tester) async {
+      await _pump(tester, forecasts: [
+        _forecast(ServiceType.frontDiscPads, ReminderStatus.dueSoon,
+            kmLeft: 180)
+      ]);
+      expect(find.textContaining(_en.rowLeftKm('180 km')), findsOneWidget);
+    });
+
     testWidgets('no alert when all is fine', (tester) async {
       await _pump(tester, papers: [_paper(PaperworkKind.insurance, 90)]);
       expect(_key('simple_home_alert'), findsNothing);
     });
 
-    testWidgets('Find mechanic goes to the Bike tab', (tester) async {
+    testWidgets('Find mechanic lists nearby mechanics at once', (tester) async {
       await _pump(tester, forecasts: [overdue]);
       await tester.tap(_key('simple_home_find_mechanic'));
       await tester.pumpAndSettle();
-      expect(find.text('at /home/simple-bike'), findsOneWidget);
+      expect(_key('simpleBikePlace_mech1'), findsOneWidget);
+      expect(_key('simpleBikePlace_fuel1'), findsNothing);
+      expect(_key('simpleBikeFindNearby'), findsNothing);
     });
 
     testWidgets('Find mechanic is hidden with Places off', (tester) async {
@@ -358,7 +447,9 @@ void main() {
           findsNothing);
     });
 
-    testWidgets('without contacts: leads to Settings', (tester) async {
+    testWidgets(
+        "without contacts: Settings' add dialog, saving to the same place",
+        (tester) async {
       await _pump(tester);
       await tester.tap(_key('simple_home_help'));
       await tester.pumpAndSettle();
@@ -367,7 +458,29 @@ void main() {
           findsNothing);
       await tester.tap(_key('simple_home_add_contact'));
       await tester.pumpAndSettle();
-      expect(find.text('at /settings'), findsOneWidget);
+      expect(find.text(_en.addEmergencyContactTitle), findsOneWidget);
+      final fields = find.byType(TextField);
+      await tester.enterText(fields.at(0), 'Mum');
+      await tester.enterText(fields.at(1), '01711000000');
+      await tester.tap(find.widgetWithText(ElevatedButton, _en.addAction));
+      await tester.pumpAndSettle();
+      final saved = await _firestore
+          .collection('users')
+          .doc('u1')
+          .collection('emergencyContacts')
+          .get();
+      expect(saved.docs.single.data()['name'], 'Mum');
+    });
+
+    testWidgets("contacts that fail to load aren't shown as none",
+        (tester) async {
+      await _pump(tester, contactsFail: true);
+      await tester.tap(_key('simple_home_help'));
+      await tester.pumpAndSettle();
+      expect(_key('simple_home_contacts_failed'), findsOneWidget);
+      expect(_key('simple_home_contacts_retry'), findsOneWidget);
+      expect(find.text(_en.simpleHomeNoContacts), findsNothing);
+      expect(_key('simple_home_add_contact'), findsNothing);
     });
 
     test('the location SMS: number, encoded body with a Maps link', () {
@@ -388,6 +501,9 @@ void main() {
           modules: const AppModules(simple: true, rideTracking: false));
       expect(_key('simple_home_start_ride'), findsNothing);
       expect(_key('simple_home_no_rides'), findsNothing);
+      // km comes only from recorded rides, so no false "0 km".
+      expect(_key('simple_home_km'), findsNothing);
+      expect(_key('simple_home_taka'), findsOneWidget);
     });
 
     testWidgets('starts a ride through the recorder, then opens it',

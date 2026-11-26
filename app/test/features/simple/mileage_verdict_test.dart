@@ -24,17 +24,28 @@ List<FuelLogEntity> _withRatio(double ratio) {
 }
 
 void main() {
-  test('no fills, one fill or one stretch: not enough data', () {
+  test('no fills, one full fill, or no full fill after it: not enough data',
+      () {
     for (final logs in [
       <FuelLogEntity>[],
       [_fill(0, 0, 5)],
-      [_fill(0, 0, 5), _fill(1, 100, 2)],
       // A partial fill doesn't close a stretch.
-      [_fill(0, 0, 5), _fill(1, 100, 2), _fill(2, 200, 2, full: false)],
+      [_fill(0, 0, 5), _fill(1, 100, 2, full: false)],
     ]) {
       final r = mileageVerdict(logs);
       expect(r.verdict, MileageVerdict.notEnoughData);
       expect(r.lastKmPerLiter, isNull);
+    }
+  });
+
+  test('two full fills (one stretch): the km/L, not judged yet', () {
+    for (final logs in [
+      [_fill(0, 0, 5), _fill(1, 100, 2)],
+      [_fill(0, 0, 5), _fill(1, 100, 2), _fill(2, 200, 2, full: false)],
+    ]) {
+      final r = mileageVerdict(logs);
+      expect(r.verdict, MileageVerdict.firstOnly);
+      expect(r.lastKmPerLiter, closeTo(50, 1e-9));
     }
   });
 

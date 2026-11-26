@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/i18n/l10n_context.dart';
@@ -10,6 +9,7 @@ import '../../../poi_directory/presentation/providers/places_provider.dart';
 import '../../../poi_directory/presentation/widgets/place_launch_actions.dart';
 import '../../../profile/domain/entities/emergency_contact_entity.dart';
 import '../../../profile/presentation/providers/emergency_contacts_provider.dart';
+import '../../../profile/presentation/widgets/settings_emergency_contacts_section.dart';
 
 /// The SMS app at [phone] with [body] (which gets a Google Maps link to
 /// [lat],[lng]) typed in. The rider still presses send: nothing goes out on
@@ -26,7 +26,7 @@ Uri locationSmsUri(
 }
 
 /// [Help] on Simple Home: call or text the rider's emergency contacts
-/// (added in Settings), or a way to add the first one.
+/// (the same ones as Settings), or add the first one right here.
 class SimpleHomeHelpSheet extends ConsumerWidget {
   const SimpleHomeHelpSheet({super.key});
 
@@ -55,16 +55,30 @@ class SimpleHomeHelpSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             if (contacts.isLoading && !contacts.hasValue)
               const Center(child: CircularProgressIndicator())
-            else if (list.isEmpty) ...[
+            // Failed to load is not "no contacts": don't tell a rider who
+            // has some to add one.
+            else if (contacts.hasError && !contacts.hasValue) ...[
+              Text(l10n.simpleHomeContactsFailed,
+                  key: const Key('simple_home_contacts_failed')),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                key: const Key('simple_home_contacts_retry'),
+                style:
+                    OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
+                onPressed: () => ref.invalidate(myEmergencyContactsProvider),
+                icon: const Icon(Icons.refresh),
+                label: Text(l10n.retry),
+              ),
+            ] else if (list.isEmpty) ...[
               Text(l10n.simpleHomeNoContacts),
               const SizedBox(height: 12),
               FilledButton.icon(
                 key: const Key('simple_home_add_contact'),
                 style: FilledButton.styleFrom(minimumSize: const Size(64, 48)),
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.push('/settings');
-                },
+                // Settings' own add dialog, same repository; the sheet stays
+                // open and shows Call once the contact is saved.
+                onPressed: () => SettingsEmergencyContactsSection.showAddDialog(
+                    context, ref),
                 icon: const Icon(Icons.person_add_alt),
                 label: Text(l10n.simpleHomeAddContact),
               ),

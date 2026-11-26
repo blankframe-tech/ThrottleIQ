@@ -21,12 +21,16 @@ class _Context extends Fake implements BuildContext {}
 /// target, the end-of-ride target and the Start-ride widget target are all
 /// /home/record, which must land on the Simple home.
 void main() {
+  late ProviderContainer container;
+
   Future<String? Function(String)> redirectWith(Map<String, Object> prefs,
-      {BikeEntity? bike}) async {
+      {BikeEntity? bike, StateProvider<BikeEntity?>? bikeSource}) async {
     SharedPreferences.setMockInitialValues(prefs);
-    final container = ProviderContainer(overrides: [
+    container = ProviderContainer(overrides: [
       authStateProvider.overrideWith((ref) => Stream.value(_Rider())),
       if (bike != null) simpleBikeProvider.overrideWithValue(bike),
+      if (bikeSource != null)
+        simpleBikeProvider.overrideWith((ref) => ref.watch(bikeSource)),
     ]);
     addTearDown(container.dispose);
     container.listen(authStateProvider, (_, __) {});
@@ -72,6 +76,36 @@ void main() {
     expect(redirect('/home/maintenance?bikeId=b1'), '/home/simple-bike');
     expect(redirect('/home/maintenance?bikeId=b2'), isNull);
   });
+
+  for (final simple in [true, false]) {
+    test(
+        'cold start: the garage loading late re-runs the redirect '
+        '(simple: $simple)', () async {
+      final bike = StateProvider<BikeEntity?>((ref) => null);
+      final redirect = await redirectWith({if (simple) 'module_simple': true},
+          bikeSource: bike);
+      var refreshes = 0;
+      container
+          .read(routerProvider)
+          .routeInformationProvider
+          .addListener(() => refreshes++);
+      if (simple) {
+        // Garage still loading: the bike is unknown, so the link holds.
+        expect(redirect('/home/maintenance?bikeId=b1'), isNull);
+      }
+      container.read(bike.notifier).state = BikeEntity(
+          id: 'b1',
+          userId: 'u1',
+          brand: 'Yamaha',
+          model: 'MT-15',
+          createdAt: DateTime(2026, 1, 1));
+      await Future<void>.delayed(Duration.zero);
+      expect(refreshes, simple ? greaterThan(0) : 0);
+      if (simple) {
+        expect(redirect('/home/maintenance?bikeId=b1'), '/home/simple-bike');
+      }
+    });
+  }
 
   test('full mode is unchanged and the simple tabs bounce home', () async {
     final redirect = await redirectWith({});

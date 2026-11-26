@@ -7168,6 +7168,11 @@ class AppLocalizationsBn extends AppLocalizations {
       'মাইলেজ: এখনও যথেষ্ট তথ্য নেই। দেখতে দুইবার ফুল ট্যাংক তেল নিন।';
 
   @override
+  String simpleHomeMileageFirst(String kmpl) {
+    return 'মাইলেজ $kmpl km/L · যাচাই করতে আরও একবার ফুল ট্যাংক তেল নিন';
+  }
+
+  @override
   String get simpleHomeFindMechanic => 'মেকানিক খুঁজুন';
 
   @override
@@ -7207,6 +7212,10 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get simpleHomeAddContact => 'পরিবারের কন্টাক্ট যোগ করুন';
+
+  @override
+  String get simpleHomeContactsFailed =>
+      'পরিবারের কন্টাক্টগুলো লোড করা যায়নি। ইন্টারনেট চেক করে আবার চেষ্টা করুন।';
 
   @override
   String get manualOdometerHint =>

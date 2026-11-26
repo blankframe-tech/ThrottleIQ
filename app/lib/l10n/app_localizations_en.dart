@@ -7191,6 +7191,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Mileage: not enough data yet. Fill the tank full twice to see it.';
 
   @override
+  String simpleHomeMileageFirst(String kmpl) {
+    return 'Mileage $kmpl km/L · one more full tank to judge it';
+  }
+
+  @override
   String get simpleHomeFindMechanic => 'Find mechanic';
 
   @override
@@ -7229,6 +7234,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get simpleHomeAddContact => 'Add a family contact';
+
+  @override
+  String get simpleHomeContactsFailed =>
+      'Couldn\'t load your family contacts. Check your internet, then try again.';
 
   @override
   String get manualOdometerHint =>

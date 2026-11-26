@@ -12234,6 +12234,12 @@ abstract class AppLocalizations {
   /// **'Mileage: not enough data yet. Fill the tank full twice to see it.'**
   String get simpleHomeMileageNotEnough;
 
+  /// Simple mode Home tab (#241): one measured full-to-full stretch, so a km/L but no good/low verdict yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · one more full tank to judge it'**
+  String simpleHomeMileageFirst(String kmpl);
+
   /// Simple mode Home tab (#241).
   ///
   /// In en, this message translates to:
@@ -12305,6 +12311,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add a family contact'**
   String get simpleHomeAddContact;
+
+  /// Simple mode Home tab (#241): Help sheet, the emergency contacts failed to load.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load your family contacts. Check your internet, then try again.'**
+  String get simpleHomeContactsFailed;
 
   /// Settings → Your ThrottleIQ (app modules).
   ///

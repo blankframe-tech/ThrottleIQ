@@ -1423,6 +1423,8 @@ class RideRecordingNotifier extends StateNotifier<RideRecordingState>
 
     try {
       _ref.invalidate(garageProvider);
+      // Simple Home's km tile and Rides tab read this; it isn't autoDispose.
+      _ref.invalidate(rideHistoryProvider(ride.bikeId));
       unawaited(_persistenceCoordinator.updatePublicStats(ride.userId));
       unawaited(GpsDropLog.record(ride.id, kept: _gpsKept, dropped: _gpsDropped)
           .catchError((Object e) => debugPrint('[RideRecording] gps log: $e')));

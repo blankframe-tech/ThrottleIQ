@@ -46,6 +46,12 @@ class SimpleHomeScreen extends ConsumerWidget {
 /// Buttons here are at least 48dp tall.
 const _tall = Size(64, 48);
 
+/// A tile whose source is loading or failed: never a made-up 0.
+const _noValue = '—';
+
+/// "8.5", "120", "1,250": one decimal only for small values.
+String _amount(double v) => v < 10 ? v.toStringAsFixed(1) : groupThousands(v);
+
 class _NoBike extends StatelessWidget {
   @override
   Widget build(BuildContext context) => ListView(
@@ -110,18 +116,22 @@ class _HomeBody extends ConsumerWidget {
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: _Tile(
-                key: const Key('simple_home_km'),
-                value: km.toStringAsFixed(km < 10 ? 1 : 0),
-                label: l10n.simpleHomeKmRidden,
+            // km comes only from recorded rides: with tracking off it would
+            // always read 0, so it isn't shown.
+            if (modules.rideTracking) ...[
+              Expanded(
+                child: _Tile(
+                  key: const Key('simple_home_km'),
+                  value: rides == null ? _noValue : _amount(km),
+                  label: l10n.simpleHomeKmRidden,
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
+              const SizedBox(width: 12),
+            ],
             Expanded(
               child: _Tile(
                 key: const Key('simple_home_taka'),
-                value: '৳${formatTaka(taka)}',
+                value: fills == null ? _noValue : '৳${_amount(taka)}',
                 label: l10n.simpleHomeFuelSpent,
               ),
             ),
@@ -245,6 +255,7 @@ class _MileageLine extends StatelessWidget {
     final avg = reading.avgKmPerLiter;
     final (text, color) = switch (reading.verdict) {
       MileageVerdict.notEnoughData => (l10n.simpleHomeMileageNotEnough, null),
+      MileageVerdict.firstOnly => (l10n.simpleHomeMileageFirst(n(last!)), null),
       MileageVerdict.good => (
           l10n.simpleHomeMileageGood(n(last!)),
           context.palette.success

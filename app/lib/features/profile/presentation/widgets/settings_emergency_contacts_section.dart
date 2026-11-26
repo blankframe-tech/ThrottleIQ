@@ -31,7 +31,7 @@ class SettingsEmergencyContactsSection extends ConsumerWidget {
                     color: context.palette.textPrimary)),
             const Spacer(),
             TextButton.icon(
-              onPressed: () => _showContactDialog(context, ref),
+              onPressed: () => showAddDialog(context, ref),
               icon: const Icon(Icons.add, size: 18),
               label: Text(l10n.addAction),
             ),
@@ -153,7 +153,9 @@ class SettingsEmergencyContactsSection extends ConsumerWidget {
     );
   }
 
-  Future<void> _showContactDialog(BuildContext context, WidgetRef ref) async {
+  /// The add-contact dialog (and the one-time "not alerted yet" notice),
+  /// also opened from Simple Home's Help sheet.
+  static Future<void> showAddDialog(BuildContext context, WidgetRef ref) async {
     if ((ref.read(emergencyContactsNotifierProvider).valueOrNull?.length ??
             0) >=
         maxEmergencyContacts) {
@@ -203,7 +205,7 @@ class SettingsEmergencyContactsSection extends ConsumerWidget {
 
 /// The "Add Emergency Contact" dialog's content, as its own
 /// [ConsumerStatefulWidget] rather than `TextEditingController`s created
-/// inline in `_showContactDialog` — those were never disposed at all (a
+/// inline in `showAddDialog` — those were never disposed at all (a
 /// small per-open leak, not a crash: unlike forum_thread_screen.dart's
 /// "New post" sheet, this dialog never called `.dispose()` in the first
 /// place, so it never hit the "used after disposed" race). Fixed with the

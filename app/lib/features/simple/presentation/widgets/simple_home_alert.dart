@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../../../core/i18n/l10n_context.dart';
 import '../../../../core/theme/app_theme_context.dart';
 import '../../../../shared/widgets/editorial.dart';
@@ -14,6 +12,8 @@ import '../../../maintenance/presentation/providers/maintenance_provider.dart';
 import '../../../maintenance/presentation/widgets/forecast_text.dart';
 import '../../../maintenance/presentation/widgets/paperwork_card.dart';
 import '../../../maintenance/presentation/widgets/quick_service_sheet.dart';
+import '../../../poi_directory/domain/entities/place_entity.dart';
+import 'simple_bike_nearby.dart';
 
 /// Simple Home's one alert, most urgent first: overdue service, expired
 /// paper, paper expiring within [PaperworkEntity.warnDays], service due
@@ -21,7 +21,8 @@ import '../../../maintenance/presentation/widgets/quick_service_sheet.dart';
 class SimpleHomeAlert extends ConsumerWidget {
   final BikeEntity bike;
 
-  /// Places module on: offer [Find mechanic] (the Bike tab's Find nearby).
+  /// Places module on: offer [Find mechanic] (the Bike tab's Find nearby,
+  /// mechanics only, in a sheet).
   final bool places;
   const SimpleHomeAlert({super.key, required this.bike, required this.places});
 
@@ -40,28 +41,43 @@ class SimpleHomeAlert extends ConsumerWidget {
         .where((p) => p.daysLeft(now) <= PaperworkEntity.warnDays)
         .firstOrNull;
 
+    final imperial = ref.watch(maintenanceImperialProvider);
+
     final overdue = first(ReminderStatus.overdue);
-    if (overdue != null) return _maintenance(context, overdue, now);
+    if (overdue != null) return _maintenance(context, overdue, now, imperial);
     if (paper != null) return _paper(context, paper, now);
     final soon = first(ReminderStatus.dueSoon);
-    if (soon != null) return _maintenance(context, soon, now);
+    if (soon != null) return _maintenance(context, soon, now, imperial);
     return const SizedBox.shrink();
   }
 
-  Widget _maintenance(BuildContext context, CheckForecast f, DateTime now) {
+  Widget _maintenance(
+      BuildContext context, CheckForecast f, DateTime now, bool imperial) {
     final l10n = context.l10n;
     final label = forecastLabel(f, l10n);
+    // As the Bike tab's checklist: an undatable km-only check says the km.
     final when = dueWhenText(f, l10n, now);
+    final detail = when.isNotEmpty ? when : rowRemainingText(f, l10n, imperial);
     return _Card(
       overdue: f.status == ReminderStatus.overdue,
       icon: Icons.build_outlined,
-      text: when.isEmpty ? label : '$label · $when',
+      text: detail.isEmpty ? label : '$label · $detail',
       actions: [
         if (places)
           OutlinedButton.icon(
             key: const Key('simple_home_find_mechanic'),
             style: OutlinedButton.styleFrom(minimumSize: const Size(64, 48)),
-            onPressed: () => context.go('/home/simple-bike'),
+            onPressed: () => showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              builder: (_) => const SafeArea(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(16),
+                  child: SimpleBikeNearby(
+                      initiallyOpen: true, only: PlaceCategory.garage),
+                ),
+              ),
+            ),
             icon: const Icon(Icons.place_outlined),
             label: Text(l10n.simpleHomeFindMechanic),
           ),

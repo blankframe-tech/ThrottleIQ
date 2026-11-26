@@ -9932,6 +9932,15 @@
   "@simpleHomeMileageNotEnough": {
     "description": "Simple mode Home tab (#241)."
   },
+  "simpleHomeMileageFirst": "Mileage {kmpl} km/L · one more full tank to judge it",
+  "@simpleHomeMileageFirst": {
+    "description": "Simple mode Home tab (#241): one measured full-to-full stretch, so a km/L but no good/low verdict yet.",
+    "placeholders": {
+      "kmpl": {
+        "type": "String"
+      }
+    }
+  },
   "simpleHomeFindMechanic": "Find mechanic",
   "@simpleHomeFindMechanic": {
     "description": "Simple mode Home tab (#241)."
@@ -9984,6 +9993,10 @@
   "simpleHomeAddContact": "Add a family contact",
   "@simpleHomeAddContact": {
     "description": "Simple mode Home tab (#241)."
+  },
+  "simpleHomeContactsFailed": "Couldn't load your family contacts. Check your internet, then try again.",
+  "@simpleHomeContactsFailed": {
+    "description": "Simple mode Home tab (#241): Help sheet, the emergency contacts failed to load."
   },
   "manualOdometerHint": "Rides aren't tracked, so update this now and then to keep service reminders accurate.",
   "@manualOdometerHint": {

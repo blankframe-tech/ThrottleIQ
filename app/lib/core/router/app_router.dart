@@ -73,8 +73,17 @@ class _AuthRefreshNotifier extends ChangeNotifier {
   _AuthRefreshNotifier(Ref ref) {
     ref.listen(authStateProvider, (_, __) => notifyListeners());
     ref.listen(appModulesProvider, (_, __) => notifyListeners());
+    ref.listen(_simpleRedirectBikeId, (_, __) => notifyListeners());
   }
 }
+
+/// Simple mode's bike id, for the maintenance-link redirect. A cold-start
+/// notification arrives before the garage loads; this re-runs the redirect
+/// once it does. Null in full mode, which never loads the garage for it.
+final _simpleRedirectBikeId = Provider<String?>((ref) =>
+    ref.watch(appModulesProvider.select((m) => m.simple))
+        ? ref.watch(simpleBikeProvider)?.id
+        : null);
 
 /// Pure redirect decision, extracted for unit testing (see app_router_test.dart).
 /// Returns the path to redirect to, or null to stay put.
