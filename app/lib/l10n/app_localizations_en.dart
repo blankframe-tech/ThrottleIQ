@@ -7022,6 +7022,97 @@ class AppLocalizationsEn extends AppLocalizations {
   String get simpleModeCommunityHidden => 'Community is hidden in Simple mode.';
 
   @override
+  String get simpleHomeStartRide => 'START RIDE';
+
+  @override
+  String get simpleHomeOpenRide => 'Ride running: open it';
+
+  @override
+  String get simpleHomeNoBike =>
+      'Add your bike to see your rides, fuel and service in one place.';
+
+  @override
+  String get simpleHomeNoRides =>
+      'No rides yet. Tap START RIDE to record your first one.';
+
+  @override
+  String get simpleHomeNoFuel =>
+      'No fuel added yet. Add your next fill to see what you spend and your mileage.';
+
+  @override
+  String get simpleHomeThisMonth => 'This month';
+
+  @override
+  String get simpleHomeKmRidden => 'km ridden';
+
+  @override
+  String get simpleHomeFuelSpent => 'spent on fuel';
+
+  @override
+  String simpleHomeMileageGood(String kmpl) {
+    return 'Mileage $kmpl km/L 👍 good';
+  }
+
+  @override
+  String simpleHomeMileageOkay(String kmpl) {
+    return 'Mileage $kmpl km/L · okay';
+  }
+
+  @override
+  String simpleHomeMileageLow(String kmpl) {
+    return 'Mileage $kmpl km/L · lower than usual';
+  }
+
+  @override
+  String simpleHomeMileageAverage(String kmpl) {
+    return 'Your usual: $kmpl km/L';
+  }
+
+  @override
+  String get simpleHomeMileageNotEnough =>
+      'Mileage: not enough data yet. Fill the tank full twice to see it.';
+
+  @override
+  String get simpleHomeFindMechanic => 'Find mechanic';
+
+  @override
+  String get simpleHomeRenew => 'Renew';
+
+  @override
+  String get simpleHomeAddFuel => 'Add fuel';
+
+  @override
+  String get simpleHomeHelp => 'Help';
+
+  @override
+  String get simpleHomeHelpTitle => 'Get help';
+
+  @override
+  String get simpleHomeHelpBody =>
+      'Call a family contact, or text them where you are. Nothing is sent until you press send in your messages app.';
+
+  @override
+  String get simpleHomeSendLocation => 'Send my location';
+
+  @override
+  String simpleHomeLocationSms(String link) {
+    return 'I need help. I\'m here: $link';
+  }
+
+  @override
+  String get simpleHomeLocationFailed =>
+      'Couldn\'t get your location. Check that location is on, then try again.';
+
+  @override
+  String get simpleHomeSmsFailed => 'Couldn\'t open your messages app.';
+
+  @override
+  String get simpleHomeNoContacts => 'You haven\'t added a family contact yet.';
+
+  @override
+  String get simpleHomeAddContact => 'Add a family contact';
+
+  @override
   String get manualOdometerHint =>
       'Rides aren\'t tracked, so update this now and then to keep service reminders accurate.';
 

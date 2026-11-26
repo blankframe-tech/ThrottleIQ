@@ -11952,6 +11952,156 @@ abstract class AppLocalizations {
   /// **'Community is hidden in Simple mode.'**
   String get simpleModeCommunityHidden;
 
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'START RIDE'**
+  String get simpleHomeStartRide;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Ride running: open it'**
+  String get simpleHomeOpenRide;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Add your bike to see your rides, fuel and service in one place.'**
+  String get simpleHomeNoBike;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'No rides yet. Tap START RIDE to record your first one.'**
+  String get simpleHomeNoRides;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'No fuel added yet. Add your next fill to see what you spend and your mileage.'**
+  String get simpleHomeNoFuel;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'This month'**
+  String get simpleHomeThisMonth;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'km ridden'**
+  String get simpleHomeKmRidden;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'spent on fuel'**
+  String get simpleHomeFuelSpent;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L 👍 good'**
+  String simpleHomeMileageGood(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · okay'**
+  String simpleHomeMileageOkay(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage {kmpl} km/L · lower than usual'**
+  String simpleHomeMileageLow(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Your usual: {kmpl} km/L'**
+  String simpleHomeMileageAverage(String kmpl);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Mileage: not enough data yet. Fill the tank full twice to see it.'**
+  String get simpleHomeMileageNotEnough;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Find mechanic'**
+  String get simpleHomeFindMechanic;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Renew'**
+  String get simpleHomeRenew;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Add fuel'**
+  String get simpleHomeAddFuel;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Help'**
+  String get simpleHomeHelp;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Get help'**
+  String get simpleHomeHelpTitle;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Call a family contact, or text them where you are. Nothing is sent until you press send in your messages app.'**
+  String get simpleHomeHelpBody;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Send my location'**
+  String get simpleHomeSendLocation;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'I need help. I\'m here: {link}'**
+  String simpleHomeLocationSms(String link);
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t get your location. Check that location is on, then try again.'**
+  String get simpleHomeLocationFailed;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open your messages app.'**
+  String get simpleHomeSmsFailed;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t added a family contact yet.'**
+  String get simpleHomeNoContacts;
+
+  /// Simple mode Home tab (#241).
+  ///
+  /// In en, this message translates to:
+  /// **'Add a family contact'**
+  String get simpleHomeAddContact;
+
   /// Settings → Your ThrottleIQ (app modules).
   ///
   /// In en, this message translates to:
